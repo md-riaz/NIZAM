@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreTenantRequest;
+use App\Http\Requests\UpdateTenantRequest;
+use App\Http\Resources\TenantResource;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 /**
  * API controller for managing tenants.
@@ -15,55 +17,37 @@ class TenantController extends Controller
     /**
      * List all tenants (paginated).
      */
-    public function index(): JsonResponse
+    public function index()
     {
-        $tenants = Tenant::paginate(15);
-
-        return response()->json($tenants);
+        return TenantResource::collection(Tenant::paginate(15));
     }
 
     /**
      * Create a new tenant.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreTenantRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'domain' => 'required|string|unique:tenants',
-            'slug' => 'required|string|unique:tenants|alpha_dash',
-            'max_extensions' => 'integer|min:0',
-            'is_active' => 'boolean',
-        ]);
+        $tenant = Tenant::create($request->validated());
 
-        $tenant = Tenant::create($validated);
-
-        return response()->json($tenant, 201);
+        return (new TenantResource($tenant))->response()->setStatusCode(201);
     }
 
     /**
      * Show a single tenant.
      */
-    public function show(Tenant $tenant): JsonResponse
+    public function show(Tenant $tenant): TenantResource
     {
-        return response()->json($tenant);
+        return new TenantResource($tenant);
     }
 
     /**
      * Update an existing tenant.
      */
-    public function update(Request $request, Tenant $tenant): JsonResponse
+    public function update(UpdateTenantRequest $request, Tenant $tenant): TenantResource
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'domain' => 'required|string|unique:tenants,domain,' . $tenant->id,
-            'slug' => 'required|string|alpha_dash|unique:tenants,slug,' . $tenant->id,
-            'max_extensions' => 'integer|min:0',
-            'is_active' => 'boolean',
-        ]);
+        $tenant->update($request->validated());
 
-        $tenant->update($validated);
-
-        return response()->json($tenant);
+        return new TenantResource($tenant);
     }
 
     /**

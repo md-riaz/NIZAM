@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreIvrRequest;
+use App\Http\Requests\UpdateIvrRequest;
+use App\Http\Resources\IvrResource;
 use App\Models\Ivr;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 /**
  * API controller for managing IVRs scoped to a tenant.
@@ -16,71 +18,45 @@ class IvrController extends Controller
     /**
      * List IVRs for a tenant (paginated).
      */
-    public function index(Tenant $tenant): JsonResponse
+    public function index(Tenant $tenant)
     {
-        $ivrs = $tenant->ivrs()->paginate(15);
-
-        return response()->json($ivrs);
+        return IvrResource::collection($tenant->ivrs()->paginate(15));
     }
 
     /**
      * Create a new IVR for a tenant.
      */
-    public function store(Request $request, Tenant $tenant): JsonResponse
+    public function store(StoreIvrRequest $request, Tenant $tenant): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'greet_long' => 'nullable|string',
-            'greet_short' => 'nullable|string',
-            'timeout' => 'integer|min:1|max:60',
-            'max_failures' => 'integer|min:1|max:10',
-            'options' => 'required|array',
-            'timeout_destination_type' => 'nullable|string|required_with:timeout_destination_id',
-            'timeout_destination_id' => 'nullable|uuid|required_with:timeout_destination_type',
-            'is_active' => 'boolean',
-        ]);
+        $ivr = $tenant->ivrs()->create($request->validated());
 
-        $ivr = $tenant->ivrs()->create($validated);
-
-        return response()->json($ivr, 201);
+        return (new IvrResource($ivr))->response()->setStatusCode(201);
     }
 
     /**
      * Show a single IVR.
      */
-    public function show(Tenant $tenant, Ivr $ivr): JsonResponse
+    public function show(Tenant $tenant, Ivr $ivr): JsonResponse|IvrResource
     {
         if ($ivr->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'IVR not found.'], 404);
         }
 
-        return response()->json($ivr);
+        return new IvrResource($ivr);
     }
 
     /**
      * Update an existing IVR.
      */
-    public function update(Request $request, Tenant $tenant, Ivr $ivr): JsonResponse
+    public function update(UpdateIvrRequest $request, Tenant $tenant, Ivr $ivr): JsonResponse|IvrResource
     {
         if ($ivr->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'IVR not found.'], 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'greet_long' => 'nullable|string',
-            'greet_short' => 'nullable|string',
-            'timeout' => 'integer|min:1|max:60',
-            'max_failures' => 'integer|min:1|max:10',
-            'options' => 'required|array',
-            'timeout_destination_type' => 'nullable|string|required_with:timeout_destination_id',
-            'timeout_destination_id' => 'nullable|uuid|required_with:timeout_destination_type',
-            'is_active' => 'boolean',
-        ]);
+        $ivr->update($request->validated());
 
-        $ivr->update($validated);
-
-        return response()->json($ivr);
+        return new IvrResource($ivr);
     }
 
     /**

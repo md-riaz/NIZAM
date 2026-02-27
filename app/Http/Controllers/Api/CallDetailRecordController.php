@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CallDetailRecordResource;
 use App\Models\CallDetailRecord;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +21,7 @@ class CallDetailRecordController extends Controller
      *
      * Supports query filters: direction, caller_id_number, destination_number, date_from, date_to.
      */
-    public function index(Request $request, Tenant $tenant): JsonResponse
+    public function index(Request $request, Tenant $tenant)
     {
         $query = $tenant->cdrs()->orderBy('start_stamp', 'desc');
 
@@ -44,20 +45,18 @@ class CallDetailRecordController extends Controller
             $query->where('start_stamp', '<=', $request->input('date_to'));
         }
 
-        $cdrs = $query->paginate(15);
-
-        return response()->json($cdrs);
+        return CallDetailRecordResource::collection($query->paginate(15));
     }
 
     /**
      * Show a single CDR.
      */
-    public function show(Tenant $tenant, CallDetailRecord $callDetailRecord): JsonResponse
+    public function show(Tenant $tenant, CallDetailRecord $callDetailRecord): JsonResponse|CallDetailRecordResource
     {
         if ($callDetailRecord->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'CDR not found.'], 404);
         }
 
-        return response()->json($callDetailRecord);
+        return new CallDetailRecordResource($callDetailRecord);
     }
 }

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreTimeConditionRequest;
+use App\Http\Requests\UpdateTimeConditionRequest;
+use App\Http\Resources\TimeConditionResource;
 use App\Models\Tenant;
 use App\Models\TimeCondition;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 /**
  * API controller for managing time conditions scoped to a tenant.
@@ -16,67 +18,45 @@ class TimeConditionController extends Controller
     /**
      * List time conditions for a tenant (paginated).
      */
-    public function index(Tenant $tenant): JsonResponse
+    public function index(Tenant $tenant)
     {
-        $timeConditions = $tenant->timeConditions()->paginate(15);
-
-        return response()->json($timeConditions);
+        return TimeConditionResource::collection($tenant->timeConditions()->paginate(15));
     }
 
     /**
      * Create a new time condition for a tenant.
      */
-    public function store(Request $request, Tenant $tenant): JsonResponse
+    public function store(StoreTimeConditionRequest $request, Tenant $tenant): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'conditions' => 'required|array',
-            'match_destination_type' => 'nullable|string|required_with:match_destination_id',
-            'match_destination_id' => 'nullable|uuid|required_with:match_destination_type',
-            'no_match_destination_type' => 'nullable|string|required_with:no_match_destination_id',
-            'no_match_destination_id' => 'nullable|uuid|required_with:no_match_destination_type',
-            'is_active' => 'boolean',
-        ]);
+        $timeCondition = $tenant->timeConditions()->create($request->validated());
 
-        $timeCondition = $tenant->timeConditions()->create($validated);
-
-        return response()->json($timeCondition, 201);
+        return (new TimeConditionResource($timeCondition))->response()->setStatusCode(201);
     }
 
     /**
      * Show a single time condition.
      */
-    public function show(Tenant $tenant, TimeCondition $timeCondition): JsonResponse
+    public function show(Tenant $tenant, TimeCondition $timeCondition): JsonResponse|TimeConditionResource
     {
         if ($timeCondition->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Time condition not found.'], 404);
         }
 
-        return response()->json($timeCondition);
+        return new TimeConditionResource($timeCondition);
     }
 
     /**
      * Update an existing time condition.
      */
-    public function update(Request $request, Tenant $tenant, TimeCondition $timeCondition): JsonResponse
+    public function update(UpdateTimeConditionRequest $request, Tenant $tenant, TimeCondition $timeCondition): JsonResponse|TimeConditionResource
     {
         if ($timeCondition->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Time condition not found.'], 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'conditions' => 'required|array',
-            'match_destination_type' => 'nullable|string|required_with:match_destination_id',
-            'match_destination_id' => 'nullable|uuid|required_with:match_destination_type',
-            'no_match_destination_type' => 'nullable|string|required_with:no_match_destination_id',
-            'no_match_destination_id' => 'nullable|uuid|required_with:no_match_destination_type',
-            'is_active' => 'boolean',
-        ]);
+        $timeCondition->update($request->validated());
 
-        $timeCondition->update($validated);
-
-        return response()->json($timeCondition);
+        return new TimeConditionResource($timeCondition);
     }
 
     /**
