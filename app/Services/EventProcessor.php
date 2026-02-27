@@ -172,11 +172,9 @@ class EventProcessor
                 'duration' => $data['duration'],
                 'billsec' => $data['billsec'],
                 'hangup_cause' => $data['hangup_cause'],
-                'direction' => match ($data['direction']) {
-                    'inbound' => 'inbound',
-                    'outbound' => 'outbound',
-                    default => 'unknown',
-                },
+                'direction' => in_array($data['direction'], ['inbound', 'outbound', 'local'])
+                    ? $data['direction']
+                    : 'local',
                 'recording_path' => $event['variable_record_file_path'] ?? null,
             ]);
         } catch (\Exception $e) {

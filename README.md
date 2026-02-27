@@ -89,20 +89,58 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 
 ### Device Provisioning
 - Template-based device configs
-- Vendor profiles with MAC detection
+- Vendor profiles (Polycom, Yealink, Grandstream) with MAC detection
+- Auto-provisioning endpoint for phones (`GET /provision/{mac}`)
+
+### Webhooks
+- Outbound event notifications for CRM/ERP integration
+- Configurable event subscriptions per tenant
+- HMAC-SHA256 signed payloads for security
+- Queued delivery with exponential backoff retry
+- Events: `call.started`, `call.answered`, `call.missed`, `call.hangup`, `voicemail.received`, `device.registered`
+
+### Event Bus
+- FreeSWITCH ESL event listener (`php artisan nizam:esl-listen`)
+- Real-time call event processing and CDR creation
+- Broadcast events via WebSocket channels per tenant
+- Automatic webhook dispatch on matching events
 
 ---
 
 ## API
 
-NIZAM is API-first — the UI is just an API client. All operations are accessible via REST API:
+NIZAM is API-first — the UI is just an API client. All operations are accessible via REST API with consistent JSON responses via API Resources.
 
 ### Authentication
 
-All API endpoints require authentication via [Laravel Sanctum](https://laravel.com/docs/sanctum) bearer tokens.
+Register, login, and obtain bearer tokens via the Auth API. All other endpoints require authentication via [Laravel Sanctum](https://laravel.com/docs/sanctum) bearer tokens.
+
+```bash
+# Register
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Admin","email":"admin@example.com","password":"password","password_confirmation":"password"}'
+
+# Login
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"password"}'
+
+# Use token in subsequent requests
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8080/api/tenants
+```
 
 ### Endpoints
 
+#### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/auth/register` | Register a new user |
+| `POST` | `/api/auth/login` | Login and get token |
+| `POST` | `/api/auth/logout` | Logout (revoke token) |
+| `GET` | `/api/auth/me` | Get authenticated user |
+
+#### Tenants
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/tenants` | List tenants |
@@ -110,30 +148,49 @@ All API endpoints require authentication via [Laravel Sanctum](https://laravel.c
 | `GET` | `/api/tenants/{id}` | Get tenant |
 | `PUT` | `/api/tenants/{id}` | Update tenant |
 | `DELETE` | `/api/tenants/{id}` | Delete tenant |
+
+#### Extensions
+| Method | Endpoint | Description |
+|--------|----------|-------------|
 | `GET` | `/api/tenants/{id}/extensions` | List extensions |
 | `POST` | `/api/tenants/{id}/extensions` | Create extension |
 | `GET` | `/api/tenants/{id}/extensions/{id}` | Get extension |
 | `PUT` | `/api/tenants/{id}/extensions/{id}` | Update extension |
 | `DELETE` | `/api/tenants/{id}/extensions/{id}` | Delete extension |
-| `GET` | `/api/tenants/{id}/dids` | List DIDs |
-| `POST` | `/api/tenants/{id}/dids` | Create DID |
-| `GET` | `/api/tenants/{id}/ring-groups` | List ring groups |
-| `POST` | `/api/tenants/{id}/ring-groups` | Create ring group |
-| `GET` | `/api/tenants/{id}/ivrs` | List IVRs |
-| `POST` | `/api/tenants/{id}/ivrs` | Create IVR |
-| `GET` | `/api/tenants/{id}/time-conditions` | List time conditions |
-| `POST` | `/api/tenants/{id}/time-conditions` | Create time condition |
-| `GET` | `/api/tenants/{id}/cdrs` | List call records |
-| `GET` | `/api/tenants/{id}/device-profiles` | List device profiles |
-| `POST` | `/api/tenants/{id}/device-profiles` | Create device profile |
+
+#### DIDs, Ring Groups, IVRs, Time Conditions, CDRs, Device Profiles
+All follow the same CRUD pattern under `/api/tenants/{id}/...`:
+- `/dids` — Inbound number routing
+- `/ring-groups` — Ring group management
+- `/ivrs` — IVR menu management
+- `/time-conditions` — Time-based routing
+- `/cdrs` — Call detail records (read-only)
+- `/device-profiles` — Device provisioning profiles
+
+#### Webhooks
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/tenants/{id}/webhooks` | List webhooks |
+| `POST` | `/api/tenants/{id}/webhooks` | Create webhook |
+| `GET` | `/api/tenants/{id}/webhooks/{id}` | Get webhook |
+| `PUT` | `/api/tenants/{id}/webhooks/{id}` | Update webhook |
+| `DELETE` | `/api/tenants/{id}/webhooks/{id}` | Delete webhook |
+
+#### Call Operations
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/tenants/{id}/calls/originate` | Originate a call |
+| `GET` | `/api/tenants/{id}/calls/status` | Get active call status |
 
 ### Event Bus
 
 ```
 FreeSWITCH → ESL → Event Processor → Redis → WebSocket/API
+                                    ↘ CDR Creation
+                                    ↘ Webhook Dispatch
 ```
 
-Real-time streaming of call start, bridge, hangup, registration, and gateway status events.
+Real-time streaming of call start, answer, hangup, and voicemail events. Events are automatically dispatched to matching webhooks and broadcast on tenant-scoped WebSocket channels.
 
 ---
 
@@ -177,13 +234,16 @@ docker compose exec app php artisan migrate
 # Generate application key
 docker compose exec app php artisan key:generate
 
-# Create an API token (via tinker)
-docker compose exec app php artisan tinker
-# > $user = \App\Models\User::factory()->create();
-# > $user->createToken('api')->plainTextToken;
+# Seed demo data (optional)
+docker compose exec app php artisan db:seed
+
+# Start ESL event listener (connects to FreeSWITCH)
+docker compose exec app php artisan nizam:esl-listen
 ```
 
 The API will be available at `http://localhost:8080/api`.
+
+Demo credentials (after seeding): `admin@nizam.local` / `password`
 
 ### Local Development (without Docker)
 
@@ -209,28 +269,45 @@ php artisan serve
 ```
 NIZAM/
 ├── app/
-│   ├── Events/              # Event classes (CallEvent)
+│   ├── Console/Commands/       # Artisan commands (nizam:esl-listen)
+│   ├── Events/                 # Event classes (CallEvent)
 │   ├── Http/
-│   │   └── Controllers/
-│   │       ├── Api/         # REST API controllers
-│   │       └── FreeswitchXmlController.php
-│   ├── Models/              # Eloquent models
-│   ├── Providers/           # Service providers
-│   └── Services/            # Business logic services
-│       └── DialplanCompiler.php
+│   │   ├── Controllers/
+│   │   │   ├── Api/            # REST API controllers
+│   │   │   │   ├── AuthController.php
+│   │   │   │   ├── TenantController.php
+│   │   │   │   ├── ExtensionController.php
+│   │   │   │   ├── CallController.php
+│   │   │   │   ├── WebhookController.php
+│   │   │   │   └── ...
+│   │   │   ├── FreeswitchXmlController.php
+│   │   │   └── ProvisioningController.php
+│   │   ├── Requests/           # Form request validation (14 classes)
+│   │   └── Resources/          # API resource transformers (8 classes)
+│   ├── Jobs/                   # Queue jobs (DeliverWebhook)
+│   ├── Models/                 # Eloquent models (9 models)
+│   ├── Providers/              # Service providers
+│   └── Services/               # Business logic services
+│       ├── DialplanCompiler.php
+│       ├── EslConnectionManager.php
+│       ├── EventProcessor.php
+│       ├── ProvisioningService.php
+│       └── WebhookDispatcher.php
 ├── config/
-│   └── nizam.php            # NIZAM configuration
+│   └── nizam.php               # NIZAM configuration
 ├── database/
-│   └── migrations/          # Database schema
+│   ├── factories/              # Model factories (9 factories)
+│   ├── migrations/             # Database schema (13 migrations)
+│   └── seeders/                # Demo data seeder
 ├── docker/
-│   ├── app/                 # PHP-FPM Dockerfile
-│   ├── nginx/               # Nginx configuration
-│   └── freeswitch/          # FreeSWITCH container & config
+│   ├── app/                    # PHP-FPM Dockerfile
+│   ├── nginx/                  # Nginx configuration
+│   └── freeswitch/             # FreeSWITCH container & config
 ├── routes/
-│   ├── api.php              # API routes
-│   └── web.php              # Web routes (incl. mod_xml_curl)
-├── docker-compose.yml       # Container orchestration
-└── tests/                   # PHPUnit tests
+│   ├── api.php                 # API routes (auth, CRUD, calls)
+│   └── web.php                 # Web routes (xml-curl, provisioning)
+├── docker-compose.yml          # Container orchestration
+└── tests/                      # PHPUnit tests (82 tests, 172 assertions)
 ```
 
 ---
