@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\IvrController;
 use App\Http\Controllers\Api\TimeConditionController;
 use App\Http\Controllers\Api\CallDetailRecordController;
 use App\Http\Controllers\Api\DeviceProfileController;
+use App\Http\Controllers\Api\WebhookController;
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
@@ -28,5 +29,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('time-conditions', TimeConditionController::class);
         Route::apiResource('cdrs', CallDetailRecordController::class)->only(['index', 'show']);
         Route::apiResource('device-profiles', DeviceProfileController::class);
+        Route::apiResource('webhooks', WebhookController::class);
     });
 });

@@ -73,4 +73,9 @@ class Tenant extends Model
     {
         return $this->hasMany(DeviceProfile::class);
     }
+
+    public function webhooks(): HasMany
+    {
+        return $this->hasMany(Webhook::class);
+    }
 }
