@@ -68,4 +68,9 @@ class Tenant extends Model
     {
         return $this->hasMany(CallDetailRecord::class);
     }
+
+    public function deviceProfiles(): HasMany
+    {
+        return $this->hasMany(DeviceProfile::class);
+    }
 }
