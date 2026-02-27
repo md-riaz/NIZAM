@@ -1,59 +1,279 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# NIZAM
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**NIZAM** — Open Communications Control Platform
 
-## About Laravel
+> From Arabic: نظام (Nizām) — meaning *system, order, structure*.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+NIZAM is an API-first, modular communications platform built on top of [FreeSWITCH](https://freeswitch.com), designed to provide structured automation, integration, and multi-tenant telephony control — serving as a modern alternative to FusionPBX and Wazo.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Vision
 
-## Learning Laravel
+NIZAM separates concerns into distinct layers:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+| Layer | Technology | Responsibility |
+|-------|-----------|----------------|
+| **Media Core** | FreeSWITCH | SIP signaling, RTP media, call bridging, recording, conferencing |
+| **Control Plane** | Laravel 12 | Business logic, tenant management, routing, provisioning |
+| **Integration Layer** | REST + WebSocket + Events | API access, real-time streaming, webhooks |
+| **Provisioning Layer** | Template engine | Device automation, vendor profiles |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+FreeSWITCH remains stateless regarding business logic. All business state lives in NIZAM.
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Architecture
 
-### Premium Partners
+```
+┌─────────────────────────────────────────────────────┐
+│                    NIZAM Platform                    │
+├─────────────┬──────────────┬────────────────────────┤
+│  REST API   │  WebSocket   │  Event Bus             │
+│  (Sanctum)  │  (Reverb)    │  (Redis/Queue)         │
+├─────────────┴──────────────┴────────────────────────┤
+│              Laravel Control Plane                   │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐            │
+│  │ Tenant   │ │Extension │ │ Routing  │  ...       │
+│  │ Service  │ │ Service  │ │ Service  │            │
+│  └──────────┘ └──────────┘ └──────────┘            │
+├─────────────────────────────────────────────────────┤
+│           Dialplan Compiler (mod_xml_curl)           │
+├─────────────────────────────────────────────────────┤
+│              FreeSWITCH Media Core                   │
+│        SIP · RTP · Voicemail · Conferencing          │
+└─────────────────────────────────────────────────────┘
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Configuration Model
 
-## Contributing
+1. API call updates the database (single source of truth)
+2. Dialplan compiler generates runtime XML configuration
+3. `mod_xml_curl` dynamically serves directory & dialplan to FreeSWITCH
+4. No manual XML editing required
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## Core Features
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Multi-Tenancy
+- Domain-based tenant isolation
+- Per-tenant resource limits
+- Scoped authentication via Sanctum
 
-## Security Vulnerabilities
+### Extensions
+- SIP user management with credential encryption
+- Voicemail settings and caller ID control
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Inbound Routing (DIDs)
+- DID → Destination mapping
+- Destination types: Extension, Ring Group, IVR, Time Condition, Voicemail
+
+### Ring Groups
+- Simultaneous and sequential strategies
+- Configurable timeout with fallback routing
+
+### IVR Menus
+- Prompt upload support
+- Digit-to-destination mapping
+- Timeout routing
+
+### Time Conditions
+- Office hours logic with day/time rules
+- Match and no-match destination routing
+
+### CDR & Recording
+- Indexed call detail records
+- UUID correlation with FreeSWITCH
+- Recording path tracking
+
+### Device Provisioning
+- Template-based device configs
+- Vendor profiles with MAC detection
+
+---
+
+## API
+
+NIZAM is API-first — the UI is just an API client. All operations are accessible via REST API:
+
+### Authentication
+
+All API endpoints require authentication via [Laravel Sanctum](https://laravel.com/docs/sanctum) bearer tokens.
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/tenants` | List tenants |
+| `POST` | `/api/tenants` | Create tenant |
+| `GET` | `/api/tenants/{id}` | Get tenant |
+| `PUT` | `/api/tenants/{id}` | Update tenant |
+| `DELETE` | `/api/tenants/{id}` | Delete tenant |
+| `GET` | `/api/tenants/{id}/extensions` | List extensions |
+| `POST` | `/api/tenants/{id}/extensions` | Create extension |
+| `GET` | `/api/tenants/{id}/extensions/{id}` | Get extension |
+| `PUT` | `/api/tenants/{id}/extensions/{id}` | Update extension |
+| `DELETE` | `/api/tenants/{id}/extensions/{id}` | Delete extension |
+| `GET` | `/api/tenants/{id}/dids` | List DIDs |
+| `POST` | `/api/tenants/{id}/dids` | Create DID |
+| `GET` | `/api/tenants/{id}/ring-groups` | List ring groups |
+| `POST` | `/api/tenants/{id}/ring-groups` | Create ring group |
+| `GET` | `/api/tenants/{id}/ivrs` | List IVRs |
+| `POST` | `/api/tenants/{id}/ivrs` | Create IVR |
+| `GET` | `/api/tenants/{id}/time-conditions` | List time conditions |
+| `POST` | `/api/tenants/{id}/time-conditions` | Create time condition |
+| `GET` | `/api/tenants/{id}/cdrs` | List call records |
+| `GET` | `/api/tenants/{id}/device-profiles` | List device profiles |
+| `POST` | `/api/tenants/{id}/device-profiles` | Create device profile |
+
+### Event Bus
+
+```
+FreeSWITCH → ESL → Event Processor → Redis → WebSocket/API
+```
+
+Real-time streaming of call start, bridge, hangup, registration, and gateway status events.
+
+---
+
+## Technology Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Media Engine | FreeSWITCH |
+| Backend Framework | Laravel 12+ |
+| Database | PostgreSQL 16 |
+| Cache & Events | Redis 7 |
+| API Auth | Laravel Sanctum |
+| WebSocket | Laravel Reverb (planned) |
+| Deployment | Docker |
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Docker & Docker Compose
+- Git
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/md-riaz/NIZAM.git
+cd NIZAM
+
+# Copy environment file
+cp .env.example .env
+
+# Start services
+docker compose up -d
+
+# Run migrations
+docker compose exec app php artisan migrate
+
+# Generate application key
+docker compose exec app php artisan key:generate
+
+# Create an API token (via tinker)
+docker compose exec app php artisan tinker
+# > $user = \App\Models\User::factory()->create();
+# > $user->createToken('api')->plainTextToken;
+```
+
+The API will be available at `http://localhost:8080/api`.
+
+### Local Development (without Docker)
+
+```bash
+# Install PHP dependencies
+composer install
+
+# Copy and configure environment
+cp .env.example .env
+php artisan key:generate
+
+# Run migrations (uses SQLite by default for local dev)
+php artisan migrate
+
+# Start development server
+php artisan serve
+```
+
+---
+
+## Project Structure
+
+```
+NIZAM/
+├── app/
+│   ├── Events/              # Event classes (CallEvent)
+│   ├── Http/
+│   │   └── Controllers/
+│   │       ├── Api/         # REST API controllers
+│   │       └── FreeswitchXmlController.php
+│   ├── Models/              # Eloquent models
+│   ├── Providers/           # Service providers
+│   └── Services/            # Business logic services
+│       └── DialplanCompiler.php
+├── config/
+│   └── nizam.php            # NIZAM configuration
+├── database/
+│   └── migrations/          # Database schema
+├── docker/
+│   ├── app/                 # PHP-FPM Dockerfile
+│   ├── nginx/               # Nginx configuration
+│   └── freeswitch/          # FreeSWITCH container & config
+├── routes/
+│   ├── api.php              # API routes
+│   └── web.php              # Web routes (incl. mod_xml_curl)
+├── docker-compose.yml       # Container orchestration
+└── tests/                   # PHPUnit tests
+```
+
+---
+
+## Architectural Principles
+
+1. **Media and business logic must be separated** — FreeSWITCH handles media, NIZAM handles logic
+2. **Database is the source of truth** — No manual XML configuration files
+3. **Dialplan is compiled output** — Generated dynamically from database state
+4. **API-first always** — Every operation is available via REST API
+5. **Multi-tenant by design** — Domain isolation from day one
+6. **Modules are plug-in packages** — Extensible via Laravel packages
+7. **Observability is mandatory** — Events, logging, and CDR tracking
+
+---
+
+## Future Roadmap
+
+- [ ] Call Queues (ACD)
+- [ ] WebRTC Gateway
+- [ ] SMS Integration (Bandwidth/Twilio)
+- [ ] Billing Module
+- [ ] AI Call Analysis
+- [ ] Contact Center Features
+- [ ] Visual Flow Builder UI
+- [ ] Policy Engine
+- [ ] External Module SDK
+- [ ] API Marketplace
+
+---
+
+## Positioning
+
+NIZAM combines:
+
+- **FreeSWITCH's** runtime media power
+- **Wazo's** structured control plane thinking
+- **Laravel's** developer ecosystem
+
+More structured than FusionPBX. Simpler to operate than full Wazo microservices. More media-capable than Asterisk-based stacks. Designed for SaaS-ready deployment.
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT License. See [LICENSE](LICENSE) for details.

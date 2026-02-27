@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "nizam/nizam",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "NIZAM — Open Communications Control Platform built on FreeSWITCH and Laravel.",
+    "keywords": ["nizam", "freeswitch", "pbx", "voip", "communications", "laravel"],
     "license": "MIT",
     "require": {
         "php": "^8.2",
