@@ -1,0 +1,7 @@
+<configuration name="xml_curl.conf" description="cURL XML Gateway">
+  <bindings>
+    <binding name="nizam">
+      <param name="gateway-url" value="${NIZAM_XML_CURL_URL}" bindings="directory|dialplan"/>
+    </binding>
+  </bindings>
+</configuration>
