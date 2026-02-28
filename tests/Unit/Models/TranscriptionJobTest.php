@@ -3,7 +3,6 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Recording;
-use App\Models\Tenant;
 use App\Models\TranscriptionJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

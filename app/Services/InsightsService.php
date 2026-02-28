@@ -42,7 +42,7 @@ class InsightsService
         $queueEntry = QueueEntry::where('call_uuid', $callUuid)->first();
 
         $webhookFailures = WebhookDeliveryAttempt::where('tenant_id', $tenantId)
-            ->where('event_type', 'like', "call.%")
+            ->where('event_type', 'like', 'call.%')
             ->where('created_at', '>=', $cdr->start_stamp)
             ->where('created_at', '<=', $cdr->end_stamp ?? now())
             ->where('status', 'failed')

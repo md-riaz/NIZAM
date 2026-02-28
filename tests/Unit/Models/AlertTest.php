@@ -4,7 +4,6 @@ namespace Tests\Unit\Models;
 
 use App\Models\Alert;
 use App\Models\AlertPolicy;
-use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
