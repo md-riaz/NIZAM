@@ -18,6 +18,7 @@ class CallEventController extends Controller
      */
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
+        $this->authorize('viewAny', CallEventLog::class);
         $query = CallEventLog::where('tenant_id', $tenant->id)
             ->orderBy('occurred_at', 'asc');
 
@@ -47,6 +48,7 @@ class CallEventController extends Controller
      */
     public function trace(Tenant $tenant, string $callUuid): JsonResponse
     {
+        $this->authorize('viewAny', CallEventLog::class);
         $events = CallEventLog::where('tenant_id', $tenant->id)
             ->where('call_uuid', $callUuid)
             ->orderBy('occurred_at', 'asc')

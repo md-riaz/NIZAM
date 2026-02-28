@@ -36,4 +36,12 @@ class Recording extends Model
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    /**
+     * Get the CDR associated with this recording via call UUID.
+     */
+    public function cdr(): BelongsTo
+    {
+        return $this->belongsTo(CallDetailRecord::class, 'call_uuid', 'uuid');
+    }
 }

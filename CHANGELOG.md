@@ -46,18 +46,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 #### API Governance
 - Sanctum token authentication (register, login, logout, me)
-- Role-based authorization policies for all resources (Tenant, Extension, DID, RingGroup, IVR, TimeCondition, Webhook, DeviceProfile)
+- Role-based authorization policies for all resources (Tenant, Extension, DID, RingGroup, IVR, TimeCondition, Webhook, DeviceProfile, Recording, CDR, CallEvent, Call, User)
 - `$this->authorize()` calls wired into all resource controllers
 - Tenant-scoped API middleware (`tenant.access`) on all tenant routes
 - Rate limiting: 60 requests/minute per user or IP
-- REST endpoints for all resources: Tenant, Extension, DID, Ring Group, IVR, Time Condition, CDR, Device Profile, Webhook
+- REST endpoints for all resources: Tenant, Extension, DID, Ring Group, IVR, Time Condition, CDR, Device Profile, Webhook, Recording, User
 - Call originate and status endpoints
-- Call event list and trace endpoints
+- Call event list, trace, and real-time SSE stream endpoints
 
 #### Event & Observability
 - Call UUID correlation across full lifecycle
 - Persistent `call_events` table for event replay
 - Call trace API: `GET /call-events/{uuid}/trace`
+- Server-Sent Events (SSE) endpoint: `GET /call-events/stream` for real-time event streaming with Last-Event-ID reconnection support
+- CDR-Recording relationship via call UUID for linking recordings to call records
 - Gateway status polling command (`nizam:gateway-status`) with cached results
 - Private WebSocket channels per tenant (`private-tenant.{id}.calls`) with channel authorization
 - Broadcast channel authorization in `routes/channels.php`

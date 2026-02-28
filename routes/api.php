@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\CallDetailRecordController;
 use App\Http\Controllers\Api\CallEventController;
+use App\Http\Controllers\Api\CallEventStreamController;
 use App\Http\Controllers\Api\DeviceProfileController;
 use App\Http\Controllers\Api\DidController;
 use App\Http\Controllers\Api\ExtensionController;
@@ -52,6 +53,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::delete('recordings/{recording}', [RecordingController::class, 'destroy'])->name('recordings.destroy');
 
         Route::get('call-events', [CallEventController::class, 'index'])->name('call-events.index');
+        Route::get('call-events/stream', [CallEventStreamController::class, 'stream'])->name('call-events.stream');
         Route::get('call-events/{callUuid}/trace', [CallEventController::class, 'trace'])->name('call-events.trace');
 
         Route::post('calls/originate', [CallController::class, 'originate'])->name('calls.originate');

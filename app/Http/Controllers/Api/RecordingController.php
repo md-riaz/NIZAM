@@ -18,6 +18,7 @@ class RecordingController extends Controller
 {
     public function index(Request $request, Tenant $tenant): AnonymousResourceCollection
     {
+        $this->authorize('viewAny', Recording::class);
         $query = Recording::where('tenant_id', $tenant->id)
             ->orderBy('created_at', 'desc');
 
@@ -46,6 +47,7 @@ class RecordingController extends Controller
 
     public function show(Tenant $tenant, Recording $recording): RecordingResource|JsonResponse
     {
+        $this->authorize('view', $recording);
         if ($recording->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Recording not found.'], 404);
         }
@@ -58,6 +60,7 @@ class RecordingController extends Controller
      */
     public function download(Tenant $tenant, Recording $recording)
     {
+        $this->authorize('download', $recording);
         if ($recording->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Recording not found.'], 404);
         }
@@ -74,6 +77,7 @@ class RecordingController extends Controller
 
     public function destroy(Tenant $tenant, Recording $recording): JsonResponse
     {
+        $this->authorize('delete', $recording);
         if ($recording->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Recording not found.'], 404);
         }

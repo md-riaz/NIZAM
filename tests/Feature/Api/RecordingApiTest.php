@@ -53,7 +53,7 @@ class RecordingApiTest extends TestCase
         $response = $this->actingAs($this->user, 'sanctum')
             ->getJson("/api/tenants/{$this->tenant->id}/recordings/{$recording->id}");
 
-        $response->assertStatus(404);
+        $response->assertStatus(403);
     }
 
     public function test_can_filter_recordings_by_call_uuid(): void

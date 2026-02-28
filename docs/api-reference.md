@@ -340,6 +340,40 @@ Authorization: Bearer YOUR_TOKEN
 }
 ```
 
+### Real-Time Event Stream (SSE)
+
+Subscribe to real-time call events via Server-Sent Events:
+
+```http
+GET /api/tenants/{tenant_id}/call-events/stream
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Query Parameters:**
+| Parameter | Description |
+|-----------|-------------|
+| `call_uuid` | Filter stream to a specific call UUID |
+
+**Headers:**
+| Header | Description |
+|--------|-------------|
+| `Last-Event-ID` | Resume from a specific event ID after reconnection |
+
+**Response** `200` (SSE stream):
+```
+id: 42
+event: started
+data: {"id":42,"call_uuid":"abc-123","event_type":"started","payload":{...},"occurred_at":"2026-01-15T10:30:00.000Z"}
+
+id: 43
+event: answered
+data: {"id":43,"call_uuid":"abc-123","event_type":"answered","payload":{...},"occurred_at":"2026-01-15T10:30:05.000Z"}
+
+: heartbeat
+```
+
+The stream sends heartbeat comments every 15 seconds and auto-disconnects after 5 minutes (clients should reconnect using `Last-Event-ID`).
+
 ---
 
 ## Device Profiles

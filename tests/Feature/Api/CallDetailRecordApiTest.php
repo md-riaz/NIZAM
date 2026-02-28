@@ -166,7 +166,7 @@ class CallDetailRecordApiTest extends TestCase
         $response = $this->actingAs($this->user, 'sanctum')
             ->getJson("/api/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
 
-        $response->assertStatus(404);
+        $response->assertStatus(403);
     }
 
     public function test_cdrs_are_ordered_by_start_stamp_desc(): void

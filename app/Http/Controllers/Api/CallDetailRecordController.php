@@ -23,6 +23,7 @@ class CallDetailRecordController extends Controller
      */
     public function index(Request $request, Tenant $tenant)
     {
+        $this->authorize('viewAny', CallDetailRecord::class);
         $query = $tenant->cdrs()->orderBy('start_stamp', 'desc');
 
         if ($request->filled('direction')) {
@@ -61,6 +62,7 @@ class CallDetailRecordController extends Controller
      */
     public function show(Tenant $tenant, CallDetailRecord $cdr): JsonResponse|CallDetailRecordResource
     {
+        $this->authorize('view', $cdr);
         if ($cdr->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'CDR not found.'], 404);
         }

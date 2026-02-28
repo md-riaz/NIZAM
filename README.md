@@ -134,7 +134,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Webhook secrets encrypted at rest
 - API rate limiting (60 requests/minute per user or IP)
 - Tenant isolation middleware on all scoped routes
-- Role-based authorization policies (TenantPolicy, ExtensionPolicy, DidPolicy, RingGroupPolicy, IvrPolicy, TimeConditionPolicy, WebhookPolicy, DeviceProfilePolicy, UserPolicy)
+- Role-based authorization policies (TenantPolicy, ExtensionPolicy, DidPolicy, RingGroupPolicy, IvrPolicy, TimeConditionPolicy, WebhookPolicy, DeviceProfilePolicy, UserPolicy, RecordingPolicy, CallDetailRecordPolicy, CallEventLogPolicy, CallPolicy)
 - Granular permission system with per-user permission assignment
 - Admin user management API (CRUD for users, grant/revoke permissions)
 - Fail-safe routing defaults
@@ -270,6 +270,7 @@ Real-time streaming of call lifecycle events. Events are:
 - Persisted to `call_events` table for replay and debugging
 - Dispatched to matching webhooks via queued jobs
 - Broadcast on tenant-scoped private WebSocket channels (`private-tenant.{id}.calls`)
+- Available via Server-Sent Events (SSE) at `GET /api/tenants/{id}/call-events/stream`
 
 **Normalized Event Types:**
 
@@ -448,7 +449,7 @@ NIZAM/
 │   ├── api.php                 # API routes (auth, CRUD, calls, events, health)
 │   └── web.php                 # Web routes (xml-curl, provisioning)
 ├── docker-compose.yml          # Container orchestration (6 services)
-└── tests/                      # PHPUnit tests (288 tests, 560 assertions)
+└── tests/                      # PHPUnit tests (308 tests, 584 assertions)
 ```
 
 ---
