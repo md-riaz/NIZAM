@@ -33,8 +33,7 @@ class ExtensionObserverTest extends TestCase
 
         $originalUpdatedAt = $profile->updated_at;
 
-        // Wait a moment to ensure timestamp difference
-        sleep(1);
+        $this->travel(5)->seconds();
 
         $extension->update(['password' => 'new-password']);
 
@@ -93,7 +92,7 @@ class ExtensionObserverTest extends TestCase
 
         $originalUpdatedAt = $profile->updated_at;
 
-        sleep(1);
+        $this->travel(5)->seconds();
 
         $extension->update(['directory_first_name' => 'Jane']);
 

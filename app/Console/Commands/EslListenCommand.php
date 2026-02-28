@@ -128,7 +128,7 @@ class EslListenCommand extends Command
     protected function backoffDelay(int $attempt): int
     {
         // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
-        return min(30, (int) pow(2, $attempt - 2));
+        return min(30, max(1, (int) pow(2, $attempt - 1)));
     }
 
     protected function registerSignalHandlers(): void
