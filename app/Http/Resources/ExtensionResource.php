@@ -20,6 +20,7 @@ class ExtensionResource extends JsonResource
             'outbound_caller_id_name' => $this->outbound_caller_id_name,
             'outbound_caller_id_number' => $this->outbound_caller_id_number,
             'voicemail_enabled' => $this->voicemail_enabled,
+            'voicemail_pin' => $this->voicemail_pin,
             'is_active' => $this->is_active,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

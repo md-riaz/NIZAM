@@ -40,7 +40,6 @@ class Extension extends Model
      */
     protected $hidden = [
         'password',
-        'voicemail_pin',
     ];
 
     /**
@@ -52,7 +51,6 @@ class Extension extends Model
     {
         return [
             'password' => 'encrypted',
-            'voicemail_pin' => 'encrypted',
             'voicemail_enabled' => 'boolean',
             'is_active' => 'boolean',
         ];

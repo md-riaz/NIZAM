@@ -72,7 +72,7 @@ class ExtensionTest extends TestCase
         $this->assertArrayNotHasKey('password', $array);
     }
 
-    public function test_voicemail_pin_field_is_hidden(): void
+    public function test_voicemail_pin_field_is_visible(): void
     {
         $tenant = $this->createTenant();
 
@@ -85,7 +85,8 @@ class ExtensionTest extends TestCase
         ]);
 
         $array = $extension->toArray();
-        $this->assertArrayNotHasKey('voicemail_pin', $array);
+        $this->assertArrayHasKey('voicemail_pin', $array);
+        $this->assertEquals('1234', $array['voicemail_pin']);
     }
 
     public function test_voicemail_enabled_is_cast_to_boolean(): void
@@ -125,7 +126,7 @@ class ExtensionTest extends TestCase
         $this->assertNotEquals('secret1234', $rawValue);
     }
 
-    public function test_voicemail_pin_is_encrypted_at_rest(): void
+    public function test_voicemail_pin_is_stored_in_plaintext(): void
     {
         $tenant = $this->createTenant();
 
@@ -137,13 +138,13 @@ class ExtensionTest extends TestCase
             'voicemail_pin' => '5678',
         ]);
 
-        // The model should decrypt and return the original value
+        // The model should return the original value
         $this->assertEquals('5678', $extension->voicemail_pin);
 
-        // The raw database value should NOT be the plaintext pin
+        // The raw database value should be plaintext (not encrypted)
         $rawValue = \Illuminate\Support\Facades\DB::table('extensions')
             ->where('id', $extension->id)
             ->value('voicemail_pin');
-        $this->assertNotEquals('5678', $rawValue);
+        $this->assertEquals('5678', $rawValue);
     }
 }
