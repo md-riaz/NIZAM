@@ -34,6 +34,16 @@ class Extension extends Model
     ];
 
     /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'voicemail_pin',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -41,6 +51,8 @@ class Extension extends Model
     protected function casts(): array
     {
         return [
+            'password' => 'encrypted',
+            'voicemail_pin' => 'encrypted',
             'voicemail_enabled' => 'boolean',
             'is_active' => 'boolean',
         ];
