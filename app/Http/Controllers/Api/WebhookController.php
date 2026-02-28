@@ -109,4 +109,40 @@ class WebhookController extends Controller
             $webhook->deliveryAttempts()->orderByDesc('created_at')->paginate(15)
         );
     }
+
+    /**
+     * Get delivery statistics for a webhook.
+     */
+    public function deliveryStats(Tenant $tenant, Webhook $webhook): JsonResponse
+    {
+        if ($webhook->tenant_id !== $tenant->id) {
+            return response()->json(['message' => 'Webhook not found.'], 404);
+        }
+
+        $this->authorize('view', $webhook);
+
+        $attempts = $webhook->deliveryAttempts();
+        $total = $attempts->count();
+        $successful = $webhook->deliveryAttempts()->where('success', true)->count();
+        $failed = $total - $successful;
+        $successRate = $total > 0 ? round(($successful / $total) * 100, 2) : 0;
+        $avgLatency = $webhook->deliveryAttempts()->where('success', true)->avg('latency_ms');
+
+        $recentFailures = $webhook->deliveryAttempts()
+            ->where('success', false)
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get(['event_type', 'error_message', 'response_status', 'created_at']);
+
+        return response()->json([
+            'data' => [
+                'total_attempts' => $total,
+                'successful' => $successful,
+                'failed' => $failed,
+                'success_rate' => $successRate,
+                'avg_latency_ms' => $avgLatency ? round((float) $avgLatency, 2) : null,
+                'recent_failures' => $recentFailures,
+            ],
+        ]);
+    }
 }

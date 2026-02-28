@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
         $callPolicy = new CallPolicy;
         Gate::define('originate', fn ($user) => $callPolicy->before($user, 'originate') ?? $callPolicy->originate($user));
         Gate::define('viewStatus', fn ($user) => $callPolicy->before($user, 'viewStatus') ?? $callPolicy->viewStatus($user));
+        Gate::define('callControl', fn ($user) => $callPolicy->before($user, 'callControl') ?? $callPolicy->callControl($user));
 
         // Boot all registered modules and load their migrations
         $registry = $this->app->make(ModuleRegistry::class);

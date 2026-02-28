@@ -26,4 +26,10 @@ class CallPolicy
         return $user->tenant_id !== null
             && $user->hasPermission('calls.view_status');
     }
+
+    public function callControl(User $user): bool
+    {
+        return $user->tenant_id !== null
+            && $user->hasPermission('calls.control');
+    }
 }

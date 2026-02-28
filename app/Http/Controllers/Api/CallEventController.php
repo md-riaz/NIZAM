@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\CallEventLog;
 use App\Models\Tenant;
+use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -62,6 +63,58 @@ class CallEventController extends Controller
             'call_uuid' => $callUuid,
             'event_count' => $events->count(),
             'events' => $events,
+        ]);
+    }
+
+    /**
+     * Replay a specific event by its UUID.
+     */
+    public function replay(Tenant $tenant, string $eventId): JsonResponse
+    {
+        $this->authorize('viewAny', CallEventLog::class);
+
+        $event = CallEventLog::where('tenant_id', $tenant->id)
+            ->where('id', $eventId)
+            ->first();
+
+        if (! $event) {
+            return response()->json(['message' => 'Event not found.'], 404);
+        }
+
+        return response()->json([
+            'id' => $event->id,
+            'call_uuid' => $event->call_uuid,
+            'event_type' => $event->event_type,
+            'schema_version' => $event->schema_version,
+            'payload' => $event->payload,
+            'occurred_at' => $event->occurred_at?->toISOString(),
+        ]);
+    }
+
+    /**
+     * Re-dispatch a stored event to all matching webhooks.
+     *
+     * Required for debugging and webhook retry scenarios.
+     */
+    public function redispatch(Request $request, Tenant $tenant, string $eventId): JsonResponse
+    {
+        $this->authorize('viewAny', CallEventLog::class);
+
+        $event = CallEventLog::where('tenant_id', $tenant->id)
+            ->where('id', $eventId)
+            ->first();
+
+        if (! $event) {
+            return response()->json(['message' => 'Event not found.'], 404);
+        }
+
+        $dispatcher = app(WebhookDispatcher::class);
+        $dispatcher->dispatch($tenant->id, $event->event_type, $event->payload ?? []);
+
+        return response()->json([
+            'message' => 'Event re-dispatched to webhooks.',
+            'event_id' => $event->id,
+            'event_type' => $event->event_type,
         ]);
     }
 }

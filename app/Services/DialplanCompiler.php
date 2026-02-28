@@ -89,12 +89,25 @@ class DialplanCompiler
     /**
      * Compile the inbound dialplan XML for a given domain.
      */
-    public function compileDialplan(string $domain, string $destinationNumber): string
+    public function compileDialplan(string $domain, string $destinationNumber, ?string $callerIdNumber = null): string
     {
         $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
 
         if (! $tenant || ! $tenant->isOperational()) {
             return $this->emptyDialplanResponse();
+        }
+
+        // Evaluate active policies BEFORE routing resolution
+        $policyDecision = $this->evaluatePreRoutingPolicies($tenant, $destinationNumber, $callerIdNumber);
+
+        if ($policyDecision !== null) {
+            if ($policyDecision['decision'] === PolicyEvaluator::DECISION_REJECT) {
+                return $this->compileRejectDialplan($tenant->domain, $destinationNumber, $policyDecision['reason'] ?? 'Policy rejected');
+            }
+
+            if ($policyDecision['decision'] === PolicyEvaluator::DECISION_REDIRECT && isset($policyDecision['redirect_to'])) {
+                return $this->compilePolicyRedirect($tenant, $destinationNumber, $policyDecision['redirect_to']);
+            }
         }
 
         // Check if it's a DID routing
@@ -119,6 +132,86 @@ class DialplanCompiler
 
         // Fail-safe: no matching route — play a courtesy message and hangup
         return $this->compileFailsafeDialplan($tenant->domain, $destinationNumber);
+    }
+
+    /**
+     * Evaluate active pre-routing policies for a tenant before routing resolution.
+     *
+     * Returns null if no active policies apply (proceed normally),
+     * or a structured decision array from PolicyEvaluator.
+     *
+     * Note: Policies that are explicitly assigned as DID destinations are excluded
+     * from pre-routing evaluation — they are handled via the DID routing path.
+     */
+    protected function evaluatePreRoutingPolicies(Tenant $tenant, string $destinationNumber, ?string $callerIdNumber = null): ?array
+    {
+        // Get IDs of policies that are assigned as DID destinations (handled separately)
+        $didLinkedPolicyIds = $tenant->dids()
+            ->where('destination_type', 'call_routing_policy')
+            ->where('is_active', true)
+            ->pluck('destination_id');
+
+        $policies = $tenant->callRoutingPolicies()
+            ->where('is_active', true)
+            ->whereNotIn('id', $didLinkedPolicyIds)
+            ->orderBy('priority', 'asc')
+            ->get();
+
+        if ($policies->isEmpty()) {
+            return null;
+        }
+
+        $evaluator = app(PolicyEvaluator::class);
+        $context = [
+            'tenant_id' => $tenant->id,
+            'did' => $destinationNumber,
+            'caller_id' => $callerIdNumber ?? '',
+            'now' => now(),
+        ];
+
+        foreach ($policies as $policy) {
+            $decision = $evaluator->evaluatePolicy($policy, $context);
+
+            if ($decision['decision'] !== PolicyEvaluator::DECISION_ALLOW) {
+                return $decision;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Compile a reject dialplan response (policy rejected the call).
+     */
+    protected function compileRejectDialplan(string $domain, string $destinationNumber, string $reason): string
+    {
+        $xml = $this->dialplanHeader($domain);
+        $xml .= '        <extension name="policy-reject">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($destinationNumber, '/').'$">'."\n";
+        $xml .= '            <action application="log" data="WARNING Policy rejected call: '.htmlspecialchars($reason, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="respond" data="403"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+        $xml .= $this->dialplanFooter();
+
+        return $xml;
+    }
+
+    /**
+     * Compile a redirect dialplan based on policy decision.
+     */
+    protected function compilePolicyRedirect(Tenant $tenant, string $destinationNumber, array $redirectTo): string
+    {
+        $xml = $this->dialplanHeader($tenant->domain);
+        $xml .= '        <extension name="policy-redirect">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($destinationNumber, '/').'$">'."\n";
+        $xml .= $this->compileConcurrentCallLimit($tenant);
+        $xml .= $this->compileDestinationAction($tenant, $redirectTo['type'], $redirectTo['id']);
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+        $xml .= $this->dialplanFooter();
+
+        return $xml;
     }
 
     /**

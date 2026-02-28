@@ -61,7 +61,7 @@ class EventProcessorEventLogTest extends TestCase
         $this->assertDatabaseHas('call_events', [
             'tenant_id' => $tenant->id,
             'call_uuid' => 'uuid-create-log',
-            'event_type' => 'started',
+            'event_type' => CallEventLog::EVENT_CALL_CREATED,
         ]);
     }
 
@@ -84,7 +84,7 @@ class EventProcessorEventLogTest extends TestCase
 
         $this->assertDatabaseHas('call_events', [
             'call_uuid' => 'uuid-answer-log',
-            'event_type' => 'answered',
+            'event_type' => CallEventLog::EVENT_CALL_ANSWERED,
         ]);
     }
 
@@ -108,7 +108,7 @@ class EventProcessorEventLogTest extends TestCase
 
         $this->assertDatabaseHas('call_events', [
             'call_uuid' => 'uuid-bridge-log',
-            'event_type' => 'bridge',
+            'event_type' => CallEventLog::EVENT_CALL_BRIDGED,
         ]);
     }
 
@@ -134,7 +134,7 @@ class EventProcessorEventLogTest extends TestCase
 
         $this->assertDatabaseHas('call_events', [
             'call_uuid' => 'uuid-hangup-log',
-            'event_type' => 'hangup',
+            'event_type' => CallEventLog::EVENT_CALL_HANGUP,
         ]);
     }
 
@@ -158,7 +158,7 @@ class EventProcessorEventLogTest extends TestCase
 
         $this->assertDatabaseHas('call_events', [
             'tenant_id' => $tenant->id,
-            'event_type' => 'registered',
+            'event_type' => CallEventLog::EVENT_DEVICE_REGISTERED,
         ]);
     }
 
@@ -181,8 +181,8 @@ class EventProcessorEventLogTest extends TestCase
 
         $logged = CallEventLog::where('call_uuid', 'uuid-payload-check')->first();
         $this->assertNotNull($logged);
-        $this->assertEquals('Jane Doe', $logged->payload['caller_id_name']);
-        $this->assertEquals('2001', $logged->payload['destination_number']);
+        $this->assertEquals('Jane Doe', $logged->payload['metadata']['caller_id_name']);
+        $this->assertEquals('2001', $logged->payload['metadata']['destination_number']);
     }
 
     public function test_full_call_lifecycle_creates_ordered_events(): void
@@ -215,9 +215,9 @@ class EventProcessorEventLogTest extends TestCase
             ->get();
 
         $this->assertCount(4, $loggedEvents);
-        $this->assertEquals('started', $loggedEvents[0]->event_type);
-        $this->assertEquals('answered', $loggedEvents[1]->event_type);
-        $this->assertEquals('bridge', $loggedEvents[2]->event_type);
-        $this->assertEquals('hangup', $loggedEvents[3]->event_type);
+        $this->assertEquals(CallEventLog::EVENT_CALL_CREATED, $loggedEvents[0]->event_type);
+        $this->assertEquals(CallEventLog::EVENT_CALL_ANSWERED, $loggedEvents[1]->event_type);
+        $this->assertEquals(CallEventLog::EVENT_CALL_BRIDGED, $loggedEvents[2]->event_type);
+        $this->assertEquals(CallEventLog::EVENT_CALL_HANGUP, $loggedEvents[3]->event_type);
     }
 }

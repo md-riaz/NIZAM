@@ -33,23 +33,31 @@ class DeliverWebhook implements ShouldQueue
 
     public function handle(): void
     {
+        $timestamp = now()->getTimestamp();
+
         $body = json_encode([
             'event' => $this->eventType,
             'timestamp' => now()->toIso8601String(),
             'data' => $this->payload,
         ]);
 
-        $signature = hash_hmac('sha256', $body, $this->webhook->secret);
+        $signaturePayload = $timestamp.'.'.$body;
+        $signature = hash_hmac('sha256', $signaturePayload, $this->webhook->secret);
 
         try {
+            $startTime = microtime(true);
+
             $response = Http::timeout($this->timeout)
                 ->withHeaders([
                     'Content-Type' => 'application/json',
                     'X-Nizam-Signature' => $signature,
+                    'X-Nizam-Timestamp' => (string) $timestamp,
                     'X-Nizam-Event' => $this->eventType,
                 ])
                 ->withBody($body, 'application/json')
                 ->post($this->webhook->url);
+
+            $latencyMs = round((microtime(true) - $startTime) * 1000, 2);
 
             WebhookDeliveryAttempt::create([
                 'webhook_id' => $this->webhook->id,
@@ -59,6 +67,7 @@ class DeliverWebhook implements ShouldQueue
                 'response_body' => substr((string) $response->body(), 0, 1000),
                 'attempt' => $this->attempts(),
                 'success' => $response->successful(),
+                'latency_ms' => $latencyMs,
                 'delivered_at' => now(),
             ]);
 
@@ -90,5 +99,28 @@ class DeliverWebhook implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    /**
+     * Handle a job failure after all retries exhausted (dead-letter).
+     */
+    public function failed(?\Throwable $exception): void
+    {
+        WebhookDeliveryAttempt::create([
+            'webhook_id' => $this->webhook->id,
+            'event_type' => $this->eventType,
+            'payload' => $this->payload,
+            'attempt' => $this->attempts(),
+            'success' => false,
+            'error_message' => 'Dead letter: '.(($exception) ? $exception->getMessage() : 'Max retries exhausted'),
+            'delivered_at' => now(),
+        ]);
+
+        Log::error('Webhook delivery dead-lettered', [
+            'webhook_id' => $this->webhook->id,
+            'url' => $this->webhook->url,
+            'event' => $this->eventType,
+            'error' => $exception?->getMessage(),
+        ]);
     }
 }

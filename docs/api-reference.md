@@ -537,7 +537,28 @@ Authorization: Bearer YOUR_TOKEN
 }
 ```
 
-Delivery attempts are created automatically when the `DeliverWebhook` job runs. Failed deliveries include `error_message` and `response_status`. The job retries up to 3 times with exponential backoff (10s, 60s, 300s).
+Delivery attempts are created automatically when the `DeliverWebhook` job runs. Failed deliveries include `error_message` and `response_status`. The job retries up to 3 times with exponential backoff (10s, 60s, 300s). After all retries are exhausted, a dead-letter entry is recorded.
+
+### Webhook Delivery Stats
+
+```http
+GET /api/tenants/{tenant_id}/webhooks/{webhook_id}/delivery-stats
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": {
+    "total_attempts": 100,
+    "successful": 95,
+    "failed": 5,
+    "success_rate": 95.0,
+    "avg_latency_ms": 150.5,
+    "recent_failures": []
+  }
+}
+```
 
 ---
 
@@ -679,11 +700,32 @@ Authorization: Bearer YOUR_TOKEN
   "call_uuid": "abc-123-def",
   "event_count": 4,
   "events": [
-    { "event_type": "started", "occurred_at": "...", "payload": {...} },
-    { "event_type": "answered", "occurred_at": "...", "payload": {...} },
-    { "event_type": "bridge", "occurred_at": "...", "payload": {...} },
-    { "event_type": "hangup", "occurred_at": "...", "payload": {...} }
+    { "event_type": "call.created", "occurred_at": "...", "payload": {...} },
+    { "event_type": "call.answered", "occurred_at": "...", "payload": {...} },
+    { "event_type": "call.bridged", "occurred_at": "...", "payload": {...} },
+    { "event_type": "call.hangup", "occurred_at": "...", "payload": {...} }
   ]
+}
+```
+
+### Event Replay
+
+Replay a specific stored event by its UUID for debugging or webhook retry:
+
+```http
+GET /api/tenants/{tenant_id}/call-events/replay/{event_id}
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "id": "event-uuid",
+  "call_uuid": "abc-123",
+  "event_type": "call.created",
+  "schema_version": "1.0",
+  "payload": { "tenant_id": "...", "call_uuid": "...", "metadata": {...} },
+  "occurred_at": "2026-01-15T10:30:00.000Z"
 }
 ```
 
@@ -700,6 +742,7 @@ Authorization: Bearer YOUR_TOKEN
 | Parameter | Description |
 |-----------|-------------|
 | `call_uuid` | Filter stream to a specific call UUID |
+| `event_types` | Comma-separated list of event types to filter (e.g., `call.created,call.hangup`) |
 
 **Headers:**
 | Header | Description |
@@ -719,7 +762,7 @@ data: {"id":43,"call_uuid":"abc-123","event_type":"answered","payload":{...},"oc
 : heartbeat
 ```
 
-The stream sends heartbeat comments every 15 seconds and auto-disconnects after 5 minutes (clients should reconnect using `Last-Event-ID`).
+The stream sends heartbeat comments every 15 seconds and auto-disconnects after 5 minutes (clients should reconnect using `Last-Event-ID`). Maximum 50 concurrent connections per tenant.
 
 ---
 
@@ -804,6 +847,131 @@ Content-Type: application/json
 ```http
 GET /api/tenants/{tenant_id}/calls/status
 Authorization: Bearer YOUR_TOKEN
+```
+
+### Hangup Call
+
+```http
+POST /api/tenants/{tenant_id}/calls/hangup
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "uuid": "call-uuid-here",
+  "cause": "NORMAL_CLEARING"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| uuid | Yes | Call UUID to hang up |
+| cause | No | Hangup cause (default: NORMAL_CLEARING) |
+
+### Transfer Call
+
+```http
+POST /api/tenants/{tenant_id}/calls/transfer
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "uuid": "call-uuid-here",
+  "destination": "1002",
+  "leg": "aleg"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| uuid | Yes | Call UUID to transfer |
+| destination | Yes | Transfer destination |
+| leg | No | Transfer leg: aleg, bleg, both |
+
+### Toggle Recording
+
+```http
+POST /api/tenants/{tenant_id}/calls/recording
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "uuid": "call-uuid-here",
+  "action": "start"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| uuid | Yes | Call UUID |
+| action | Yes | start or stop |
+
+### Hold / Unhold
+
+```http
+POST /api/tenants/{tenant_id}/calls/hold
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "uuid": "call-uuid-here",
+  "action": "hold"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| uuid | Yes | Call UUID |
+| action | Yes | hold or unhold |
+
+---
+
+## Policy Evaluation API
+
+Test a call routing policy against a given context without routing a real call.
+
+```http
+POST /api/tenants/{tenant_id}/call-routing-policies/{policy_id}/evaluate
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "did": "+15551234567",
+  "caller_id": "5559876543",
+  "time": "2026-01-15T12:00:00Z",
+  "metadata": {}
+}
+```
+
+**Response** `200`:
+```json
+{
+  "policy_id": "uuid",
+  "policy_name": "Business Hours",
+  "context": { "tenant_id": "uuid", "did": "+15551234567", "caller_id": "5559876543" },
+  "decision": { "decision": "allow" }
+}
+```
+
+Possible decisions: `allow`, `redirect`, `reject`, `modify`.
+
+---
+
+## Event Re-dispatch
+
+Re-dispatch a stored event to all matching webhooks. Required for debugging and webhook retries.
+
+```http
+POST /api/tenants/{tenant_id}/call-events/redispatch/{event_id}
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "message": "Event re-dispatched to webhooks.",
+  "event_id": "uuid",
+  "event_type": "call.created"
+}
 ```
 
 ---
