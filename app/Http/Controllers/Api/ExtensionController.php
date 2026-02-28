@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateExtensionRequest;
 use App\Http\Resources\ExtensionResource;
 use App\Models\Extension;
 use App\Models\Tenant;
+use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -15,6 +16,10 @@ use Illuminate\Http\JsonResponse;
  */
 class ExtensionController extends Controller
 {
+    public function __construct(
+        protected WebhookDispatcher $webhookDispatcher
+    ) {}
+
     /**
      * List extensions for a tenant (paginated).
      */
@@ -32,7 +37,18 @@ class ExtensionController extends Controller
     {
         $this->authorize('create', Extension::class);
 
+        if ($tenant->max_extensions > 0 && $tenant->extensions()->count() >= $tenant->max_extensions) {
+            return response()->json([
+                'message' => 'Extension quota exceeded. Maximum allowed: '.$tenant->max_extensions,
+            ], 422);
+        }
+
         $extension = $tenant->extensions()->create($request->validated());
+
+        $this->webhookDispatcher->dispatch($tenant->id, 'extension.created', [
+            'extension_id' => $extension->id,
+            'extension' => $extension->extension,
+        ]);
 
         return (new ExtensionResource($extension))->response()->setStatusCode(201);
     }
@@ -64,6 +80,11 @@ class ExtensionController extends Controller
 
         $extension->update($request->validated());
 
+        $this->webhookDispatcher->dispatch($tenant->id, 'extension.updated', [
+            'extension_id' => $extension->id,
+            'extension' => $extension->extension,
+        ]);
+
         return new ExtensionResource($extension);
     }
 
@@ -78,7 +99,14 @@ class ExtensionController extends Controller
 
         $this->authorize('delete', $extension);
 
+        $extensionNumber = $extension->extension;
+        $extensionId = $extension->id;
         $extension->delete();
+
+        $this->webhookDispatcher->dispatch($tenant->id, 'extension.deleted', [
+            'extension_id' => $extensionId,
+            'extension' => $extensionNumber,
+        ]);
 
         return response()->json(null, 204);
     }

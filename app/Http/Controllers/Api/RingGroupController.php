@@ -32,6 +32,12 @@ class RingGroupController extends Controller
     {
         $this->authorize('create', RingGroup::class);
 
+        if ($tenant->max_ring_groups > 0 && $tenant->ringGroups()->count() >= $tenant->max_ring_groups) {
+            return response()->json([
+                'message' => 'Ring group quota exceeded. Maximum allowed: '.$tenant->max_ring_groups,
+            ], 422);
+        }
+
         $ringGroup = $tenant->ringGroups()->create($request->validated());
 
         return (new RingGroupResource($ringGroup))->response()->setStatusCode(201);

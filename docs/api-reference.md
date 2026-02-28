@@ -245,10 +245,87 @@ Authorization: Bearer YOUR_TOKEN
     "device_profiles_count": 15,
     "webhooks_count": 4,
     "call_routing_policies_count": 3,
-    "call_flows_count": 2
+    "call_flows_count": 2,
+    "quotas": {
+      "max_extensions": 50,
+      "max_concurrent_calls": 20,
+      "max_dids": 10,
+      "max_ring_groups": 5
+    }
   }
 }
 ```
+
+### Tenant Provisioning (Zero-Touch)
+
+Create a tenant with automated onboarding — auto-generates domain, bootstraps default extension 1000.
+
+```http
+POST /api/tenants/provision
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "name": "Acme Corp",
+  "domain": "acme.nizam.local",
+  "slug": "acme-corp",
+  "max_extensions": 50,
+  "max_concurrent_calls": 20,
+  "max_dids": 10,
+  "max_ring_groups": 5
+}
+```
+
+Only `name` is required. Domain and slug are auto-generated if not provided. Tenant starts in `trial` status.
+
+### Usage Metering
+
+#### Get Usage Summary
+
+```http
+GET /api/tenants/{tenant_id}/usage/summary?from=2026-02-01&to=2026-02-28
+Authorization: Bearer YOUR_TOKEN
+```
+
+Returns aggregated usage metrics (call_minutes, concurrent_call_peak, recording_storage_bytes, active_devices, active_extensions) for the given date range.
+
+#### Collect Usage Snapshot
+
+```http
+POST /api/tenants/{tenant_id}/usage/collect
+Authorization: Bearer YOUR_TOKEN
+```
+
+Records a point-in-time snapshot of current resource usage for the tenant.
+
+### Admin Dashboard
+
+System-wide observability endpoint (admin-only):
+
+```http
+GET /api/admin/dashboard
+Authorization: Bearer YOUR_TOKEN
+```
+
+Returns total tenants by status, per-tenant resource counts, and aggregate system metrics.
+
+### External Number Lookup
+
+Tenants can configure an external number lookup URL in their settings for CNAM/caller-ID enrichment:
+
+```http
+PUT /api/tenants/{tenant_id}/settings
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "settings": {
+    "number_lookup_url": "https://your-api.com/lookup"
+  }
+}
+```
+
+When configured, NIZAM will send GET requests to this URL with `?number=+15551234567` and headers `X-Tenant-Id` and `X-Tenant-Domain`.
 
 ---
 
@@ -683,9 +760,18 @@ X-Nizam-Event: call.hangup
 - `call.bridge` — Call legs bridged
 - `call.missed` — Missed call (NO_ANSWER)
 - `call.hangup` — Call ended
+- `recording.created` — New recording saved
 - `voicemail.received` — New voicemail
-- `registration.registered` — SIP device registered
-- `registration.unregistered` — SIP device unregistered
+- `device.registered` — SIP device registered
+- `registration.registered` — SIP device registered (via ESL)
+- `registration.unregistered` — SIP device unregistered (via ESL)
+- `extension.created` — Extension created via API
+- `extension.updated` — Extension updated via API
+- `extension.deleted` — Extension deleted via API
+- `did.created` — DID created via API
+- `did.updated` — DID updated via API
+- `did.deleted` — DID deleted via API
+- `tenant.updated` — Tenant configuration changed
 
 ---
 

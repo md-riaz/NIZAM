@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CallController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\TenantStatsController;
 use App\Http\Controllers\Api\TimeConditionController;
 use App\Http\Controllers\Api\TokenController;
+use App\Http\Controllers\Api\UsageController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +44,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::apiResource('tenants', TenantController::class);
     Route::get('tenants/{tenant}/settings', [TenantController::class, 'settings'])->name('tenants.settings');
     Route::put('tenants/{tenant}/settings', [TenantController::class, 'updateSettings'])->name('tenants.settings.update');
+    Route::post('tenants/provision', [TenantController::class, 'provision'])->name('tenants.provision');
+
+    // Admin observability dashboard
+    Route::get('admin/dashboard', AdminDashboardController::class)->name('admin.dashboard');
 
     // User management (admin-only)
     Route::apiResource('users', UserController::class);
@@ -52,6 +58,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
         Route::get('stats', TenantStatsController::class)->name('tenants.stats');
+
+        // Usage metering
+        Route::get('usage/summary', [UsageController::class, 'summary'])->name('tenants.usage.summary');
+        Route::post('usage/collect', [UsageController::class, 'collect'])->name('tenants.usage.collect');
 
         Route::apiResource('extensions', ExtensionController::class);
         Route::apiResource('dids', DidController::class);
