@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateDidRequest;
 use App\Http\Resources\DidResource;
 use App\Models\Did;
 use App\Models\Tenant;
+use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -15,6 +16,10 @@ use Illuminate\Http\JsonResponse;
  */
 class DidController extends Controller
 {
+    public function __construct(
+        protected WebhookDispatcher $webhookDispatcher
+    ) {}
+
     /**
      * List DIDs for a tenant (paginated).
      */
@@ -39,6 +44,11 @@ class DidController extends Controller
         }
 
         $did = $tenant->dids()->create($request->validated());
+
+        $this->webhookDispatcher->dispatch($tenant->id, 'did.created', [
+            'did_id' => $did->id,
+            'number' => $did->number,
+        ]);
 
         return (new DidResource($did))->response()->setStatusCode(201);
     }
@@ -70,6 +80,11 @@ class DidController extends Controller
 
         $did->update($request->validated());
 
+        $this->webhookDispatcher->dispatch($tenant->id, 'did.updated', [
+            'did_id' => $did->id,
+            'number' => $did->number,
+        ]);
+
         return new DidResource($did);
     }
 
@@ -84,7 +99,14 @@ class DidController extends Controller
 
         $this->authorize('delete', $did);
 
+        $didNumber = $did->number;
+        $didId = $did->id;
         $did->delete();
+
+        $this->webhookDispatcher->dispatch($tenant->id, 'did.deleted', [
+            'did_id' => $didId,
+            'number' => $didNumber,
+        ]);
 
         return response()->json(null, 204);
     }

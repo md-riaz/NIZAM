@@ -122,11 +122,43 @@ class DialplanCompiler
         return $this->compileFailsafeDialplan($tenant->domain, $destinationNumber);
     }
 
+    /**
+     * Generate concurrent call limit enforcement actions for a tenant.
+     *
+     * Uses FreeSWITCH's limit application to cap concurrent calls per tenant domain.
+     * When max_concurrent_calls is 0, no limit is enforced (unlimited).
+     */
+    protected function compileConcurrentCallLimit(Tenant $tenant): string
+    {
+        if ($tenant->max_concurrent_calls <= 0) {
+            return '';
+        }
+
+        $xml = '            <action application="limit" data="hash '
+            .htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1)
+            .' tenant_calls '
+            .(int) $tenant->max_concurrent_calls
+            .' !NORMAL_TEMPORARY_FAILURE"/>'."\n";
+
+        return $xml;
+    }
+
+    /**
+     * Generate the per-tenant recording storage path.
+     */
+    protected function tenantRecordingPath(Tenant $tenant): string
+    {
+        $basePath = config('filesystems.disks.recordings.root', storage_path('app/recordings'));
+
+        return $basePath.'/'.$tenant->id;
+    }
+
     protected function compileDidRouting(Tenant $tenant, Did $did): string
     {
         $xml = $this->dialplanHeader($tenant->domain);
         $xml .= '        <extension name="did-'.htmlspecialchars($did->number, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($did->number, '/').'$">'."\n";
+        $xml .= $this->compileConcurrentCallLimit($tenant);
 
         switch ($did->destination_type) {
             case 'extension':
@@ -185,6 +217,7 @@ class DialplanCompiler
         $xml = $this->dialplanHeader($tenant->domain);
         $xml .= '        <extension name="local-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
+        $xml .= $this->compileConcurrentCallLimit($tenant);
         $xml .= '            <action application="bridge" data="user/'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         $xml .= '          </condition>'."\n";
         $xml .= '        </extension>'."\n";
@@ -466,7 +499,7 @@ class DialplanCompiler
                     }
                     break;
                 case 'record':
-                    $path = $data['path'] ?? '/tmp/recordings/${uuid}.wav';
+                    $path = $data['path'] ?? $this->tenantRecordingPath($tenant).'/${uuid}.wav';
                     $xml .= '            <action application="record" data="'.htmlspecialchars($path, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                     break;
                 case 'webhook':

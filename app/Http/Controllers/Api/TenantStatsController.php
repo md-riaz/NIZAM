@@ -34,6 +34,12 @@ class TenantStatsController extends Controller
                 'webhooks_count' => $tenant->webhooks()->count(),
                 'call_routing_policies_count' => $tenant->callRoutingPolicies()->count(),
                 'call_flows_count' => $tenant->callFlows()->count(),
+                'quotas' => [
+                    'max_extensions' => $tenant->max_extensions,
+                    'max_concurrent_calls' => $tenant->max_concurrent_calls,
+                    'max_dids' => $tenant->max_dids,
+                    'max_ring_groups' => $tenant->max_ring_groups,
+                ],
             ],
         ]);
     }
