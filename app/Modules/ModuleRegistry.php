@@ -20,14 +20,25 @@ class ModuleRegistry
     /**
      * Register a module instance.
      *
+     * When $enabled is false the module is tracked in the registry
+     * but its register() method is never called, so no bindings,
+     * listeners, or container state leak into the application.
+     *
      * @throws RuntimeException When module manifest is invalid
      */
-    public function register(NizamModule $module): void
+    public function register(NizamModule $module, bool $enabled = true): void
     {
         $this->validateManifest($module);
 
         $this->modules[$module->name()] = $module;
-        $this->enabled[$module->name()] = true;
+        $this->enabled[$module->name()] = $enabled;
+
+        if (! $enabled) {
+            Log::info('Module registered (disabled)', ['module' => $module->name(), 'version' => $module->version()]);
+
+            return;
+        }
+
         $module->register();
 
         // Collect policy hooks declared by the module
@@ -62,6 +73,9 @@ class ModuleRegistry
 
     /**
      * Enable a module by name.
+     *
+     * If the module was registered as disabled, calling enable()
+     * will invoke its register() method and collect its policy hooks.
      */
     public function enable(string $name): void
     {
@@ -78,7 +92,18 @@ class ModuleRegistry
                 }
             }
 
+            $wasDisabled = ! $this->isEnabled($name);
             $this->enabled[$name] = true;
+
+            // Late-initialize modules that were registered as disabled
+            if ($wasDisabled) {
+                $module = $this->modules[$name];
+                $module->register();
+
+                foreach ($module->policyHooks() as $hook => $callback) {
+                    $this->policyHooks[$hook][$name] = $callback;
+                }
+            }
         }
     }
 

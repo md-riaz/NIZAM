@@ -341,6 +341,57 @@ class ModuleRegistryTest extends TestCase
         $this->assertFalse($registry->isEnabled('nonexistent'));
     }
 
+    public function test_register_with_enabled_false_skips_module_register(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModule('skip-register', '1.0.0');
+        $module->expects($this->never())->method('register');
+
+        $registry->register($module, enabled: false);
+
+        $this->assertFalse($registry->isEnabled('skip-register'));
+        $this->assertSame($module, $registry->get('skip-register'));
+    }
+
+    public function test_register_with_enabled_false_does_not_collect_policy_hooks(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('disabled-hooks', '1.0.0', [
+            'policyHooks' => [
+                'before_route' => fn () => 'should not run',
+            ],
+        ]);
+
+        $registry->register($module, enabled: false);
+
+        $this->assertEmpty($registry->executePolicyHook('before_route'));
+    }
+
+    public function test_enabling_disabled_module_calls_register_and_collects_hooks(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('late-enable', '1.0.0', [
+            'policyHooks' => [
+                'before_route' => fn (string $dest) => "intercepted:{$dest}",
+            ],
+        ]);
+        $module->expects($this->once())->method('register');
+
+        $registry->register($module, enabled: false);
+        $this->assertFalse($registry->isEnabled('late-enable'));
+
+        $registry->enable('late-enable');
+        $this->assertTrue($registry->isEnabled('late-enable'));
+
+        // Policy hooks should now be active after enable
+        $results = $registry->executePolicyHook('before_route', ['1001']);
+        $this->assertArrayHasKey('late-enable', $results);
+        $this->assertEquals('intercepted:1001', $results['late-enable']);
+    }
+
     private function createMockModule(string $name, string $version): NizamModule
     {
         return $this->createMockModuleWith($name, $version);

@@ -39,12 +39,10 @@ class AppServiceProvider extends ServiceProvider
             // Register modules in resolved order
             foreach ($orderedClasses as $class) {
                 $module = $this->app->make($class);
-                $registry->register($module);
-
                 $name = $module->name();
-                if (! ($moduleConfigs[$name]['enabled'] ?? true)) {
-                    $registry->disable($name);
-                }
+                $enabled = $moduleConfigs[$name]['enabled'] ?? true;
+
+                $registry->register($module, $enabled);
             }
 
             return $registry;
