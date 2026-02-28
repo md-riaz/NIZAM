@@ -60,6 +60,7 @@ class SyncPermissionsCommand extends Command
         'users.create' => 'Create users',
         'users.update' => 'Update users',
         'users.delete' => 'Delete users',
+        'audit_logs.view' => 'View audit logs',
     ];
 
     public function handle(ModuleRegistry $registry): int

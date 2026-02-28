@@ -449,7 +449,7 @@ NIZAM/
 │   ├── api.php                 # API routes (auth, CRUD, calls, events, health)
 │   └── web.php                 # Web routes (xml-curl, provisioning)
 ├── docker-compose.yml          # Container orchestration (6 services)
-└── tests/                      # PHPUnit tests (308 tests, 584 assertions)
+└── tests/                      # PHPUnit tests (315 tests, 597 assertions)
 ```
 
 ---

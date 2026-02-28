@@ -639,6 +639,54 @@ Authorization: Bearer {token}
 
 ---
 
+## Audit Logs
+
+Read-only API for querying audit trail entries. All domain model changes (create, update, delete) are automatically logged.
+
+### List Audit Logs
+
+```http
+GET /api/tenants/{tenant_id}/audit-logs
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Query Parameters:**
+| Parameter | Description |
+|-----------|-------------|
+| `action` | Filter by action type (`created`, `updated`, `deleted`) |
+| `auditable_type` | Filter by model type (e.g., `App\Models\Extension`) |
+| `user_id` | Filter by user who performed the action |
+| `from` | Filter logs after this datetime |
+| `to` | Filter logs before this datetime |
+
+### Show Audit Log
+
+```http
+GET /api/tenants/{tenant_id}/audit-logs/{id}
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": {
+    "id": "uuid",
+    "tenant_id": "uuid",
+    "user_id": 1,
+    "action": "updated",
+    "auditable_type": "App\\Models\\Extension",
+    "auditable_id": "uuid",
+    "old_values": { "name": "Old Name" },
+    "new_values": { "name": "New Name" },
+    "ip_address": "192.168.1.1",
+    "user_agent": "Mozilla/5.0...",
+    "created_at": "2026-01-15T10:30:00.000000Z"
+  }
+}
+```
+
+---
+
 ## Error Responses
 
 All errors follow a consistent format:

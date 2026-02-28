@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Services\EslConnectionManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * API controller for call operations.
@@ -18,6 +19,7 @@ class CallController extends Controller
      */
     public function originate(Request $request, Tenant $tenant): JsonResponse
     {
+        Gate::authorize('originate');
         $validated = $request->validate([
             'extension' => 'required|string',
             'destination' => 'required|string',
@@ -67,6 +69,7 @@ class CallController extends Controller
      */
     public function status(Tenant $tenant): JsonResponse
     {
+        Gate::authorize('viewStatus');
         $esl = EslConnectionManager::fromConfig();
 
         if (! $esl->connect()) {

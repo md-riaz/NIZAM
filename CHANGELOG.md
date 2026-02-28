@@ -78,6 +78,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - API rate limiting (60 req/min)
 - Tenant isolation enforcement via middleware
 - Audit log system tracking all domain model changes
+- Audit log API: read-only endpoints for querying audit trail (`GET /audit-logs`)
 - Fail-safe routing default (404 for unroutable destinations)
 
 #### Module Framework

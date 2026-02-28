@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\CallDetailRecordController;
@@ -58,5 +59,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
         Route::post('calls/originate', [CallController::class, 'originate'])->name('calls.originate');
         Route::get('calls/status', [CallController::class, 'status'])->name('calls.status');
+
+        // Audit logs (read-only)
+        Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
     });
 });
