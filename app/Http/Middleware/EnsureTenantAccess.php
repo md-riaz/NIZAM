@@ -34,7 +34,14 @@ class EnsureTenantAccess
             return $next($request);
         }
 
-        $tenantId = $tenant?->id ?? $routeTenant;
+        // Resolve the tenant ID for access comparison.
+        // When the tenant model was found, use its ID; otherwise fall back to
+        // the raw route parameter so the ownership check still runs.
+        $tenantId = $tenant?->id;
+
+        if ($tenantId === null) {
+            $tenantId = is_string($routeTenant) ? $routeTenant : null;
+        }
 
         if ($tenantId === null) {
             return $next($request);
