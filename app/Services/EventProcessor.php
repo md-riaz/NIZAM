@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Events\CallEvent;
 use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
-use App\Models\Extension;
 use Illuminate\Support\Facades\Log;
 
 class EventProcessor
@@ -185,11 +184,13 @@ class EventProcessor
             return null;
         }
 
-        $extension = Extension::whereHas('tenant', function ($q) use ($domain) {
-            $q->where('domain', $domain)->where('is_active', true);
-        })->first();
+        $tenant = \App\Models\Tenant::where('domain', $domain)->where('is_active', true)->first();
 
-        return $extension?->tenant_id;
+        if (! $tenant || ! $tenant->isOperational()) {
+            return null;
+        }
+
+        return $tenant->id;
     }
 
     /**
