@@ -18,26 +18,30 @@ class DidPolicy
 
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->hasPermission('dids.view');
     }
 
     public function view(User $user, Did $did): bool
     {
-        return $user->tenant_id === $did->tenant_id;
+        return $user->tenant_id === $did->tenant_id
+            && $user->hasPermission('dids.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null;
+        return $user->tenant_id !== null
+            && $user->hasPermission('dids.create');
     }
 
     public function update(User $user, Did $did): bool
     {
-        return $user->tenant_id === $did->tenant_id;
+        return $user->tenant_id === $did->tenant_id
+            && $user->hasPermission('dids.update');
     }
 
     public function delete(User $user, Did $did): bool
     {
-        return $user->tenant_id === $did->tenant_id;
+        return $user->tenant_id === $did->tenant_id
+            && $user->hasPermission('dids.delete');
     }
 }

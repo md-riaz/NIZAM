@@ -53,6 +53,13 @@ class SyncPermissionsCommand extends Command
         'device_profiles.update' => 'Update device profiles',
         'device_profiles.delete' => 'Delete device profiles',
         'calls.originate' => 'Originate calls',
+        'recordings.view' => 'View recordings',
+        'recordings.delete' => 'Delete recordings',
+        'recordings.download' => 'Download recordings',
+        'users.view' => 'View users',
+        'users.create' => 'Create users',
+        'users.update' => 'Update users',
+        'users.delete' => 'Delete users',
     ];
 
     public function handle(ModuleRegistry $registry): int

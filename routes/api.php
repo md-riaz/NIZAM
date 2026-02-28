@@ -9,9 +9,11 @@ use App\Http\Controllers\Api\DidController;
 use App\Http\Controllers\Api\ExtensionController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\IvrController;
+use App\Http\Controllers\Api\RecordingController;
 use App\Http\Controllers\Api\RingGroupController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\TimeConditionController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +28,13 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     Route::apiResource('tenants', TenantController::class);
 
+    // User management (admin-only)
+    Route::apiResource('users', UserController::class);
+    Route::get('users/{user}/permissions', [UserController::class, 'permissions'])->name('users.permissions');
+    Route::post('users/{user}/permissions/grant', [UserController::class, 'grantPermissions'])->name('users.permissions.grant');
+    Route::post('users/{user}/permissions/revoke', [UserController::class, 'revokePermissions'])->name('users.permissions.revoke');
+    Route::get('permissions', [UserController::class, 'availablePermissions'])->name('permissions.index');
+
     Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
         Route::apiResource('extensions', ExtensionController::class);
         Route::apiResource('dids', DidController::class);
@@ -35,6 +44,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::apiResource('cdrs', CallDetailRecordController::class)->only(['index', 'show']);
         Route::apiResource('device-profiles', DeviceProfileController::class);
         Route::apiResource('webhooks', WebhookController::class);
+
+        // Recordings
+        Route::get('recordings', [RecordingController::class, 'index'])->name('recordings.index');
+        Route::get('recordings/{recording}', [RecordingController::class, 'show'])->name('recordings.show');
+        Route::get('recordings/{recording}/download', [RecordingController::class, 'download'])->name('recordings.download');
+        Route::delete('recordings/{recording}', [RecordingController::class, 'destroy'])->name('recordings.destroy');
 
         Route::get('call-events', [CallEventController::class, 'index'])->name('call-events.index');
         Route::get('call-events/{callUuid}/trace', [CallEventController::class, 'trace'])->name('call-events.trace');

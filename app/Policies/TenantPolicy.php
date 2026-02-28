@@ -21,12 +21,13 @@ class TenantPolicy
 
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->hasPermission('tenants.view');
     }
 
     public function view(User $user, Tenant $tenant): bool
     {
-        return $user->tenant_id === $tenant->id;
+        return $user->tenant_id === $tenant->id
+            && $user->hasPermission('tenants.view');
     }
 
     public function create(User $user): bool

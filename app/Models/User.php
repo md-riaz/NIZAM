@@ -69,10 +69,17 @@ class User extends Authenticatable
     /**
      * Check if the user has a specific permission by slug.
      * Admins always have all permissions.
+     * If no permissions have been assigned to the user yet, allow all (default-open).
+     * Once any permission is explicitly granted, only those permissions are allowed.
      */
     public function hasPermission(string $slug): bool
     {
         if ($this->isAdmin()) {
+            return true;
+        }
+
+        // If no permissions have been assigned to this user, default to allow
+        if ($this->permissions()->count() === 0) {
             return true;
         }
 

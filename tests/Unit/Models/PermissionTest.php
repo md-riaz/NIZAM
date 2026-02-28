@@ -68,7 +68,7 @@ class PermissionTest extends TestCase
         $this->assertTrue($admin->hasPermission('anything.at.all'));
     }
 
-    public function test_user_without_permission_returns_false(): void
+    public function test_user_without_explicit_permissions_defaults_to_allow(): void
     {
         $tenant = Tenant::create([
             'name' => 'Test',
@@ -79,7 +79,8 @@ class PermissionTest extends TestCase
 
         $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
 
-        $this->assertFalse($user->hasPermission('extensions.view'));
+        // Users with no explicit permissions default to allow (pre-sync state)
+        $this->assertTrue($user->hasPermission('extensions.view'));
     }
 
     public function test_user_with_granted_permission_returns_true(): void

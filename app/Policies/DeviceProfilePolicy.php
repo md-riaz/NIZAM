@@ -18,26 +18,30 @@ class DeviceProfilePolicy
 
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->hasPermission('device_profiles.view');
     }
 
     public function view(User $user, DeviceProfile $deviceProfile): bool
     {
-        return $user->tenant_id === $deviceProfile->tenant_id;
+        return $user->tenant_id === $deviceProfile->tenant_id
+            && $user->hasPermission('device_profiles.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null;
+        return $user->tenant_id !== null
+            && $user->hasPermission('device_profiles.create');
     }
 
     public function update(User $user, DeviceProfile $deviceProfile): bool
     {
-        return $user->tenant_id === $deviceProfile->tenant_id;
+        return $user->tenant_id === $deviceProfile->tenant_id
+            && $user->hasPermission('device_profiles.update');
     }
 
     public function delete(User $user, DeviceProfile $deviceProfile): bool
     {
-        return $user->tenant_id === $deviceProfile->tenant_id;
+        return $user->tenant_id === $deviceProfile->tenant_id
+            && $user->hasPermission('device_profiles.delete');
     }
 }

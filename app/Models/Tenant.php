@@ -84,4 +84,9 @@ class Tenant extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function recordings(): HasMany
+    {
+        return $this->hasMany(Recording::class);
+    }
 }

@@ -18,26 +18,30 @@ class RingGroupPolicy
 
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->hasPermission('ring_groups.view');
     }
 
     public function view(User $user, RingGroup $ringGroup): bool
     {
-        return $user->tenant_id === $ringGroup->tenant_id;
+        return $user->tenant_id === $ringGroup->tenant_id
+            && $user->hasPermission('ring_groups.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null;
+        return $user->tenant_id !== null
+            && $user->hasPermission('ring_groups.create');
     }
 
     public function update(User $user, RingGroup $ringGroup): bool
     {
-        return $user->tenant_id === $ringGroup->tenant_id;
+        return $user->tenant_id === $ringGroup->tenant_id
+            && $user->hasPermission('ring_groups.update');
     }
 
     public function delete(User $user, RingGroup $ringGroup): bool
     {
-        return $user->tenant_id === $ringGroup->tenant_id;
+        return $user->tenant_id === $ringGroup->tenant_id
+            && $user->hasPermission('ring_groups.delete');
     }
 }
