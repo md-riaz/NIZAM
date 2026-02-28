@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\CallDetailRecordController;
+use App\Http\Controllers\Api\CallEventController;
 use App\Http\Controllers\Api\DeviceProfileController;
 use App\Http\Controllers\Api\DidController;
 use App\Http\Controllers\Api\ExtensionController;
@@ -34,6 +35,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::apiResource('cdrs', CallDetailRecordController::class)->only(['index', 'show']);
         Route::apiResource('device-profiles', DeviceProfileController::class);
         Route::apiResource('webhooks', WebhookController::class);
+
+        Route::get('call-events', [CallEventController::class, 'index'])->name('call-events.index');
+        Route::get('call-events/{callUuid}/trace', [CallEventController::class, 'trace'])->name('call-events.trace');
 
         Route::post('calls/originate', [CallController::class, 'originate'])->name('calls.originate');
         Route::get('calls/status', [CallController::class, 'status'])->name('calls.status');
