@@ -19,9 +19,13 @@ class ModuleRegistry
 
     /**
      * Register a module instance.
+     *
+     * @throws RuntimeException When module manifest is invalid
      */
     public function register(NizamModule $module): void
     {
+        $this->validateManifest($module);
+
         $this->modules[$module->name()] = $module;
         $this->enabled[$module->name()] = true;
         $module->register();
@@ -35,22 +39,65 @@ class ModuleRegistry
     }
 
     /**
+     * Validate a module's manifest before registration.
+     *
+     * @throws RuntimeException When manifest is invalid
+     */
+    protected function validateManifest(NizamModule $module): void
+    {
+        $name = $module->name();
+        if (empty($name) || ! is_string($name)) {
+            throw new RuntimeException('Module manifest invalid: name must be a non-empty string');
+        }
+
+        $version = $module->version();
+        if (empty($version) || ! is_string($version)) {
+            throw new RuntimeException("Module '{$name}' manifest invalid: version must be a non-empty string");
+        }
+
+        if (isset($this->modules[$name])) {
+            throw new RuntimeException("Module '{$name}' is already registered");
+        }
+    }
+
+    /**
      * Enable a module by name.
      */
     public function enable(string $name): void
     {
         if (isset($this->modules[$name])) {
+            // Check that all dependencies are enabled
+            foreach ($this->modules[$name]->dependencies() as $dep) {
+                if (! $this->isEnabled($dep)) {
+                    Log::warning('Cannot enable module: dependency is disabled', [
+                        'module' => $name,
+                        'dependency' => $dep,
+                    ]);
+
+                    return;
+                }
+            }
+
             $this->enabled[$name] = true;
         }
     }
 
     /**
-     * Disable a module by name.
+     * Disable a module by name. Also disables any modules that depend on it.
      */
     public function disable(string $name): void
     {
         if (isset($this->modules[$name])) {
             $this->enabled[$name] = false;
+
+            // Cascade: disable any modules that depend on this one
+            foreach ($this->modules as $otherName => $otherModule) {
+                if ($otherName !== $name && $this->isEnabled($otherName)) {
+                    if (in_array($name, $otherModule->dependencies())) {
+                        $this->disable($otherName);
+                    }
+                }
+            }
         }
     }
 

@@ -23,15 +23,26 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ModuleRegistry::class, function () {
             $registry = new ModuleRegistry;
 
-            foreach (config('modules', []) as $name => $moduleConfig) {
+            $moduleConfigs = config('modules', []);
+
+            // Resolve load order based on dependencies
+            $moduleClasses = [];
+            foreach ($moduleConfigs as $name => $moduleConfig) {
                 if (! is_array($moduleConfig) || ! isset($moduleConfig['class'])) {
                     continue;
                 }
+                $moduleClasses[$name] = $moduleConfig['class'];
+            }
 
-                $module = $this->app->make($moduleConfig['class']);
+            $orderedClasses = ModuleRegistry::resolveDependencies($moduleClasses);
+
+            // Register modules in resolved order
+            foreach ($orderedClasses as $class) {
+                $module = $this->app->make($class);
                 $registry->register($module);
 
-                if (! ($moduleConfig['enabled'] ?? true)) {
+                $name = $module->name();
+                if (! ($moduleConfigs[$name]['enabled'] ?? true)) {
                     $registry->disable($name);
                 }
             }
