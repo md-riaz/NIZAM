@@ -9,14 +9,12 @@ use Illuminate\Support\Facades\Log;
 
 class GatewayStatusCommand extends Command
 {
-    protected $signature = 'nizam:gateway-status {--interval=60 : Polling interval in seconds}';
+    protected $signature = 'nizam:gateway-status';
 
-    protected $description = 'Poll FreeSWITCH gateway status and cache the results';
+    protected $description = 'Poll FreeSWITCH gateway status and cache the results for health reporting';
 
     public function handle(): int
     {
-        $interval = (int) $this->option('interval');
-
         $this->info('Polling FreeSWITCH gateway status...');
 
         $esl = EslConnectionManager::fromConfig();
@@ -26,8 +24,10 @@ class GatewayStatusCommand extends Command
             Log::error('Gateway status: ESL connection failed');
             Cache::put('nizam:gateway_status', [
                 'status' => 'unreachable',
+                'gateways' => [],
+                'registrations' => ['count' => 0, 'entries' => []],
                 'checked_at' => now()->toIso8601String(),
-            ], $interval * 2);
+            ], 300);
 
             return self::FAILURE;
         }
@@ -47,7 +47,7 @@ class GatewayStatusCommand extends Command
             'checked_at' => now()->toIso8601String(),
         ];
 
-        Cache::put('nizam:gateway_status', $status, $interval * 2);
+        Cache::put('nizam:gateway_status', $status, 300);
 
         $this->info('Gateway status updated.');
         $this->table(

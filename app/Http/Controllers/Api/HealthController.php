@@ -56,7 +56,9 @@ class HealthController extends Controller
     {
         return Cache::get('nizam:gateway_status', [
             'status' => 'unknown',
-            'message' => 'Run nizam:gateway-status to populate',
+            'gateways' => [],
+            'registrations' => ['count' => 0, 'entries' => []],
+            'checked_at' => null,
         ]);
     }
 
