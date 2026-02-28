@@ -104,6 +104,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Recording API: list, show, download, delete
 - Configurable recording storage disk (`RECORDING_PATH` env var)
 
+#### Tenant Management
+- Tenant settings endpoint (`GET /settings`, `PUT /settings` with merge behavior)
+- Tenant dashboard statistics API (`GET /stats`) with resource counts and CDR summaries
+
+#### CDR Export
+- CDR CSV export endpoint (`GET /cdrs/export`) with filter support and 10,000 record limit
+
+#### API Token Management
+- List, create, and revoke named API tokens (`GET /auth/tokens`, `POST /auth/tokens`, `DELETE /auth/tokens/{id}`)
+- Supports named tokens with configurable abilities
+
 #### Webhooks
 - Outbound event notifications with HMAC-SHA256 signing
 - Configurable event subscriptions per tenant
@@ -111,7 +122,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Events: call.started, call.answered, call.bridge, call.missed, call.hangup, voicemail.received, registration.registered, registration.unregistered
 
 ### Tests
-- 288 tests with 560 assertions covering all features
+- 330 tests with 641 assertions covering all features
 - Unit tests for models, services, policies, observers, modules
 - Feature tests for all API endpoints, middleware, provisioning
 - Permission-policy integration tests

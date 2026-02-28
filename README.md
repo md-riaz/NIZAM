@@ -90,6 +90,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - UUID correlation with FreeSWITCH
 - Recording path tracking
 - Recording model with file indexing, download API, and deletion
+- CDR CSV export with filtering (`GET /api/tenants/{id}/cdrs/export`)
 
 ### Device Provisioning
 - Template-based device configs
@@ -178,6 +179,9 @@ curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8080/api/tenants
 | `POST` | `/api/auth/login` | Login and get token |
 | `POST` | `/api/auth/logout` | Logout (revoke token) |
 | `GET` | `/api/auth/me` | Get authenticated user |
+| `GET` | `/api/auth/tokens` | List API tokens |
+| `POST` | `/api/auth/tokens` | Create named API token |
+| `DELETE` | `/api/auth/tokens/{id}` | Revoke API token |
 
 #### Tenants
 | Method | Endpoint | Description |
@@ -187,6 +191,9 @@ curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8080/api/tenants
 | `GET` | `/api/tenants/{id}` | Get tenant |
 | `PUT` | `/api/tenants/{id}` | Update tenant (admin only) |
 | `DELETE` | `/api/tenants/{id}` | Delete tenant (admin only) |
+| `GET` | `/api/tenants/{id}/settings` | Get tenant settings |
+| `PUT` | `/api/tenants/{id}/settings` | Merge-update tenant settings (admin only) |
+| `GET` | `/api/tenants/{id}/stats` | Get tenant dashboard statistics |
 
 #### Extensions
 | Method | Endpoint | Description |
@@ -204,6 +211,7 @@ All follow the same CRUD pattern under `/api/tenants/{id}/...`:
 - `/ivrs` — IVR menu management
 - `/time-conditions` — Time-based routing
 - `/cdrs` — Call detail records (read-only: index + show)
+- `/cdrs/export` — CDR CSV export with filters (max 10,000 records)
 - `/device-profiles` — Device provisioning profiles
 
 #### Webhooks
@@ -449,7 +457,7 @@ NIZAM/
 │   ├── api.php                 # API routes (auth, CRUD, calls, events, health)
 │   └── web.php                 # Web routes (xml-curl, provisioning)
 ├── docker-compose.yml          # Container orchestration (6 services)
-└── tests/                      # PHPUnit tests (315 tests, 597 assertions)
+└── tests/                      # PHPUnit tests (330 tests, 641 assertions)
 ```
 
 ---

@@ -64,6 +64,54 @@ GET /api/auth/me
 Authorization: Bearer YOUR_TOKEN
 ```
 
+### List API Tokens
+
+```http
+GET /api/auth/tokens
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": [
+    { "id": 1, "name": "CLI Token", "abilities": ["*"], "last_used_at": null, "created_at": "..." }
+  ]
+}
+```
+
+### Create API Token
+
+```http
+POST /api/auth/tokens
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "name": "My CLI Token",
+  "abilities": ["*"]
+}
+```
+
+**Response** `201`:
+```json
+{
+  "data": { "id": 2, "name": "My CLI Token", "abilities": ["*"] },
+  "plainTextToken": "2|abc123..."
+}
+```
+
+> The `plainTextToken` is only returned at creation time. Store it securely.
+
+### Revoke API Token
+
+```http
+DELETE /api/auth/tokens/{tokenId}
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `204` No Content.
+
 ---
 
 ## Health Check
@@ -142,6 +190,62 @@ Content-Type: application/json
 GET    /api/tenants/{id}
 PUT    /api/tenants/{id}
 DELETE /api/tenants/{id}
+```
+
+### Tenant Settings
+
+Get and merge-update tenant settings (stored as JSON):
+
+```http
+GET /api/tenants/{id}/settings
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": { "timezone": "America/New_York", "recording_format": "wav" }
+}
+```
+
+```http
+PUT /api/tenants/{id}/settings
+Authorization: Bearer YOUR_TOKEN (admin)
+Content-Type: application/json
+
+{
+  "settings": { "recording_format": "mp3", "max_ring_time": 30 }
+}
+```
+
+Settings are **merged** — existing keys are preserved unless explicitly overwritten.
+
+### Tenant Statistics
+
+Dashboard-style aggregate counts for all tenant resources:
+
+```http
+GET /api/tenants/{tenant_id}/stats
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": {
+    "extensions_count": 25,
+    "active_extensions_count": 22,
+    "dids_count": 10,
+    "ring_groups_count": 3,
+    "ivrs_count": 2,
+    "cdrs_total": 1540,
+    "cdrs_today": 47,
+    "recordings_count": 320,
+    "recordings_total_size": 524288000,
+    "device_profiles_count": 15,
+    "webhooks_count": 4
+  }
+}
 ```
 
 ---
@@ -297,6 +401,29 @@ Read-only. Created automatically when calls end.
 GET /api/tenants/{tenant_id}/cdrs
 GET /api/tenants/{tenant_id}/cdrs/{id}
 ```
+
+**Query Parameters** (for list endpoint):
+
+| Parameter | Description |
+|-----------|-------------|
+| `direction` | Filter by direction (`inbound`, `outbound`, `local`) |
+| `uuid` | Filter by call UUID |
+| `hangup_cause` | Filter by hangup cause |
+| `caller_id_number` | Filter by caller ID number |
+| `destination_number` | Filter by destination number |
+| `date_from` | Filter CDRs after this datetime |
+| `date_to` | Filter CDRs before this datetime |
+
+### Export CDRs as CSV
+
+Stream CDRs as a downloadable CSV file. Supports the same filters as the list endpoint. Limited to 10,000 records.
+
+```http
+GET /api/tenants/{tenant_id}/cdrs/export
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response**: Streamed CSV with headers: `uuid`, `caller_id_name`, `caller_id_number`, `destination_number`, `direction`, `start_stamp`, `answer_stamp`, `end_stamp`, `duration`, `billsec`, `hangup_cause`.
 
 ---
 
