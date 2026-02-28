@@ -24,7 +24,12 @@
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
+            "Database\\Seeders\\": "database/seeders/",
+            "Modules\\PbxRouting\\": "modules/pbx-routing/src/",
+            "Modules\\PbxContactCenter\\": "modules/pbx-contact-center/src/",
+            "Modules\\PbxAutomation\\": "modules/pbx-automation/src/",
+            "Modules\\PbxAnalytics\\": "modules/pbx-analytics/src/",
+            "Modules\\PbxProvisioning\\": "modules/pbx-provisioning/src/"
         }
     },
     "autoload-dev": {

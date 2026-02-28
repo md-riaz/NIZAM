@@ -15,27 +15,27 @@ return [
     */
 
     'pbx-routing' => [
-        'class' => \App\Modules\PbxRoutingModule::class,
+        'class' => \Modules\PbxRouting\PbxRoutingModule::class,
         'enabled' => env('MODULE_PBX_ROUTING', true),
     ],
 
     'pbx-contact-center' => [
-        'class' => \App\Modules\PbxContactCenterModule::class,
+        'class' => \Modules\PbxContactCenter\PbxContactCenterModule::class,
         'enabled' => env('MODULE_PBX_CONTACT_CENTER', true),
     ],
 
     'pbx-automation' => [
-        'class' => \App\Modules\PbxAutomationModule::class,
+        'class' => \Modules\PbxAutomation\PbxAutomationModule::class,
         'enabled' => env('MODULE_PBX_AUTOMATION', true),
     ],
 
     'pbx-analytics' => [
-        'class' => \App\Modules\PbxAnalyticsModule::class,
+        'class' => \Modules\PbxAnalytics\PbxAnalyticsModule::class,
         'enabled' => env('MODULE_PBX_ANALYTICS', true),
     ],
 
     'pbx-provisioning' => [
-        'class' => \App\Modules\PbxProvisioningModule::class,
+        'class' => \Modules\PbxProvisioning\PbxProvisioningModule::class,
         'enabled' => env('MODULE_PBX_PROVISIONING', true),
     ],
 

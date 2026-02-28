@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Modules;
 
-use App\Modules\PbxAnalyticsModule;
-use App\Modules\PbxAutomationModule;
-use App\Modules\PbxContactCenterModule;
-use App\Modules\PbxProvisioningModule;
-use App\Modules\PbxRoutingModule;
+use Modules\PbxAnalytics\PbxAnalyticsModule;
+use Modules\PbxAutomation\PbxAutomationModule;
+use Modules\PbxContactCenter\PbxContactCenterModule;
+use Modules\PbxProvisioning\PbxProvisioningModule;
+use Modules\PbxRouting\PbxRoutingModule;
 use Tests\TestCase;
 
 class ConcreteModulesTest extends TestCase

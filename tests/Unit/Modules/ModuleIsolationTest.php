@@ -3,8 +3,8 @@
 namespace Tests\Unit\Modules;
 
 use App\Modules\ModuleRegistry;
-use App\Modules\PbxContactCenterModule;
-use App\Modules\PbxRoutingModule;
+use Modules\PbxContactCenter\PbxContactCenterModule;
+use Modules\PbxRouting\PbxRoutingModule;
 use Tests\TestCase;
 
 class ModuleIsolationTest extends TestCase

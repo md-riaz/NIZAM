@@ -5,11 +5,11 @@ namespace Tests\Unit\Modules;
 use App\Modules\BaseModule;
 use App\Modules\Contracts\NizamModule;
 use App\Modules\ModuleRegistry;
-use App\Modules\PbxAnalyticsModule;
-use App\Modules\PbxAutomationModule;
-use App\Modules\PbxContactCenterModule;
-use App\Modules\PbxProvisioningModule;
-use App\Modules\PbxRoutingModule;
+use Modules\PbxAnalytics\PbxAnalyticsModule;
+use Modules\PbxAutomation\PbxAutomationModule;
+use Modules\PbxContactCenter\PbxContactCenterModule;
+use Modules\PbxProvisioning\PbxProvisioningModule;
+use Modules\PbxRouting\PbxRoutingModule;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -57,6 +57,11 @@ class ModuleVerificationAuditTest extends TestCase
         $this->assertStringNotContainsString('use App\Modules\PbxAutomation', $provider);
         $this->assertStringNotContainsString('use App\Modules\PbxAnalytics', $provider);
         $this->assertStringNotContainsString('use App\Modules\PbxProvisioning', $provider);
+        $this->assertStringNotContainsString('use Modules\PbxRouting', $provider);
+        $this->assertStringNotContainsString('use Modules\PbxContactCenter', $provider);
+        $this->assertStringNotContainsString('use Modules\PbxAutomation', $provider);
+        $this->assertStringNotContainsString('use Modules\PbxAnalytics', $provider);
+        $this->assertStringNotContainsString('use Modules\PbxProvisioning', $provider);
     }
 
     // =========================================================================
@@ -558,11 +563,11 @@ class ModuleVerificationAuditTest extends TestCase
 
         // Module routes also use tenant.access middleware
         $moduleRoutes = [
-            base_path('routes/modules/pbx-routing.php'),
-            base_path('routes/modules/pbx-contact-center.php'),
-            base_path('routes/modules/pbx-automation.php'),
-            base_path('routes/modules/pbx-analytics.php'),
-            base_path('routes/modules/pbx-provisioning.php'),
+            base_path('modules/pbx-routing/routes/api.php'),
+            base_path('modules/pbx-contact-center/routes/api.php'),
+            base_path('modules/pbx-automation/routes/api.php'),
+            base_path('modules/pbx-analytics/routes/api.php'),
+            base_path('modules/pbx-provisioning/routes/api.php'),
         ];
 
         foreach ($moduleRoutes as $file) {
@@ -643,11 +648,11 @@ class ModuleVerificationAuditTest extends TestCase
     public function test_cp11_module_routes_use_auth_middleware(): void
     {
         $moduleRoutes = [
-            base_path('routes/modules/pbx-routing.php'),
-            base_path('routes/modules/pbx-contact-center.php'),
-            base_path('routes/modules/pbx-automation.php'),
-            base_path('routes/modules/pbx-analytics.php'),
-            base_path('routes/modules/pbx-provisioning.php'),
+            base_path('modules/pbx-routing/routes/api.php'),
+            base_path('modules/pbx-contact-center/routes/api.php'),
+            base_path('modules/pbx-automation/routes/api.php'),
+            base_path('modules/pbx-analytics/routes/api.php'),
+            base_path('modules/pbx-provisioning/routes/api.php'),
         ];
 
         foreach ($moduleRoutes as $file) {
@@ -663,11 +668,11 @@ class ModuleVerificationAuditTest extends TestCase
     public function test_cp11_module_routes_use_rate_limiting(): void
     {
         $moduleRoutes = [
-            base_path('routes/modules/pbx-routing.php'),
-            base_path('routes/modules/pbx-contact-center.php'),
-            base_path('routes/modules/pbx-automation.php'),
-            base_path('routes/modules/pbx-analytics.php'),
-            base_path('routes/modules/pbx-provisioning.php'),
+            base_path('modules/pbx-routing/routes/api.php'),
+            base_path('modules/pbx-contact-center/routes/api.php'),
+            base_path('modules/pbx-automation/routes/api.php'),
+            base_path('modules/pbx-analytics/routes/api.php'),
+            base_path('modules/pbx-provisioning/routes/api.php'),
         ];
 
         foreach ($moduleRoutes as $file) {
