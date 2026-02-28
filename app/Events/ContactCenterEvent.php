@@ -21,9 +21,11 @@ class ContactCenterEvent implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
+        $filteredEventType = str_replace('.', '-', $this->eventType);
+
         return [
             new PrivateChannel('tenant.'.$this->tenantId.'.contact-center'),
-            new PrivateChannel('tenant.'.$this->tenantId.'.contact-center.'.$this->eventType),
+            new PrivateChannel('tenant.'.$this->tenantId.'.contact-center.'.$filteredEventType),
         ];
     }
 
