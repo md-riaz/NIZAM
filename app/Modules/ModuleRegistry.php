@@ -93,7 +93,6 @@ class ModuleRegistry
             }
 
             $wasDisabled = ! $this->isEnabled($name);
-            $this->enabled[$name] = true;
 
             // Late-initialize modules that were registered as disabled
             if ($wasDisabled) {
@@ -104,6 +103,8 @@ class ModuleRegistry
                     $this->policyHooks[$hook][$name] = $callback;
                 }
             }
+
+            $this->enabled[$name] = true;
         }
     }
 
