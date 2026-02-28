@@ -32,6 +32,12 @@ class DidController extends Controller
     {
         $this->authorize('create', Did::class);
 
+        if ($tenant->max_dids > 0 && $tenant->dids()->count() >= $tenant->max_dids) {
+            return response()->json([
+                'message' => 'DID quota exceeded. Maximum allowed: '.$tenant->max_dids,
+            ], 422);
+        }
+
         $did = $tenant->dids()->create($request->validated());
 
         return (new DidResource($did))->response()->setStatusCode(201);

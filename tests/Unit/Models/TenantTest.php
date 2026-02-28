@@ -39,7 +39,11 @@ class TenantTest extends TestCase
             'slug',
             'settings',
             'max_extensions',
+            'max_concurrent_calls',
+            'max_dids',
+            'max_ring_groups',
             'is_active',
+            'status',
         ], $tenant->getFillable());
     }
 

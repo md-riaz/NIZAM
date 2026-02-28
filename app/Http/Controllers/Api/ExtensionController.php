@@ -32,6 +32,12 @@ class ExtensionController extends Controller
     {
         $this->authorize('create', Extension::class);
 
+        if ($tenant->max_extensions > 0 && $tenant->extensions()->count() >= $tenant->max_extensions) {
+            return response()->json([
+                'message' => 'Extension quota exceeded. Maximum allowed: '.$tenant->max_extensions,
+            ], 422);
+        }
+
         $extension = $tenant->extensions()->create($request->validated());
 
         return (new ExtensionResource($extension))->response()->setStatusCode(201);

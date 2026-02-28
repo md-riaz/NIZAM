@@ -20,7 +20,7 @@ class DialplanCompiler
     {
         $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
 
-        if (! $tenant) {
+        if (! $tenant || ! $tenant->isOperational()) {
             return $this->emptyDirectoryResponse();
         }
 
@@ -94,7 +94,7 @@ class DialplanCompiler
     {
         $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
 
-        if (! $tenant) {
+        if (! $tenant || ! $tenant->isOperational()) {
             return $this->emptyDialplanResponse();
         }
 

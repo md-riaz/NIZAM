@@ -7,6 +7,7 @@ use App\Http\Requests\StoreTenantRequest;
 use App\Http\Requests\UpdateTenantRequest;
 use App\Http\Resources\TenantResource;
 use App\Models\Tenant;
+use App\Services\TenantProvisioningService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -110,5 +111,36 @@ class TenantController extends Controller
         return response()->json([
             'data' => $tenant->settings,
         ]);
+    }
+
+    /**
+     * Provision a new tenant with zero-touch onboarding.
+     */
+    public function provision(Request $request, TenantProvisioningService $provisioning): JsonResponse
+    {
+        $this->authorize('create', Tenant::class);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'domain' => 'nullable|string|unique:tenants',
+            'slug' => 'nullable|string|unique:tenants|alpha_dash',
+            'max_extensions' => 'integer|min:0',
+            'max_concurrent_calls' => 'integer|min:0',
+            'max_dids' => 'integer|min:0',
+            'max_ring_groups' => 'integer|min:0',
+            'settings' => 'array',
+        ]);
+
+        $result = $provisioning->provision($validated);
+
+        return response()->json([
+            'data' => [
+                'tenant' => new TenantResource($result['tenant']),
+                'default_extension' => [
+                    'extension' => $result['default_extension']->extension,
+                ],
+                'provisioning_domain' => $result['provisioning_domain'],
+            ],
+        ], 201);
     }
 }

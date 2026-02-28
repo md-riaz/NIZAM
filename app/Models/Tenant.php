@@ -17,13 +17,44 @@ class Tenant extends Model
      *
      * @var list<string>
      */
+    public const STATUS_TRIAL = 'trial';
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_SUSPENDED = 'suspended';
+
+    public const STATUS_TERMINATED = 'terminated';
+
+    public const VALID_STATUSES = [
+        self::STATUS_TRIAL,
+        self::STATUS_ACTIVE,
+        self::STATUS_SUSPENDED,
+        self::STATUS_TERMINATED,
+    ];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
     protected $fillable = [
         'name',
         'domain',
         'slug',
         'settings',
         'max_extensions',
+        'max_concurrent_calls',
+        'max_dids',
+        'max_ring_groups',
         'is_active',
+        'status',
+    ];
+
+    protected $attributes = [
+        'status' => self::STATUS_ACTIVE,
+        'max_concurrent_calls' => 0,
+        'max_dids' => 0,
+        'max_ring_groups' => 0,
     ];
 
     /**
@@ -36,8 +67,16 @@ class Tenant extends Model
         return [
             'settings' => 'array',
             'max_extensions' => 'integer',
+            'max_concurrent_calls' => 'integer',
+            'max_dids' => 'integer',
+            'max_ring_groups' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function isOperational(): bool
+    {
+        return in_array($this->status, [self::STATUS_TRIAL, self::STATUS_ACTIVE]);
     }
 
     public function extensions(): HasMany
@@ -98,5 +137,10 @@ class Tenant extends Model
     public function callFlows(): HasMany
     {
         return $this->hasMany(CallFlow::class);
+    }
+
+    public function usageRecords(): HasMany
+    {
+        return $this->hasMany(UsageRecord::class);
     }
 }
