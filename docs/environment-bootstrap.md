@@ -255,5 +255,5 @@ Add to your crontab or task scheduler:
 
 ```bash
 # Daily database backup at 2:00 AM, keep 7 days
-0 2 * * * cd /path/to/nizam && docker compose exec -T postgres pg_dump -U nizam nizam | gzip > backups/nizam_$(date +\%Y\%m\%d).sql.gz && find backups/ -name "*.sql.gz" -mtime +7 -delete
+0 2 * * * cd /path/to/nizam && docker compose exec -T postgres pg_dump -U nizam nizam | gzip > backups/nizam_$(date +\%Y\%m\%d).sql.gz 2>> backups/backup.log && find backups/ -name "*.sql.gz" -mtime +7 -delete || echo "[$(date)] Backup failed" >> backups/backup.log
 ```

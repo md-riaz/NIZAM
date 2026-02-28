@@ -35,7 +35,7 @@ class MakeModuleCommand extends Command
         ];
 
         foreach ($directories as $dir) {
-            if (! mkdir($dir, 0755, true) && ! is_dir($dir)) {
+            if (! is_dir($dir) && ! mkdir($dir, 0755, true)) {
                 $this->error("Failed to create directory: {$dir}");
 
                 return self::FAILURE;
@@ -176,11 +176,13 @@ PHP;
 
     protected function generateConfig(string $studlyName): string
     {
-        return <<<'PHP'
+        $envKey = strtoupper(Str::snake($studlyName));
+
+        return <<<PHP
 <?php
 
 return [
-    'enabled' => env('MODULE_'.strtoupper('PLACEHOLDER').'_ENABLED', true),
+    'enabled' => env('MODULE_{$envKey}_ENABLED', true),
 ];
 
 PHP;
