@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'freeswitch/xml-curl',
             'provision/*',
         ]);
+
+        $middleware->alias([
+            'tenant.access' => \App\Http\Middleware\EnsureTenantAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
