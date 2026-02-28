@@ -20,6 +20,8 @@ class ExtensionController extends Controller
      */
     public function index(Tenant $tenant)
     {
+        $this->authorize('viewAny', Extension::class);
+
         return ExtensionResource::collection($tenant->extensions()->paginate(15));
     }
 
@@ -28,6 +30,8 @@ class ExtensionController extends Controller
      */
     public function store(StoreExtensionRequest $request, Tenant $tenant): JsonResponse
     {
+        $this->authorize('create', Extension::class);
+
         $extension = $tenant->extensions()->create($request->validated());
 
         return (new ExtensionResource($extension))->response()->setStatusCode(201);
@@ -42,6 +46,8 @@ class ExtensionController extends Controller
             return response()->json(['message' => 'Extension not found.'], 404);
         }
 
+        $this->authorize('view', $extension);
+
         return new ExtensionResource($extension);
     }
 
@@ -53,6 +59,8 @@ class ExtensionController extends Controller
         if ($extension->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
         }
+
+        $this->authorize('update', $extension);
 
         $extension->update($request->validated());
 
@@ -67,6 +75,8 @@ class ExtensionController extends Controller
         if ($extension->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
         }
+
+        $this->authorize('delete', $extension);
 
         $extension->delete();
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\EslConnectionManager;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class HealthController extends Controller
 {
@@ -14,6 +15,7 @@ class HealthController extends Controller
     public function __invoke(): JsonResponse
     {
         $eslStatus = $this->checkEslConnection();
+        $gatewayStatus = $this->getGatewayStatus();
 
         $healthy = $eslStatus['connected'];
 
@@ -22,6 +24,7 @@ class HealthController extends Controller
             'checks' => [
                 'app' => ['status' => 'ok'],
                 'esl' => $eslStatus,
+                'gateways' => $gatewayStatus,
             ],
         ], $healthy ? 200 : 503);
     }
@@ -47,6 +50,14 @@ class HealthController extends Controller
         } catch (\Throwable $e) {
             return ['connected' => false, 'status' => 'error', 'message' => $e->getMessage()];
         }
+    }
+
+    protected function getGatewayStatus(): array
+    {
+        return Cache::get('nizam:gateway_status', [
+            'status' => 'unknown',
+            'message' => 'Run nizam:gateway-status to populate',
+        ]);
     }
 
     protected function parseFreeswitchStatus(?string $response): array

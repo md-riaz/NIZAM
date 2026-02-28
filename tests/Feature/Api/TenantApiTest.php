@@ -11,9 +11,14 @@ class TenantApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function authenticatedUser(): User
+    private function adminUser(): User
     {
-        return User::factory()->create();
+        return User::factory()->create(['role' => 'admin']);
+    }
+
+    private function tenantUser(Tenant $tenant): User
+    {
+        return User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
     }
 
     public function test_unauthenticated_requests_return_401(): void
@@ -23,9 +28,9 @@ class TenantApiTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function test_can_list_tenants(): void
+    public function test_admin_can_list_all_tenants(): void
     {
-        $user = $this->authenticatedUser();
+        $user = $this->adminUser();
 
         Tenant::create([
             'name' => 'Tenant One',
@@ -40,9 +45,33 @@ class TenantApiTest extends TestCase
         $response->assertJsonFragment(['name' => 'Tenant One']);
     }
 
-    public function test_can_create_a_tenant(): void
+    public function test_tenant_user_only_sees_own_tenant(): void
     {
-        $user = $this->authenticatedUser();
+        $tenant = Tenant::create([
+            'name' => 'My Tenant',
+            'domain' => 'my.example.com',
+            'slug' => 'my-tenant',
+        ]);
+
+        Tenant::create([
+            'name' => 'Other Tenant',
+            'domain' => 'other.example.com',
+            'slug' => 'other-tenant',
+        ]);
+
+        $user = $this->tenantUser($tenant);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson('/api/tenants');
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment(['name' => 'My Tenant']);
+        $response->assertJsonMissing(['name' => 'Other Tenant']);
+    }
+
+    public function test_admin_can_create_a_tenant(): void
+    {
+        $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/tenants', [
@@ -60,9 +89,28 @@ class TenantApiTest extends TestCase
         ]);
     }
 
-    public function test_can_show_a_single_tenant(): void
+    public function test_non_admin_cannot_create_a_tenant(): void
     {
-        $user = $this->authenticatedUser();
+        $tenant = Tenant::create([
+            'name' => 'Existing',
+            'domain' => 'existing.example.com',
+            'slug' => 'existing',
+        ]);
+        $user = $this->tenantUser($tenant);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/tenants', [
+                'name' => 'New Tenant',
+                'domain' => 'new.example.com',
+                'slug' => 'new-tenant',
+            ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_admin_can_show_a_single_tenant(): void
+    {
+        $user = $this->adminUser();
 
         $tenant = Tenant::create([
             'name' => 'Show Tenant',
@@ -77,9 +125,9 @@ class TenantApiTest extends TestCase
         $response->assertJsonFragment(['name' => 'Show Tenant']);
     }
 
-    public function test_can_update_a_tenant(): void
+    public function test_admin_can_update_a_tenant(): void
     {
-        $user = $this->authenticatedUser();
+        $user = $this->adminUser();
 
         $tenant = Tenant::create([
             'name' => 'Old Name',
@@ -98,9 +146,9 @@ class TenantApiTest extends TestCase
         $this->assertDatabaseHas('tenants', ['name' => 'Updated Name']);
     }
 
-    public function test_can_delete_a_tenant(): void
+    public function test_admin_can_delete_a_tenant(): void
     {
-        $user = $this->authenticatedUser();
+        $user = $this->adminUser();
 
         $tenant = Tenant::create([
             'name' => 'Delete Me',
@@ -117,7 +165,7 @@ class TenantApiTest extends TestCase
 
     public function test_validates_required_fields_on_create(): void
     {
-        $user = $this->authenticatedUser();
+        $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/tenants', []);

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Extension;
+use App\Modules\ModuleRegistry;
 use App\Observers\ExtensionObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(ModuleRegistry::class);
     }
 
     /**
@@ -29,5 +30,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Extension::observe(ExtensionObserver::class);
+
+        // Boot all registered modules
+        $this->app->make(ModuleRegistry::class)->bootAll();
     }
 }
