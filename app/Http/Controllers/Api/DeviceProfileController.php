@@ -20,6 +20,8 @@ class DeviceProfileController extends Controller
      */
     public function index(Tenant $tenant)
     {
+        $this->authorize('viewAny', DeviceProfile::class);
+
         return DeviceProfileResource::collection($tenant->deviceProfiles()->paginate(15));
     }
 
@@ -28,6 +30,8 @@ class DeviceProfileController extends Controller
      */
     public function store(StoreDeviceProfileRequest $request, Tenant $tenant): JsonResponse
     {
+        $this->authorize('create', DeviceProfile::class);
+
         $deviceProfile = $tenant->deviceProfiles()->create($request->validated());
 
         return (new DeviceProfileResource($deviceProfile))->response()->setStatusCode(201);
@@ -42,6 +46,8 @@ class DeviceProfileController extends Controller
             return response()->json(['message' => 'Device profile not found.'], 404);
         }
 
+        $this->authorize('view', $deviceProfile);
+
         return new DeviceProfileResource($deviceProfile);
     }
 
@@ -53,6 +59,8 @@ class DeviceProfileController extends Controller
         if ($deviceProfile->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Device profile not found.'], 404);
         }
+
+        $this->authorize('update', $deviceProfile);
 
         $deviceProfile->update($request->validated());
 
@@ -67,6 +75,8 @@ class DeviceProfileController extends Controller
         if ($deviceProfile->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Device profile not found.'], 404);
         }
+
+        $this->authorize('delete', $deviceProfile);
 
         $deviceProfile->delete();
 

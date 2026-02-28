@@ -20,6 +20,8 @@ class TimeConditionController extends Controller
      */
     public function index(Tenant $tenant)
     {
+        $this->authorize('viewAny', TimeCondition::class);
+
         return TimeConditionResource::collection($tenant->timeConditions()->paginate(15));
     }
 
@@ -28,6 +30,8 @@ class TimeConditionController extends Controller
      */
     public function store(StoreTimeConditionRequest $request, Tenant $tenant): JsonResponse
     {
+        $this->authorize('create', TimeCondition::class);
+
         $timeCondition = $tenant->timeConditions()->create($request->validated());
 
         return (new TimeConditionResource($timeCondition))->response()->setStatusCode(201);
@@ -42,6 +46,8 @@ class TimeConditionController extends Controller
             return response()->json(['message' => 'Time condition not found.'], 404);
         }
 
+        $this->authorize('view', $timeCondition);
+
         return new TimeConditionResource($timeCondition);
     }
 
@@ -53,6 +59,8 @@ class TimeConditionController extends Controller
         if ($timeCondition->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Time condition not found.'], 404);
         }
+
+        $this->authorize('update', $timeCondition);
 
         $timeCondition->update($request->validated());
 
@@ -67,6 +75,8 @@ class TimeConditionController extends Controller
         if ($timeCondition->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Time condition not found.'], 404);
         }
+
+        $this->authorize('delete', $timeCondition);
 
         $timeCondition->delete();
 

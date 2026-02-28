@@ -243,7 +243,7 @@ FreeSWITCH → ESL → Event Processor → Redis → WebSocket/API
 Real-time streaming of call lifecycle events. Events are:
 - Persisted to `call_events` table for replay and debugging
 - Dispatched to matching webhooks via queued jobs
-- Broadcast on tenant-scoped WebSocket channels
+- Broadcast on tenant-scoped private WebSocket channels (`private-tenant.{id}.calls`)
 
 **Normalized Event Types:**
 
@@ -267,6 +267,8 @@ Real-time streaming of call lifecycle events. Events are:
 | `php artisan nizam:esl-listen` | Start ESL event listener with auto-reconnection |
 | `php artisan nizam:esl-listen --max-retries=5` | ESL listener with limited reconnection attempts |
 | `php artisan nizam:gateway-status` | Poll and cache FreeSWITCH gateway/registration status |
+| `php artisan nizam:sync-permissions` | Sync core + module permissions to database |
+| `php artisan make:nizam-module {name}` | Generate a module skeleton with all required hooks |
 
 ---
 
@@ -373,7 +375,7 @@ php artisan serve
 ```
 NIZAM/
 ├── app/
-│   ├── Console/Commands/       # Artisan commands (nizam:esl-listen, nizam:gateway-status)
+│   ├── Console/Commands/       # Artisan commands (nizam:esl-listen, nizam:gateway-status, nizam:sync-permissions, make:nizam-module)
 │   ├── Events/                 # Event classes (CallEvent)
 │   ├── Http/
 │   │   ├── Controllers/
@@ -420,7 +422,7 @@ NIZAM/
 │   ├── api.php                 # API routes (auth, CRUD, calls, events, health)
 │   └── web.php                 # Web routes (xml-curl, provisioning)
 ├── docker-compose.yml          # Container orchestration (6 services)
-└── tests/                      # PHPUnit tests (249 tests, 486 assertions)
+└── tests/                      # PHPUnit tests (266 tests, 520 assertions)
 ```
 
 ---

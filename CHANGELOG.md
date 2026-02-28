@@ -46,7 +46,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 #### API Governance
 - Sanctum token authentication (register, login, logout, me)
-- Role-based authorization policies (TenantPolicy, ExtensionPolicy)
+- Role-based authorization policies for all resources (Tenant, Extension, DID, RingGroup, IVR, TimeCondition, Webhook, DeviceProfile)
+- `$this->authorize()` calls wired into all resource controllers
 - Tenant-scoped API middleware (`tenant.access`) on all tenant routes
 - Rate limiting: 60 requests/minute per user or IP
 - REST endpoints for all resources: Tenant, Extension, DID, Ring Group, IVR, Time Condition, CDR, Device Profile, Webhook
@@ -58,6 +59,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Persistent `call_events` table for event replay
 - Call trace API: `GET /call-events/{uuid}/trace`
 - Gateway status polling command (`nizam:gateway-status`) with cached results
+- Private WebSocket channels per tenant (`private-tenant.{id}.calls`) with channel authorization
+- Broadcast channel authorization in `routes/channels.php`
 - CDR auto-creation on call hangup
 - Event broadcasting on tenant-scoped WebSocket channels
 
@@ -81,6 +84,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Hooks: dialplan contributions, event subscriptions, permission extensions
 - Migration isolation per module via `migrationsPath()` hook
 - Error isolation per module event handler
+- `make:nizam-module` artisan command — generates full module skeleton with all hooks
 
 #### Permissions
 - Granular permission model with user-permission assignments
@@ -96,6 +100,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Events: call.started, call.answered, call.bridge, call.missed, call.hangup, voicemail.received, registration.registered, registration.unregistered
 
 ### Tests
-- 249 tests with 486 assertions covering all features
+- 266 tests with 520 assertions covering all features
 - Unit tests for models, services, policies, observers, modules
 - Feature tests for all API endpoints, middleware, provisioning

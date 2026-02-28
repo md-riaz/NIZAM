@@ -215,3 +215,45 @@ vendor/bin/pint
 - [ ] Run `php artisan config:cache` and `php artisan route:cache`
 - [ ] Schedule `nizam:gateway-status` in cron for periodic health checks
 - [ ] Monitor ESL listener process (systemd, supervisor, or Docker restart policy)
+- [ ] Sync permissions with `php artisan nizam:sync-permissions`
+
+---
+
+## Backup & Restore
+
+### Database Backup
+
+```bash
+# Full PostgreSQL backup
+docker compose exec postgres pg_dump -U nizam nizam > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Compressed backup
+docker compose exec postgres pg_dump -U nizam nizam | gzip > backup_$(date +%Y%m%d).sql.gz
+```
+
+### Database Restore
+
+```bash
+# Restore from SQL file
+docker compose exec -T postgres psql -U nizam nizam < backup_20260101.sql
+
+# Restore from compressed backup
+gunzip -c backup_20260101.sql.gz | docker compose exec -T postgres psql -U nizam nizam
+```
+
+### FreeSWITCH Config Backup
+
+NIZAM generates all FreeSWITCH config dynamically from the database, so backing up the database is sufficient. The `docker/freeswitch/` directory contains the base config templates.
+
+### Redis Cache
+
+Redis is used for caching only (gateway status, rate limits). It does not need backup — caches rebuild automatically.
+
+### Automated Backup Schedule
+
+Add to your crontab or task scheduler:
+
+```bash
+# Daily database backup at 2:00 AM, keep 7 days
+0 2 * * * cd /path/to/nizam && docker compose exec -T postgres pg_dump -U nizam nizam | gzip > backups/nizam_$(date +\%Y\%m\%d).sql.gz && find backups/ -name "*.sql.gz" -mtime +7 -delete
+```

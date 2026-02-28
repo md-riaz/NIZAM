@@ -32,7 +32,31 @@ interface NizamModule
 
 ## Creating a Module
 
-### 1. Create the Module Class
+### Quick Start — Module Generator
+
+Use the artisan command to scaffold a complete module:
+
+```bash
+php artisan make:nizam-module CallRecording
+```
+
+This creates the following structure in `modules/call-recording/`:
+
+```
+modules/call-recording/
+├── src/
+│   ├── CallRecordingModule.php        # NizamModule implementation
+│   └── CallRecordingServiceProvider.php  # Laravel service provider
+├── config/
+│   └── call_recording.php             # Module configuration
+├── database/
+│   └── migrations/                    # Module-specific migrations
+├── tests/                             # Module tests
+├── composer.json                      # Package manifest
+└── README.md                          # Module documentation
+```
+
+### Manual Setup — Create the Module Class
 
 ```php
 <?php

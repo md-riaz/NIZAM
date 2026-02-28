@@ -3,7 +3,7 @@
 namespace Tests\Unit\Events;
 
 use App\Events\CallEvent;
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Tests\TestCase;
 
 class CallEventTest extends TestCase
@@ -15,8 +15,8 @@ class CallEventTest extends TestCase
         $channels = $event->broadcastOn();
 
         $this->assertCount(1, $channels);
-        $this->assertInstanceOf(Channel::class, $channels[0]);
-        $this->assertEquals('tenant.tenant-uuid-123.calls', $channels[0]->name);
+        $this->assertInstanceOf(PrivateChannel::class, $channels[0]);
+        $this->assertEquals('private-tenant.tenant-uuid-123.calls', $channels[0]->name);
     }
 
     public function test_broadcast_as_returns_prefixed_event_type(): void
