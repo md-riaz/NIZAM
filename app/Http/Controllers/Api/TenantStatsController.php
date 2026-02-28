@@ -32,6 +32,8 @@ class TenantStatsController extends Controller
                 'recordings_total_size' => (int) $tenant->recordings()->sum('file_size'),
                 'device_profiles_count' => $tenant->deviceProfiles()->count(),
                 'webhooks_count' => $tenant->webhooks()->count(),
+                'call_routing_policies_count' => $tenant->callRoutingPolicies()->count(),
+                'call_flows_count' => $tenant->callFlows()->count(),
             ],
         ]);
     }

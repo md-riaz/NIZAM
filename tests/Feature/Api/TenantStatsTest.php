@@ -3,6 +3,8 @@
 namespace Tests\Feature\Api;
 
 use App\Models\CallDetailRecord;
+use App\Models\CallFlow;
+use App\Models\CallRoutingPolicy;
 use App\Models\DeviceProfile;
 use App\Models\Did;
 use App\Models\Extension;
@@ -51,6 +53,8 @@ class TenantStatsTest extends TestCase
         ]);
         DeviceProfile::factory()->create(['tenant_id' => $this->tenant->id]);
         Webhook::factory()->create(['tenant_id' => $this->tenant->id]);
+        CallRoutingPolicy::factory()->count(2)->create(['tenant_id' => $this->tenant->id]);
+        CallFlow::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
             ->getJson("/api/tenants/{$this->tenant->id}/stats");
@@ -66,6 +70,8 @@ class TenantStatsTest extends TestCase
             'recordings_total_size' => 2000,
             'device_profiles_count' => 1,
             'webhooks_count' => 1,
+            'call_routing_policies_count' => 2,
+            'call_flows_count' => 1,
         ]);
     }
 
