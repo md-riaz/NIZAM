@@ -55,4 +55,24 @@ class UsageController extends Controller
             ],
         ], 201);
     }
+
+    /**
+     * Reconcile CDR billable minutes against metered call_minutes.
+     */
+    public function reconcile(Request $request, Tenant $tenant, UsageMeteringService $metering): JsonResponse
+    {
+        $this->authorize('view', $tenant);
+
+        $from = $request->has('from')
+            ? Carbon::parse($request->input('from'))
+            : Carbon::today()->startOfMonth();
+
+        $to = $request->has('to')
+            ? Carbon::parse($request->input('to'))
+            : Carbon::today();
+
+        return response()->json([
+            'data' => $metering->reconcileCallMinutes($tenant, $from, $to),
+        ]);
+    }
 }

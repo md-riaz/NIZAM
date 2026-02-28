@@ -5,12 +5,15 @@ namespace App\Services;
 use App\Events\CallEvent;
 use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
+use App\Models\Tenant;
+use App\Models\UsageRecord;
 use Illuminate\Support\Facades\Log;
 
 class EventProcessor
 {
     public function __construct(
-        protected WebhookDispatcher $webhookDispatcher
+        protected WebhookDispatcher $webhookDispatcher,
+        protected ?UsageMeteringService $meteringService = null
     ) {}
 
     /**
@@ -93,6 +96,9 @@ class EventProcessor
 
         // Create CDR record
         $this->createCdr($tenantId, $data, $event);
+
+        // Record call minutes for usage metering
+        $this->recordCallMinutes($tenantId, $data['billsec']);
 
         CallEvent::dispatch($tenantId, 'hangup', $data);
         $this->webhookDispatcher->dispatch($tenantId, 'call.hangup', $data);
@@ -251,6 +257,29 @@ class EventProcessor
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to record call event', ['error' => $e->getMessage(), 'event_type' => $eventType]);
+        }
+    }
+
+    /**
+     * Record call minutes for usage metering.
+     */
+    protected function recordCallMinutes(string $tenantId, int $billsec): void
+    {
+        if ($billsec <= 0 || ! $this->meteringService) {
+            return;
+        }
+
+        try {
+            $tenant = Tenant::find($tenantId);
+            if ($tenant) {
+                $this->meteringService->record(
+                    $tenant,
+                    UsageRecord::METRIC_CALL_MINUTES,
+                    round($billsec / 60, 4)
+                );
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to record call minutes', ['error' => $e->getMessage(), 'tenant_id' => $tenantId]);
         }
     }
 }
