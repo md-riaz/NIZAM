@@ -14,7 +14,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('action'); // created, updated, deleted
             $table->string('auditable_type'); // model class
-            $table->string('auditable_id'); // model ID
+            $table->string('auditable_id'); // model primary key (UUID or integer)
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();
             $table->string('ip_address', 45)->nullable();
