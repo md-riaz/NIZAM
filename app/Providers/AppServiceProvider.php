@@ -19,7 +19,33 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(ModuleRegistry::class);
+        $this->app->singleton(ModuleRegistry::class, function () {
+            $registry = new ModuleRegistry;
+
+            $moduleConfigs = config('nizam.modules', []);
+
+            // Resolve load order based on dependencies
+            $moduleClasses = [];
+            foreach ($moduleConfigs as $name => $moduleConfig) {
+                if (! is_array($moduleConfig) || ! isset($moduleConfig['class'])) {
+                    continue;
+                }
+                $moduleClasses[$name] = $moduleConfig['class'];
+            }
+
+            $orderedClasses = ModuleRegistry::resolveDependencies($moduleClasses);
+
+            // Register modules in resolved order
+            foreach ($orderedClasses as $class) {
+                $module = $this->app->make($class);
+                $name = $module->name();
+                $enabled = $moduleConfigs[$name]['enabled'] ?? true;
+
+                $registry->register($module, $enabled);
+            }
+
+            return $registry;
+        });
     }
 
     /**
@@ -39,12 +65,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewStatus', fn ($user) => $callPolicy->before($user, 'viewStatus') ?? $callPolicy->viewStatus($user));
         Gate::define('callControl', fn ($user) => $callPolicy->before($user, 'callControl') ?? $callPolicy->callControl($user));
 
-        // Boot all registered modules and load their migrations
+        // Boot all NIZAM modules (telecom hooks: dialplan, policy, events)
+        // Routes and migrations are handled by nwidart/laravel-modules ServiceProviders
         $registry = $this->app->make(ModuleRegistry::class);
         $registry->bootAll();
-
-        foreach ($registry->collectMigrationPaths() as $path) {
-            $this->loadMigrationsFrom($path);
-        }
     }
 }

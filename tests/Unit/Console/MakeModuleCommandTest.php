@@ -11,8 +11,8 @@ class MakeModuleCommandTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Clean up generated module directory
-        $path = base_path('modules/test-module');
+        // Clean up generated module directory (StudlyCase convention)
+        $path = base_path('modules/TestModule');
         if (is_dir($path)) {
             $this->recursiveDelete($path);
         }
@@ -25,12 +25,14 @@ class MakeModuleCommandTest extends TestCase
         $this->artisan('make:nizam-module', ['name' => 'TestModule'])
             ->assertExitCode(0);
 
-        $basePath = base_path('modules/test-module');
+        $basePath = base_path('modules/TestModule');
 
         $this->assertDirectoryExists($basePath);
-        $this->assertFileExists("{$basePath}/src/TestModuleModule.php");
-        $this->assertFileExists("{$basePath}/src/TestModuleServiceProvider.php");
-        $this->assertFileExists("{$basePath}/config/test_module.php");
+        $this->assertFileExists("{$basePath}/app/TestModuleModule.php");
+        $this->assertFileExists("{$basePath}/app/Providers/TestModuleServiceProvider.php");
+        $this->assertFileExists("{$basePath}/module.json");
+        $this->assertFileExists("{$basePath}/config/config.php");
+        $this->assertFileExists("{$basePath}/routes/api.php");
         $this->assertFileExists("{$basePath}/composer.json");
         $this->assertFileExists("{$basePath}/README.md");
         $this->assertDirectoryExists("{$basePath}/database/migrations");
@@ -42,7 +44,7 @@ class MakeModuleCommandTest extends TestCase
         $this->artisan('make:nizam-module', ['name' => 'TestModule'])
             ->assertExitCode(0);
 
-        $content = file_get_contents(base_path('modules/test-module/src/TestModuleModule.php'));
+        $content = file_get_contents(base_path('modules/TestModule/app/TestModuleModule.php'));
 
         $this->assertStringContainsString('implements NizamModule', $content);
         $this->assertStringContainsString("return 'test-module'", $content);
@@ -51,6 +53,18 @@ class MakeModuleCommandTest extends TestCase
         $this->assertStringContainsString('public function handleEvent', $content);
         $this->assertStringContainsString('public function permissions', $content);
         $this->assertStringContainsString('public function migrationsPath', $content);
+    }
+
+    public function test_module_json_follows_nwidart_convention(): void
+    {
+        $this->artisan('make:nizam-module', ['name' => 'TestModule'])
+            ->assertExitCode(0);
+
+        $json = json_decode(file_get_contents(base_path('modules/TestModule/module.json')), true);
+
+        $this->assertEquals('TestModule', $json['name']);
+        $this->assertEquals('test-module', $json['alias']);
+        $this->assertContains('Modules\\TestModule\\Providers\\TestModuleServiceProvider', $json['providers']);
     }
 
     public function test_fails_if_module_already_exists(): void

@@ -20,6 +20,20 @@ interface NizamModule
     public function version(): string;
 
     /**
+     * Module dependencies (other module names required).
+     *
+     * @return array<string>
+     */
+    public function dependencies(): array;
+
+    /**
+     * Module configuration defaults.
+     *
+     * @return array<string, mixed>
+     */
+    public function config(): array;
+
+    /**
      * Register the module: bindings, event listeners, etc.
      */
     public function register(): void;
@@ -59,4 +73,16 @@ interface NizamModule
      * Return the path to the module's migrations directory, or null if none.
      */
     public function migrationsPath(): ?string;
+
+    /**
+     * Return the path to the module's route file, or null if none.
+     */
+    public function routesFile(): ?string;
+
+    /**
+     * Return policy hooks this module provides.
+     *
+     * @return array<string, callable>
+     */
+    public function policyHooks(): array;
 }

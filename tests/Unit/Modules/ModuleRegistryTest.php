@@ -58,15 +58,9 @@ class ModuleRegistryTest extends TestCase
     {
         $registry = new ModuleRegistry;
 
-        $module = $this->createMock(NizamModule::class);
-        $module->method('name')->willReturn('dialer');
-        $module->method('version')->willReturn('1.0.0');
-        $module->method('description')->willReturn('Test module dialer');
-        $module->method('subscribedEvents')->willReturn([]);
-        $module->method('permissions')->willReturn([]);
-        $module->method('migrationsPath')->willReturn(null);
-        $module->method('dialplanContributions')
-            ->willReturn([10 => '<action application="playback" data="tone_stream://%(200,0,440)"/>']);
+        $module = $this->createMockModuleWith('dialer', '1.0.0', [
+            'dialplanContributions' => [10 => '<action application="playback" data="tone_stream://%(200,0,440)"/>'],
+        ]);
 
         $registry->register($module);
 
@@ -79,14 +73,9 @@ class ModuleRegistryTest extends TestCase
     {
         $registry = new ModuleRegistry;
 
-        $module = $this->createMock(NizamModule::class);
-        $module->method('name')->willReturn('listener');
-        $module->method('version')->willReturn('1.0.0');
-        $module->method('description')->willReturn('Test module listener');
-        $module->method('dialplanContributions')->willReturn([]);
-        $module->method('permissions')->willReturn([]);
-        $module->method('migrationsPath')->willReturn(null);
-        $module->method('subscribedEvents')->willReturn(['call.hangup']);
+        $module = $this->createMockModuleWith('listener', '1.0.0', [
+            'subscribedEvents' => ['call.hangup'],
+        ]);
         $module->expects($this->once())->method('handleEvent')
             ->with('call.hangup', ['uuid' => '123']);
 
@@ -98,8 +87,9 @@ class ModuleRegistryTest extends TestCase
     {
         $registry = new ModuleRegistry;
 
-        $module = $this->createMockModule('non-listener', '1.0.0');
-        $module->method('subscribedEvents')->willReturn(['call.started']);
+        $module = $this->createMockModuleWith('non-listener', '1.0.0', [
+            'subscribedEvents' => ['call.started'],
+        ]);
         $module->expects($this->never())->method('handleEvent');
 
         $registry->register($module);
@@ -110,23 +100,13 @@ class ModuleRegistryTest extends TestCase
     {
         $registry = new ModuleRegistry;
 
-        $module1 = $this->createMock(NizamModule::class);
-        $module1->method('name')->willReturn('perm-a');
-        $module1->method('version')->willReturn('1.0.0');
-        $module1->method('description')->willReturn('Test module perm-a');
-        $module1->method('subscribedEvents')->willReturn([]);
-        $module1->method('dialplanContributions')->willReturn([]);
-        $module1->method('migrationsPath')->willReturn(null);
-        $module1->method('permissions')->willReturn(['recordings.view', 'recordings.delete']);
+        $module1 = $this->createMockModuleWith('perm-a', '1.0.0', [
+            'permissions' => ['recordings.view', 'recordings.delete'],
+        ]);
 
-        $module2 = $this->createMock(NizamModule::class);
-        $module2->method('name')->willReturn('perm-b');
-        $module2->method('version')->willReturn('1.0.0');
-        $module2->method('description')->willReturn('Test module perm-b');
-        $module2->method('subscribedEvents')->willReturn([]);
-        $module2->method('dialplanContributions')->willReturn([]);
-        $module2->method('migrationsPath')->willReturn(null);
-        $module2->method('permissions')->willReturn(['fax.send', 'recordings.view']); // duplicate
+        $module2 = $this->createMockModuleWith('perm-b', '1.0.0', [
+            'permissions' => ['fax.send', 'recordings.view'], // duplicate
+        ]);
 
         $registry->register($module1);
         $registry->register($module2);
@@ -142,14 +122,9 @@ class ModuleRegistryTest extends TestCase
     {
         $registry = new ModuleRegistry;
 
-        $module = $this->createMock(NizamModule::class);
-        $module->method('name')->willReturn('crasher');
-        $module->method('version')->willReturn('1.0.0');
-        $module->method('description')->willReturn('Test module crasher');
-        $module->method('dialplanContributions')->willReturn([]);
-        $module->method('permissions')->willReturn([]);
-        $module->method('migrationsPath')->willReturn(null);
-        $module->method('subscribedEvents')->willReturn(['call.hangup']);
+        $module = $this->createMockModuleWith('crasher', '1.0.0', [
+            'subscribedEvents' => ['call.hangup'],
+        ]);
         $module->method('handleEvent')
             ->willThrowException(new \RuntimeException('Module error'));
 
@@ -164,23 +139,11 @@ class ModuleRegistryTest extends TestCase
     {
         $registry = new ModuleRegistry;
 
-        $module1 = $this->createMock(NizamModule::class);
-        $module1->method('name')->willReturn('mod-a');
-        $module1->method('version')->willReturn('1.0.0');
-        $module1->method('description')->willReturn('Module A');
-        $module1->method('subscribedEvents')->willReturn([]);
-        $module1->method('dialplanContributions')->willReturn([]);
-        $module1->method('permissions')->willReturn([]);
-        $module1->method('migrationsPath')->willReturn(__DIR__); // use existing dir for test
+        $module1 = $this->createMockModuleWith('mod-a', '1.0.0', [
+            'migrationsPath' => __DIR__,
+        ]);
 
-        $module2 = $this->createMock(NizamModule::class);
-        $module2->method('name')->willReturn('mod-b');
-        $module2->method('version')->willReturn('1.0.0');
-        $module2->method('description')->willReturn('Module B');
-        $module2->method('subscribedEvents')->willReturn([]);
-        $module2->method('dialplanContributions')->willReturn([]);
-        $module2->method('permissions')->willReturn([]);
-        $module2->method('migrationsPath')->willReturn(null); // no migrations
+        $module2 = $this->createMockModule('mod-b', '1.0.0');
 
         $registry->register($module1);
         $registry->register($module2);
@@ -190,16 +153,276 @@ class ModuleRegistryTest extends TestCase
         $this->assertEquals(__DIR__, $paths[0]);
     }
 
+    public function test_module_can_be_enabled_and_disabled(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModule('toggleable', '1.0.0');
+        $registry->register($module);
+
+        $this->assertTrue($registry->isEnabled('toggleable'));
+
+        $registry->disable('toggleable');
+        $this->assertFalse($registry->isEnabled('toggleable'));
+
+        $registry->enable('toggleable');
+        $this->assertTrue($registry->isEnabled('toggleable'));
+    }
+
+    public function test_disabled_module_is_not_booted(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModule('disabled-mod', '1.0.0');
+        $module->expects($this->never())->method('boot');
+
+        $registry->register($module);
+        $registry->disable('disabled-mod');
+        $registry->bootAll();
+    }
+
+    public function test_disabled_module_events_not_dispatched(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('disabled-listener', '1.0.0', [
+            'subscribedEvents' => ['call.hangup'],
+        ]);
+        $module->expects($this->never())->method('handleEvent');
+
+        $registry->register($module);
+        $registry->disable('disabled-listener');
+        $registry->dispatchEvent('call.hangup', ['uuid' => '123']);
+    }
+
+    public function test_disabled_module_permissions_not_collected(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('disabled-perm', '1.0.0', [
+            'permissions' => ['secret.permission'],
+        ]);
+
+        $registry->register($module);
+        $registry->disable('disabled-perm');
+
+        $this->assertEmpty($registry->collectPermissions());
+    }
+
+    public function test_disabled_module_dialplan_not_collected(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('disabled-dialer', '1.0.0', [
+            'dialplanContributions' => [10 => '<action application="hangup"/>'],
+        ]);
+
+        $registry->register($module);
+        $registry->disable('disabled-dialer');
+
+        $this->assertEmpty($registry->collectDialplanContributions('example.com', '1001'));
+    }
+
+    public function test_disabled_module_migrations_not_collected(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('disabled-migrator', '1.0.0', [
+            'migrationsPath' => __DIR__,
+        ]);
+
+        $registry->register($module);
+        $registry->disable('disabled-migrator');
+
+        $this->assertEmpty($registry->collectMigrationPaths());
+    }
+
+    public function test_enabled_returns_only_enabled_modules(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module1 = $this->createMockModule('active', '1.0.0');
+        $module2 = $this->createMockModule('inactive', '1.0.0');
+
+        $registry->register($module1);
+        $registry->register($module2);
+        $registry->disable('inactive');
+
+        $enabled = $registry->enabled();
+        $this->assertCount(1, $enabled);
+        $this->assertArrayHasKey('active', $enabled);
+        $this->assertArrayNotHasKey('inactive', $enabled);
+    }
+
+    public function test_manifests_returns_all_module_info(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('manifest-mod', '2.1.0', [
+            'dependencies' => ['core-dep'],
+        ]);
+
+        $registry->register($module);
+
+        $manifests = $registry->manifests();
+        $this->assertArrayHasKey('manifest-mod', $manifests);
+        $this->assertEquals('manifest-mod', $manifests['manifest-mod']['name']);
+        $this->assertEquals('2.1.0', $manifests['manifest-mod']['version']);
+        $this->assertTrue($manifests['manifest-mod']['enabled']);
+        $this->assertEquals(['core-dep'], $manifests['manifest-mod']['dependencies']);
+    }
+
+    public function test_collects_route_files_from_enabled_modules(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('routed', '1.0.0', [
+            'routesFile' => __FILE__,
+        ]);
+
+        $registry->register($module);
+
+        $files = $registry->collectRouteFiles();
+        $this->assertCount(1, $files);
+        $this->assertEquals(__FILE__, $files[0]);
+    }
+
+    public function test_disabled_module_routes_not_collected(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('disabled-routed', '1.0.0', [
+            'routesFile' => __FILE__,
+        ]);
+
+        $registry->register($module);
+        $registry->disable('disabled-routed');
+
+        $this->assertEmpty($registry->collectRouteFiles());
+    }
+
+    public function test_policy_hooks_collected_and_executed(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('hooked', '1.0.0', [
+            'policyHooks' => [
+                'before_route' => fn (string $dest) => "intercepted:{$dest}",
+            ],
+        ]);
+
+        $registry->register($module);
+
+        $results = $registry->executePolicyHook('before_route', ['1001']);
+        $this->assertArrayHasKey('hooked', $results);
+        $this->assertEquals('intercepted:1001', $results['hooked']);
+    }
+
+    public function test_disabled_module_policy_hooks_not_executed(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('disabled-hooked', '1.0.0', [
+            'policyHooks' => [
+                'before_route' => fn () => 'should not run',
+            ],
+        ]);
+
+        $registry->register($module);
+        $registry->disable('disabled-hooked');
+
+        $this->assertEmpty($registry->executePolicyHook('before_route'));
+    }
+
+    public function test_is_enabled_returns_false_for_unknown_module(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $this->assertFalse($registry->isEnabled('nonexistent'));
+    }
+
+    public function test_register_with_enabled_false_skips_module_register(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModule('skip-register', '1.0.0');
+        $module->expects($this->never())->method('register');
+
+        $registry->register($module, enabled: false);
+
+        $this->assertFalse($registry->isEnabled('skip-register'));
+        $this->assertSame($module, $registry->get('skip-register'));
+    }
+
+    public function test_register_with_enabled_false_does_not_collect_policy_hooks(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('disabled-hooks', '1.0.0', [
+            'policyHooks' => [
+                'before_route' => fn () => 'should not run',
+            ],
+        ]);
+
+        $registry->register($module, enabled: false);
+
+        $this->assertEmpty($registry->executePolicyHook('before_route'));
+    }
+
+    public function test_enabling_disabled_module_calls_register_and_collects_hooks(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module = $this->createMockModuleWith('late-enable', '1.0.0', [
+            'policyHooks' => [
+                'before_route' => fn (string $dest) => "intercepted:{$dest}",
+            ],
+        ]);
+        $module->expects($this->once())->method('register');
+
+        $registry->register($module, enabled: false);
+        $this->assertFalse($registry->isEnabled('late-enable'));
+
+        $registry->enable('late-enable');
+        $this->assertTrue($registry->isEnabled('late-enable'));
+
+        // Policy hooks should now be active after enable
+        $results = $registry->executePolicyHook('before_route', ['1001']);
+        $this->assertArrayHasKey('late-enable', $results);
+        $this->assertEquals('intercepted:1001', $results['late-enable']);
+    }
+
     private function createMockModule(string $name, string $version): NizamModule
+    {
+        return $this->createMockModuleWith($name, $version);
+    }
+
+    /**
+     * Create a mock module with optional overrides for specific methods.
+     *
+     * @param  array<string, mixed>  $overrides  Keyed by method name
+     */
+    private function createMockModuleWith(string $name, string $version, array $overrides = []): NizamModule
     {
         $module = $this->createMock(NizamModule::class);
         $module->method('name')->willReturn($name);
         $module->method('version')->willReturn($version);
         $module->method('description')->willReturn("Test module {$name}");
-        $module->method('subscribedEvents')->willReturn([]);
-        $module->method('dialplanContributions')->willReturn([]);
-        $module->method('permissions')->willReturn([]);
-        $module->method('migrationsPath')->willReturn(null);
+
+        $defaults = [
+            'dependencies' => [],
+            'config' => [],
+            'subscribedEvents' => [],
+            'dialplanContributions' => [],
+            'permissions' => [],
+            'migrationsPath' => null,
+            'routesFile' => null,
+            'policyHooks' => [],
+        ];
+
+        foreach (array_merge($defaults, $overrides) as $method => $returnValue) {
+            $module->method($method)->willReturn($returnValue);
+        }
 
         return $module;
     }

@@ -1,0 +1,11 @@
+{
+    "name": "PbxAnalytics",
+    "alias": "pbx-analytics",
+    "description": "Analytics: insights, anomaly detection, recording enrichment",
+    "keywords": ["pbx", "analytics", "recording"],
+    "priority": 0,
+    "providers": [
+        "Modules\\PbxAnalytics\\Providers\\PbxAnalyticsServiceProvider"
+    ],
+    "files": []
+}
