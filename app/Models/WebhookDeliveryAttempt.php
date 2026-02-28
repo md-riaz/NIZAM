@@ -19,6 +19,7 @@ class WebhookDeliveryAttempt extends Model
         'response_body',
         'attempt',
         'success',
+        'latency_ms',
         'error_message',
         'delivered_at',
     ];
@@ -30,6 +31,7 @@ class WebhookDeliveryAttempt extends Model
             'response_status' => 'integer',
             'attempt' => 'integer',
             'success' => 'boolean',
+            'latency_ms' => 'decimal:2',
             'delivered_at' => 'datetime',
         ];
     }

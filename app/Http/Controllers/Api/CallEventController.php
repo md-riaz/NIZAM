@@ -64,4 +64,29 @@ class CallEventController extends Controller
             'events' => $events,
         ]);
     }
+
+    /**
+     * Replay a specific event by its UUID.
+     */
+    public function replay(Tenant $tenant, string $eventId): JsonResponse
+    {
+        $this->authorize('viewAny', CallEventLog::class);
+
+        $event = CallEventLog::where('tenant_id', $tenant->id)
+            ->where('id', $eventId)
+            ->first();
+
+        if (! $event) {
+            return response()->json(['message' => 'Event not found.'], 404);
+        }
+
+        return response()->json([
+            'id' => $event->id,
+            'call_uuid' => $event->call_uuid,
+            'event_type' => $event->event_type,
+            'schema_version' => $event->schema_version,
+            'payload' => $event->payload,
+            'occurred_at' => $event->occurred_at?->toISOString(),
+        ]);
+    }
 }

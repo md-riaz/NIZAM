@@ -86,4 +86,97 @@ class CallController extends Controller
             'count' => $channels['row_count'] ?? 0,
         ]);
     }
+
+    /**
+     * Hangup a call by UUID.
+     */
+    public function hangup(Request $request, Tenant $tenant): JsonResponse
+    {
+        Gate::authorize('callControl');
+
+        $validated = $request->validate([
+            'uuid' => 'required|string|max:255',
+            'cause' => 'nullable|string|max:100',
+        ]);
+
+        $esl = EslConnectionManager::fromConfig();
+
+        if (! $esl->connect()) {
+            return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
+        }
+
+        $cause = $validated['cause'] ?? 'NORMAL_CLEARING';
+        $response = $esl->api("uuid_kill {$validated['uuid']} {$cause}");
+        $esl->disconnect();
+
+        return response()->json([
+            'message' => 'Hangup command sent.',
+            'response' => $response,
+        ]);
+    }
+
+    /**
+     * Transfer a call by UUID.
+     */
+    public function transfer(Request $request, Tenant $tenant): JsonResponse
+    {
+        Gate::authorize('callControl');
+
+        $validated = $request->validate([
+            'uuid' => 'required|string|max:255',
+            'destination' => 'required|string|max:255',
+            'leg' => 'nullable|string|in:aleg,bleg,both',
+        ]);
+
+        $esl = EslConnectionManager::fromConfig();
+
+        if (! $esl->connect()) {
+            return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
+        }
+
+        $leg = $validated['leg'] ?? '';
+        $legFlag = $leg ? "-{$leg} " : '';
+        $response = $esl->api("uuid_transfer {$validated['uuid']} {$legFlag}{$validated['destination']} XML {$tenant->domain}");
+        $esl->disconnect();
+
+        return response()->json([
+            'message' => 'Transfer command sent.',
+            'response' => $response,
+        ]);
+    }
+
+    /**
+     * Toggle recording on a live call by UUID.
+     */
+    public function toggleRecording(Request $request, Tenant $tenant): JsonResponse
+    {
+        Gate::authorize('callControl');
+
+        $validated = $request->validate([
+            'uuid' => 'required|string|max:255',
+            'action' => 'required|string|in:start,stop',
+        ]);
+
+        $esl = EslConnectionManager::fromConfig();
+
+        if (! $esl->connect()) {
+            return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
+        }
+
+        $basePath = config('filesystems.disks.recordings.root', storage_path('app/recordings'));
+        $recordingPath = "{$basePath}/{$tenant->id}/{$validated['uuid']}.wav";
+
+        if ($validated['action'] === 'start') {
+            $response = $esl->api("uuid_record {$validated['uuid']} start {$recordingPath}");
+        } else {
+            $response = $esl->api("uuid_record {$validated['uuid']} stop {$recordingPath}");
+        }
+
+        $esl->disconnect();
+
+        return response()->json([
+            'message' => "Recording {$validated['action']} command sent.",
+            'response' => $response,
+        ]);
+    }
 }

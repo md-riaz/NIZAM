@@ -40,13 +40,13 @@ class EventProcessor
             return;
         }
 
-        $data = $this->extractCallData($event);
+        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_CREATED, $this->extractCallData($event));
 
         CallEvent::dispatch($tenantId, 'started', $data);
         $this->webhookDispatcher->dispatch($tenantId, 'call.started', $data);
-        $this->recordEvent($tenantId, 'started', $data);
+        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_CREATED, $data);
 
-        Log::debug('Call started', ['uuid' => $data['uuid'] ?? 'unknown']);
+        Log::debug('Call started', ['uuid' => $data['call_uuid'] ?? 'unknown']);
     }
 
     protected function handleChannelAnswer(array $event): void
@@ -56,13 +56,13 @@ class EventProcessor
             return;
         }
 
-        $data = $this->extractCallData($event);
+        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $this->extractCallData($event));
 
         CallEvent::dispatch($tenantId, 'answered', $data);
         $this->webhookDispatcher->dispatch($tenantId, 'call.answered', $data);
-        $this->recordEvent($tenantId, 'answered', $data);
+        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $data);
 
-        Log::debug('Call answered', ['uuid' => $data['uuid'] ?? 'unknown']);
+        Log::debug('Call answered', ['uuid' => $data['call_uuid'] ?? 'unknown']);
     }
 
     protected function handleChannelBridge(array $event): void
@@ -72,14 +72,16 @@ class EventProcessor
             return;
         }
 
-        $data = $this->extractCallData($event);
-        $data['other_leg_uuid'] = $event['Other-Leg-Unique-ID'] ?? '';
+        $callData = $this->extractCallData($event);
+        $callData['other_leg_uuid'] = $event['Other-Leg-Unique-ID'] ?? '';
+
+        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $callData);
 
         CallEvent::dispatch($tenantId, 'bridge', $data);
         $this->webhookDispatcher->dispatch($tenantId, 'call.bridge', $data);
-        $this->recordEvent($tenantId, 'bridge', $data);
+        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $data);
 
-        Log::debug('Call bridged', ['uuid' => $data['uuid'] ?? 'unknown', 'other_leg' => $data['other_leg_uuid']]);
+        Log::debug('Call bridged', ['uuid' => $data['call_uuid'] ?? 'unknown', 'other_leg' => $callData['other_leg_uuid']]);
     }
 
     protected function handleChannelHangup(array $event): void
@@ -89,27 +91,29 @@ class EventProcessor
             return;
         }
 
-        $data = $this->extractCallData($event);
-        $data['hangup_cause'] = $event['Hangup-Cause'] ?? 'NORMAL_CLEARING';
-        $data['duration'] = (int) ($event['variable_duration'] ?? 0);
-        $data['billsec'] = (int) ($event['variable_billsec'] ?? 0);
+        $callData = $this->extractCallData($event);
+        $callData['hangup_cause'] = $event['Hangup-Cause'] ?? 'NORMAL_CLEARING';
+        $callData['duration'] = (int) ($event['variable_duration'] ?? 0);
+        $callData['billsec'] = (int) ($event['variable_billsec'] ?? 0);
+
+        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_HANGUP, $callData);
 
         // Create CDR record
         $this->createCdr($tenantId, $data, $event);
 
         // Record call minutes for usage metering
-        $this->recordCallMinutes($tenantId, $data['billsec']);
+        $this->recordCallMinutes($tenantId, $callData['billsec']);
 
         CallEvent::dispatch($tenantId, 'hangup', $data);
         $this->webhookDispatcher->dispatch($tenantId, 'call.hangup', $data);
-        $this->recordEvent($tenantId, 'hangup', $data);
+        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_HANGUP, $data);
 
         // Check for missed call (no answer)
-        if (($data['hangup_cause'] ?? '') === 'NO_ANSWER') {
+        if (($callData['hangup_cause'] ?? '') === 'NO_ANSWER') {
             $this->webhookDispatcher->dispatch($tenantId, 'call.missed', $data);
         }
 
-        Log::debug('Call hangup', ['uuid' => $data['uuid'] ?? 'unknown', 'cause' => $data['hangup_cause']]);
+        Log::debug('Call hangup', ['uuid' => $data['call_uuid'] ?? 'unknown', 'cause' => $callData['hangup_cause']]);
     }
 
     protected function handleCustomEvent(array $event): void
@@ -136,7 +140,7 @@ class EventProcessor
             return;
         }
 
-        $data = [
+        $vmData = [
             'user' => $event['VM-User'] ?? '',
             'domain' => $event['VM-Domain'] ?? '',
             'caller_id_number' => $event['VM-Caller-ID-Number'] ?? '',
@@ -144,8 +148,10 @@ class EventProcessor
             'message_len' => $event['VM-Message-Len'] ?? '0',
         ];
 
+        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_VOICEMAIL_RECEIVED, $vmData);
+
         $this->webhookDispatcher->dispatch($tenantId, 'voicemail.received', $data);
-        Log::debug('Voicemail received', $data);
+        Log::debug('Voicemail received', $vmData);
     }
 
     protected function handleRegistration(array $event, string $action): void
@@ -160,7 +166,7 @@ class EventProcessor
             return;
         }
 
-        $data = [
+        $regData = [
             'user' => $event['from-user'] ?? $event['username'] ?? '',
             'domain' => $domain,
             'contact' => $event['contact'] ?? '',
@@ -169,11 +175,32 @@ class EventProcessor
             'action' => $action,
         ];
 
+        $eventType = $action === 'registered'
+            ? CallEventLog::EVENT_DEVICE_REGISTERED
+            : CallEventLog::EVENT_DEVICE_UNREGISTERED;
+
+        $data = $this->buildEventPayload($tenant->id, $eventType, $regData);
+
         CallEvent::dispatch($tenant->id, $action, $data);
         $this->webhookDispatcher->dispatch($tenant->id, "registration.{$action}", $data);
-        $this->recordEvent($tenant->id, $action, $data);
+        $this->recordEvent($tenant->id, $eventType, $data);
 
-        Log::debug("SIP {$action}", ['user' => $data['user'], 'domain' => $domain]);
+        Log::debug("SIP {$action}", ['user' => $regData['user'], 'domain' => $domain]);
+    }
+
+    /**
+     * Build an immutable event payload with canonical fields.
+     */
+    protected function buildEventPayload(string $tenantId, string $eventType, array $metadata): array
+    {
+        return [
+            'tenant_id' => $tenantId,
+            'call_uuid' => $metadata['uuid'] ?? $metadata['user'] ?? '',
+            'event_type' => $eventType,
+            'timestamp' => now()->toIso8601String(),
+            'schema_version' => CallEventLog::SCHEMA_VERSION,
+            'metadata' => $metadata,
+        ];
     }
 
     /**
@@ -219,26 +246,27 @@ class EventProcessor
     protected function createCdr(string $tenantId, array $data, array $event): void
     {
         try {
+            $meta = $data['metadata'] ?? $data;
             CallDetailRecord::create([
                 'tenant_id' => $tenantId,
-                'uuid' => $data['uuid'],
-                'caller_id_name' => $data['caller_id_name'],
-                'caller_id_number' => $data['caller_id_number'],
-                'destination_number' => $data['destination_number'],
+                'uuid' => $meta['uuid'] ?? $data['call_uuid'] ?? '',
+                'caller_id_name' => $meta['caller_id_name'] ?? '',
+                'caller_id_number' => $meta['caller_id_number'] ?? '',
+                'destination_number' => $meta['destination_number'] ?? '',
                 'context' => $event['Caller-Context'] ?? null,
                 'start_stamp' => $event['variable_start_stamp'] ?? now(),
                 'answer_stamp' => $event['variable_answer_stamp'] ?? null,
                 'end_stamp' => $event['variable_end_stamp'] ?? now(),
-                'duration' => $data['duration'],
-                'billsec' => $data['billsec'],
-                'hangup_cause' => $data['hangup_cause'],
-                'direction' => in_array($data['direction'], ['inbound', 'outbound', 'local'])
-                    ? $data['direction']
+                'duration' => $meta['duration'] ?? 0,
+                'billsec' => $meta['billsec'] ?? 0,
+                'hangup_cause' => $meta['hangup_cause'] ?? 'NORMAL_CLEARING',
+                'direction' => in_array($meta['direction'] ?? '', ['inbound', 'outbound', 'local'])
+                    ? $meta['direction']
                     : 'local',
                 'recording_path' => $event['variable_record_file_path'] ?? null,
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to create CDR', ['error' => $e->getMessage(), 'uuid' => $data['uuid']]);
+            Log::error('Failed to create CDR', ['error' => $e->getMessage(), 'uuid' => $data['call_uuid'] ?? 'unknown']);
         }
     }
 
@@ -250,9 +278,10 @@ class EventProcessor
         try {
             CallEventLog::create([
                 'tenant_id' => $tenantId,
-                'call_uuid' => $data['uuid'] ?? $data['user'] ?? '',
+                'call_uuid' => $data['call_uuid'] ?? $data['uuid'] ?? $data['user'] ?? '',
                 'event_type' => $eventType,
                 'payload' => $data,
+                'schema_version' => CallEventLog::SCHEMA_VERSION,
                 'occurred_at' => now(),
             ]);
         } catch (\Exception $e) {

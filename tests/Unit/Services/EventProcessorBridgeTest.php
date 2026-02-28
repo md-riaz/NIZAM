@@ -85,8 +85,8 @@ class EventProcessorBridgeTest extends TestCase
 
         Event::assertDispatched(CallEvent::class, function (CallEvent $e) {
             return $e->eventType === 'bridge'
-                && isset($e->data['other_leg_uuid'])
-                && $e->data['other_leg_uuid'] === 'other-leg-uuid-123';
+                && isset($e->data['metadata']['other_leg_uuid'])
+                && $e->data['metadata']['other_leg_uuid'] === 'other-leg-uuid-123';
         });
     }
 

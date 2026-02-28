@@ -3,10 +3,81 @@
 namespace App\Services;
 
 use App\Models\CallRoutingPolicy;
+use App\Models\Tenant;
 use Carbon\Carbon;
 
 class PolicyEvaluator
 {
+    /** Policy decision constants */
+    public const DECISION_ALLOW = 'allow';
+
+    public const DECISION_REDIRECT = 'redirect';
+
+    public const DECISION_REJECT = 'reject';
+
+    public const DECISION_MODIFY = 'modify';
+
+    /**
+     * Evaluate a policy and return a structured decision.
+     *
+     * @return array{decision: string, redirect_to?: string, metadata?: array, reason?: string}
+     */
+    public function evaluatePolicy(CallRoutingPolicy $policy, array $context = []): array
+    {
+        // Check tenant suspension
+        if (isset($context['tenant_id'])) {
+            $tenant = Tenant::find($context['tenant_id']);
+            if ($tenant && ! $tenant->isOperational()) {
+                return [
+                    'decision' => self::DECISION_REJECT,
+                    'reason' => 'Tenant is suspended or terminated.',
+                ];
+            }
+        }
+
+        // Evaluate blacklist first
+        foreach ($policy->conditions ?? [] as $condition) {
+            if (($condition['type'] ?? '') === 'blacklist') {
+                $callerId = $context['caller_id'] ?? '';
+                $numbers = $condition['params']['numbers'] ?? [];
+                if (in_array($callerId, $numbers)) {
+                    return [
+                        'decision' => self::DECISION_REJECT,
+                        'reason' => 'Caller is blacklisted.',
+                    ];
+                }
+            }
+        }
+
+        $matched = $this->evaluate($policy, $context);
+
+        if ($matched) {
+            if ($policy->match_destination_type && $policy->match_destination_id) {
+                return [
+                    'decision' => self::DECISION_REDIRECT,
+                    'redirect_to' => [
+                        'type' => $policy->match_destination_type,
+                        'id' => $policy->match_destination_id,
+                    ],
+                ];
+            }
+
+            return ['decision' => self::DECISION_ALLOW];
+        }
+
+        if ($policy->no_match_destination_type && $policy->no_match_destination_id) {
+            return [
+                'decision' => self::DECISION_REDIRECT,
+                'redirect_to' => [
+                    'type' => $policy->no_match_destination_type,
+                    'id' => $policy->no_match_destination_id,
+                ],
+            ];
+        }
+
+        return ['decision' => self::DECISION_ALLOW];
+    }
+
     /**
      * Evaluate all conditions in a policy. Returns true if all conditions match.
      */

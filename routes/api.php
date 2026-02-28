@@ -75,6 +75,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::apiResource('webhooks', WebhookController::class);
         Route::get('webhooks/{webhook}/delivery-attempts', [WebhookController::class, 'deliveryAttempts'])
             ->name('webhooks.delivery-attempts');
+        Route::get('webhooks/{webhook}/delivery-stats', [WebhookController::class, 'deliveryStats'])
+            ->name('webhooks.delivery-stats');
 
         Route::apiResource('call-routing-policies', CallRoutingPolicyController::class);
         Route::apiResource('call-flows', CallFlowController::class);
@@ -88,9 +90,13 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('call-events', [CallEventController::class, 'index'])->name('call-events.index');
         Route::get('call-events/stream', [CallEventStreamController::class, 'stream'])->name('call-events.stream');
         Route::get('call-events/{callUuid}/trace', [CallEventController::class, 'trace'])->name('call-events.trace');
+        Route::get('call-events/replay/{eventId}', [CallEventController::class, 'replay'])->name('call-events.replay');
 
         Route::post('calls/originate', [CallController::class, 'originate'])->name('calls.originate');
         Route::get('calls/status', [CallController::class, 'status'])->name('calls.status');
+        Route::post('calls/hangup', [CallController::class, 'hangup'])->name('calls.hangup');
+        Route::post('calls/transfer', [CallController::class, 'transfer'])->name('calls.transfer');
+        Route::post('calls/recording', [CallController::class, 'toggleRecording'])->name('calls.recording');
 
         // Audit logs (read-only)
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
