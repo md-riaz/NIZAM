@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateTenantRequest;
 use App\Http\Resources\TenantResource;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * API controller for managing tenants.
@@ -77,5 +78,37 @@ class TenantController extends Controller
         $tenant->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Get tenant settings.
+     */
+    public function settings(Tenant $tenant): JsonResponse
+    {
+        $this->authorize('view', $tenant);
+
+        return response()->json([
+            'data' => $tenant->settings ?? [],
+        ]);
+    }
+
+    /**
+     * Merge-update tenant settings.
+     */
+    public function updateSettings(Request $request, Tenant $tenant): JsonResponse
+    {
+        $this->authorize('update', $tenant);
+
+        $validated = $request->validate([
+            'settings' => 'required|array',
+        ]);
+
+        $tenant->update([
+            'settings' => array_merge($tenant->settings ?? [], $validated['settings']),
+        ]);
+
+        return response()->json([
+            'data' => $tenant->settings,
+        ]);
     }
 }
