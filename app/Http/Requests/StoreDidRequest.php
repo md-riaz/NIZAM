@@ -16,7 +16,7 @@ class StoreDidRequest extends FormRequest
         return [
             'number' => 'required|string',
             'description' => 'nullable|string',
-            'destination_type' => 'required|in:extension,ring_group,ivr,time_condition,voicemail',
+            'destination_type' => 'required|in:extension,ring_group,ivr,time_condition,voicemail,call_routing_policy,call_flow',
             'destination_id' => 'required|uuid',
             'is_active' => 'boolean',
         ];

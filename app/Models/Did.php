@@ -48,6 +48,8 @@ class Did extends Model
             'ivr' => Ivr::class,
             'time_condition' => TimeCondition::class,
             'voicemail' => Extension::class,
+            'call_routing_policy' => CallRoutingPolicy::class,
+            'call_flow' => CallFlow::class,
         ]);
     }
 

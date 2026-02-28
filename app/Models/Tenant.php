@@ -89,4 +89,14 @@ class Tenant extends Model
     {
         return $this->hasMany(Recording::class);
     }
+
+    public function callRoutingPolicies(): HasMany
+    {
+        return $this->hasMany(CallRoutingPolicy::class);
+    }
+
+    public function callFlows(): HasMany
+    {
+        return $this->hasMany(CallFlow::class);
+    }
 }

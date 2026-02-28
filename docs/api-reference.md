@@ -243,7 +243,9 @@ Authorization: Bearer YOUR_TOKEN
     "recordings_count": 320,
     "recordings_total_size": 524288000,
     "device_profiles_count": 15,
-    "webhooks_count": 4
+    "webhooks_count": 4,
+    "call_routing_policies_count": 3,
+    "call_flows_count": 2
   }
 }
 ```
@@ -317,7 +319,139 @@ DELETE /api/tenants/{tenant_id}/dids/{id}
 }
 ```
 
-**Destination types:** `extension`, `ring_group`, `ivr`, `voicemail`, `time_condition`
+**Destination types:** `extension`, `ring_group`, `ivr`, `voicemail`, `time_condition`, `call_routing_policy`, `call_flow`
+
+---
+
+## Call Routing Policies
+
+Policy-driven routing: DID → policy → outcome. Conditions are AND-evaluated at runtime.
+
+```http
+GET    /api/tenants/{tenant_id}/call-routing-policies
+POST   /api/tenants/{tenant_id}/call-routing-policies
+GET    /api/tenants/{tenant_id}/call-routing-policies/{id}
+PUT    /api/tenants/{tenant_id}/call-routing-policies/{id}
+DELETE /api/tenants/{tenant_id}/call-routing-policies/{id}
+```
+
+### Create Call Routing Policy
+
+```json
+{
+  "name": "Business Hours Policy",
+  "description": "Route based on business hours and caller ID",
+  "conditions": [
+    { "type": "time_of_day", "params": { "start": "09:00", "end": "17:00" } },
+    { "type": "day_of_week", "params": { "days": ["mon", "tue", "wed", "thu", "fri"] } }
+  ],
+  "match_destination_type": "extension",
+  "match_destination_id": "extension-uuid",
+  "no_match_destination_type": "voicemail",
+  "no_match_destination_id": "extension-uuid",
+  "priority": 10,
+  "is_active": true
+}
+```
+
+**Condition Types:**
+
+| Type | Params | Description |
+|------|--------|-------------|
+| `time_of_day` | `start`, `end` (HH:MM) | Match within a time range |
+| `day_of_week` | `days` (array: mon, tue, etc.) | Match on specific days |
+| `caller_id_pattern` | `pattern` (wildcard string) | Match caller ID with `*` wildcard |
+| `blacklist` | `numbers` (array of E.164) | Reject if caller is in list |
+| `geo_prefix` | `prefixes` (array of dial prefixes) | Match caller by geographic prefix |
+
+**Match/No-Match Destination Types:** `extension`, `ring_group`, `ivr`, `voicemail`, `call_flow`
+
+Policies are returned ordered by `priority` (ascending). When a DID routes to a policy, conditions are evaluated top-down. If all conditions match, the call routes to `match_destination`. Otherwise, it routes to `no_match_destination`.
+
+---
+
+## Call Flows
+
+Composable call flow graphs. Each flow is a sequence of nodes that are compiled into FreeSWITCH dialplan actions.
+
+```http
+GET    /api/tenants/{tenant_id}/call-flows
+POST   /api/tenants/{tenant_id}/call-flows
+GET    /api/tenants/{tenant_id}/call-flows/{id}
+PUT    /api/tenants/{tenant_id}/call-flows/{id}
+DELETE /api/tenants/{tenant_id}/call-flows/{id}
+```
+
+### Create Call Flow
+
+```json
+{
+  "name": "Welcome Flow",
+  "description": "Play greeting then bridge to extension",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "play_prompt",
+      "data": { "file": "welcome.wav" },
+      "next": "bridge1"
+    },
+    {
+      "id": "bridge1",
+      "type": "bridge",
+      "data": { "destination_type": "extension", "destination_id": "ext-uuid" },
+      "next": null
+    }
+  ],
+  "is_active": true
+}
+```
+
+**Node Types:**
+
+| Type | Data Fields | Description |
+|------|-------------|-------------|
+| `play_prompt` | `file` | Play an audio file |
+| `collect_input` | `min_digits`, `max_digits`, `timeout`, `file` | Play prompt and collect DTMF digits |
+| `bridge` | `destination_type`, `destination_id` | Bridge call to a destination |
+| `record` | `path` | Record the call |
+| `webhook` | `url` | Make an HTTP request to an external URL |
+| `api_call` | (varies) | Call an external API |
+| `branch` | (varies) | Conditional branching |
+
+Each node has an `id` (unique within the flow), a `type`, a `data` object, and an optional `next` pointer to the next node ID.
+
+---
+
+## Webhook Delivery Attempts
+
+View the delivery history for any webhook. Each attempt is logged with status, response, and error details.
+
+```http
+GET /api/tenants/{tenant_id}/webhooks/{webhook_id}/delivery-attempts
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "webhook_id": "uuid",
+      "event_type": "call.started",
+      "payload": { "call_uuid": "abc-123", "caller": "+15551234567" },
+      "response_status": 200,
+      "attempt": 1,
+      "success": true,
+      "error_message": null,
+      "delivered_at": "2026-02-28T10:00:00.000000Z",
+      "created_at": "2026-02-28T10:00:00.000000Z"
+    }
+  ]
+}
+```
+
+Delivery attempts are created automatically when the `DeliverWebhook` job runs. Failed deliveries include `error_message` and `response_status`. The job retries up to 3 times with exponential backoff (10s, 60s, 300s).
 
 ---
 

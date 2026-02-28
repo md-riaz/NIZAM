@@ -62,6 +62,14 @@ class SyncPermissionsCommand extends Command
         'users.update' => 'Update users',
         'users.delete' => 'Delete users',
         'audit_logs.view' => 'View audit logs',
+        'call_routing_policies.view' => 'View call routing policies',
+        'call_routing_policies.create' => 'Create call routing policies',
+        'call_routing_policies.update' => 'Update call routing policies',
+        'call_routing_policies.delete' => 'Delete call routing policies',
+        'call_flows.view' => 'View call flows',
+        'call_flows.create' => 'Create call flows',
+        'call_flows.update' => 'Update call flows',
+        'call_flows.delete' => 'Delete call flows',
     ];
 
     public function handle(ModuleRegistry $registry): int

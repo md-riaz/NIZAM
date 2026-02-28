@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Webhook;
+use App\Models\WebhookDeliveryAttempt;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -50,6 +51,17 @@ class DeliverWebhook implements ShouldQueue
                 ->withBody($body, 'application/json')
                 ->post($this->webhook->url);
 
+            WebhookDeliveryAttempt::create([
+                'webhook_id' => $this->webhook->id,
+                'event_type' => $this->eventType,
+                'payload' => $this->payload,
+                'response_status' => $response->status(),
+                'response_body' => substr((string) $response->body(), 0, 1000),
+                'attempt' => $this->attempts(),
+                'success' => $response->successful(),
+                'delivered_at' => now(),
+            ]);
+
             if ($response->failed()) {
                 Log::warning('Webhook delivery failed', [
                     'webhook_id' => $this->webhook->id,
@@ -59,6 +71,16 @@ class DeliverWebhook implements ShouldQueue
                 ]);
             }
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            WebhookDeliveryAttempt::create([
+                'webhook_id' => $this->webhook->id,
+                'event_type' => $this->eventType,
+                'payload' => $this->payload,
+                'attempt' => $this->attempts(),
+                'success' => false,
+                'error_message' => $e->getMessage(),
+                'delivered_at' => now(),
+            ]);
+
             Log::error('Webhook connection error', [
                 'webhook_id' => $this->webhook->id,
                 'url' => $this->webhook->url,
