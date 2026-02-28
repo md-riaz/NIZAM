@@ -109,7 +109,7 @@ class CallEventController extends Controller
         }
 
         $dispatcher = app(WebhookDispatcher::class);
-        $dispatched = $dispatcher->dispatch($tenant->id, $event->event_type, $event->payload ?? []);
+        $dispatcher->dispatch($tenant->id, $event->event_type, $event->payload ?? []);
 
         return response()->json([
             'message' => 'Event re-dispatched to webhooks.',
