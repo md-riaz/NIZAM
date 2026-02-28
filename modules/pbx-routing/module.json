@@ -1,7 +1,0 @@
-{
-    "name": "pbx-routing",
-    "version": "1.0.0",
-    "description": "PBX routing: DIDs, ring groups, IVR, time conditions",
-    "dependencies": [],
-    "namespace": "Modules\\PbxRouting"
-}

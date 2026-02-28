@@ -1,0 +1,11 @@
+{
+    "name": "PbxProvisioning",
+    "alias": "pbx-provisioning",
+    "description": "Provisioning: device templates, MAC detection, credential injection",
+    "keywords": ["pbx", "provisioning", "device"],
+    "priority": 0,
+    "providers": [
+        "Modules\\PbxProvisioning\\Providers\\PbxProvisioningServiceProvider"
+    ],
+    "files": []
+}

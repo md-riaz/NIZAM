@@ -18,19 +18,21 @@ class MakeModuleCommand extends Command
         $kebabName = Str::kebab($name);
         $snakeName = Str::snake($name);
 
-        $basePath = base_path("modules/{$kebabName}");
+        $basePath = base_path("modules/{$studlyName}");
 
         if (is_dir($basePath)) {
-            $this->error("Module directory already exists: modules/{$kebabName}");
+            $this->error("Module directory already exists: modules/{$studlyName}");
 
             return self::FAILURE;
         }
 
-        // Create directory structure
+        // Create directory structure (nwidart convention)
         $directories = [
-            $basePath.'/src',
+            $basePath.'/app',
+            $basePath.'/app/Providers',
             $basePath.'/database/migrations',
             $basePath.'/config',
+            $basePath.'/routes',
             $basePath.'/tests',
         ];
 
@@ -42,22 +44,34 @@ class MakeModuleCommand extends Command
             }
         }
 
-        // Generate module class
+        // Generate module class (NizamModule implementation for telecom hooks)
         file_put_contents(
-            "{$basePath}/src/{$studlyName}Module.php",
+            "{$basePath}/app/{$studlyName}Module.php",
             $this->generateModuleClass($studlyName, $kebabName, $snakeName)
+        );
+
+        // Generate ServiceProvider (nwidart convention)
+        file_put_contents(
+            "{$basePath}/app/Providers/{$studlyName}ServiceProvider.php",
+            $this->generateServiceProvider($studlyName, $kebabName, $snakeName)
+        );
+
+        // Generate module.json (nwidart convention)
+        file_put_contents(
+            "{$basePath}/module.json",
+            $this->generateModuleJson($studlyName, $kebabName)
         );
 
         // Generate config file
         file_put_contents(
-            "{$basePath}/config/{$snakeName}.php",
+            "{$basePath}/config/config.php",
             $this->generateConfig($studlyName)
         );
 
-        // Generate service provider
+        // Generate routes file
         file_put_contents(
-            "{$basePath}/src/{$studlyName}ServiceProvider.php",
-            $this->generateServiceProvider($studlyName, $kebabName, $snakeName)
+            "{$basePath}/routes/api.php",
+            $this->generateRoutes($studlyName, $kebabName)
         );
 
         // Generate README
@@ -72,22 +86,28 @@ class MakeModuleCommand extends Command
             $this->generateComposerJson($studlyName, $kebabName)
         );
 
-        $this->info("Module skeleton created at: modules/{$kebabName}/");
+        $this->info("Module skeleton created at: modules/{$studlyName}/");
         $this->newLine();
         $this->line('  <comment>Files created:</comment>');
-        $this->line("    src/{$studlyName}Module.php       — Module implementation");
-        $this->line("    src/{$studlyName}ServiceProvider.php — Laravel service provider");
-        $this->line("    config/{$snakeName}.php           — Module configuration");
-        $this->line('    database/migrations/              — Module migrations directory');
-        $this->line('    tests/                            — Module tests directory');
-        $this->line('    composer.json                     — Package manifest');
-        $this->line('    README.md                         — Module documentation');
+        $this->line("    app/{$studlyName}Module.php           — NizamModule implementation (telecom hooks)");
+        $this->line("    app/Providers/{$studlyName}ServiceProvider.php — Laravel service provider");
+        $this->line('    module.json                           — nwidart module manifest');
+        $this->line('    config/config.php                     — Module configuration');
+        $this->line('    routes/api.php                        — Module API routes');
+        $this->line('    database/migrations/                  — Module migrations directory');
+        $this->line('    tests/                                — Module tests directory');
+        $this->line('    composer.json                         — Package manifest');
+        $this->line('    README.md                             — Module documentation');
         $this->newLine();
         $this->line('  <comment>Next steps:</comment>');
-        $this->line('    1. Register the module in AppServiceProvider:');
-        $this->line("       \$registry->register(new \\Modules\\{$studlyName}\\{$studlyName}Module());");
+        $this->line("    1. Add to config/nizam.php 'modules' section:");
+        $this->line("       '{$kebabName}' => [");
+        $this->line("           'class' => \\Modules\\{$studlyName}\\{$studlyName}Module::class,");
+        $this->line("           'enabled' => env('MODULE_".strtoupper(Str::snake($studlyName))."', true),");
+        $this->line('       ],');
         $this->line('    2. Implement your dialplan contributions, event handlers, and permissions');
         $this->line('    3. Add migrations to database/migrations/');
+        $this->line("    4. Enable the module: php artisan module:enable {$studlyName}");
 
         return self::SUCCESS;
     }
@@ -116,6 +136,16 @@ class {$studlyName}Module implements NizamModule
     public function version(): string
     {
         return '1.0.0';
+    }
+
+    public function dependencies(): array
+    {
+        return [];
+    }
+
+    public function config(): array
+    {
+        return [];
     }
 
     public function register(): void
@@ -150,11 +180,6 @@ class {$studlyName}Module implements NizamModule
     public function handleEvent(string \$eventType, array \$data): void
     {
         // Handle events from subscribed types
-        // switch (\$eventType) {
-        //     case 'call.hangup':
-        //         // Process hangup event
-        //         break;
-        // }
     }
 
     public function permissions(): array
@@ -169,9 +194,62 @@ class {$studlyName}Module implements NizamModule
     {
         return __DIR__ . '/../database/migrations';
     }
+
+    public function routesFile(): ?string
+    {
+        return __DIR__ . '/../routes/api.php';
+    }
+
+    public function policyHooks(): array
+    {
+        return [];
+    }
 }
 
 PHP;
+    }
+
+    protected function generateServiceProvider(string $studlyName, string $kebabName, string $snakeName): string
+    {
+        return <<<PHP
+<?php
+
+namespace Modules\\{$studlyName}\\Providers;
+
+use Illuminate\\Support\\ServiceProvider;
+
+class {$studlyName}ServiceProvider extends ServiceProvider
+{
+    protected string \$name = '{$studlyName}';
+
+    public function boot(): void
+    {
+        \$this->loadMigrationsFrom(module_path(\$this->name, 'database/migrations'));
+        \$this->loadRoutesFrom(module_path(\$this->name, 'routes/api.php'));
+    }
+
+    public function register(): void {}
+}
+
+PHP;
+    }
+
+    protected function generateModuleJson(string $studlyName, string $kebabName): string
+    {
+        return <<<JSON
+{
+    "name": "{$studlyName}",
+    "alias": "{$kebabName}",
+    "description": "{$studlyName} module for NIZAM",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\\\{$studlyName}\\\\Providers\\\\{$studlyName}ServiceProvider"
+    ],
+    "files": []
+}
+
+JSON;
     }
 
     protected function generateConfig(string $studlyName): string
@@ -188,30 +266,24 @@ return [
 PHP;
     }
 
-    protected function generateServiceProvider(string $studlyName, string $kebabName, string $snakeName): string
+    protected function generateRoutes(string $studlyName, string $kebabName): string
     {
         return <<<PHP
 <?php
 
-namespace Modules\\{$studlyName};
+use Illuminate\\Support\\Facades\\Route;
 
-use App\\Modules\\ModuleRegistry;
-use Illuminate\\Support\\ServiceProvider;
+/*
+|--------------------------------------------------------------------------
+| {$studlyName} Module API Routes
+|--------------------------------------------------------------------------
+*/
 
-class {$studlyName}ServiceProvider extends ServiceProvider
-{
-    public function register(): void
-    {
-        \$this->mergeConfigFrom(__DIR__ . '/../config/{$snakeName}.php', '{$snakeName}');
-    }
-
-    public function boot(): void
-    {
-        /** @var ModuleRegistry \$registry */
-        \$registry = \$this->app->make(ModuleRegistry::class);
-        \$registry->register(new {$studlyName}Module());
-    }
-}
+Route::prefix('api')->middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+    Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
+        // Add your module routes here
+    });
+});
 
 PHP;
     }
@@ -225,7 +297,10 @@ A NIZAM module for {$studlyName} functionality.
 
 ## Installation
 
-Register the module in your `AppServiceProvider` or use the auto-discovery service provider.
+This module is managed by nwidart/laravel-modules.
+
+Enable: `php artisan module:enable {$studlyName}`
+Disable: `php artisan module:disable {$studlyName}`
 
 ## Configuration
 
@@ -241,6 +316,7 @@ php artisan vendor:publish --tag={$kebabName}-config
 - **Events**: Subscribe to call lifecycle and system events
 - **Permissions**: Extend the RBAC system with module-specific permissions
 - **Migrations**: Isolated database migrations in `database/migrations/`
+- **Routes**: Module-owned API routes in `routes/api.php`
 
 MD;
     }
@@ -254,13 +330,14 @@ MD;
     "type": "nizam-module",
     "autoload": {
         "psr-4": {
-            "Modules\\\\{$studlyName}\\\\": "src/"
+            "Modules\\\\{$studlyName}\\\\": "app/",
+            "Modules\\\\{$studlyName}\\\\Providers\\\\": "app/Providers/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Modules\\\\{$studlyName}\\\\{$studlyName}ServiceProvider"
+                "Modules\\\\{$studlyName}\\\\Providers\\\\{$studlyName}ServiceProvider"
             ]
         }
     }

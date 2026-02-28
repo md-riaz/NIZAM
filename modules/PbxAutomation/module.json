@@ -1,0 +1,11 @@
+{
+    "name": "PbxAutomation",
+    "alias": "pbx-automation",
+    "description": "Automation: webhooks, event subscriptions, call control API",
+    "keywords": ["pbx", "automation", "webhook"],
+    "priority": 0,
+    "providers": [
+        "Modules\\PbxAutomation\\Providers\\PbxAutomationServiceProvider"
+    ],
+    "files": []
+}

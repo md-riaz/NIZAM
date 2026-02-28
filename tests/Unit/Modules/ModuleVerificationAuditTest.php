@@ -563,11 +563,11 @@ class ModuleVerificationAuditTest extends TestCase
 
         // Module routes also use tenant.access middleware
         $moduleRoutes = [
-            base_path('modules/pbx-routing/routes/api.php'),
-            base_path('modules/pbx-contact-center/routes/api.php'),
-            base_path('modules/pbx-automation/routes/api.php'),
-            base_path('modules/pbx-analytics/routes/api.php'),
-            base_path('modules/pbx-provisioning/routes/api.php'),
+            base_path('modules/PbxRouting/routes/api.php'),
+            base_path('modules/PbxContactCenter/routes/api.php'),
+            base_path('modules/PbxAutomation/routes/api.php'),
+            base_path('modules/PbxAnalytics/routes/api.php'),
+            base_path('modules/PbxProvisioning/routes/api.php'),
         ];
 
         foreach ($moduleRoutes as $file) {
@@ -648,11 +648,11 @@ class ModuleVerificationAuditTest extends TestCase
     public function test_cp11_module_routes_use_auth_middleware(): void
     {
         $moduleRoutes = [
-            base_path('modules/pbx-routing/routes/api.php'),
-            base_path('modules/pbx-contact-center/routes/api.php'),
-            base_path('modules/pbx-automation/routes/api.php'),
-            base_path('modules/pbx-analytics/routes/api.php'),
-            base_path('modules/pbx-provisioning/routes/api.php'),
+            base_path('modules/PbxRouting/routes/api.php'),
+            base_path('modules/PbxContactCenter/routes/api.php'),
+            base_path('modules/PbxAutomation/routes/api.php'),
+            base_path('modules/PbxAnalytics/routes/api.php'),
+            base_path('modules/PbxProvisioning/routes/api.php'),
         ];
 
         foreach ($moduleRoutes as $file) {
@@ -668,11 +668,11 @@ class ModuleVerificationAuditTest extends TestCase
     public function test_cp11_module_routes_use_rate_limiting(): void
     {
         $moduleRoutes = [
-            base_path('modules/pbx-routing/routes/api.php'),
-            base_path('modules/pbx-contact-center/routes/api.php'),
-            base_path('modules/pbx-automation/routes/api.php'),
-            base_path('modules/pbx-analytics/routes/api.php'),
-            base_path('modules/pbx-provisioning/routes/api.php'),
+            base_path('modules/PbxRouting/routes/api.php'),
+            base_path('modules/PbxContactCenter/routes/api.php'),
+            base_path('modules/PbxAutomation/routes/api.php'),
+            base_path('modules/PbxAnalytics/routes/api.php'),
+            base_path('modules/PbxProvisioning/routes/api.php'),
         ];
 
         foreach ($moduleRoutes as $file) {

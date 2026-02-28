@@ -9,7 +9,8 @@
         "php": "^8.2",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.3",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "nwidart/laravel-modules": "^12.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -25,11 +26,16 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
-            "Modules\\PbxRouting\\": "modules/pbx-routing/src/",
-            "Modules\\PbxContactCenter\\": "modules/pbx-contact-center/src/",
-            "Modules\\PbxAutomation\\": "modules/pbx-automation/src/",
-            "Modules\\PbxAnalytics\\": "modules/pbx-analytics/src/",
-            "Modules\\PbxProvisioning\\": "modules/pbx-provisioning/src/"
+            "Modules\\PbxRouting\\": "modules/PbxRouting/app/",
+            "Modules\\PbxRouting\\Providers\\": "modules/PbxRouting/app/Providers/",
+            "Modules\\PbxContactCenter\\": "modules/PbxContactCenter/app/",
+            "Modules\\PbxContactCenter\\Providers\\": "modules/PbxContactCenter/app/Providers/",
+            "Modules\\PbxAutomation\\": "modules/PbxAutomation/app/",
+            "Modules\\PbxAutomation\\Providers\\": "modules/PbxAutomation/app/Providers/",
+            "Modules\\PbxAnalytics\\": "modules/PbxAnalytics/app/",
+            "Modules\\PbxAnalytics\\Providers\\": "modules/PbxAnalytics/app/Providers/",
+            "Modules\\PbxProvisioning\\": "modules/PbxProvisioning/app/",
+            "Modules\\PbxProvisioning\\Providers\\": "modules/PbxProvisioning/app/Providers/"
         }
     },
     "autoload-dev": {
@@ -84,7 +90,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "wikimedia/composer-merge-plugin": true
         }
     },
     "minimum-stability": "stable",

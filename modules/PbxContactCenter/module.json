@@ -1,0 +1,11 @@
+{
+    "name": "PbxContactCenter",
+    "alias": "pbx-contact-center",
+    "description": "Contact center: queue engine, agent state, SLA metrics, wallboard",
+    "keywords": ["pbx", "contact-center", "queue", "agent"],
+    "priority": 0,
+    "providers": [
+        "Modules\\PbxContactCenter\\Providers\\PbxContactCenterServiceProvider"
+    ],
+    "files": []
+}

@@ -10,7 +10,6 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ModuleRegistry::class, function () {
             $registry = new ModuleRegistry;
 
-            $moduleConfigs = config('modules', []);
+            $moduleConfigs = config('nizam.modules', []);
 
             // Resolve load order based on dependencies
             $moduleClasses = [];
@@ -66,18 +65,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewStatus', fn ($user) => $callPolicy->before($user, 'viewStatus') ?? $callPolicy->viewStatus($user));
         Gate::define('callControl', fn ($user) => $callPolicy->before($user, 'callControl') ?? $callPolicy->callControl($user));
 
-        // Boot all registered modules, load their migrations and routes
+        // Boot all NIZAM modules (telecom hooks: dialplan, policy, events)
+        // Routes and migrations are handled by nwidart/laravel-modules ServiceProviders
         $registry = $this->app->make(ModuleRegistry::class);
         $registry->bootAll();
-
-        foreach ($registry->collectMigrationPaths() as $path) {
-            $this->loadMigrationsFrom($path);
-        }
-
-        foreach ($registry->collectRouteFiles() as $routeFile) {
-            Route::prefix('api')
-                ->middleware('api')
-                ->group($routeFile);
-        }
     }
 }

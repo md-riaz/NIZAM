@@ -1,0 +1,11 @@
+{
+    "name": "PbxRouting",
+    "alias": "pbx-routing",
+    "description": "PBX routing: DIDs, ring groups, IVR, time conditions",
+    "keywords": ["pbx", "routing", "did", "ivr"],
+    "priority": 0,
+    "providers": [
+        "Modules\\PbxRouting\\Providers\\PbxRoutingServiceProvider"
+    ],
+    "files": []
+}

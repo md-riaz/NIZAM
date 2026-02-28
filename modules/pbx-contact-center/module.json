@@ -1,7 +1,0 @@
-{
-    "name": "pbx-contact-center",
-    "version": "1.0.0",
-    "description": "Contact center: queue engine, agent state, SLA metrics, wallboard",
-    "dependencies": [],
-    "namespace": "Modules\\PbxContactCenter"
-}
