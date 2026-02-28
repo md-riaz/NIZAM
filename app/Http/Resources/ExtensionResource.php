@@ -13,6 +13,7 @@ class ExtensionResource extends JsonResource
             'id' => $this->id,
             'tenant_id' => $this->tenant_id,
             'extension' => $this->extension,
+            'password' => $this->password,
             'directory_first_name' => $this->directory_first_name,
             'directory_last_name' => $this->directory_last_name,
             'effective_caller_id_name' => $this->effective_caller_id_name,

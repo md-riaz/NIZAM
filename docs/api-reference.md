@@ -177,7 +177,9 @@ Content-Type: application/json
 }
 ```
 
-**Note:** `password` is encrypted at rest but never returned in API responses. `voicemail_pin` is stored in plaintext and included in API responses for display in dashboards.
+**Note:** Both `password` and `voicemail_pin` are stored as plaintext and included in API responses. `password` is accessible for webphone/sip.js integration. Webhook `secret` remains encrypted at rest and hidden from API responses.
+
+**Security:** Since SIP credentials are transmitted in API responses, always enforce HTTPS in production and restrict API access via Sanctum token authentication and tenant-scoped middleware.
 
 ### Get / Update / Delete Extension
 

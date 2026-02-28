@@ -63,7 +63,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Role-based authorization (admin bypasses tenant checks)
 
 ### Extensions
-- SIP user management with encrypted passwords (at-rest encryption via Laravel `encrypted` cast)
+- SIP user management with plaintext passwords (accessible for webphone/sip.js integration)
 - Voicemail settings (PIN stored in plaintext for display in dashboards/API)
 - Caller ID control (effective and outbound)
 
@@ -127,7 +127,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Error isolation per module
 
 ### Security
-- SIP passwords encrypted at rest (Laravel `encrypted` cast)
+- SIP passwords stored as plaintext for webphone/sip.js integration
 - Webhook secrets encrypted at rest
 - API rate limiting (60 requests/minute per user or IP)
 - Tenant isolation middleware on all scoped routes
@@ -429,7 +429,7 @@ NIZAM/
 
 | Field | Storage | Reason |
 |-------|---------|--------|
-| Extension `password` | **Encrypted** (Laravel `encrypted` cast) | SIP credentials must be protected at rest. Decrypted transparently when serving FreeSWITCH directory XML. |
+| Extension `password` | **Plaintext** | SIP credentials stored as plaintext so webphone clients (e.g., sip.js) and the FreeSWITCH directory can use them directly. Included in API responses. |
 | Extension `voicemail_pin` | **Plaintext** | Needs to be displayed in API responses and dashboard templates. |
 | Webhook `secret` | **Encrypted** (Laravel `encrypted` cast) | HMAC signing secrets must be protected at rest. Hidden from API serialization. |
 
@@ -444,7 +444,7 @@ NIZAM/
 5. **Multi-tenant by design** — Domain isolation from day one
 6. **Modules are plug-in packages** — Extensible via `NizamModule` interface
 7. **Observability is mandatory** — Event logging, audit trails, CDR tracking, call trace by UUID
-8. **Security by default** — Encrypted credentials, rate limiting, tenant isolation, audit logging
+8. **Security by default** — Webhook secret encryption, rate limiting, tenant isolation, audit logging
 
 ---
 
