@@ -108,8 +108,6 @@ class CallDetailRecordController extends Controller
             $query->where('start_stamp', '<=', $request->input('date_to'));
         }
 
-        $cdrs = $query->limit(10000)->get();
-
         $headers = [
             'Content-Type' => 'text/csv; charset=utf-8',
             'Content-Disposition' => 'attachment; filename="cdrs.csv"',
@@ -121,17 +119,17 @@ class CallDetailRecordController extends Controller
             'duration', 'billsec', 'hangup_cause',
         ];
 
-        return response()->stream(function () use ($cdrs, $columns) {
+        return response()->stream(function () use ($query, $columns) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, $columns);
 
-            foreach ($cdrs as $cdr) {
+            $query->limit(10000)->cursor()->each(function ($cdr) use ($handle, $columns) {
                 $row = [];
                 foreach ($columns as $col) {
                     $row[] = $cdr->{$col};
                 }
                 fputcsv($handle, $row);
-            }
+            });
 
             fclose($handle);
         }, 200, $headers);
