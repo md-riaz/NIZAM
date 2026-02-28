@@ -6,7 +6,6 @@ use App\Models\CallFlow;
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
-use App\Models\Ivr;
 use App\Models\RingGroup;
 use App\Models\Tenant;
 use App\Models\TimeCondition;
@@ -162,43 +161,43 @@ class DialplanCompiler
 
         switch ($did->destination_type) {
             case 'extension':
-                $ext = Extension::find($did->destination_id);
+                $ext = $tenant->extensions()->find($did->destination_id);
                 if ($ext) {
                     $xml .= '            <action application="bridge" data="user/'.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
             case 'ivr':
-                $ivr = Ivr::find($did->destination_id);
+                $ivr = $tenant->ivrs()->find($did->destination_id);
                 if ($ivr) {
                     $xml .= '            <action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
             case 'ring_group':
-                $rg = RingGroup::find($did->destination_id);
+                $rg = $tenant->ringGroups()->find($did->destination_id);
                 if ($rg) {
                     $xml .= $this->compileRingGroupActions($tenant, $rg);
                 }
                 break;
             case 'voicemail':
-                $ext = Extension::find($did->destination_id);
+                $ext = $tenant->extensions()->find($did->destination_id);
                 if ($ext) {
                     $xml .= '            <action application="voicemail" data="default '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
             case 'time_condition':
-                $tc = TimeCondition::find($did->destination_id);
+                $tc = $tenant->timeConditions()->find($did->destination_id);
                 if ($tc) {
                     $xml .= $this->compileTimeConditionActions($tenant, $tc);
                 }
                 break;
             case 'call_routing_policy':
-                $policy = CallRoutingPolicy::find($did->destination_id);
+                $policy = $tenant->callRoutingPolicies()->find($did->destination_id);
                 if ($policy) {
                     $xml .= $this->compilePolicyRouting($tenant, $policy);
                 }
                 break;
             case 'call_flow':
-                $flow = CallFlow::find($did->destination_id);
+                $flow = $tenant->callFlows()->find($did->destination_id);
                 if ($flow) {
                     $xml .= $this->compileCallFlowActions($tenant, $flow);
                 }
@@ -229,7 +228,7 @@ class DialplanCompiler
     protected function compileRingGroupActions(Tenant $tenant, RingGroup $ringGroup): string
     {
         $memberIds = $ringGroup->members ?? [];
-        $extensions = Extension::whereIn('id', $memberIds)->where('is_active', true)->get();
+        $extensions = $tenant->extensions()->whereIn('id', $memberIds)->where('is_active', true)->get();
 
         if ($extensions->isEmpty()) {
             return '';
@@ -320,22 +319,22 @@ class DialplanCompiler
     {
         switch ($type) {
             case 'extension':
-                $ext = Extension::find($id);
+                $ext = $tenant->extensions()->find($id);
                 if ($ext) {
                     return '            <anti-action application="bridge" data="user/'.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
             case 'voicemail':
-                $ext = Extension::find($id);
+                $ext = $tenant->extensions()->find($id);
                 if ($ext) {
                     return '            <anti-action application="voicemail" data="default '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
             case 'ring_group':
-                $rg = RingGroup::find($id);
+                $rg = $tenant->ringGroups()->find($id);
                 if ($rg) {
                     $memberIds = $rg->members ?? [];
-                    $extensions = Extension::whereIn('id', $memberIds)->where('is_active', true)->get();
+                    $extensions = $tenant->extensions()->whereIn('id', $memberIds)->where('is_active', true)->get();
                     if ($extensions->isNotEmpty()) {
                         $dialStrings = $extensions->map(fn ($ext) => 'user/'.$ext->extension.'@'.$tenant->domain);
 
@@ -344,13 +343,13 @@ class DialplanCompiler
                 }
                 break;
             case 'ivr':
-                $ivr = Ivr::find($id);
+                $ivr = $tenant->ivrs()->find($id);
                 if ($ivr) {
                     return '            <anti-action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
             case 'call_flow':
-                $flow = CallFlow::find($id);
+                $flow = $tenant->callFlows()->find($id);
                 if ($flow) {
                     return $this->compileCallFlowActions($tenant, $flow);
                 }
@@ -364,31 +363,31 @@ class DialplanCompiler
     {
         switch ($type) {
             case 'extension':
-                $ext = Extension::find($id);
+                $ext = $tenant->extensions()->find($id);
                 if ($ext) {
                     return '            <action application="bridge" data="user/'.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
             case 'voicemail':
-                $ext = Extension::find($id);
+                $ext = $tenant->extensions()->find($id);
                 if ($ext) {
                     return '            <action application="voicemail" data="default '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
             case 'ring_group':
-                $rg = RingGroup::find($id);
+                $rg = $tenant->ringGroups()->find($id);
                 if ($rg) {
                     return $this->compileRingGroupActions($tenant, $rg);
                 }
                 break;
             case 'ivr':
-                $ivr = Ivr::find($id);
+                $ivr = $tenant->ivrs()->find($id);
                 if ($ivr) {
                     return '            <action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
             case 'call_flow':
-                $flow = CallFlow::find($id);
+                $flow = $tenant->callFlows()->find($id);
                 if ($flow) {
                     return $this->compileCallFlowActions($tenant, $flow);
                 }

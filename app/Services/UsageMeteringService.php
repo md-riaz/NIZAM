@@ -64,7 +64,8 @@ class UsageMeteringService
     public function getSummary(Tenant $tenant, Carbon $from, Carbon $to): array
     {
         $records = $tenant->usageRecords()
-            ->whereBetween('recorded_date', [$from->toDateString(), $to->toDateString()])
+            ->whereDate('recorded_date', '>=', $from->toDateString())
+            ->whereDate('recorded_date', '<=', $to->toDateString())
             ->get();
 
         $summary = [];
@@ -79,5 +80,39 @@ class UsageMeteringService
         }
 
         return $summary;
+    }
+
+    /**
+     * Reconcile CDR billable seconds against metered call_minutes for a tenant.
+     *
+     * Compares the sum of CDR billsec (converted to minutes) with the sum of
+     * recorded call_minutes usage records for the given date range.
+     */
+    public function reconcileCallMinutes(Tenant $tenant, Carbon $from, Carbon $to): array
+    {
+        $fromDate = $from->copy()->startOfDay();
+        $toDate = $to->copy()->endOfDay();
+
+        $cdrTotalSeconds = (int) $tenant->cdrs()
+            ->whereBetween('start_stamp', [$fromDate, $toDate])
+            ->sum('billsec');
+
+        $cdrMinutes = round($cdrTotalSeconds / 60, 4);
+
+        $meteredMinutes = (float) $tenant->usageRecords()
+            ->where('metric', UsageRecord::METRIC_CALL_MINUTES)
+            ->whereDate('recorded_date', '>=', $from->copy()->toDateString())
+            ->whereDate('recorded_date', '<=', $to->copy()->toDateString())
+            ->sum('value');
+
+        $meteredMinutes = round($meteredMinutes, 4);
+
+        return [
+            'cdr_total_seconds' => $cdrTotalSeconds,
+            'cdr_total_minutes' => $cdrMinutes,
+            'metered_minutes' => $meteredMinutes,
+            'difference_minutes' => round($cdrMinutes - $meteredMinutes, 4),
+            'matched' => abs($cdrMinutes - $meteredMinutes) < 0.01,
+        ];
     }
 }

@@ -10,6 +10,10 @@ class EslConnectionManager
 
     protected bool $authenticated = false;
 
+    protected int $maxRetries = 3;
+
+    protected int $retryDelayMs = 500;
+
     public function __construct(
         protected string $host,
         protected int $port,
@@ -57,6 +61,46 @@ class EslConnectionManager
     }
 
     /**
+     * Reconnect to FreeSWITCH ESL with retry logic.
+     *
+     * Attempts up to maxRetries with exponential back-off.
+     */
+    public function reconnect(): bool
+    {
+        $this->disconnect();
+
+        for ($attempt = 1; $attempt <= $this->maxRetries; $attempt++) {
+            Log::info("ESL reconnect attempt {$attempt}/{$this->maxRetries}");
+
+            if ($this->connect()) {
+                Log::info('ESL reconnected successfully');
+
+                return true;
+            }
+
+            if ($attempt < $this->maxRetries) {
+                usleep($this->retryDelayMs * 1000 * $attempt);
+            }
+        }
+
+        Log::error('ESL reconnect failed after '.$this->maxRetries.' attempts');
+
+        return false;
+    }
+
+    /**
+     * Ensure the ESL connection is active, reconnecting if necessary.
+     */
+    public function ensureConnected(): bool
+    {
+        if ($this->isConnected()) {
+            return true;
+        }
+
+        return $this->reconnect();
+    }
+
+    /**
      * Authenticate with FreeSWITCH.
      */
     protected function authenticate(): bool
@@ -97,7 +141,7 @@ class EslConnectionManager
      */
     public function api(string $command): ?string
     {
-        if (! $this->authenticated) {
+        if (! $this->ensureConnected()) {
             return null;
         }
 
@@ -111,7 +155,7 @@ class EslConnectionManager
      */
     public function bgapi(string $command): ?string
     {
-        if (! $this->authenticated) {
+        if (! $this->ensureConnected()) {
             return null;
         }
 

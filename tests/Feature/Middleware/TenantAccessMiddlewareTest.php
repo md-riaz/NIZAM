@@ -66,4 +66,51 @@ class TenantAccessMiddlewareTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_suspended_tenant_is_blocked_for_tenant_user(): void
+    {
+        $tenant = Tenant::factory()->suspended()->create();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+        $response = $this->actingAs($user)
+            ->getJson("/test/tenants/{$tenant->id}/resource");
+
+        $response->assertStatus(403);
+        $response->assertJsonFragment(['message' => 'Tenant is suspended.']);
+    }
+
+    public function test_terminated_tenant_is_blocked_for_tenant_user(): void
+    {
+        $tenant = Tenant::factory()->terminated()->create();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+        $response = $this->actingAs($user)
+            ->getJson("/test/tenants/{$tenant->id}/resource");
+
+        $response->assertStatus(403);
+        $response->assertJsonFragment(['message' => 'Tenant is terminated.']);
+    }
+
+    public function test_suspended_tenant_is_blocked_for_admin_user(): void
+    {
+        $tenant = Tenant::factory()->suspended()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/test/tenants/{$tenant->id}/resource");
+
+        $response->assertStatus(403);
+        $response->assertJsonFragment(['message' => 'Tenant is suspended.']);
+    }
+
+    public function test_trial_tenant_is_allowed(): void
+    {
+        $tenant = Tenant::factory()->trial()->create();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+        $response = $this->actingAs($user)
+            ->getJson("/test/tenants/{$tenant->id}/resource");
+
+        $response->assertStatus(200);
+    }
 }

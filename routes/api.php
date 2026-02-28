@@ -62,6 +62,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         // Usage metering
         Route::get('usage/summary', [UsageController::class, 'summary'])->name('tenants.usage.summary');
         Route::post('usage/collect', [UsageController::class, 'collect'])->name('tenants.usage.collect');
+        Route::get('usage/reconcile', [UsageController::class, 'reconcile'])->name('tenants.usage.reconcile');
 
         Route::apiResource('extensions', ExtensionController::class);
         Route::apiResource('dids', DidController::class);
