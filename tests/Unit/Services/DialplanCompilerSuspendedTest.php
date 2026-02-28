@@ -36,7 +36,7 @@ class DialplanCompilerSuspendedTest extends TestCase
 
         $xml = $this->compiler->compileDirectory($tenant->domain);
 
-        $this->assertStringContains('section name="directory"', $xml);
+        $this->assertStringContainsString('section name="directory"', $xml);
         $this->assertStringNotContainsString('1001', $xml);
     }
 
@@ -57,7 +57,7 @@ class DialplanCompilerSuspendedTest extends TestCase
 
         $xml = $this->compiler->compileDialplan($tenant->domain, '1001');
 
-        $this->assertStringContains('section name="dialplan"', $xml);
+        $this->assertStringContainsString('section name="dialplan"', $xml);
         $this->assertStringNotContainsString('1001', $xml);
     }
 
@@ -119,10 +119,5 @@ class DialplanCompilerSuspendedTest extends TestCase
         $xml = $this->compiler->compileDirectory($tenant->domain);
 
         $this->assertStringContainsString('1001', $xml);
-    }
-
-    private function assertStringContains(string $needle, string $haystack): void
-    {
-        $this->assertStringContainsString($needle, $haystack);
     }
 }
