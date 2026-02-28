@@ -186,6 +186,7 @@ class QueueService
             ->where('status', QueueEntry::STATUS_ANSWERED)
             ->whereNotNull('agent_id')
             ->orderByDesc('answer_time')
+            ->orderByDesc('updated_at')
             ->first();
 
         if (! $lastAnswered) {

@@ -3,7 +3,6 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Agent;
-use App\Models\Extension;
 use App\Models\Queue;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
