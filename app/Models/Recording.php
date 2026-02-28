@@ -6,6 +6,7 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Recording extends Model
 {
@@ -27,6 +28,12 @@ class Recording extends Model
         'wait_time',
         'outcome',
         'abandon_reason',
+        'sentiment',
+        'keywords',
+        'needs_review',
+        'review_reasons',
+        'silence_ratio',
+        'transfer_count',
     ];
 
     protected function casts(): array
@@ -35,6 +42,11 @@ class Recording extends Model
             'file_size' => 'integer',
             'duration' => 'integer',
             'wait_time' => 'integer',
+            'keywords' => 'array',
+            'needs_review' => 'boolean',
+            'review_reasons' => 'array',
+            'silence_ratio' => 'decimal:2',
+            'transfer_count' => 'integer',
         ];
     }
 
@@ -49,5 +61,10 @@ class Recording extends Model
     public function cdr(): BelongsTo
     {
         return $this->belongsTo(CallDetailRecord::class, 'call_uuid', 'uuid');
+    }
+
+    public function transcriptionJobs(): HasMany
+    {
+        return $this->hasMany(TranscriptionJob::class);
     }
 }
