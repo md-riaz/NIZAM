@@ -298,6 +298,15 @@ Authorization: Bearer YOUR_TOKEN
 
 Records a point-in-time snapshot of current resource usage for the tenant.
 
+#### Reconcile Call Minutes
+
+```http
+GET /api/tenants/{tenant_id}/usage/reconcile?from=2026-02-01&to=2026-02-28
+Authorization: Bearer YOUR_TOKEN
+```
+
+Compares CDR billable seconds (converted to minutes) against metered `call_minutes` usage records for the given date range. Returns `matched: true` when the totals agree within 0.01 minutes.
+
 ### Admin Dashboard
 
 System-wide observability endpoint (admin-only):
