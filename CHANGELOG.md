@@ -27,7 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 #### Data Architecture
 - Multi-tenant schema with domain-based isolation
-- Extension model with encrypted SIP passwords (Laravel `encrypted` cast)
+- Extension model with SIP passwords and voicemail PINs in plaintext (for webphone/sip.js integration)
 - Voicemail PIN stored as plaintext for dashboard/API display
 - DID routing model with polymorphic destination support
 - Ring Group, IVR, Time Condition models with compiler logic
@@ -40,7 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - DID → Extension routing via Dialplan Compiler
 - Ring Group support (simultaneous + sequential strategies)
 - IVR model with digit-to-destination mapping
-- Time Condition logic with office hours rules
+- Time Condition evaluation engine with FreeSWITCH `<condition>` attributes (wday, time-of-day, mday, mon)
+- Time Condition match/no-match routing with `<action>` and `<anti-action>` elements
 - Fail-safe routing: unroutable destinations return `respond 404`
 
 #### API Governance
@@ -67,7 +68,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Auto-regeneration of device profiles on extension update (ExtensionObserver)
 
 #### Security
-- SIP passwords encrypted at rest
+- SIP passwords and voicemail PINs stored as plaintext (for webphone/sip.js integration)
 - Webhook secrets encrypted at rest
 - API rate limiting (60 req/min)
 - Tenant isolation enforcement via middleware
@@ -78,7 +79,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `NizamModule` interface with lifecycle hooks
 - `ModuleRegistry` singleton for module management
 - Hooks: dialplan contributions, event subscriptions, permission extensions
+- Migration isolation per module via `migrationsPath()` hook
 - Error isolation per module event handler
+
+#### Permissions
+- Granular permission model with user-permission assignments
+- Core permissions for all CRUD operations (tenants, extensions, DIDs, ring groups, IVRs, etc.)
+- Module-contributed permissions synced via `nizam:sync-permissions` command
+- Admin role bypasses all permission checks
+- `hasPermission()`, `grantPermissions()`, `revokePermissions()` on User model
 
 #### Webhooks
 - Outbound event notifications with HMAC-SHA256 signing
@@ -87,6 +96,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Events: call.started, call.answered, call.bridge, call.missed, call.hangup, voicemail.received, registration.registered, registration.unregistered
 
 ### Tests
-- 235 tests with 457 assertions covering all features
+- 249 tests with 486 assertions covering all features
 - Unit tests for models, services, policies, observers, modules
 - Feature tests for all API endpoints, middleware, provisioning

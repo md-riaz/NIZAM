@@ -420,7 +420,7 @@ NIZAM/
 │   ├── api.php                 # API routes (auth, CRUD, calls, events, health)
 │   └── web.php                 # Web routes (xml-curl, provisioning)
 ├── docker-compose.yml          # Container orchestration (6 services)
-└── tests/                      # PHPUnit tests (235 tests, 457 assertions)
+└── tests/                      # PHPUnit tests (249 tests, 486 assertions)
 ```
 
 ---
@@ -472,6 +472,17 @@ NIZAM combines:
 - **Laravel's** developer ecosystem
 
 More structured than FusionPBX. Simpler to operate than full Wazo microservices. More media-capable than Asterisk-based stacks. Designed for SaaS-ready deployment.
+
+---
+
+## Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [API Reference](docs/api-reference.md) | Full REST endpoint reference with request/response examples |
+| [Environment Bootstrap](docs/environment-bootstrap.md) | Docker + local setup, FreeSWITCH config, production checklist |
+| [Module Development](docs/module-development.md) | NizamModule interface and module authoring guide |
+| [Deployment & Scaling](docs/deployment-scaling.md) | Production deployment, horizontal scaling, backup/restore |
 
 ---
 

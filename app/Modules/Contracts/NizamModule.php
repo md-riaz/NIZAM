@@ -54,4 +54,9 @@ interface NizamModule
      * @return array<string>
      */
     public function permissions(): array;
+
+    /**
+     * Return the path to the module's migrations directory, or null if none.
+     */
+    public function migrationsPath(): ?string;
 }

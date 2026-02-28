@@ -31,7 +31,12 @@ class AppServiceProvider extends ServiceProvider
 
         Extension::observe(ExtensionObserver::class);
 
-        // Boot all registered modules
-        $this->app->make(ModuleRegistry::class)->bootAll();
+        // Boot all registered modules and load their migrations
+        $registry = $this->app->make(ModuleRegistry::class);
+        $registry->bootAll();
+
+        foreach ($registry->collectMigrationPaths() as $path) {
+            $this->loadMigrationsFrom($path);
+        }
     }
 }

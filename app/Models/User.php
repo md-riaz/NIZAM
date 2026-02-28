@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -55,8 +56,48 @@ class User extends Authenticatable
         return $this->belongsTo(Tenant::class);
     }
 
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Check if the user has a specific permission by slug.
+     * Admins always have all permissions.
+     */
+    public function hasPermission(string $slug): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->permissions()->where('slug', $slug)->exists();
+    }
+
+    /**
+     * Grant one or more permissions to the user.
+     *
+     * @param  array<string>  $slugs
+     */
+    public function grantPermissions(array $slugs): void
+    {
+        $ids = Permission::whereIn('slug', $slugs)->pluck('id');
+        $this->permissions()->syncWithoutDetaching($ids);
+    }
+
+    /**
+     * Revoke one or more permissions from the user.
+     *
+     * @param  array<string>  $slugs
+     */
+    public function revokePermissions(array $slugs): void
+    {
+        $ids = Permission::whereIn('slug', $slugs)->pluck('id');
+        $this->permissions()->detach($ids);
     }
 }

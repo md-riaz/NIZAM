@@ -64,6 +64,7 @@ class ModuleRegistryTest extends TestCase
         $module->method('description')->willReturn('Test module dialer');
         $module->method('subscribedEvents')->willReturn([]);
         $module->method('permissions')->willReturn([]);
+        $module->method('migrationsPath')->willReturn(null);
         $module->method('dialplanContributions')
             ->willReturn([10 => '<action application="playback" data="tone_stream://%(200,0,440)"/>']);
 
@@ -84,6 +85,7 @@ class ModuleRegistryTest extends TestCase
         $module->method('description')->willReturn('Test module listener');
         $module->method('dialplanContributions')->willReturn([]);
         $module->method('permissions')->willReturn([]);
+        $module->method('migrationsPath')->willReturn(null);
         $module->method('subscribedEvents')->willReturn(['call.hangup']);
         $module->expects($this->once())->method('handleEvent')
             ->with('call.hangup', ['uuid' => '123']);
@@ -114,6 +116,7 @@ class ModuleRegistryTest extends TestCase
         $module1->method('description')->willReturn('Test module perm-a');
         $module1->method('subscribedEvents')->willReturn([]);
         $module1->method('dialplanContributions')->willReturn([]);
+        $module1->method('migrationsPath')->willReturn(null);
         $module1->method('permissions')->willReturn(['recordings.view', 'recordings.delete']);
 
         $module2 = $this->createMock(NizamModule::class);
@@ -122,6 +125,7 @@ class ModuleRegistryTest extends TestCase
         $module2->method('description')->willReturn('Test module perm-b');
         $module2->method('subscribedEvents')->willReturn([]);
         $module2->method('dialplanContributions')->willReturn([]);
+        $module2->method('migrationsPath')->willReturn(null);
         $module2->method('permissions')->willReturn(['fax.send', 'recordings.view']); // duplicate
 
         $registry->register($module1);
@@ -144,6 +148,7 @@ class ModuleRegistryTest extends TestCase
         $module->method('description')->willReturn('Test module crasher');
         $module->method('dialplanContributions')->willReturn([]);
         $module->method('permissions')->willReturn([]);
+        $module->method('migrationsPath')->willReturn(null);
         $module->method('subscribedEvents')->willReturn(['call.hangup']);
         $module->method('handleEvent')
             ->willThrowException(new \RuntimeException('Module error'));
@@ -155,6 +160,36 @@ class ModuleRegistryTest extends TestCase
         $this->assertTrue(true);
     }
 
+    public function test_collects_migration_paths_from_modules(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $module1 = $this->createMock(NizamModule::class);
+        $module1->method('name')->willReturn('mod-a');
+        $module1->method('version')->willReturn('1.0.0');
+        $module1->method('description')->willReturn('Module A');
+        $module1->method('subscribedEvents')->willReturn([]);
+        $module1->method('dialplanContributions')->willReturn([]);
+        $module1->method('permissions')->willReturn([]);
+        $module1->method('migrationsPath')->willReturn(__DIR__); // use existing dir for test
+
+        $module2 = $this->createMock(NizamModule::class);
+        $module2->method('name')->willReturn('mod-b');
+        $module2->method('version')->willReturn('1.0.0');
+        $module2->method('description')->willReturn('Module B');
+        $module2->method('subscribedEvents')->willReturn([]);
+        $module2->method('dialplanContributions')->willReturn([]);
+        $module2->method('permissions')->willReturn([]);
+        $module2->method('migrationsPath')->willReturn(null); // no migrations
+
+        $registry->register($module1);
+        $registry->register($module2);
+
+        $paths = $registry->collectMigrationPaths();
+        $this->assertCount(1, $paths);
+        $this->assertEquals(__DIR__, $paths[0]);
+    }
+
     private function createMockModule(string $name, string $version): NizamModule
     {
         $module = $this->createMock(NizamModule::class);
@@ -164,6 +199,7 @@ class ModuleRegistryTest extends TestCase
         $module->method('subscribedEvents')->willReturn([]);
         $module->method('dialplanContributions')->willReturn([]);
         $module->method('permissions')->willReturn([]);
+        $module->method('migrationsPath')->willReturn(null);
 
         return $module;
     }

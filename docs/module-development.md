@@ -24,6 +24,7 @@ interface NizamModule
     public function subscribedEvents(): array;
     public function handleEvent(string $eventType, array $data): void;
     public function permissions(): array;
+    public function migrationsPath(): ?string;
 }
 ```
 
@@ -97,6 +98,11 @@ class CallRecordingModule implements NizamModule
             'recordings.delete',
         ];
     }
+
+    public function migrationsPath(): ?string
+    {
+        return __DIR__.'/migrations';
+    }
 }
 ```
 
@@ -160,6 +166,29 @@ public function permissions(): array
 ```
 
 Use `ModuleRegistry::collectPermissions()` to gather all module permissions for role/policy management.
+
+### Migration Isolation
+
+Modules can define their own database migrations in a separate directory:
+
+```php
+public function migrationsPath(): ?string
+{
+    return __DIR__.'/migrations';
+}
+```
+
+Migrations are automatically loaded by `AppServiceProvider` when the module is registered. Each module's migrations run alongside core migrations but are kept in separate directories for clean organization:
+
+```
+app/Modules/
+├── CallRecordingModule.php
+└── migrations/
+    ├── 2026_01_01_000001_create_recordings_table.php
+    └── 2026_01_01_000002_add_recording_settings_table.php
+```
+
+Return `null` if the module has no migrations.
 
 ---
 

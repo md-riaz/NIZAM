@@ -32,6 +32,25 @@ class ModuleRegistry
     }
 
     /**
+     * Collect migration paths from all modules for isolated migration loading.
+     *
+     * @return array<string>
+     */
+    public function collectMigrationPaths(): array
+    {
+        $paths = [];
+
+        foreach ($this->modules as $module) {
+            $path = $module->migrationsPath();
+            if ($path && is_dir($path)) {
+                $paths[] = $path;
+            }
+        }
+
+        return $paths;
+    }
+
+    /**
      * Get a registered module by name.
      */
     public function get(string $name): ?NizamModule

@@ -209,30 +209,102 @@ class DialplanCompiler
         $conditions = $timeCondition->conditions ?? [];
         $xml = '';
 
+        // Build FreeSWITCH condition attributes from the conditions array
+        $attrs = $this->buildTimeConditionAttributes($conditions);
+
+        if ($attrs) {
+            $xml .= '          </condition>'."\n";
+            $xml .= '          <condition'.$attrs.'>'."\n";
+
+            // Match destination — <action>
+            if ($timeCondition->match_destination_type && $timeCondition->match_destination_id) {
+                $xml .= $this->compileDestinationAction($tenant, $timeCondition->match_destination_type, $timeCondition->match_destination_id);
+            }
+
+            // No-match destination — <anti-action>
+            if ($timeCondition->no_match_destination_type && $timeCondition->no_match_destination_id) {
+                $xml .= $this->compileAntiAction($tenant, $timeCondition->no_match_destination_type, $timeCondition->no_match_destination_id);
+            }
+        } else {
+            // No time attributes — route to match destination unconditionally
+            if ($timeCondition->match_destination_type && $timeCondition->match_destination_id) {
+                $xml .= $this->compileDestinationAction($tenant, $timeCondition->match_destination_type, $timeCondition->match_destination_id);
+            }
+        }
+
+        return $xml;
+    }
+
+    /**
+     * Build FreeSWITCH condition attributes from time condition rules.
+     */
+    protected function buildTimeConditionAttributes(array $conditions): string
+    {
+        $attrs = '';
+
         foreach ($conditions as $condition) {
             $wday = $condition['wday'] ?? '';
             $timeFrom = $condition['time_from'] ?? '';
             $timeTo = $condition['time_to'] ?? '';
+            $mday = $condition['mday'] ?? '';
+            $mon = $condition['mon'] ?? '';
 
-            if ($wday || ($timeFrom && $timeTo)) {
-                $expression = '';
-                if ($wday) {
-                    $expression .= 'wday '.htmlspecialchars($wday, ENT_QUOTES | ENT_XML1);
-                }
-                if ($timeFrom && $timeTo) {
-                    $expression .= ($expression ? ' ' : '').'time-of-day '.htmlspecialchars("$timeFrom-$timeTo", ENT_QUOTES | ENT_XML1);
-                }
-
-                $xml .= '            <action application="set" data="time_match=true"/>'."\n";
+            if ($wday) {
+                $attrs .= ' wday="'.htmlspecialchars($wday, ENT_QUOTES | ENT_XML1).'"';
+            }
+            if ($timeFrom && $timeTo) {
+                $attrs .= ' time-of-day="'.htmlspecialchars("$timeFrom-$timeTo", ENT_QUOTES | ENT_XML1).'"';
+            }
+            if ($mday) {
+                $attrs .= ' mday="'.htmlspecialchars($mday, ENT_QUOTES | ENT_XML1).'"';
+            }
+            if ($mon) {
+                $attrs .= ' mon="'.htmlspecialchars($mon, ENT_QUOTES | ENT_XML1).'"';
             }
         }
 
-        // Match destination
-        if ($timeCondition->match_destination_type && $timeCondition->match_destination_id) {
-            $xml .= $this->compileDestinationAction($tenant, $timeCondition->match_destination_type, $timeCondition->match_destination_id);
+        return $attrs;
+    }
+
+    /**
+     * Compile a FreeSWITCH anti-action (used for no-match branch of time conditions).
+     */
+    protected function compileAntiAction(Tenant $tenant, string $type, string $id): string
+    {
+        switch ($type) {
+            case 'extension':
+                $ext = Extension::find($id);
+                if ($ext) {
+                    return '            <anti-action application="bridge" data="user/'.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                }
+                break;
+            case 'voicemail':
+                $ext = Extension::find($id);
+                if ($ext) {
+                    return '            <anti-action application="voicemail" data="default '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                }
+                break;
+            case 'ring_group':
+                $rg = RingGroup::find($id);
+                if ($rg) {
+                    $memberIds = $rg->members ?? [];
+                    $extensions = Extension::whereIn('id', $memberIds)->where('is_active', true)->get();
+                    if ($extensions->isNotEmpty()) {
+                        $dialStrings = $extensions->map(fn ($ext) => 'user/'.$ext->extension.'@'.$tenant->domain);
+
+                        return '            <anti-action application="bridge" data="'.htmlspecialchars($dialStrings->implode($rg->strategy === 'simultaneous' ? ',' : '|'), ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                    }
+                }
+                break;
+            case 'ivr':
+                $ivr = Ivr::find($id);
+                if ($ivr) {
+                    return '            <anti-action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                }
+                break;
         }
 
-        return $xml;
+        return '';
     }
 
     protected function compileDestinationAction(Tenant $tenant, string $type, string $id): string
