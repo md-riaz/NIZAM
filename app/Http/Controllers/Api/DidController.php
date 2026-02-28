@@ -20,6 +20,8 @@ class DidController extends Controller
      */
     public function index(Tenant $tenant)
     {
+        $this->authorize('viewAny', Did::class);
+
         return DidResource::collection($tenant->dids()->paginate(15));
     }
 
@@ -28,6 +30,8 @@ class DidController extends Controller
      */
     public function store(StoreDidRequest $request, Tenant $tenant): JsonResponse
     {
+        $this->authorize('create', Did::class);
+
         $did = $tenant->dids()->create($request->validated());
 
         return (new DidResource($did))->response()->setStatusCode(201);
@@ -42,6 +46,8 @@ class DidController extends Controller
             return response()->json(['message' => 'DID not found.'], 404);
         }
 
+        $this->authorize('view', $did);
+
         return new DidResource($did);
     }
 
@@ -53,6 +59,8 @@ class DidController extends Controller
         if ($did->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'DID not found.'], 404);
         }
+
+        $this->authorize('update', $did);
 
         $did->update($request->validated());
 
@@ -67,6 +75,8 @@ class DidController extends Controller
         if ($did->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'DID not found.'], 404);
         }
+
+        $this->authorize('delete', $did);
 
         $did->delete();
 

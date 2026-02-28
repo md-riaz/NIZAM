@@ -19,8 +19,8 @@ class WebhookApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->user = User::factory()->create();
         $this->tenant = Tenant::factory()->create();
+        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
     }
 
     public function test_can_list_webhooks_for_a_tenant(): void

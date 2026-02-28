@@ -25,6 +25,7 @@ class CallDetailRecordResource extends JsonResource
             'hangup_cause' => $this->hangup_cause,
             'direction' => $this->direction,
             'recording_path' => $this->recording_path,
+            'recordings' => $this->whenLoaded('recordings'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

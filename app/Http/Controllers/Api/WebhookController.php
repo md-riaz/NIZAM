@@ -21,6 +21,8 @@ class WebhookController extends Controller
      */
     public function index(Tenant $tenant)
     {
+        $this->authorize('viewAny', Webhook::class);
+
         return WebhookResource::collection($tenant->webhooks()->paginate(15));
     }
 
@@ -29,6 +31,8 @@ class WebhookController extends Controller
      */
     public function store(StoreWebhookRequest $request, Tenant $tenant): JsonResponse
     {
+        $this->authorize('create', Webhook::class);
+
         $data = $request->validated();
 
         if (empty($data['secret'])) {
@@ -52,6 +56,8 @@ class WebhookController extends Controller
             return response()->json(['message' => 'Webhook not found.'], 404);
         }
 
+        $this->authorize('view', $webhook);
+
         return new WebhookResource($webhook);
     }
 
@@ -63,6 +69,8 @@ class WebhookController extends Controller
         if ($webhook->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Webhook not found.'], 404);
         }
+
+        $this->authorize('update', $webhook);
 
         $webhook->update($request->validated());
 
@@ -77,6 +85,8 @@ class WebhookController extends Controller
         if ($webhook->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Webhook not found.'], 404);
         }
+
+        $this->authorize('delete', $webhook);
 
         $webhook->delete();
 

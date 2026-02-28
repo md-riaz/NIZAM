@@ -19,8 +19,8 @@ class CallDetailRecordApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->user = User::factory()->create();
         $this->tenant = Tenant::factory()->create();
+        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
     }
 
     public function test_can_list_cdrs_for_a_tenant(): void
@@ -166,7 +166,7 @@ class CallDetailRecordApiTest extends TestCase
         $response = $this->actingAs($this->user, 'sanctum')
             ->getJson("/api/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
 
-        $response->assertStatus(404);
+        $response->assertStatus(403);
     }
 
     public function test_cdrs_are_ordered_by_start_stamp_desc(): void

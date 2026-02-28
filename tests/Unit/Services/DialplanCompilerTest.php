@@ -80,4 +80,17 @@ class DialplanCompilerTest extends TestCase
 
         $this->assertStringContainsString('<section name="dialplan"></section>', $xml);
     }
+
+    public function test_compile_dialplan_returns_failsafe_for_unroutable_destination(): void
+    {
+        [$tenant, $extension] = $this->createTenantWithExtension();
+
+        $xml = $this->compiler->compileDialplan('test.example.com', '9999');
+
+        $this->assertStringContainsString('<section name="dialplan">', $xml);
+        $this->assertStringContainsString('failsafe', $xml);
+        $this->assertStringContainsString('application="log"', $xml);
+        $this->assertStringContainsString('application="respond"', $xml);
+        $this->assertStringContainsString('404', $xml);
+    }
 }

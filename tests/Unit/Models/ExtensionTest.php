@@ -57,7 +57,7 @@ class ExtensionTest extends TestCase
         $this->assertEquals($tenant->id, $extension->tenant->id);
     }
 
-    public function test_password_field_is_hidden(): void
+    public function test_password_field_is_visible(): void
     {
         $tenant = $this->createTenant();
 
@@ -69,10 +69,11 @@ class ExtensionTest extends TestCase
         ]);
 
         $array = $extension->toArray();
-        $this->assertArrayNotHasKey('password', $array);
+        $this->assertArrayHasKey('password', $array);
+        $this->assertEquals('secret1234', $array['password']);
     }
 
-    public function test_voicemail_pin_field_is_hidden(): void
+    public function test_voicemail_pin_field_is_visible(): void
     {
         $tenant = $this->createTenant();
 
@@ -85,7 +86,8 @@ class ExtensionTest extends TestCase
         ]);
 
         $array = $extension->toArray();
-        $this->assertArrayNotHasKey('voicemail_pin', $array);
+        $this->assertArrayHasKey('voicemail_pin', $array);
+        $this->assertEquals('1234', $array['voicemail_pin']);
     }
 
     public function test_voicemail_enabled_is_cast_to_boolean(): void
@@ -102,5 +104,48 @@ class ExtensionTest extends TestCase
 
         $extension->refresh();
         $this->assertIsBool($extension->voicemail_enabled);
+    }
+
+    public function test_password_is_stored_in_plaintext(): void
+    {
+        $tenant = $this->createTenant();
+
+        $extension = $tenant->extensions()->create([
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'directory_first_name' => 'John',
+            'directory_last_name' => 'Doe',
+        ]);
+
+        // The model should return the original value
+        $this->assertEquals('secret1234', $extension->password);
+
+        // The raw database value should be plaintext (not encrypted)
+        $rawValue = \Illuminate\Support\Facades\DB::table('extensions')
+            ->where('id', $extension->id)
+            ->value('password');
+        $this->assertEquals('secret1234', $rawValue);
+    }
+
+    public function test_voicemail_pin_is_stored_in_plaintext(): void
+    {
+        $tenant = $this->createTenant();
+
+        $extension = $tenant->extensions()->create([
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'directory_first_name' => 'John',
+            'directory_last_name' => 'Doe',
+            'voicemail_pin' => '5678',
+        ]);
+
+        // The model should return the original value
+        $this->assertEquals('5678', $extension->voicemail_pin);
+
+        // The raw database value should be plaintext (not encrypted)
+        $rawValue = \Illuminate\Support\Facades\DB::table('extensions')
+            ->where('id', $extension->id)
+            ->value('voicemail_pin');
+        $this->assertEquals('5678', $rawValue);
     }
 }

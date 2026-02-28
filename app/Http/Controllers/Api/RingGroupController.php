@@ -20,6 +20,8 @@ class RingGroupController extends Controller
      */
     public function index(Tenant $tenant)
     {
+        $this->authorize('viewAny', RingGroup::class);
+
         return RingGroupResource::collection($tenant->ringGroups()->paginate(15));
     }
 
@@ -28,6 +30,8 @@ class RingGroupController extends Controller
      */
     public function store(StoreRingGroupRequest $request, Tenant $tenant): JsonResponse
     {
+        $this->authorize('create', RingGroup::class);
+
         $ringGroup = $tenant->ringGroups()->create($request->validated());
 
         return (new RingGroupResource($ringGroup))->response()->setStatusCode(201);
@@ -42,6 +46,8 @@ class RingGroupController extends Controller
             return response()->json(['message' => 'Ring group not found.'], 404);
         }
 
+        $this->authorize('view', $ringGroup);
+
         return new RingGroupResource($ringGroup);
     }
 
@@ -53,6 +59,8 @@ class RingGroupController extends Controller
         if ($ringGroup->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Ring group not found.'], 404);
         }
+
+        $this->authorize('update', $ringGroup);
 
         $ringGroup->update($request->validated());
 
@@ -67,6 +75,8 @@ class RingGroupController extends Controller
         if ($ringGroup->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Ring group not found.'], 404);
         }
+
+        $this->authorize('delete', $ringGroup);
 
         $ringGroup->delete();
 

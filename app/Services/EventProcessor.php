@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Events\CallEvent;
 use App\Models\CallDetailRecord;
+use App\Models\CallEventLog;
 use App\Models\Extension;
 use Illuminate\Support\Facades\Log;
 
@@ -23,6 +24,7 @@ class EventProcessor
         match ($eventName) {
             'CHANNEL_CREATE' => $this->handleChannelCreate($event),
             'CHANNEL_ANSWER' => $this->handleChannelAnswer($event),
+            'CHANNEL_BRIDGE' => $this->handleChannelBridge($event),
             'CHANNEL_HANGUP_COMPLETE' => $this->handleChannelHangup($event),
             'CUSTOM' => $this->handleCustomEvent($event),
             default => null,
@@ -40,6 +42,7 @@ class EventProcessor
 
         CallEvent::dispatch($tenantId, 'started', $data);
         $this->webhookDispatcher->dispatch($tenantId, 'call.started', $data);
+        $this->recordEvent($tenantId, 'started', $data);
 
         Log::debug('Call started', ['uuid' => $data['uuid'] ?? 'unknown']);
     }
@@ -55,8 +58,26 @@ class EventProcessor
 
         CallEvent::dispatch($tenantId, 'answered', $data);
         $this->webhookDispatcher->dispatch($tenantId, 'call.answered', $data);
+        $this->recordEvent($tenantId, 'answered', $data);
 
         Log::debug('Call answered', ['uuid' => $data['uuid'] ?? 'unknown']);
+    }
+
+    protected function handleChannelBridge(array $event): void
+    {
+        $tenantId = $this->resolveTenantId($event);
+        if (! $tenantId) {
+            return;
+        }
+
+        $data = $this->extractCallData($event);
+        $data['other_leg_uuid'] = $event['Other-Leg-Unique-ID'] ?? '';
+
+        CallEvent::dispatch($tenantId, 'bridge', $data);
+        $this->webhookDispatcher->dispatch($tenantId, 'call.bridge', $data);
+        $this->recordEvent($tenantId, 'bridge', $data);
+
+        Log::debug('Call bridged', ['uuid' => $data['uuid'] ?? 'unknown', 'other_leg' => $data['other_leg_uuid']]);
     }
 
     protected function handleChannelHangup(array $event): void
@@ -76,6 +97,7 @@ class EventProcessor
 
         CallEvent::dispatch($tenantId, 'hangup', $data);
         $this->webhookDispatcher->dispatch($tenantId, 'call.hangup', $data);
+        $this->recordEvent($tenantId, 'hangup', $data);
 
         // Check for missed call (no answer)
         if (($data['hangup_cause'] ?? '') === 'NO_ANSWER') {
@@ -89,9 +111,12 @@ class EventProcessor
     {
         $subclass = $event['Event-Subclass'] ?? '';
 
-        if ($subclass === 'vm::maintenance') {
-            $this->handleVoicemail($event);
-        }
+        match ($subclass) {
+            'vm::maintenance' => $this->handleVoicemail($event),
+            'sofia::register' => $this->handleRegistration($event, 'registered'),
+            'sofia::unregister' => $this->handleRegistration($event, 'unregistered'),
+            default => null,
+        };
     }
 
     protected function handleVoicemail(array $event): void
@@ -116,6 +141,34 @@ class EventProcessor
 
         $this->webhookDispatcher->dispatch($tenantId, 'voicemail.received', $data);
         Log::debug('Voicemail received', $data);
+    }
+
+    protected function handleRegistration(array $event, string $action): void
+    {
+        $domain = $event['domain'] ?? $event['realm'] ?? null;
+        if (! $domain) {
+            return;
+        }
+
+        $tenant = \App\Models\Tenant::where('domain', $domain)->where('is_active', true)->first();
+        if (! $tenant) {
+            return;
+        }
+
+        $data = [
+            'user' => $event['from-user'] ?? $event['username'] ?? '',
+            'domain' => $domain,
+            'contact' => $event['contact'] ?? '',
+            'user_agent' => $event['user-agent'] ?? '',
+            'network_ip' => $event['network-ip'] ?? '',
+            'action' => $action,
+        ];
+
+        CallEvent::dispatch($tenant->id, $action, $data);
+        $this->webhookDispatcher->dispatch($tenant->id, "registration.{$action}", $data);
+        $this->recordEvent($tenant->id, $action, $data);
+
+        Log::debug("SIP {$action}", ['user' => $data['user'], 'domain' => $domain]);
     }
 
     /**
@@ -179,6 +232,24 @@ class EventProcessor
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to create CDR', ['error' => $e->getMessage(), 'uuid' => $data['uuid']]);
+        }
+    }
+
+    /**
+     * Persist a call event for replay/audit.
+     */
+    protected function recordEvent(string $tenantId, string $eventType, array $data): void
+    {
+        try {
+            CallEventLog::create([
+                'tenant_id' => $tenantId,
+                'call_uuid' => $data['uuid'] ?? $data['user'] ?? '',
+                'event_type' => $eventType,
+                'payload' => $data,
+                'occurred_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to record call event', ['error' => $e->getMessage(), 'event_type' => $eventType]);
         }
     }
 }

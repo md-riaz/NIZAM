@@ -20,6 +20,8 @@ class IvrController extends Controller
      */
     public function index(Tenant $tenant)
     {
+        $this->authorize('viewAny', Ivr::class);
+
         return IvrResource::collection($tenant->ivrs()->paginate(15));
     }
 
@@ -28,6 +30,8 @@ class IvrController extends Controller
      */
     public function store(StoreIvrRequest $request, Tenant $tenant): JsonResponse
     {
+        $this->authorize('create', Ivr::class);
+
         $ivr = $tenant->ivrs()->create($request->validated());
 
         return (new IvrResource($ivr))->response()->setStatusCode(201);
@@ -42,6 +46,8 @@ class IvrController extends Controller
             return response()->json(['message' => 'IVR not found.'], 404);
         }
 
+        $this->authorize('view', $ivr);
+
         return new IvrResource($ivr);
     }
 
@@ -53,6 +59,8 @@ class IvrController extends Controller
         if ($ivr->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'IVR not found.'], 404);
         }
+
+        $this->authorize('update', $ivr);
 
         $ivr->update($request->validated());
 
@@ -67,6 +75,8 @@ class IvrController extends Controller
         if ($ivr->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'IVR not found.'], 404);
         }
+
+        $this->authorize('delete', $ivr);
 
         $ivr->delete();
 

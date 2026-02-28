@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CallDetailRecord extends Model
 {
@@ -52,5 +53,13 @@ class CallDetailRecord extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * Get the recordings associated with this CDR via call UUID.
+     */
+    public function recordings(): HasMany
+    {
+        return $this->hasMany(Recording::class, 'call_uuid', 'uuid');
     }
 }
