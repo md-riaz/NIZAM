@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Nwidart\Modules\Exceptions\ModuleNotFoundException;
+use Nwidart\Modules\Facades\Module as NwidartModule;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,11 +38,12 @@ class AppServiceProvider extends ServiceProvider
 
             $orderedClasses = ModuleRegistry::resolveDependencies($moduleClasses);
 
-            // Register modules in resolved order
+            // Register modules in resolved order.
+            // nwidart is the single source of truth for activation state.
             foreach ($orderedClasses as $class) {
                 $module = $this->app->make($class);
                 $name = $module->name();
-                $enabled = $moduleConfigs[$name]['enabled'] ?? true;
+                $enabled = $this->nwidartIsEnabled($name, $moduleConfigs[$name] ?? []);
 
                 $registry->register($module, $enabled);
             }
@@ -69,5 +73,26 @@ class AppServiceProvider extends ServiceProvider
         // Routes and migrations are handled by nwidart/laravel-modules ServiceProviders
         $registry = $this->app->make(ModuleRegistry::class);
         $registry->bootAll();
+    }
+
+    /**
+     * Determine if a NIZAM module should be enabled.
+     *
+     * nwidart/laravel-modules is the single source of truth for module activation.
+     * The module's StudlyCase name (e.g. PbxRouting for "pbx-routing") is used
+     * to look up the activation state in modules_statuses.json via the nwidart
+     * facade. Falls back to the local config only when the module is not yet
+     * registered with nwidart (e.g. during initial scaffolding).
+     *
+     * @param  array<string, mixed>  $moduleConfig
+     */
+    public function nwidartIsEnabled(string $nizamAlias, array $moduleConfig = []): bool
+    {
+        try {
+            return NwidartModule::isEnabled(Str::studly($nizamAlias));
+        } catch (ModuleNotFoundException) {
+            // Module not yet registered with nwidart; respect local config as fallback.
+            return $moduleConfig['enabled'] ?? true;
+        }
     }
 }
