@@ -1,0 +1,1018 @@
+openapi: 3.1.0
+info:
+  title: NIZAM — Open Communications Control Platform API
+  description: |
+    Multi-tenant VoIP/PBX platform API built on FreeSWITCH + Laravel.
+    Provides tenant lifecycle management, call routing, IVR, queues,
+    contact center, webhooks, analytics, and intelligence services.
+  version: 1.0.0
+  contact:
+    name: NIZAM Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost/api
+    description: Local development
+  - url: https://api.nizam.example.com/api
+    description: Production
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Authentication
+    description: User registration, login, and token management
+  - name: Tenants
+    description: Tenant lifecycle and settings
+  - name: Extensions
+    description: PBX extension management
+  - name: DIDs
+    description: Direct Inward Dialing number management
+  - name: Ring Groups
+    description: Ring group management
+  - name: IVRs
+    description: Interactive Voice Response management
+  - name: Time Conditions
+    description: Time-based routing conditions
+  - name: Calls
+    description: Call control (originate, hangup, transfer, hold)
+  - name: CDRs
+    description: Call Detail Records
+  - name: Recordings
+    description: Call recordings
+  - name: Webhooks
+    description: Webhook management and delivery tracking
+  - name: Call Routing Policies
+    description: Call routing policy evaluation
+  - name: Call Flows
+    description: Call flow definitions
+  - name: Agents
+    description: Contact center agent management
+  - name: Queues
+    description: Contact center queue management
+  - name: Queue Metrics
+    description: Queue performance metrics and wallboard
+  - name: Call Events
+    description: Call event stream and audit trail
+  - name: Insights
+    description: Analytics, health scoring, anomaly detection
+  - name: Usage
+    description: Usage metering and reconciliation
+  - name: Admin
+    description: User and permission management
+
+paths:
+  /health:
+    get:
+      tags: [Authentication]
+      summary: Health check
+      security: []
+      operationId: healthCheck
+      responses:
+        '200':
+          description: System healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      security: []
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, password_confirmation]
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                password_confirmation:
+                  type: string
+                  format: password
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout (revoke current token)
+      operationId: logout
+      responses:
+        '200':
+          description: Logged out
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      operationId: me
+      responses:
+        '200':
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /auth/tokens:
+    get:
+      tags: [Authentication]
+      summary: List API tokens
+      operationId: listTokens
+      responses:
+        '200':
+          description: List of tokens
+    post:
+      tags: [Authentication]
+      summary: Create API token
+      operationId: createToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  example: my-integration
+                abilities:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Token created
+
+  /tenants:
+    get:
+      tags: [Tenants]
+      summary: List tenants
+      operationId: listTenants
+      responses:
+        '200':
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+    post:
+      tags: [Tenants]
+      summary: Create tenant
+      operationId: createTenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantInput'
+      responses:
+        '201':
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tenants/{tenantId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Tenants]
+      summary: Get tenant details
+      operationId: getTenant
+      responses:
+        '200':
+          description: Tenant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Tenants]
+      summary: Update tenant
+      operationId: updateTenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantInput'
+      responses:
+        '200':
+          description: Tenant updated
+    delete:
+      tags: [Tenants]
+      summary: Delete tenant
+      operationId: deleteTenant
+      responses:
+        '204':
+          description: Tenant deleted
+
+  /tenants/{tenantId}/settings:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Tenants]
+      summary: Get tenant settings
+      operationId: getTenantSettings
+      responses:
+        '200':
+          description: Tenant settings
+    put:
+      tags: [Tenants]
+      summary: Update tenant settings
+      operationId: updateTenantSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Settings updated
+
+  /tenants/provision:
+    post:
+      tags: [Tenants]
+      summary: Provision a new tenant (full setup)
+      operationId: provisionTenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, domain]
+              properties:
+                name:
+                  type: string
+                domain:
+                  type: string
+                max_extensions:
+                  type: integer
+      responses:
+        '201':
+          description: Tenant provisioned
+
+  /tenants/{tenantId}/extensions:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Extensions]
+      summary: List extensions
+      operationId: listExtensions
+      responses:
+        '200':
+          description: List of extensions
+    post:
+      tags: [Extensions]
+      summary: Create extension
+      operationId: createExtension
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtensionInput'
+      responses:
+        '201':
+          description: Extension created
+
+  /tenants/{tenantId}/dids:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [DIDs]
+      summary: List DIDs
+      operationId: listDids
+      responses:
+        '200':
+          description: List of DIDs
+    post:
+      tags: [DIDs]
+      summary: Create DID
+      operationId: createDid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DidInput'
+      responses:
+        '201':
+          description: DID created
+
+  /tenants/{tenantId}/ring-groups:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Ring Groups]
+      summary: List ring groups
+      operationId: listRingGroups
+      responses:
+        '200':
+          description: List of ring groups
+    post:
+      tags: [Ring Groups]
+      summary: Create ring group
+      operationId: createRingGroup
+      responses:
+        '201':
+          description: Ring group created
+
+  /tenants/{tenantId}/ivrs:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [IVRs]
+      summary: List IVRs
+      operationId: listIvrs
+      responses:
+        '200':
+          description: List of IVRs
+    post:
+      tags: [IVRs]
+      summary: Create IVR
+      operationId: createIvr
+      responses:
+        '201':
+          description: IVR created
+
+  /tenants/{tenantId}/webhooks:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Webhooks]
+      summary: List webhooks
+      operationId: listWebhooks
+      responses:
+        '200':
+          description: List of webhooks
+    post:
+      tags: [Webhooks]
+      summary: Create webhook
+      operationId: createWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookInput'
+      responses:
+        '201':
+          description: Webhook created
+
+  /tenants/{tenantId}/webhooks/{webhookId}/delivery-attempts:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Webhooks]
+      summary: List delivery attempts
+      operationId: listWebhookDeliveryAttempts
+      responses:
+        '200':
+          description: Delivery attempts
+
+  /tenants/{tenantId}/webhooks/{webhookId}/delivery-stats:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Webhooks]
+      summary: Get webhook delivery stats
+      operationId: getWebhookDeliveryStats
+      responses:
+        '200':
+          description: Delivery statistics
+
+  /tenants/{tenantId}/calls/originate:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      tags: [Calls]
+      summary: Originate a call
+      operationId: originateCall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [extension, destination]
+              properties:
+                extension:
+                  type: string
+                  example: '1001'
+                destination:
+                  type: string
+                  example: '+15551234567'
+      responses:
+        '200':
+          description: Call initiated
+        '403':
+          description: Call control permission denied
+
+  /tenants/{tenantId}/calls/hangup:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      tags: [Calls]
+      summary: Hang up a call
+      operationId: hangupCall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [call_uuid]
+              properties:
+                call_uuid:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Call terminated
+
+  /tenants/{tenantId}/calls/transfer:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      tags: [Calls]
+      summary: Transfer a call
+      operationId: transferCall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [call_uuid, destination]
+              properties:
+                call_uuid:
+                  type: string
+                  format: uuid
+                destination:
+                  type: string
+      responses:
+        '200':
+          description: Call transferred
+
+  /tenants/{tenantId}/calls/hold:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      tags: [Calls]
+      summary: Toggle call hold
+      operationId: holdCall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [call_uuid]
+              properties:
+                call_uuid:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Hold toggled
+
+  /tenants/{tenantId}/cdrs:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [CDRs]
+      summary: List CDRs
+      operationId: listCdrs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: CDR listing
+
+  /tenants/{tenantId}/recordings:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Recordings]
+      summary: List recordings
+      operationId: listRecordings
+      responses:
+        '200':
+          description: List of recordings
+
+  /tenants/{tenantId}/agents:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Agents]
+      summary: List agents
+      operationId: listAgents
+      responses:
+        '200':
+          description: List of agents
+    post:
+      tags: [Agents]
+      summary: Create agent
+      operationId: createAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentInput'
+      responses:
+        '201':
+          description: Agent created
+
+  /tenants/{tenantId}/agents/{agentId}/state:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: agentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Agents]
+      summary: Change agent state
+      operationId: changeAgentState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [state]
+              properties:
+                state:
+                  type: string
+                  enum: [available, busy, ringing, paused, offline]
+                pause_reason:
+                  type: string
+                  enum: [break, lunch, after_call_work, custom]
+      responses:
+        '200':
+          description: State changed
+
+  /tenants/{tenantId}/queues:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Queues]
+      summary: List queues
+      operationId: listQueues
+      responses:
+        '200':
+          description: List of queues
+    post:
+      tags: [Queues]
+      summary: Create queue
+      operationId: createQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueueInput'
+      responses:
+        '201':
+          description: Queue created
+
+  /tenants/{tenantId}/queues/{queueId}/metrics/realtime:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - name: queueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Queue Metrics]
+      summary: Get real-time queue metrics
+      operationId: getRealtimeMetrics
+      responses:
+        '200':
+          description: Real-time metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueMetrics'
+
+  /tenants/{tenantId}/wallboard:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Queue Metrics]
+      summary: Get wallboard data
+      operationId: getWallboard
+      responses:
+        '200':
+          description: Wallboard data
+
+  /tenants/{tenantId}/call-events:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Call Events]
+      summary: List call events
+      operationId: listCallEvents
+      parameters:
+        - name: call_uuid
+          in: query
+          schema:
+            type: string
+        - name: event_type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Call events
+
+  /tenants/{tenantId}/call-routing-policies:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Call Routing Policies]
+      summary: List call routing policies
+      operationId: listPolicies
+      responses:
+        '200':
+          description: List of policies
+    post:
+      tags: [Call Routing Policies]
+      summary: Create routing policy
+      operationId: createPolicy
+      responses:
+        '201':
+          description: Policy created
+
+  /tenants/{tenantId}/usage/summary:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Usage]
+      summary: Get usage summary
+      operationId: getUsageSummary
+      responses:
+        '200':
+          description: Usage summary
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: |
+        Use Laravel Sanctum token authentication.
+        Include in header: `Authorization: Bearer <token>`
+
+  parameters:
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Tenant UUID
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthenticated.
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Resource not found.
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: The given data was invalid.
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: This action is unauthorized.
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          example: 1|abc123def456
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        tenant_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Acme Corp
+        domain:
+          type: string
+          example: acme.example.com
+        slug:
+          type: string
+          example: acme-corp-1234
+        status:
+          type: string
+          enum: [trial, active, suspended, terminated]
+        is_active:
+          type: boolean
+        max_extensions:
+          type: integer
+        max_concurrent_calls:
+          type: integer
+        max_dids:
+          type: integer
+        settings:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TenantInput:
+      type: object
+      required: [name, domain]
+      properties:
+        name:
+          type: string
+        domain:
+          type: string
+        max_extensions:
+          type: integer
+          default: 10
+        max_concurrent_calls:
+          type: integer
+          default: 0
+        settings:
+          type: object
+
+    ExtensionInput:
+      type: object
+      required: [extension, password]
+      properties:
+        extension:
+          type: string
+          example: '1001'
+        password:
+          type: string
+        directory_first_name:
+          type: string
+        directory_last_name:
+          type: string
+        outbound_caller_id_number:
+          type: string
+
+    DidInput:
+      type: object
+      required: [number]
+      properties:
+        number:
+          type: string
+          example: '+15551234567'
+        destination_type:
+          type: string
+          enum: [extension, ring_group, ivr, queue, voicemail]
+        destination_id:
+          type: string
+          format: uuid
+
+    WebhookInput:
+      type: object
+      required: [url, events, secret]
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://hooks.example.com/nizam
+        events:
+          type: array
+          items:
+            type: string
+          example: ['call.created', 'call.hangup']
+        secret:
+          type: string
+          description: Shared secret for HMAC signature verification
+        is_active:
+          type: boolean
+          default: true
+        description:
+          type: string
+
+    AgentInput:
+      type: object
+      required: [name, extension_id]
+      properties:
+        name:
+          type: string
+        extension_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [agent, supervisor]
+          default: agent
+
+    QueueInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        strategy:
+          type: string
+          enum: [ring_all, round_robin, least_recent]
+          default: ring_all
+        max_wait_time:
+          type: integer
+          description: Max wait in seconds
+        service_level_threshold:
+          type: integer
+          default: 30
+        music_on_hold:
+          type: string
+
+    QueueMetrics:
+      type: object
+      properties:
+        queue_id:
+          type: string
+          format: uuid
+        queue_name:
+          type: string
+        waiting_count:
+          type: integer
+        calls_offered:
+          type: integer
+        calls_answered:
+          type: integer
+        calls_abandoned:
+          type: integer
+        average_wait_time:
+          type: number
+          format: float
+        max_wait_time:
+          type: number
+          format: float
+        service_level:
+          type: number
+          format: float
+          description: Percentage of calls answered within SLA
+        abandon_rate:
+          type: number
+          format: float
+        agent_occupancy:
+          type: number
+          format: float

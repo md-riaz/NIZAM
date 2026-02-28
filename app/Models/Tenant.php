@@ -153,4 +153,19 @@ class Tenant extends Model
     {
         return $this->hasMany(Queue::class);
     }
+
+    public function analyticsEvents(): HasMany
+    {
+        return $this->hasMany(AnalyticsEvent::class);
+    }
+
+    public function alertPolicies(): HasMany
+    {
+        return $this->hasMany(AlertPolicy::class);
+    }
+
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(Alert::class);
+    }
 }

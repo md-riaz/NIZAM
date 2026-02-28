@@ -1,0 +1,468 @@
+{
+  "info": {
+    "name": "NIZAM API",
+    "description": "NIZAM — Open Communications Control Platform API. Multi-tenant VoIP/PBX platform built on FreeSWITCH + Laravel.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost/api"
+    },
+    {
+      "key": "api_token",
+      "value": ""
+    },
+    {
+      "key": "tenant_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "  pm.collectionVariables.set('api_token', jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }
+          }
+        },
+        {
+          "name": "List Tokens",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/auth/tokens", "host": ["{{base_url}}"], "path": ["auth", "tokens"] }
+          }
+        },
+        {
+          "name": "Create Token",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"my-integration\",\n  \"abilities\": [\"*\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/auth/tokens", "host": ["{{base_url}}"], "path": ["auth", "tokens"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenant Lifecycle",
+      "item": [
+        {
+          "name": "List Tenants",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants", "host": ["{{base_url}}"], "path": ["tenants"] }
+          }
+        },
+        {
+          "name": "Create Tenant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "  pm.collectionVariables.set('tenant_id', jsonData.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Corp\",\n  \"domain\": \"acme.example.com\",\n  \"max_extensions\": 50,\n  \"settings\": {}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants", "host": ["{{base_url}}"], "path": ["tenants"] }
+          }
+        },
+        {
+          "name": "Get Tenant",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}"] }
+          }
+        },
+        {
+          "name": "Update Tenant",
+          "request": {
+            "method": "PUT",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Corp Updated\",\n  \"max_extensions\": 100\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}"] }
+          }
+        },
+        {
+          "name": "Get Tenant Settings",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/settings", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "settings"] }
+          }
+        },
+        {
+          "name": "Update Tenant Settings",
+          "request": {
+            "method": "PUT",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recording_enabled\": true,\n  \"max_recording_days\": 90\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/settings", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "settings"] }
+          }
+        },
+        {
+          "name": "Provision Tenant",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Tenant\",\n  \"domain\": \"new-tenant.example.com\",\n  \"max_extensions\": 25\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/provision", "host": ["{{base_url}}"], "path": ["tenants", "provision"] }
+          }
+        },
+        {
+          "name": "Get Tenant Stats",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/stats", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "stats"] }
+          }
+        },
+        {
+          "name": "Delete Tenant",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Provisioning",
+      "item": [
+        {
+          "name": "List Extensions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "extensions"] }
+          }
+        },
+        {
+          "name": "Create Extension",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"extension\": \"1001\",\n  \"password\": \"securePass123!\",\n  \"directory_first_name\": \"John\",\n  \"directory_last_name\": \"Doe\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "extensions"] }
+          }
+        },
+        {
+          "name": "List DIDs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/dids", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "dids"] }
+          }
+        },
+        {
+          "name": "Create DID",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"+15551234567\",\n  \"destination_type\": \"extension\",\n  \"destination_id\": \"<extension_uuid>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/dids", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "dids"] }
+          }
+        },
+        {
+          "name": "List Device Profiles",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "device-profiles"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Routing & Policy",
+      "item": [
+        {
+          "name": "List Ring Groups",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "ring-groups"] }
+          }
+        },
+        {
+          "name": "List IVRs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "ivrs"] }
+          }
+        },
+        {
+          "name": "List Time Conditions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "time-conditions"] }
+          }
+        },
+        {
+          "name": "List Call Routing Policies",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-routing-policies"] }
+          }
+        },
+        {
+          "name": "Evaluate Policy",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"caller_id_number\": \"+15559876543\",\n  \"destination_number\": \"1001\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/<policy_id>/evaluate", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-routing-policies", "<policy_id>", "evaluate"] }
+          }
+        },
+        {
+          "name": "List Call Flows",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-flows", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-flows"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events & Webhooks",
+      "item": [
+        {
+          "name": "List Call Events",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-events"] }
+          }
+        },
+        {
+          "name": "Trace Call Events",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/<call_uuid>/trace", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-events", "<call_uuid>", "trace"] }
+          }
+        },
+        {
+          "name": "List Webhooks",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "webhooks"] }
+          }
+        },
+        {
+          "name": "Create Webhook",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://hooks.example.com/nizam\",\n  \"events\": [\"call.created\", \"call.hangup\"],\n  \"secret\": \"my-webhook-secret\",\n  \"is_active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "webhooks"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contact Center",
+      "item": [
+        {
+          "name": "List Agents",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/agents", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "agents"] }
+          }
+        },
+        {
+          "name": "Create Agent",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"extension_id\": \"<extension_uuid>\",\n  \"role\": \"agent\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/agents", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "agents"] }
+          }
+        },
+        {
+          "name": "Change Agent State",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"available\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/<agent_id>/state", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "agents", "<agent_id>", "state"] }
+          }
+        },
+        {
+          "name": "List Queues",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/queues", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "queues"] }
+          }
+        },
+        {
+          "name": "Create Queue",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Support Queue\",\n  \"strategy\": \"round_robin\",\n  \"max_wait_time\": 300,\n  \"service_level_threshold\": 30\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/queues", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "queues"] }
+          }
+        },
+        {
+          "name": "Add Queue Member",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"<agent_uuid>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/<queue_id>/members", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "queues", "<queue_id>", "members"] }
+          }
+        },
+        {
+          "name": "Get Realtime Metrics",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/<queue_id>/metrics/realtime", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "queues", "<queue_id>", "metrics", "realtime"] }
+          }
+        },
+        {
+          "name": "Get Wallboard",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/wallboard", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "wallboard"] }
+          }
+        },
+        {
+          "name": "Get Agent States",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/agent-states", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "agent-states"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usage & Billing",
+      "item": [
+        {
+          "name": "Get Usage Summary",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/summary", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "usage", "summary"] }
+          }
+        },
+        {
+          "name": "Collect Usage",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/collect", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "usage", "collect"] }
+          }
+        },
+        {
+          "name": "Reconcile Usage",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/reconcile", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "usage", "reconcile"] }
+          }
+        }
+      ]
+    }
+  ]
+}
