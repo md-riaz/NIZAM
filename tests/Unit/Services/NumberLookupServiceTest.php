@@ -72,7 +72,9 @@ class NumberLookupServiceTest extends TestCase
     public function test_returns_null_on_connection_error(): void
     {
         Http::fake([
-            'https://lookup.example.com/*' => Http::response(null, 500),
+            'https://lookup.example.com/*' => function () {
+                throw new \Illuminate\Http\Client\ConnectionException('Connection timeout');
+            },
         ]);
 
         $tenant = Tenant::factory()->create([
