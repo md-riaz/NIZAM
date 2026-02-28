@@ -29,6 +29,14 @@ class CallDetailRecordController extends Controller
             $query->where('direction', $request->input('direction'));
         }
 
+        if ($request->filled('uuid')) {
+            $query->where('uuid', $request->input('uuid'));
+        }
+
+        if ($request->filled('hangup_cause')) {
+            $query->where('hangup_cause', $request->input('hangup_cause'));
+        }
+
         if ($request->filled('caller_id_number')) {
             $query->where('caller_id_number', $request->input('caller_id_number'));
         }
@@ -51,12 +59,12 @@ class CallDetailRecordController extends Controller
     /**
      * Show a single CDR.
      */
-    public function show(Tenant $tenant, CallDetailRecord $callDetailRecord): JsonResponse|CallDetailRecordResource
+    public function show(Tenant $tenant, CallDetailRecord $cdr): JsonResponse|CallDetailRecordResource
     {
-        if ($callDetailRecord->tenant_id !== $tenant->id) {
+        if ($cdr->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'CDR not found.'], 404);
         }
 
-        return new CallDetailRecordResource($callDetailRecord);
+        return new CallDetailRecordResource($cdr);
     }
 }

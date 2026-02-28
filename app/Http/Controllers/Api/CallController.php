@@ -30,13 +30,13 @@ class CallController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$extension) {
+        if (! $extension) {
             return response()->json(['message' => 'Extension not found or inactive.'], 404);
         }
 
         $esl = EslConnectionManager::fromConfig();
 
-        if (!$esl->connect()) {
+        if (! $esl->connect()) {
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
         }
 
@@ -69,11 +69,11 @@ class CallController extends Controller
     {
         $esl = EslConnectionManager::fromConfig();
 
-        if (!$esl->connect()) {
+        if (! $esl->connect()) {
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
         }
 
-        $response = $esl->api("show channels as json");
+        $response = $esl->api('show channels as json');
         $esl->disconnect();
 
         $channels = json_decode($response ?? '{}', true);

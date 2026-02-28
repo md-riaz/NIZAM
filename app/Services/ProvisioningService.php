@@ -30,7 +30,7 @@ class ProvisioningService
             $variables = array_merge($variables, [
                 '{{EXTENSION}}' => $extension->extension,
                 '{{PASSWORD}}' => $extension->password,
-                '{{DISPLAY_NAME}}' => trim(($extension->directory_first_name ?? '') . ' ' . ($extension->directory_last_name ?? '')),
+                '{{DISPLAY_NAME}}' => trim(($extension->directory_first_name ?? '').' '.($extension->directory_last_name ?? '')),
                 '{{CALLER_ID_NAME}}' => $extension->effective_caller_id_name ?? $extension->directory_first_name ?? '',
                 '{{CALLER_ID_NUMBER}}' => $extension->effective_caller_id_number ?? $extension->extension,
                 '{{VOICEMAIL_ENABLED}}' => $extension->voicemail_enabled ? 'true' : 'false',
@@ -51,10 +51,11 @@ class ProvisioningService
         return DeviceProfile::where('is_active', true)
             ->get()
             ->first(function (DeviceProfile $profile) use ($normalized) {
-                if (!$profile->mac_address) {
+                if (! $profile->mac_address) {
                     return false;
                 }
                 $profileMac = strtolower(preg_replace('/[^a-fA-F0-9]/', '', $profile->mac_address));
+
                 return $profileMac === $normalized;
             });
     }

@@ -21,12 +21,12 @@ class CallEvent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('tenant.' . $this->tenantId . '.calls'),
+            new Channel('tenant.'.$this->tenantId.'.calls'),
         ];
     }
 
     public function broadcastAs(): string
     {
-        return 'call.' . $this->eventType;
+        return 'call.'.$this->eventType;
     }
 }

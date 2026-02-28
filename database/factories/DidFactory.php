@@ -17,7 +17,7 @@ class DidFactory extends Factory
     {
         return [
             'tenant_id' => Tenant::factory(),
-            'number' => '+1' . fake()->numerify('##########'),
+            'number' => '+1'.fake()->numerify('##########'),
             'description' => fake()->optional(0.7)->sentence(),
             'destination_type' => fake()->randomElement([
                 'extension', 'ring_group', 'ivr', 'time_condition', 'voicemail',

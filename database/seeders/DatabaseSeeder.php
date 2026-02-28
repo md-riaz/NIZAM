@@ -57,7 +57,7 @@ class DatabaseSeeder extends Seeder
             $extensions[$ext] = Extension::create([
                 'tenant_id' => $tenant->id,
                 'extension' => $ext,
-                'password' => 'pass' . $ext,
+                'password' => 'pass'.$ext,
                 'directory_first_name' => $first,
                 'directory_last_name' => $last,
                 'effective_caller_id_name' => "$first $last",

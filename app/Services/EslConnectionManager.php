@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 class EslConnectionManager
 {
     protected $socket = null;
+
     protected bool $authenticated = false;
 
     public function __construct(
@@ -39,8 +40,9 @@ class EslConnectionManager
             timeout: 10
         );
 
-        if (!$this->socket) {
+        if (! $this->socket) {
             Log::error("ESL connection failed: [{$errno}] {$errstr}");
+
             return false;
         }
 
@@ -65,10 +67,12 @@ class EslConnectionManager
         if (str_contains($response, 'Reply-Text: +OK accepted')) {
             $this->authenticated = true;
             Log::info('ESL authenticated successfully');
+
             return true;
         }
 
         Log::error('ESL authentication failed');
+
         return false;
     }
 
@@ -77,7 +81,7 @@ class EslConnectionManager
      */
     public function subscribeEvents(array $events): bool
     {
-        if (!$this->authenticated) {
+        if (! $this->authenticated) {
             return false;
         }
 
@@ -93,11 +97,12 @@ class EslConnectionManager
      */
     public function api(string $command): ?string
     {
-        if (!$this->authenticated) {
+        if (! $this->authenticated) {
             return null;
         }
 
         $this->sendCommand("api {$command}");
+
         return $this->readResponse();
     }
 
@@ -106,11 +111,12 @@ class EslConnectionManager
      */
     public function bgapi(string $command): ?string
     {
-        if (!$this->authenticated) {
+        if (! $this->authenticated) {
             return null;
         }
 
         $this->sendCommand("bgapi {$command}");
+
         return $this->readResponse();
     }
 
@@ -120,7 +126,7 @@ class EslConnectionManager
      */
     public function readEvent(int $timeoutSeconds = 1): ?array
     {
-        if (!$this->socket) {
+        if (! $this->socket) {
             return null;
         }
 
@@ -147,7 +153,7 @@ class EslConnectionManager
     protected function sendCommand(string $command): void
     {
         if ($this->socket) {
-            fwrite($this->socket, $command . "\n\n");
+            fwrite($this->socket, $command."\n\n");
         }
     }
 
@@ -156,7 +162,7 @@ class EslConnectionManager
      */
     protected function readResponse(): string
     {
-        if (!$this->socket) {
+        if (! $this->socket) {
             return '';
         }
 
@@ -192,6 +198,7 @@ class EslConnectionManager
                 $headers[trim($key)] = urldecode(trim($value));
             }
         }
+
         return $headers;
     }
 
@@ -202,7 +209,7 @@ class EslConnectionManager
     {
         $data = '';
         $remaining = $length;
-        while ($remaining > 0 && !feof($this->socket)) {
+        while ($remaining > 0 && ! feof($this->socket)) {
             $chunk = fread($this->socket, min($remaining, 8192));
             if ($chunk === false) {
                 break;
@@ -210,6 +217,7 @@ class EslConnectionManager
             $data .= $chunk;
             $remaining -= strlen($chunk);
         }
+
         return $data;
     }
 
@@ -226,6 +234,7 @@ class EslConnectionManager
                 $data[trim($key)] = urldecode(trim($value));
             }
         }
+
         return $data;
     }
 

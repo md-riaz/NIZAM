@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 class EslListenCommand extends Command
 {
     protected $signature = 'nizam:esl-listen';
+
     protected $description = 'Connect to FreeSWITCH ESL and listen for events';
 
     public function handle(EventProcessor $processor): int
@@ -17,8 +18,9 @@ class EslListenCommand extends Command
 
         $esl = EslConnectionManager::fromConfig();
 
-        if (!$esl->connect()) {
+        if (! $esl->connect()) {
             $this->error('Failed to connect to FreeSWITCH ESL.');
+
             return self::FAILURE;
         }
 
@@ -32,12 +34,13 @@ class EslListenCommand extends Command
             'CUSTOM',
         ];
 
-        if (!$esl->subscribeEvents($events)) {
+        if (! $esl->subscribeEvents($events)) {
             $this->error('Failed to subscribe to events.');
+
             return self::FAILURE;
         }
 
-        $this->info('Subscribed to events: ' . implode(', ', $events));
+        $this->info('Subscribed to events: '.implode(', ', $events));
         $this->info('Listening for events... (Press Ctrl+C to stop)');
 
         // Event loop

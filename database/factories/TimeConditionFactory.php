@@ -20,7 +20,7 @@ class TimeConditionFactory extends Factory
             'name' => fake()->randomElement([
                 'Business Hours', 'Weekend Hours', 'Holiday Schedule',
                 'After Hours', 'Lunch Break', 'Night Shift',
-            ]) . ' ' . fake()->numerify('##'),
+            ]).' '.fake()->numerify('##'),
             'conditions' => [
                 [
                     'wday' => 'mon-fri',

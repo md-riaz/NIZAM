@@ -78,4 +78,9 @@ class Tenant extends Model
     {
         return $this->hasMany(Webhook::class);
     }
+
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
 }

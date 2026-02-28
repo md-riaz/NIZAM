@@ -19,7 +19,7 @@ class WebhookDispatcherTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->dispatcher = new WebhookDispatcher();
+        $this->dispatcher = new WebhookDispatcher;
     }
 
     public function test_dispatches_jobs_for_matching_webhooks(): void

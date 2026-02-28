@@ -1,17 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\ExtensionController;
-use App\Http\Controllers\Api\DidController;
-use App\Http\Controllers\Api\RingGroupController;
-use App\Http\Controllers\Api\IvrController;
-use App\Http\Controllers\Api\TimeConditionController;
+use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\CallDetailRecordController;
 use App\Http\Controllers\Api\DeviceProfileController;
+use App\Http\Controllers\Api\DidController;
+use App\Http\Controllers\Api\ExtensionController;
+use App\Http\Controllers\Api\IvrController;
+use App\Http\Controllers\Api\RingGroupController;
+use App\Http\Controllers\Api\TenantController;
+use App\Http\Controllers\Api\TimeConditionController;
 use App\Http\Controllers\Api\WebhookController;
-use App\Http\Controllers\Api\CallController;
+use Illuminate\Support\Facades\Route;
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);

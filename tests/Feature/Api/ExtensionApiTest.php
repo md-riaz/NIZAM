@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Extension;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +12,7 @@ class ExtensionApiTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Tenant $tenant;
 
     protected function setUp(): void

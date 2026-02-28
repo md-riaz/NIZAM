@@ -20,7 +20,7 @@ class IvrFactory extends Factory
             'name' => fake()->randomElement([
                 'Main Menu', 'Support Menu', 'Sales Menu', 'After Hours Menu',
                 'Billing Menu', 'Directory', 'Welcome Menu',
-            ]) . ' ' . fake()->numerify('##'),
+            ]).' '.fake()->numerify('##'),
             'greet_long' => fake()->optional(0.6)->filePath(),
             'greet_short' => fake()->optional(0.6)->filePath(),
             'timeout' => fake()->numberBetween(3, 10),

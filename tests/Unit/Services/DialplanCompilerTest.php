@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Extension;
 use App\Models\Tenant;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,7 +16,7 @@ class DialplanCompilerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->compiler = new DialplanCompiler();
+        $this->compiler = new DialplanCompiler;
     }
 
     private function createTenantWithExtension(): array

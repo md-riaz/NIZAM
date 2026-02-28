@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DeviceProfile;
 use App\Services\ProvisioningService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,7 +20,7 @@ class ProvisioningController extends Controller
     {
         $profile = $this->provisioning->findByMac($macAddress);
 
-        if (!$profile) {
+        if (! $profile) {
             return response('Device not found.', 404, ['Content-Type' => 'text/plain']);
         }
 

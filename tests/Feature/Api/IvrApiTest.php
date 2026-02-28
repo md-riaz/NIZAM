@@ -14,6 +14,7 @@ class IvrApiTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Tenant $tenant;
 
     protected function setUp(): void

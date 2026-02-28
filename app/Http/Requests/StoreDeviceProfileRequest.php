@@ -15,7 +15,7 @@ class StoreDeviceProfileRequest extends FormRequest
     {
         return [
             'name' => 'required|string',
-            'vendor' => 'nullable|string',
+            'vendor' => 'required|string',
             'mac_address' => 'nullable|string',
             'template' => 'nullable|string',
             'extension_id' => 'nullable|uuid',

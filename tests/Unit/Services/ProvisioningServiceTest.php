@@ -18,7 +18,7 @@ class ProvisioningServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new ProvisioningService();
+        $this->service = new ProvisioningService;
     }
 
     public function test_renders_config_with_extension_variables_substituted(): void

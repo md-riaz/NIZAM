@@ -21,20 +21,20 @@ class CallDetailRecordFactory extends Factory
         $answered = fake()->boolean(70);
 
         $answerStamp = $answered
-            ? (clone $startStamp)->modify('+' . fake()->numberBetween(1, 10) . ' seconds')
+            ? (clone $startStamp)->modify('+'.fake()->numberBetween(1, 10).' seconds')
             : null;
 
         $endStamp = (clone ($answerStamp ?? $startStamp))
-            ->modify('+' . $duration . ' seconds');
+            ->modify('+'.$duration.' seconds');
 
         return [
             'tenant_id' => Tenant::factory(),
             'uuid' => fake()->unique()->uuid(),
             'caller_id_name' => fake()->optional(0.7)->name(),
-            'caller_id_number' => '+1' . fake()->numerify('##########'),
+            'caller_id_number' => '+1'.fake()->numerify('##########'),
             'destination_number' => fake()->randomElement([
                 (string) fake()->numberBetween(1000, 9999),
-                '+1' . fake()->numerify('##########'),
+                '+1'.fake()->numerify('##########'),
             ]),
             'context' => fake()->optional(0.5)->word(),
             'start_stamp' => $startStamp,

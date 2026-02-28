@@ -32,7 +32,7 @@ class EventProcessor
     protected function handleChannelCreate(array $event): void
     {
         $tenantId = $this->resolveTenantId($event);
-        if (!$tenantId) {
+        if (! $tenantId) {
             return;
         }
 
@@ -47,7 +47,7 @@ class EventProcessor
     protected function handleChannelAnswer(array $event): void
     {
         $tenantId = $this->resolveTenantId($event);
-        if (!$tenantId) {
+        if (! $tenantId) {
             return;
         }
 
@@ -62,7 +62,7 @@ class EventProcessor
     protected function handleChannelHangup(array $event): void
     {
         $tenantId = $this->resolveTenantId($event);
-        if (!$tenantId) {
+        if (! $tenantId) {
             return;
         }
 
@@ -102,7 +102,7 @@ class EventProcessor
         }
 
         $tenantId = $this->resolveTenantId($event);
-        if (!$tenantId) {
+        if (! $tenantId) {
             return;
         }
 
@@ -128,7 +128,7 @@ class EventProcessor
             ?? $event['FreeSWITCH-Hostname']
             ?? null;
 
-        if (!$domain) {
+        if (! $domain) {
             return null;
         }
 

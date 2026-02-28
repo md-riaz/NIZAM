@@ -20,7 +20,7 @@ class TenantFactory extends Factory
         return [
             'name' => $company,
             'domain' => fake()->unique()->domainName(),
-            'slug' => Str::slug($company) . '-' . fake()->unique()->randomNumber(4),
+            'slug' => Str::slug($company).'-'.fake()->unique()->randomNumber(4),
             'settings' => [],
             'max_extensions' => fake()->numberBetween(1, 100),
             'is_active' => true,

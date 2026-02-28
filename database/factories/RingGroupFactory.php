@@ -20,7 +20,7 @@ class RingGroupFactory extends Factory
             'name' => fake()->randomElement([
                 'Sales Team', 'Support', 'Billing', 'Engineering', 'Front Desk',
                 'Operations', 'Management', 'Help Desk', 'Customer Service',
-            ]) . ' ' . fake()->numerify('##'),
+            ]).' '.fake()->numerify('##'),
             'strategy' => fake()->randomElement(['simultaneous', 'sequential']),
             'ring_timeout' => fake()->numberBetween(15, 60),
             'members' => array_map(

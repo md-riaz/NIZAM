@@ -2,13 +2,8 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\CallDetailRecord;
-use App\Models\Did;
 use App\Models\Extension;
-use App\Models\Ivr;
-use App\Models\RingGroup;
 use App\Models\Tenant;
-use App\Models\TimeCondition;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -36,7 +31,7 @@ class TenantTest extends TestCase
 
     public function test_has_correct_fillable_attributes(): void
     {
-        $tenant = new Tenant();
+        $tenant = new Tenant;
 
         $this->assertEquals([
             'name',

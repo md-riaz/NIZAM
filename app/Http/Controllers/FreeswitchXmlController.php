@@ -45,12 +45,12 @@ class FreeswitchXmlController extends Controller
 
     protected function notFoundResponse(): Response
     {
-        $xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' . "\n"
-             . '<document type="freeswitch/xml">' . "\n"
-             . '  <section name="result">' . "\n"
-             . '    <result status="not found"/>' . "\n"
-             . '  </section>' . "\n"
-             . '</document>';
+        $xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'."\n"
+             .'<document type="freeswitch/xml">'."\n"
+             .'  <section name="result">'."\n"
+             .'    <result status="not found"/>'."\n"
+             .'  </section>'."\n"
+             .'</document>';
 
         return response($xml, 200, ['Content-Type' => 'text/xml']);
     }

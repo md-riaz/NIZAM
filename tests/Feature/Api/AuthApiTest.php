@@ -102,7 +102,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/auth/logout');
 
         $response->assertStatus(204);
