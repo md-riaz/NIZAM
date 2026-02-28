@@ -144,4 +144,31 @@ class TenantTest extends TestCase
         $this->assertIsBool($tenant->is_active);
         $this->assertTrue($tenant->is_active);
     }
+
+    public function test_has_many_users(): void
+    {
+        $tenant = Tenant::factory()->create();
+        \App\Models\User::factory()->create(['tenant_id' => $tenant->id]);
+
+        $this->assertCount(1, $tenant->users);
+        $this->assertInstanceOf(\App\Models\User::class, $tenant->users->first());
+    }
+
+    public function test_has_many_webhooks(): void
+    {
+        $tenant = Tenant::factory()->create();
+        \App\Models\Webhook::factory()->create(['tenant_id' => $tenant->id]);
+
+        $this->assertCount(1, $tenant->webhooks);
+        $this->assertInstanceOf(\App\Models\Webhook::class, $tenant->webhooks->first());
+    }
+
+    public function test_has_many_device_profiles(): void
+    {
+        $tenant = Tenant::factory()->create();
+        \App\Models\DeviceProfile::factory()->create(['tenant_id' => $tenant->id]);
+
+        $this->assertCount(1, $tenant->deviceProfiles);
+        $this->assertInstanceOf(\App\Models\DeviceProfile::class, $tenant->deviceProfiles->first());
+    }
 }
