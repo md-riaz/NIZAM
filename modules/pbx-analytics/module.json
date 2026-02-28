@@ -1,0 +1,7 @@
+{
+    "name": "pbx-analytics",
+    "version": "1.0.0",
+    "description": "Analytics: insights, anomaly detection, recording enrichment",
+    "dependencies": [],
+    "namespace": "Modules\\PbxAnalytics"
+}

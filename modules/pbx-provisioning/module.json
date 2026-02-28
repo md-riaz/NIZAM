@@ -1,0 +1,7 @@
+{
+    "name": "pbx-provisioning",
+    "version": "1.0.0",
+    "description": "Provisioning: device templates, MAC detection, credential injection",
+    "dependencies": [],
+    "namespace": "Modules\\PbxProvisioning"
+}

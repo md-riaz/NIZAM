@@ -1,0 +1,7 @@
+{
+    "name": "pbx-automation",
+    "version": "1.0.0",
+    "description": "Automation: webhooks, event subscriptions, call control API",
+    "dependencies": [],
+    "namespace": "Modules\\PbxAutomation"
+}
