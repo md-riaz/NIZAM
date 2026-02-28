@@ -18,12 +18,12 @@ class ExtensionApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->user = User::factory()->create();
         $this->tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
             'slug' => 'test-tenant',
         ]);
+        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
     }
 
     public function test_can_list_extensions_for_a_tenant(): void

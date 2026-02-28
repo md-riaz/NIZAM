@@ -116,7 +116,8 @@ class DialplanCompiler
             return $this->compileExtensionDialplan($tenant, $extension);
         }
 
-        return $this->emptyDialplanResponse();
+        // Fail-safe: no matching route — play a courtesy message and hangup
+        return $this->compileFailsafeDialplan($tenant->domain, $destinationNumber);
     }
 
     protected function compileDidRouting(Tenant $tenant, Did $did): string
@@ -264,6 +265,20 @@ class DialplanCompiler
         }
 
         return '';
+    }
+
+    protected function compileFailsafeDialplan(string $domain, string $destinationNumber): string
+    {
+        $xml = $this->dialplanHeader($domain);
+        $xml .= '        <extension name="failsafe">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($destinationNumber, '/').'$">'."\n";
+        $xml .= '            <action application="log" data="WARNING Fail-safe route triggered for '.htmlspecialchars($destinationNumber, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="respond" data="404"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+        $xml .= $this->dialplanFooter();
+
+        return $xml;
     }
 
     protected function dialplanHeader(string $domain): string

@@ -30,6 +30,7 @@ class EslListenCommand extends Command
         $events = [
             'CHANNEL_CREATE',
             'CHANNEL_ANSWER',
+            'CHANNEL_BRIDGE',
             'CHANNEL_HANGUP_COMPLETE',
             'CUSTOM',
         ];
