@@ -89,6 +89,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Indexed call detail records
 - UUID correlation with FreeSWITCH
 - Recording path tracking
+- Recording model with file indexing, download API, and deletion
 
 ### Device Provisioning
 - Template-based device configs
@@ -124,6 +125,8 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - `NizamModule` interface for plug-in extensibility
 - Hooks for: dialplan contributions, event subscriptions, permission extensions
 - Module registry with lifecycle management (register → boot)
+- Module skeleton generator (`php artisan make:nizam-module {name}`)
+- Migration isolation per module via `migrationsPath()` hook
 - Error isolation per module
 
 ### Security
@@ -131,7 +134,9 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Webhook secrets encrypted at rest
 - API rate limiting (60 requests/minute per user or IP)
 - Tenant isolation middleware on all scoped routes
-- Role-based authorization policies (TenantPolicy, ExtensionPolicy)
+- Role-based authorization policies (TenantPolicy, ExtensionPolicy, DidPolicy, RingGroupPolicy, IvrPolicy, TimeConditionPolicy, WebhookPolicy, DeviceProfilePolicy, UserPolicy)
+- Granular permission system with per-user permission assignment
+- Admin user management API (CRUD for users, grant/revoke permissions)
 - Fail-safe routing defaults
 
 ---
@@ -221,6 +226,27 @@ All follow the same CRUD pattern under `/api/tenants/{id}/...`:
 |--------|----------|-------------|
 | `GET` | `/api/tenants/{id}/call-events` | List call events (filterable by `call_uuid`, `event_type`, `from`, `to`) |
 | `GET` | `/api/tenants/{id}/call-events/{uuid}/trace` | Full lifecycle trace for a specific call UUID |
+
+#### Recordings
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/tenants/{id}/recordings` | List recordings (filterable by `call_uuid`, `caller_id_number`, `destination_number`, `date_from`, `date_to`) |
+| `GET` | `/api/tenants/{id}/recordings/{id}` | Get recording metadata |
+| `GET` | `/api/tenants/{id}/recordings/{id}/download` | Download recording file |
+| `DELETE` | `/api/tenants/{id}/recordings/{id}` | Delete recording |
+
+#### User Management (Admin Only)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/users` | List all users (filterable by `tenant_id`, `role`) |
+| `POST` | `/api/users` | Create user |
+| `GET` | `/api/users/{id}` | Get user |
+| `PUT` | `/api/users/{id}` | Update user |
+| `DELETE` | `/api/users/{id}` | Delete user |
+| `GET` | `/api/users/{id}/permissions` | List user's permissions |
+| `POST` | `/api/users/{id}/permissions/grant` | Grant permissions to user |
+| `POST` | `/api/users/{id}/permissions/revoke` | Revoke permissions from user |
+| `GET` | `/api/permissions` | List all available permissions |
 
 ### Rate Limiting
 
@@ -422,7 +448,7 @@ NIZAM/
 │   ├── api.php                 # API routes (auth, CRUD, calls, events, health)
 │   └── web.php                 # Web routes (xml-curl, provisioning)
 ├── docker-compose.yml          # Container orchestration (6 services)
-└── tests/                      # PHPUnit tests (266 tests, 520 assertions)
+└── tests/                      # PHPUnit tests (288 tests, 560 assertions)
 ```
 
 ---

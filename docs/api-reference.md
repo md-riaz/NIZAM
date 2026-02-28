@@ -436,6 +436,175 @@ Retry-After: 30
 
 ---
 
+## User Management (Admin Only)
+
+### List Users
+
+```http
+GET /api/users
+Authorization: Bearer {token}
+```
+
+Query parameters: `tenant_id`, `role`
+
+**Response** `200`:
+```json
+{
+  "data": [
+    { "id": 1, "name": "John Doe", "email": "john@example.com", "role": "user", "tenant_id": "uuid" }
+  ]
+}
+```
+
+### Create User
+
+```http
+POST /api/users
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "password123",
+  "role": "user",
+  "tenant_id": "tenant-uuid"
+}
+```
+
+### Update User
+
+```http
+PUT /api/users/{id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "role": "admin"
+}
+```
+
+### Delete User
+
+```http
+DELETE /api/users/{id}
+Authorization: Bearer {token}
+```
+
+### View User Permissions
+
+```http
+GET /api/users/{id}/permissions
+Authorization: Bearer {token}
+```
+
+**Response** `200`:
+```json
+{
+  "permissions": ["extensions.view", "extensions.create"]
+}
+```
+
+### Grant Permissions
+
+```http
+POST /api/users/{id}/permissions/grant
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "permissions": ["extensions.view", "extensions.create", "dids.view"]
+}
+```
+
+### Revoke Permissions
+
+```http
+POST /api/users/{id}/permissions/revoke
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "permissions": ["extensions.create"]
+}
+```
+
+### List Available Permissions
+
+```http
+GET /api/permissions
+Authorization: Bearer {token}
+```
+
+**Response** `200`:
+```json
+{
+  "permissions": [
+    { "slug": "extensions.view", "description": "View extensions", "module": "core" },
+    { "slug": "extensions.create", "description": "Create extensions", "module": "core" }
+  ]
+}
+```
+
+---
+
+## Recordings
+
+### List Recordings
+
+```http
+GET /api/tenants/{tenant}/recordings
+Authorization: Bearer {token}
+```
+
+Query parameters: `call_uuid`, `caller_id_number`, `destination_number`, `date_from`, `date_to`
+
+**Response** `200`:
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "call_uuid": "uuid",
+      "file_name": "uuid.wav",
+      "file_size": 245000,
+      "format": "wav",
+      "duration": 30,
+      "direction": "inbound",
+      "caller_id_number": "+15551234567",
+      "destination_number": "1001",
+      "created_at": "2026-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+### Show Recording
+
+```http
+GET /api/tenants/{tenant}/recordings/{id}
+Authorization: Bearer {token}
+```
+
+### Download Recording
+
+```http
+GET /api/tenants/{tenant}/recordings/{id}/download
+Authorization: Bearer {token}
+```
+
+Returns the recording file as a download.
+
+### Delete Recording
+
+```http
+DELETE /api/tenants/{tenant}/recordings/{id}
+Authorization: Bearer {token}
+```
+
+---
+
 ## Error Responses
 
 All errors follow a consistent format:

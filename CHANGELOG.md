@@ -91,7 +91,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Core permissions for all CRUD operations (tenants, extensions, DIDs, ring groups, IVRs, etc.)
 - Module-contributed permissions synced via `nizam:sync-permissions` command
 - Admin role bypasses all permission checks
+- Granular permissions enforced in all authorization policies (default-open when no permissions assigned, restrictive once granted)
 - `hasPermission()`, `grantPermissions()`, `revokePermissions()` on User model
+- User management API (admin-only CRUD for users)
+- Permission management API (grant/revoke permissions, list available permissions)
+
+#### Recordings
+- Recording model with file indexing, metadata tracking
+- Recording API: list, show, download, delete
+- Configurable recording storage disk (`RECORDING_PATH` env var)
 
 #### Webhooks
 - Outbound event notifications with HMAC-SHA256 signing
@@ -100,6 +108,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Events: call.started, call.answered, call.bridge, call.missed, call.hangup, voicemail.received, registration.registered, registration.unregistered
 
 ### Tests
-- 266 tests with 520 assertions covering all features
+- 288 tests with 560 assertions covering all features
 - Unit tests for models, services, policies, observers, modules
 - Feature tests for all API endpoints, middleware, provisioning
+- Permission-policy integration tests
