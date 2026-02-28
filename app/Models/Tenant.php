@@ -143,4 +143,14 @@ class Tenant extends Model
     {
         return $this->hasMany(UsageRecord::class);
     }
+
+    public function agents(): HasMany
+    {
+        return $this->hasMany(Agent::class);
+    }
+
+    public function queues(): HasMany
+    {
+        return $this->hasMany(Queue::class);
+    }
 }

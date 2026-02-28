@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminDashboardController;
+use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CallController;
@@ -14,6 +15,8 @@ use App\Http\Controllers\Api\DidController;
 use App\Http\Controllers\Api\ExtensionController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\IvrController;
+use App\Http\Controllers\Api\QueueController;
+use App\Http\Controllers\Api\QueueMetricsController;
 use App\Http\Controllers\Api\RecordingController;
 use App\Http\Controllers\Api\RingGroupController;
 use App\Http\Controllers\Api\TenantController;
@@ -105,5 +108,24 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         // Audit logs (read-only)
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
+
+        // Agents
+        Route::apiResource('agents', AgentController::class);
+        Route::post('agents/{agent}/state', [AgentController::class, 'changeState'])->name('agents.state');
+
+        // Queues
+        Route::apiResource('queues', QueueController::class);
+        Route::post('queues/{queue}/members', [QueueController::class, 'addMember'])->name('queues.add-member');
+        Route::delete('queues/{queue}/members/{agent}', [QueueController::class, 'removeMember'])->name('queues.remove-member');
+        Route::get('queues/{queue}/members', [QueueController::class, 'members'])->name('queues.members');
+
+        // Queue metrics
+        Route::get('queues/{queue}/metrics/realtime', [QueueMetricsController::class, 'realtime'])->name('queues.metrics.realtime');
+        Route::post('queues/{queue}/metrics/aggregate', [QueueMetricsController::class, 'aggregate'])->name('queues.metrics.aggregate');
+        Route::get('queues/{queue}/metrics/history', [QueueMetricsController::class, 'history'])->name('queues.metrics.history');
+
+        // Wallboard
+        Route::get('wallboard', [QueueMetricsController::class, 'wallboard'])->name('wallboard');
+        Route::get('agent-states', [QueueMetricsController::class, 'agentStates'])->name('agent-states');
     });
 });
