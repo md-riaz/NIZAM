@@ -20,3 +20,11 @@ Broadcast::channel('tenant.{tenantId}.calls', function ($user, string $tenantId)
 
     return $user->tenant_id === $tenantId;
 });
+
+Broadcast::channel('tenant.{tenantId}.calls.{eventType}', function ($user, string $tenantId, string $eventType) {
+    if ($user->role === 'admin') {
+        return true;
+    }
+
+    return $user->tenant_id === $tenantId;
+});

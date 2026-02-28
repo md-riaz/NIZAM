@@ -24,7 +24,7 @@ class FreeswitchXmlController extends Controller
 
         return match ($section) {
             'directory' => $this->handleDirectory($domain),
-            'dialplan' => $this->handleDialplan($domain, $request->input('Caller-Destination-Number', '')),
+            'dialplan' => $this->handleDialplan($domain, $request->input('Caller-Destination-Number', ''), $request->input('Caller-Caller-ID-Number')),
             default => $this->notFoundResponse(),
         };
     }
@@ -36,9 +36,9 @@ class FreeswitchXmlController extends Controller
         return response($xml, 200, ['Content-Type' => 'text/xml']);
     }
 
-    protected function handleDialplan(string $domain, string $destinationNumber): Response
+    protected function handleDialplan(string $domain, string $destinationNumber, ?string $callerIdNumber = null): Response
     {
-        $xml = $this->compiler->compileDialplan($domain, $destinationNumber);
+        $xml = $this->compiler->compileDialplan($domain, $destinationNumber, $callerIdNumber);
 
         return response($xml, 200, ['Content-Type' => 'text/xml']);
     }

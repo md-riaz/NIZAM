@@ -8,7 +8,9 @@ use App\Http\Requests\UpdateCallRoutingPolicyRequest;
 use App\Http\Resources\CallRoutingPolicyResource;
 use App\Models\CallRoutingPolicy;
 use App\Models\Tenant;
+use App\Services\PolicyEvaluator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * API controller for managing call routing policies scoped to a tenant.
@@ -83,5 +85,47 @@ class CallRoutingPolicyController extends Controller
         $callRoutingPolicy->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Evaluate a specific policy against provided context.
+     *
+     * Allows external systems to test policy decisions without routing a real call.
+     */
+    public function evaluate(Request $request, Tenant $tenant, CallRoutingPolicy $callRoutingPolicy): JsonResponse
+    {
+        if ($callRoutingPolicy->tenant_id !== $tenant->id) {
+            return response()->json(['message' => 'Call routing policy not found.'], 404);
+        }
+
+        $this->authorize('view', $callRoutingPolicy);
+
+        $validated = $request->validate([
+            'did' => 'nullable|string',
+            'caller_id' => 'nullable|string',
+            'time' => 'nullable|date',
+            'metadata' => 'nullable|array',
+        ]);
+
+        $context = [
+            'tenant_id' => $tenant->id,
+            'did' => $validated['did'] ?? '',
+            'caller_id' => $validated['caller_id'] ?? '',
+            'now' => isset($validated['time']) ? \Carbon\Carbon::parse($validated['time']) : now(),
+        ];
+
+        if (isset($validated['metadata'])) {
+            $context = array_merge($context, $validated['metadata']);
+        }
+
+        $evaluator = app(PolicyEvaluator::class);
+        $decision = $evaluator->evaluatePolicy($callRoutingPolicy, $context);
+
+        return response()->json([
+            'policy_id' => $callRoutingPolicy->id,
+            'policy_name' => $callRoutingPolicy->name,
+            'context' => $context,
+            'decision' => $decision,
+        ]);
     }
 }

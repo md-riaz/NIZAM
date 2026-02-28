@@ -905,6 +905,75 @@ Content-Type: application/json
 | uuid | Yes | Call UUID |
 | action | Yes | start or stop |
 
+### Hold / Unhold
+
+```http
+POST /api/tenants/{tenant_id}/calls/hold
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "uuid": "call-uuid-here",
+  "action": "hold"
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| uuid | Yes | Call UUID |
+| action | Yes | hold or unhold |
+
+---
+
+## Policy Evaluation API
+
+Test a call routing policy against a given context without routing a real call.
+
+```http
+POST /api/tenants/{tenant_id}/call-routing-policies/{policy_id}/evaluate
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "did": "+15551234567",
+  "caller_id": "5559876543",
+  "time": "2026-01-15T12:00:00Z",
+  "metadata": {}
+}
+```
+
+**Response** `200`:
+```json
+{
+  "policy_id": "uuid",
+  "policy_name": "Business Hours",
+  "context": { "tenant_id": "uuid", "did": "+15551234567", "caller_id": "5559876543" },
+  "decision": { "decision": "allow" }
+}
+```
+
+Possible decisions: `allow`, `redirect`, `reject`, `modify`.
+
+---
+
+## Event Re-dispatch
+
+Re-dispatch a stored event to all matching webhooks. Required for debugging and webhook retries.
+
+```http
+POST /api/tenants/{tenant_id}/call-events/redispatch/{event_id}
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "message": "Event re-dispatched to webhooks.",
+  "event_id": "uuid",
+  "event_type": "call.created"
+}
+```
+
 ---
 
 ## Rate Limiting

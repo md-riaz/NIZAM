@@ -18,8 +18,9 @@ class CallEventBroadcastTest extends TestCase
 
         $channels = $event->broadcastOn();
 
-        $this->assertCount(1, $channels);
+        $this->assertCount(2, $channels);
         $this->assertInstanceOf(PrivateChannel::class, $channels[0]);
+        $this->assertInstanceOf(PrivateChannel::class, $channels[1]);
     }
 
     public function test_call_event_broadcast_name(): void

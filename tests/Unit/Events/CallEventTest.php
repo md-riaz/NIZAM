@@ -14,9 +14,10 @@ class CallEventTest extends TestCase
 
         $channels = $event->broadcastOn();
 
-        $this->assertCount(1, $channels);
+        $this->assertCount(2, $channels);
         $this->assertInstanceOf(PrivateChannel::class, $channels[0]);
         $this->assertEquals('private-tenant.tenant-uuid-123.calls', $channels[0]->name);
+        $this->assertEquals('private-tenant.tenant-uuid-123.calls.started', $channels[1]->name);
     }
 
     public function test_broadcast_as_returns_prefixed_event_type(): void
