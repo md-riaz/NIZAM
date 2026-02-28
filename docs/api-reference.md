@@ -1,0 +1,457 @@
+# API Reference
+
+All NIZAM API endpoints return JSON responses and require authentication unless noted otherwise.
+
+---
+
+## Authentication
+
+NIZAM uses [Laravel Sanctum](https://laravel.com/docs/sanctum) bearer tokens.
+
+### Register
+
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password",
+  "password_confirmation": "password"
+}
+```
+
+**Response** `201`:
+```json
+{
+  "user": { "id": "uuid", "name": "John Doe", "email": "john@example.com" },
+  "token": "1|abc123..."
+}
+```
+
+### Login
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "password"
+}
+```
+
+**Response** `200`:
+```json
+{
+  "user": { "id": "uuid", "name": "John Doe", "email": "john@example.com" },
+  "token": "2|def456..."
+}
+```
+
+### Logout
+
+```http
+POST /api/auth/logout
+Authorization: Bearer YOUR_TOKEN
+```
+
+### Current User
+
+```http
+GET /api/auth/me
+Authorization: Bearer YOUR_TOKEN
+```
+
+---
+
+## Health Check
+
+**No authentication required.**
+
+```http
+GET /api/health
+```
+
+**Response** `200` (healthy):
+```json
+{
+  "status": "healthy",
+  "checks": {
+    "app": { "status": "ok" },
+    "esl": {
+      "connected": true,
+      "status": "ok",
+      "freeswitch": { "uptime": "5d", "sessions": 12, "raw": "..." }
+    },
+    "gateways": {
+      "status": "ok",
+      "gateways": [{ "name": "external", "type": "profile", "status": "RUNNING" }],
+      "registrations": { "count": 5, "entries": [] },
+      "checked_at": "2026-02-28T03:00:00Z"
+    }
+  }
+}
+```
+
+**Response** `503` (degraded — ESL not connected):
+```json
+{
+  "status": "degraded",
+  "checks": {
+    "app": { "status": "ok" },
+    "esl": { "connected": false, "status": "unreachable" },
+    "gateways": { "status": "unknown", ... }
+  }
+}
+```
+
+---
+
+## Tenants
+
+Admin-only for create/update/delete. Regular users can only view their own tenant.
+
+### List Tenants
+
+```http
+GET /api/tenants
+Authorization: Bearer YOUR_TOKEN
+```
+
+### Create Tenant
+
+```http
+POST /api/tenants
+Authorization: Bearer YOUR_TOKEN (admin)
+Content-Type: application/json
+
+{
+  "name": "Acme Corp",
+  "domain": "acme.example.com",
+  "slug": "acme",
+  "max_extensions": 100,
+  "is_active": true
+}
+```
+
+### Get / Update / Delete Tenant
+
+```http
+GET    /api/tenants/{id}
+PUT    /api/tenants/{id}
+DELETE /api/tenants/{id}
+```
+
+---
+
+## Extensions
+
+All extension endpoints are tenant-scoped.
+
+### List Extensions
+
+```http
+GET /api/tenants/{tenant_id}/extensions
+Authorization: Bearer YOUR_TOKEN
+```
+
+### Create Extension
+
+```http
+POST /api/tenants/{tenant_id}/extensions
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "extension": "1001",
+  "password": "sip-password-123",
+  "directory_first_name": "John",
+  "directory_last_name": "Doe",
+  "effective_caller_id_name": "John Doe",
+  "effective_caller_id_number": "1001",
+  "voicemail_enabled": true,
+  "voicemail_pin": "1234",
+  "is_active": true
+}
+```
+
+**Note:** `password` is encrypted at rest but never returned in API responses. `voicemail_pin` is stored in plaintext and included in API responses for display in dashboards.
+
+### Get / Update / Delete Extension
+
+```http
+GET    /api/tenants/{tenant_id}/extensions/{id}
+PUT    /api/tenants/{tenant_id}/extensions/{id}
+DELETE /api/tenants/{tenant_id}/extensions/{id}
+```
+
+---
+
+## DIDs (Inbound Numbers)
+
+```http
+GET    /api/tenants/{tenant_id}/dids
+POST   /api/tenants/{tenant_id}/dids
+GET    /api/tenants/{tenant_id}/dids/{id}
+PUT    /api/tenants/{tenant_id}/dids/{id}
+DELETE /api/tenants/{tenant_id}/dids/{id}
+```
+
+### Create DID
+
+```json
+{
+  "number": "+15551234567",
+  "destination_type": "extension",
+  "destination_id": "extension-uuid",
+  "description": "Main line",
+  "is_active": true
+}
+```
+
+**Destination types:** `extension`, `ring_group`, `ivr`, `voicemail`, `time_condition`
+
+---
+
+## Ring Groups
+
+```http
+GET    /api/tenants/{tenant_id}/ring-groups
+POST   /api/tenants/{tenant_id}/ring-groups
+GET    /api/tenants/{tenant_id}/ring-groups/{id}
+PUT    /api/tenants/{tenant_id}/ring-groups/{id}
+DELETE /api/tenants/{tenant_id}/ring-groups/{id}
+```
+
+### Create Ring Group
+
+```json
+{
+  "name": "Sales Team",
+  "strategy": "simultaneous",
+  "members": ["ext-uuid-1", "ext-uuid-2"],
+  "ring_timeout": 30,
+  "timeout_destination_type": "voicemail",
+  "timeout_destination_id": "ext-uuid-1",
+  "is_active": true
+}
+```
+
+**Strategies:** `simultaneous`, `sequential`
+
+---
+
+## IVR Menus
+
+```http
+GET    /api/tenants/{tenant_id}/ivrs
+POST   /api/tenants/{tenant_id}/ivrs
+GET    /api/tenants/{tenant_id}/ivrs/{id}
+PUT    /api/tenants/{tenant_id}/ivrs/{id}
+DELETE /api/tenants/{tenant_id}/ivrs/{id}
+```
+
+### Create IVR
+
+```json
+{
+  "name": "Main Menu",
+  "greet_long": "/sounds/greeting.wav",
+  "greet_short": "/sounds/greeting_short.wav",
+  "options": {
+    "1": { "type": "extension", "id": "ext-uuid" },
+    "2": { "type": "ring_group", "id": "rg-uuid" },
+    "9": { "type": "ivr", "id": "sub-ivr-uuid" }
+  },
+  "timeout": 10,
+  "max_failures": 3,
+  "timeout_destination_type": "extension",
+  "timeout_destination_id": "ext-uuid",
+  "is_active": true
+}
+```
+
+---
+
+## Time Conditions
+
+```http
+GET    /api/tenants/{tenant_id}/time-conditions
+POST   /api/tenants/{tenant_id}/time-conditions
+GET    /api/tenants/{tenant_id}/time-conditions/{id}
+PUT    /api/tenants/{tenant_id}/time-conditions/{id}
+DELETE /api/tenants/{tenant_id}/time-conditions/{id}
+```
+
+---
+
+## CDRs (Call Detail Records)
+
+Read-only. Created automatically when calls end.
+
+```http
+GET /api/tenants/{tenant_id}/cdrs
+GET /api/tenants/{tenant_id}/cdrs/{id}
+```
+
+---
+
+## Call Events & Trace
+
+### List Call Events
+
+```http
+GET /api/tenants/{tenant_id}/call-events
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Query Parameters:**
+| Parameter | Description |
+|-----------|-------------|
+| `call_uuid` | Filter by call UUID |
+| `event_type` | Filter by event type (e.g., `started`, `hangup`) |
+| `from` | Filter events after this datetime |
+| `to` | Filter events before this datetime |
+
+### Call Trace
+
+Get the complete lifecycle of a specific call:
+
+```http
+GET /api/tenants/{tenant_id}/call-events/{call_uuid}/trace
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "call_uuid": "abc-123-def",
+  "event_count": 4,
+  "events": [
+    { "event_type": "started", "occurred_at": "...", "payload": {...} },
+    { "event_type": "answered", "occurred_at": "...", "payload": {...} },
+    { "event_type": "bridge", "occurred_at": "...", "payload": {...} },
+    { "event_type": "hangup", "occurred_at": "...", "payload": {...} }
+  ]
+}
+```
+
+---
+
+## Device Profiles
+
+```http
+GET    /api/tenants/{tenant_id}/device-profiles
+POST   /api/tenants/{tenant_id}/device-profiles
+GET    /api/tenants/{tenant_id}/device-profiles/{id}
+PUT    /api/tenants/{tenant_id}/device-profiles/{id}
+DELETE /api/tenants/{tenant_id}/device-profiles/{id}
+```
+
+---
+
+## Webhooks
+
+```http
+GET    /api/tenants/{tenant_id}/webhooks
+POST   /api/tenants/{tenant_id}/webhooks
+GET    /api/tenants/{tenant_id}/webhooks/{id}
+PUT    /api/tenants/{tenant_id}/webhooks/{id}
+DELETE /api/tenants/{tenant_id}/webhooks/{id}
+```
+
+### Create Webhook
+
+```json
+{
+  "url": "https://your-app.com/webhook",
+  "events": ["call.started", "call.hangup", "voicemail.received"],
+  "secret": "your-hmac-secret",
+  "is_active": true
+}
+```
+
+**Webhook Payload Headers:**
+```
+Content-Type: application/json
+X-Nizam-Signature: sha256=<hmac-hash>
+X-Nizam-Event: call.hangup
+```
+
+**Available Events:**
+- `call.started` — Call initiated
+- `call.answered` — Call answered
+- `call.bridge` — Call legs bridged
+- `call.missed` — Missed call (NO_ANSWER)
+- `call.hangup` — Call ended
+- `voicemail.received` — New voicemail
+- `registration.registered` — SIP device registered
+- `registration.unregistered` — SIP device unregistered
+
+---
+
+## Call Operations
+
+### Originate Call
+
+```http
+POST /api/tenants/{tenant_id}/calls/originate
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "extension": "1001",
+  "destination": "1002"
+}
+```
+
+### Call Status
+
+```http
+GET /api/tenants/{tenant_id}/calls/status
+Authorization: Bearer YOUR_TOKEN
+```
+
+---
+
+## Rate Limiting
+
+All authenticated endpoints are rate-limited to **60 requests per minute** per user (or per IP for unauthenticated endpoints).
+
+Response headers:
+```
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 59
+```
+
+When rate limit is exceeded:
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 30
+```
+
+---
+
+## Error Responses
+
+All errors follow a consistent format:
+
+```json
+{
+  "message": "The given data was invalid.",
+  "errors": {
+    "extension": ["The extension field is required."]
+  }
+}
+```
+
+| Status | Meaning |
+|--------|---------|
+| `401` | Unauthenticated — invalid or missing token |
+| `403` | Forbidden — insufficient permissions or wrong tenant |
+| `404` | Not found |
+| `422` | Validation error |
+| `429` | Rate limit exceeded |
+| `500` | Server error |
