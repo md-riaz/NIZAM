@@ -28,3 +28,19 @@ Broadcast::channel('tenant.{tenantId}.calls.{eventType}', function ($user, strin
 
     return $user->tenant_id === $tenantId;
 });
+
+Broadcast::channel('tenant.{tenantId}.contact-center', function ($user, string $tenantId) {
+    if ($user->role === 'admin') {
+        return true;
+    }
+
+    return $user->tenant_id === $tenantId;
+});
+
+Broadcast::channel('tenant.{tenantId}.contact-center.{eventType}', function ($user, string $tenantId, string $eventType) {
+    if ($user->role === 'admin') {
+        return true;
+    }
+
+    return $user->tenant_id === $tenantId;
+});

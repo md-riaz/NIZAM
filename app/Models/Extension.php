@@ -67,4 +67,9 @@ class Extension extends Model
     {
         return $this->hasMany(DeviceProfile::class);
     }
+
+    public function agent(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Agent::class);
+    }
 }

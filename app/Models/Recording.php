@@ -22,6 +22,11 @@ class Recording extends Model
         'direction',
         'caller_id_number',
         'destination_number',
+        'queue_name',
+        'agent_id',
+        'wait_time',
+        'outcome',
+        'abandon_reason',
     ];
 
     protected function casts(): array
@@ -29,6 +34,7 @@ class Recording extends Model
         return [
             'file_size' => 'integer',
             'duration' => 'integer',
+            'wait_time' => 'integer',
         ];
     }
 
