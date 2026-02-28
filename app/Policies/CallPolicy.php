@@ -24,6 +24,6 @@ class CallPolicy
     public function viewStatus(User $user): bool
     {
         return $user->tenant_id !== null
-            && $user->hasPermission('calls.originate');
+            && $user->hasPermission('calls.view_status');
     }
 }

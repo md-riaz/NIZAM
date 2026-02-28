@@ -53,6 +53,7 @@ class SyncPermissionsCommand extends Command
         'device_profiles.update' => 'Update device profiles',
         'device_profiles.delete' => 'Delete device profiles',
         'calls.originate' => 'Originate calls',
+        'calls.view_status' => 'View active call status',
         'recordings.view' => 'View recordings',
         'recordings.delete' => 'Delete recordings',
         'recordings.download' => 'Download recordings',
