@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreWebhookRequest;
 use App\Http\Requests\UpdateWebhookRequest;
+use App\Http\Resources\WebhookDeliveryAttemptResource;
 use App\Http\Resources\WebhookResource;
 use App\Models\Tenant;
 use App\Models\Webhook;
@@ -91,5 +92,21 @@ class WebhookController extends Controller
         $webhook->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * List delivery attempts for a webhook (paginated).
+     */
+    public function deliveryAttempts(Tenant $tenant, Webhook $webhook)
+    {
+        if ($webhook->tenant_id !== $tenant->id) {
+            return response()->json(['message' => 'Webhook not found.'], 404);
+        }
+
+        $this->authorize('view', $webhook);
+
+        return WebhookDeliveryAttemptResource::collection(
+            $webhook->deliveryAttempts()->orderByDesc('created_at')->paginate(15)
+        );
     }
 }

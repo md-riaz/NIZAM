@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\CallDetailRecordController;
 use App\Http\Controllers\Api\CallEventController;
 use App\Http\Controllers\Api\CallEventStreamController;
+use App\Http\Controllers\Api\CallFlowController;
+use App\Http\Controllers\Api\CallRoutingPolicyController;
 use App\Http\Controllers\Api\DeviceProfileController;
 use App\Http\Controllers\Api\DidController;
 use App\Http\Controllers\Api\ExtensionController;
@@ -60,6 +62,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::apiResource('cdrs', CallDetailRecordController::class)->only(['index', 'show']);
         Route::apiResource('device-profiles', DeviceProfileController::class);
         Route::apiResource('webhooks', WebhookController::class);
+        Route::get('webhooks/{webhook}/delivery-attempts', [WebhookController::class, 'deliveryAttempts'])
+            ->name('webhooks.delivery-attempts');
+
+        Route::apiResource('call-routing-policies', CallRoutingPolicyController::class);
+        Route::apiResource('call-flows', CallFlowController::class);
 
         // Recordings
         Route::get('recordings', [RecordingController::class, 'index'])->name('recordings.index');

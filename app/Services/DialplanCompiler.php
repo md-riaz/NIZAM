@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\CallFlow;
+use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Ivr;
@@ -157,6 +159,18 @@ class DialplanCompiler
                     $xml .= $this->compileTimeConditionActions($tenant, $tc);
                 }
                 break;
+            case 'call_routing_policy':
+                $policy = CallRoutingPolicy::find($did->destination_id);
+                if ($policy) {
+                    $xml .= $this->compilePolicyRouting($tenant, $policy);
+                }
+                break;
+            case 'call_flow':
+                $flow = CallFlow::find($did->destination_id);
+                if ($flow) {
+                    $xml .= $this->compileCallFlowActions($tenant, $flow);
+                }
+                break;
         }
 
         $xml .= '          </condition>'."\n";
@@ -302,6 +316,12 @@ class DialplanCompiler
                     return '            <anti-action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
+            case 'call_flow':
+                $flow = CallFlow::find($id);
+                if ($flow) {
+                    return $this->compileCallFlowActions($tenant, $flow);
+                }
+                break;
         }
 
         return '';
@@ -334,9 +354,131 @@ class DialplanCompiler
                     return '            <action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
+            case 'call_flow':
+                $flow = CallFlow::find($id);
+                if ($flow) {
+                    return $this->compileCallFlowActions($tenant, $flow);
+                }
+                break;
         }
 
         return '';
+    }
+
+    /**
+     * Compile policy-based routing using time conditions derived from policy conditions.
+     */
+    protected function compilePolicyRouting(Tenant $tenant, CallRoutingPolicy $policy): string
+    {
+        $conditions = $policy->conditions ?? [];
+        $xml = '';
+
+        $attrs = $this->buildPolicyConditionAttributes($conditions);
+
+        if ($attrs) {
+            $xml .= '          </condition>'."\n";
+            $xml .= '          <condition'.$attrs.'>'."\n";
+
+            if ($policy->match_destination_type && $policy->match_destination_id) {
+                $xml .= $this->compileDestinationAction($tenant, $policy->match_destination_type, $policy->match_destination_id);
+            }
+
+            if ($policy->no_match_destination_type && $policy->no_match_destination_id) {
+                $xml .= $this->compileAntiAction($tenant, $policy->no_match_destination_type, $policy->no_match_destination_id);
+            }
+        } else {
+            if ($policy->match_destination_type && $policy->match_destination_id) {
+                $xml .= $this->compileDestinationAction($tenant, $policy->match_destination_type, $policy->match_destination_id);
+            }
+        }
+
+        return $xml;
+    }
+
+    /**
+     * Build FreeSWITCH condition attributes from policy conditions.
+     */
+    protected function buildPolicyConditionAttributes(array $conditions): string
+    {
+        $attrs = '';
+
+        foreach ($conditions as $condition) {
+            $type = $condition['type'] ?? '';
+            $params = $condition['params'] ?? [];
+
+            switch ($type) {
+                case 'time_of_day':
+                    $start = $params['start'] ?? '';
+                    $end = $params['end'] ?? '';
+                    if ($start && $end) {
+                        $attrs .= ' time-of-day="'.htmlspecialchars("$start-$end", ENT_QUOTES | ENT_XML1).'"';
+                    }
+                    break;
+                case 'day_of_week':
+                    $days = $params['days'] ?? [];
+                    if (! empty($days)) {
+                        $attrs .= ' wday="'.htmlspecialchars(implode(',', $days), ENT_QUOTES | ENT_XML1).'"';
+                    }
+                    break;
+                case 'caller_id_pattern':
+                    $pattern = $params['pattern'] ?? '';
+                    if ($pattern) {
+                        $attrs .= ' caller-id-number="'.htmlspecialchars($pattern, ENT_QUOTES | ENT_XML1).'"';
+                    }
+                    break;
+            }
+        }
+
+        return $attrs;
+    }
+
+    /**
+     * Compile a call flow into dialplan actions.
+     */
+    protected function compileCallFlowActions(Tenant $tenant, CallFlow $flow): string
+    {
+        $nodes = $flow->nodes ?? [];
+        $xml = '';
+
+        foreach ($nodes as $node) {
+            $type = $node['type'] ?? '';
+            $data = $node['data'] ?? [];
+
+            switch ($type) {
+                case 'play_prompt':
+                    $file = $data['file'] ?? '';
+                    if ($file) {
+                        $xml .= '            <action application="playback" data="'.htmlspecialchars($file, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                    }
+                    break;
+                case 'collect_input':
+                    $min = (int) ($data['min_digits'] ?? 1);
+                    $max = (int) ($data['max_digits'] ?? 1);
+                    $timeout = (int) ($data['timeout'] ?? 5);
+                    $file = $data['file'] ?? 'silence_stream://250';
+                    $xml .= '            <action application="play_and_get_digits" data="'.$min.' '.$max.' 3 '.$timeout.'000 # '.htmlspecialchars($file, ENT_QUOTES | ENT_XML1).' silence_stream://250 digits \d+"/>'."\n";
+                    break;
+                case 'bridge':
+                    $destType = $data['destination_type'] ?? '';
+                    $destId = $data['destination_id'] ?? '';
+                    if ($destType && $destId) {
+                        $xml .= $this->compileDestinationAction($tenant, $destType, $destId);
+                    }
+                    break;
+                case 'record':
+                    $path = $data['path'] ?? '/tmp/recordings/${uuid}.wav';
+                    $xml .= '            <action application="record" data="'.htmlspecialchars($path, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                    break;
+                case 'webhook':
+                    $url = $data['url'] ?? '';
+                    if ($url) {
+                        $xml .= '            <action application="curl" data="'.htmlspecialchars($url, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                    }
+                    break;
+            }
+        }
+
+        return $xml;
     }
 
     protected function compileFailsafeDialplan(string $domain, string $destinationNumber): string
