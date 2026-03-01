@@ -317,48 +317,68 @@ Real-time streaming of call lifecycle events. Events are:
 | Cache & Events | Redis 7 |
 | API Auth | Laravel Sanctum |
 | WebSocket | Laravel Reverb (planned) |
-| Deployment | Docker |
+| Deployment | Docker / bare-metal |
 
 ---
 
 ## Quick Start
 
-### Prerequisites
+### Option A — One-line VPS installer (Ubuntu 22.04 / Debian 12)
+
+Installs everything on a fresh VPS with zero user interaction and prints the URL and admin credentials on completion:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/md-riaz/NIZAM/main/install.sh)
+```
+
+> Installs: PHP 8.3, PostgreSQL 16, Redis 7, FreeSWITCH 1.10, nginx, Supervisor, UFW.  
+> FreeSWITCH is installed from packages on Debian 12 (~5 min) or compiled from source on Ubuntu 22.04 (~30 min).
+
+See [docs/installation-bare-metal.md](docs/installation-bare-metal.md) for the step-by-step equivalent.
+
+---
+
+### Option B — Docker (recommended for development)
+
+#### Prerequisites
 
 - Docker & Docker Compose
 - Git
+- `make` (optional, but recommended — run `make help` to see all shortcuts)
 
-### Setup
+#### Setup
 
 ```bash
-# Clone the repository
+# 1. Clone
 git clone https://github.com/md-riaz/NIZAM.git
 cd NIZAM
 
-# Copy environment file
+# 2. Copy environment and generate APP_KEY (must be done before starting services)
 cp .env.example .env
+php artisan key:generate --show   # copy output and paste into .env as APP_KEY=base64:...
+# No local PHP? Use: docker run --rm php:8.3-alpine php artisan key:generate --show
 
-# Start services
+# 3. Start all 8 services
 docker compose up -d
 
-# Run migrations
+# 4. Run migrations
 docker compose exec app php artisan migrate
 
-# Generate application key
-docker compose exec app php artisan key:generate
-
-# Seed demo data (optional)
+# 5. (Optional) Seed demo data
 docker compose exec app php artisan db:seed
-
-# Start ESL event listener (connects to FreeSWITCH)
-docker compose exec app php artisan nizam:esl-listen
 ```
 
-The API will be available at `http://localhost:8080/api`.
+Or use the **one-step shortcut** (handles steps 2–4 automatically):
 
-Demo credentials (after seeding): `admin@nizam.local` / `password`
+```bash
+make setup
+```
 
-### Docker Services
+The API will be available at `http://localhost:8080/api/v1`.
+
+> **Health check:** `curl http://localhost:8080/api/v1/health`
+
+#### Docker Services
 
 | Service | Container | Port | Description |
 |---------|-----------|------|-------------|
@@ -368,13 +388,16 @@ Demo credentials (after seeding): `admin@nizam.local` / `password`
 | **redis** | `nizam-redis` | `6379` | Cache and queue broker |
 | **freeswitch** | `nizam-freeswitch` | `5060` (SIP), `8021` (ESL) | Media engine |
 | **queue** | `nizam-queue` | — | Queue worker (webhook delivery, async jobs) |
+| **scheduler** | `nizam-scheduler` | — | Periodic task runner |
+| **esl-listener** | `nizam-esl-listener` | — | FreeSWITCH event listener |
 
-### Environment Variables
+#### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_ENV` | `local` | Application environment |
-| `APP_KEY` | — | Application encryption key (auto-generated) |
+| `APP_KEY` | — | **Required before first boot** — generate with `php artisan key:generate --show` |
+| `APP_URL` | `http://localhost:8080` | Public URL of the application |
 | `DB_CONNECTION` | `pgsql` | Database driver |
 | `DB_HOST` | `127.0.0.1` | Database host |
 | `DB_DATABASE` | `nizam` | Database name |
@@ -382,25 +405,20 @@ Demo credentials (after seeding): `admin@nizam.local` / `password`
 | `DB_PASSWORD` | `secret` | Database password |
 | `FREESWITCH_HOST` | `127.0.0.1` | FreeSWITCH ESL host |
 | `FREESWITCH_ESL_PORT` | `8021` | FreeSWITCH ESL port |
-| `FREESWITCH_ESL_PASSWORD` | `ClueCon` | FreeSWITCH ESL password |
+| `FREESWITCH_ESL_PASSWORD` | `ClueCon` | FreeSWITCH ESL password — **change in production** |
+| `NIZAM_XML_CURL_URL` | `http://nginx/freeswitch/xml-curl` | URL FreeSWITCH uses to fetch dialplan from NIZAM |
 | `REDIS_HOST` | `127.0.0.1` | Redis host |
 | `QUEUE_CONNECTION` | `database` | Queue driver (`redis` recommended for production) |
 
-### Local Development (without Docker)
+### Option C — Local dev (no Docker)
 
 ```bash
-# Install PHP dependencies
 composer install
-
-# Copy and configure environment
 cp .env.example .env
 php artisan key:generate
-
-# Run migrations (uses SQLite by default for local dev)
+# Set DB_CONNECTION=sqlite for zero-config local testing
 php artisan migrate
-
-# Start development server
-php artisan serve
+php artisan serve      # API at http://localhost:8000/api/v1
 ```
 
 ---
@@ -517,7 +535,9 @@ More structured than FusionPBX. Simpler to operate than full Wazo microservices.
 | Guide | Description |
 |-------|-------------|
 | [API Reference](docs/api-reference.md) | Full REST endpoint reference with request/response examples |
-| [Environment Bootstrap](docs/environment-bootstrap.md) | Docker + local setup, FreeSWITCH config, production checklist |
+| [Environment Bootstrap](docs/environment-bootstrap.md) | Docker setup, FreeSWITCH config, production checklist, Makefile reference |
+| [Bare-Metal Installation](docs/installation-bare-metal.md) | Ubuntu/Debian install without Docker (PHP, PostgreSQL, Redis, FreeSWITCH, nginx, supervisor) |
+| [`install.sh`](install.sh) | Automated VPS installer — one command, zero interaction, prints URL + credentials |
 | [Module Development](docs/module-development.md) | NizamModule interface and module authoring guide |
 | [Deployment & Scaling](docs/deployment-scaling.md) | Production deployment, horizontal scaling, backup/restore |
 

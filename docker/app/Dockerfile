@@ -9,7 +9,7 @@ RUN apk add --no-cache \
     oniguruma-dev \
     linux-headers
 
-# Install PHP extensions
+# Install PHP extensions (including opcache for production performance)
 RUN docker-php-ext-install \
     pdo_pgsql \
     pgsql \
@@ -17,7 +17,8 @@ RUN docker-php-ext-install \
     xml \
     bcmath \
     pcntl \
-    sockets
+    sockets \
+    opcache
 
 # Install Redis extension
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
@@ -30,15 +31,28 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copy application
+# ── Layer-cache optimisation ────────────────────────────────────────────────
+# Copy only the manifest files first so that `composer install` is cached by
+# Docker and is NOT re-run on every source-code change — only when the
+# dependency list itself changes.  vendor/ is excluded from the build context
+# via .dockerignore, so the COPY . . step below will NOT overwrite it.
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction
+
+# Copy full application source (vendor/ is in .dockerignore — safe to overlay)
 COPY . .
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Generate optimised classmap and run post-install scripts (package:discover)
+RUN composer dump-autoload --optimize --no-interaction
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
+# Copy and wire up entrypoint (fixes bind-mount permissions then execs php-fpm)
+COPY docker/app/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 9000
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["php-fpm"]
