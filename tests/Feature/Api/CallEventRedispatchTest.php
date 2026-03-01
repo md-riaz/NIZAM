@@ -45,7 +45,7 @@ class CallEventRedispatchTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-events/redispatch/{$event->id}");
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-events/redispatch/{$event->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment([
@@ -56,7 +56,7 @@ class CallEventRedispatchTest extends TestCase
     public function test_redispatch_returns_404_for_missing_event(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-events/redispatch/nonexistent-id");
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-events/redispatch/nonexistent-id");
 
         $response->assertStatus(404);
     }
@@ -74,7 +74,7 @@ class CallEventRedispatchTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-events/redispatch/{$event->id}");
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-events/redispatch/{$event->id}");
 
         $response->assertStatus(404);
     }

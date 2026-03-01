@@ -21,7 +21,7 @@ class TenantProvisioningTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants/provision', [
+            ->postJson('/api/v1/tenants/provision', [
                 'name' => 'Acme Corp',
             ]);
 
@@ -44,7 +44,7 @@ class TenantProvisioningTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants/provision', [
+            ->postJson('/api/v1/tenants/provision', [
                 'name' => 'Trial Corp',
             ]);
 
@@ -57,7 +57,7 @@ class TenantProvisioningTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants/provision', [
+            ->postJson('/api/v1/tenants/provision', [
                 'name' => 'Custom Domain Corp',
                 'domain' => 'custom.example.com',
                 'slug' => 'custom-corp',
@@ -72,7 +72,7 @@ class TenantProvisioningTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants/provision', [
+            ->postJson('/api/v1/tenants/provision', [
                 'name' => 'Quota Corp',
                 'max_extensions' => 50,
                 'max_concurrent_calls' => 20,
@@ -94,7 +94,7 @@ class TenantProvisioningTest extends TestCase
         $user = User::factory()->create(['role' => 'user', 'tenant_id' => $tenant->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants/provision', [
+            ->postJson('/api/v1/tenants/provision', [
                 'name' => 'Should Fail',
             ]);
 
@@ -107,7 +107,7 @@ class TenantProvisioningTest extends TestCase
         Tenant::factory()->create(['domain' => 'taken.example.com']);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants/provision', [
+            ->postJson('/api/v1/tenants/provision', [
                 'name' => 'Duplicate Domain',
                 'domain' => 'taken.example.com',
             ]);

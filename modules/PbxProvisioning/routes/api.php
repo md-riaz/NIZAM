@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::prefix('api')->middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+Route::prefix('api/v1')->middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
         Route::apiResource('device-profiles', DeviceProfileController::class);
     });

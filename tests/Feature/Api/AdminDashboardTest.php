@@ -20,7 +20,7 @@ class AdminDashboardTest extends TestCase
         Tenant::factory()->suspended()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/dashboard');
+            ->getJson('/api/v1/admin/dashboard');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -46,14 +46,14 @@ class AdminDashboardTest extends TestCase
         $user = User::factory()->create(['role' => 'user', 'tenant_id' => $tenant->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/dashboard');
+            ->getJson('/api/v1/admin/dashboard');
 
         $response->assertStatus(403);
     }
 
     public function test_unauthenticated_cannot_access_dashboard(): void
     {
-        $response = $this->getJson('/api/admin/dashboard');
+        $response = $this->getJson('/api/v1/admin/dashboard');
 
         $response->assertStatus(401);
     }
@@ -72,7 +72,7 @@ class AdminDashboardTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/dashboard');
+            ->getJson('/api/v1/admin/dashboard');
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.total_extensions', 1);

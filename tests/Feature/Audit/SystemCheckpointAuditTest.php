@@ -131,7 +131,7 @@ class SystemCheckpointAuditTest extends TestCase
     {
         // All functionality is accessible via API — no UI dependency
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenantA->id}/extensions");
+            ->getJson("/api/v1/tenants/{$this->tenantA->id}/extensions");
         $response->assertStatus(200);
     }
 
@@ -199,7 +199,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         // Tenant B user tries to access Tenant A resources
         $response = $this->actingAs($this->userB, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenantA->id}/extensions");
+            ->getJson("/api/v1/tenants/{$this->tenantA->id}/extensions");
 
         $response->assertStatus(403);
     }
@@ -215,7 +215,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         // Tenant B user tries to read Tenant A's agent via Tenant B's path
         $response = $this->actingAs($this->userB, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenantB->id}/agents/{$agentA->id}");
+            ->getJson("/api/v1/tenants/{$this->tenantB->id}/agents/{$agentA->id}");
 
         $response->assertStatus(404);
     }
@@ -225,7 +225,7 @@ class SystemCheckpointAuditTest extends TestCase
         $queueA = Queue::create(['tenant_id' => $this->tenantA->id, 'name' => 'Queue A']);
 
         $response = $this->actingAs($this->userB, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenantB->id}/queues/{$queueA->id}");
+            ->getJson("/api/v1/tenants/{$this->tenantB->id}/queues/{$queueA->id}");
 
         $response->assertStatus(404);
     }
@@ -430,7 +430,7 @@ class SystemCheckpointAuditTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenantA->id}/extensions");
+            ->getJson("/api/v1/tenants/{$this->tenantA->id}/extensions");
 
         $response->assertStatus(403);
     }
@@ -443,7 +443,7 @@ class SystemCheckpointAuditTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenantA->id}/extensions");
+            ->getJson("/api/v1/tenants/{$this->tenantA->id}/extensions");
 
         $response->assertStatus(403);
     }
@@ -689,7 +689,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         // Invalid state through API is rejected
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenantA->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/tenants/{$this->tenantA->id}/agents/{$agent->id}/state", [
                 'state' => 'on_call_and_available', // invalid state
             ]);
         $response->assertStatus(422);
@@ -918,7 +918,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         // Tenant A should only see its own webhooks
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenantA->id}/webhooks");
+            ->getJson("/api/v1/tenants/{$this->tenantA->id}/webhooks");
 
         $response->assertStatus(200);
         $webhooks = $response->json('data');
@@ -976,7 +976,7 @@ class SystemCheckpointAuditTest extends TestCase
 
     public function test_cp9_call_control_requires_auth(): void
     {
-        $response = $this->postJson("/api/tenants/{$this->tenantA->id}/calls/hangup", [
+        $response = $this->postJson("/api/v1/tenants/{$this->tenantA->id}/calls/hangup", [
             'uuid' => (string) Str::uuid(),
         ]);
 
@@ -987,7 +987,7 @@ class SystemCheckpointAuditTest extends TestCase
     {
         // Tenant B user cannot access Tenant A's call control
         $response = $this->actingAs($this->userB, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenantA->id}/calls/hangup", [
+            ->postJson("/api/v1/tenants/{$this->tenantA->id}/calls/hangup", [
                 'uuid' => (string) Str::uuid(),
             ]);
 
@@ -998,7 +998,7 @@ class SystemCheckpointAuditTest extends TestCase
     {
         // API has throttle middleware - verify it exists in route definition
         $this->actingAs($this->userA, 'sanctum')
-            ->getJson('/api/auth/me')
+            ->getJson('/api/v1/auth/me')
             ->assertStatus(200);
     }
 

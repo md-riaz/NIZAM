@@ -25,7 +25,7 @@ class CallEventStreamTest extends TestCase
     public function test_stream_endpoint_returns_sse_content_type(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->get("/api/tenants/{$this->tenant->id}/call-events/stream");
+            ->get("/api/v1/tenants/{$this->tenant->id}/call-events/stream");
 
         $response->assertStatus(200);
         $this->assertStringStartsWith('text/event-stream', $response->headers->get('Content-Type'));
@@ -33,7 +33,7 @@ class CallEventStreamTest extends TestCase
 
     public function test_stream_endpoint_requires_authentication(): void
     {
-        $response = $this->getJson("/api/tenants/{$this->tenant->id}/call-events/stream");
+        $response = $this->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/stream");
 
         $response->assertStatus(401);
     }
@@ -41,7 +41,7 @@ class CallEventStreamTest extends TestCase
     public function test_stream_endpoint_includes_no_cache_header(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->get("/api/tenants/{$this->tenant->id}/call-events/stream");
+            ->get("/api/v1/tenants/{$this->tenant->id}/call-events/stream");
 
         $response->assertStatus(200);
         $this->assertStringContainsString('no-cache', $response->headers->get('Cache-Control'));
@@ -50,7 +50,7 @@ class CallEventStreamTest extends TestCase
     public function test_stream_route_exists(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->get("/api/tenants/{$this->tenant->id}/call-events/stream");
+            ->get("/api/v1/tenants/{$this->tenant->id}/call-events/stream");
 
         $this->assertNotEquals(404, $response->getStatusCode());
     }

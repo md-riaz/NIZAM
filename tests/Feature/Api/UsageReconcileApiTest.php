@@ -34,7 +34,7 @@ class UsageReconcileApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/tenants/{$tenant->id}/usage/reconcile");
+            ->getJson("/api/v1/tenants/{$tenant->id}/usage/reconcile");
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -52,7 +52,7 @@ class UsageReconcileApiTest extends TestCase
     {
         $tenant = Tenant::factory()->create();
 
-        $response = $this->getJson("/api/tenants/{$tenant->id}/usage/reconcile");
+        $response = $this->getJson("/api/v1/tenants/{$tenant->id}/usage/reconcile");
 
         $response->assertStatus(401);
     }

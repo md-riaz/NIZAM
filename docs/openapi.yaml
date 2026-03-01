@@ -12,9 +12,9 @@ info:
     name: MIT
 
 servers:
-  - url: http://localhost/api
+  - url: http://localhost/api/v1
     description: Local development
-  - url: https://api.nizam.example.com/api
+  - url: https://api.nizam.example.com/api/v1
     description: Production
 
 security:

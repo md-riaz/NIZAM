@@ -37,7 +37,7 @@ class UsageMeteringTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/tenants/{$tenant->id}/usage/summary");
+            ->getJson("/api/v1/tenants/{$tenant->id}/usage/summary");
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.tenant_id', $tenant->id);
@@ -57,7 +57,7 @@ class UsageMeteringTest extends TestCase
         $user = $this->adminUser($tenant);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/usage/collect");
+            ->postJson("/api/v1/tenants/{$tenant->id}/usage/collect");
 
         $response->assertStatus(201);
         $response->assertJsonPath('data.recorded', 3);
@@ -88,7 +88,7 @@ class UsageMeteringTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/tenants/{$tenant->id}/usage/summary?from=2026-02-01&to=2026-02-28");
+            ->getJson("/api/v1/tenants/{$tenant->id}/usage/summary?from=2026-02-01&to=2026-02-28");
 
         $response->assertStatus(200);
     }
@@ -97,7 +97,7 @@ class UsageMeteringTest extends TestCase
     {
         $tenant = Tenant::factory()->create();
 
-        $response = $this->getJson("/api/tenants/{$tenant->id}/usage/summary");
+        $response = $this->getJson("/api/v1/tenants/{$tenant->id}/usage/summary");
 
         $response->assertStatus(401);
     }

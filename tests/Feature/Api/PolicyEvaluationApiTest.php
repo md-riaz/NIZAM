@@ -39,7 +39,7 @@ class PolicyEvaluationApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate", [
                 'caller_id' => '5551234567',
             ]);
 
@@ -59,7 +59,7 @@ class PolicyEvaluationApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate", [
                 'caller_id' => '5559876543',
             ]);
 
@@ -80,7 +80,7 @@ class PolicyEvaluationApiTest extends TestCase
 
         // Evaluate at noon — should match
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate", [
                 'time' => '2026-01-15T12:00:00Z',
             ]);
 
@@ -97,7 +97,7 @@ class PolicyEvaluationApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate");
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate");
 
         $response->assertStatus(404);
     }

@@ -29,7 +29,7 @@ class IvrApiTest extends TestCase
         Ivr::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/ivrs");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/ivrs");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -38,7 +38,7 @@ class IvrApiTest extends TestCase
     public function test_can_create_an_ivr(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/ivrs", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/ivrs", [
                 'name' => 'Main Menu',
                 'timeout' => 5,
                 'max_failures' => 3,
@@ -60,7 +60,7 @@ class IvrApiTest extends TestCase
         $ivr = Ivr::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/ivrs/{$ivr->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/ivrs/{$ivr->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => $ivr->name]);
@@ -71,7 +71,7 @@ class IvrApiTest extends TestCase
         $ivr = Ivr::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/ivrs/{$ivr->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/ivrs/{$ivr->id}", [
                 'name' => 'Updated Menu',
                 'options' => [
                     ['digit' => '1', 'destination_type' => 'voicemail', 'destination_id' => Str::uuid()->toString()],
@@ -90,7 +90,7 @@ class IvrApiTest extends TestCase
         $ivr = Ivr::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/ivrs/{$ivr->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/ivrs/{$ivr->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('ivrs', ['id' => $ivr->id]);

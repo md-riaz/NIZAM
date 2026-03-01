@@ -29,7 +29,7 @@ class CallRoutingPolicyApiTest extends TestCase
         CallRoutingPolicy::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-routing-policies");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -38,7 +38,7 @@ class CallRoutingPolicyApiTest extends TestCase
     public function test_can_create_a_call_routing_policy(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-routing-policies", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies", [
                 'name' => 'Business Hours Policy',
                 'description' => 'Route based on business hours',
                 'conditions' => [
@@ -63,7 +63,7 @@ class CallRoutingPolicyApiTest extends TestCase
         $policy = CallRoutingPolicy::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => $policy->name]);
@@ -74,7 +74,7 @@ class CallRoutingPolicyApiTest extends TestCase
         $policy = CallRoutingPolicy::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}", [
                 'name' => 'Updated Policy',
                 'priority' => 50,
             ]);
@@ -92,7 +92,7 @@ class CallRoutingPolicyApiTest extends TestCase
         $policy = CallRoutingPolicy::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('call_routing_policies', ['id' => $policy->id]);
@@ -101,7 +101,7 @@ class CallRoutingPolicyApiTest extends TestCase
     public function test_validates_required_fields_on_create(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-routing-policies", []);
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies", []);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name', 'conditions', 'match_destination_type', 'match_destination_id']);
@@ -110,7 +110,7 @@ class CallRoutingPolicyApiTest extends TestCase
     public function test_validates_condition_types(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-routing-policies", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies", [
                 'name' => 'Test',
                 'conditions' => [
                     ['type' => 'invalid_type', 'params' => []],
@@ -130,7 +130,7 @@ class CallRoutingPolicyApiTest extends TestCase
         CallRoutingPolicy::factory()->create(['tenant_id' => $this->tenant->id, 'priority' => 20]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-routing-policies");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies");
 
         $response->assertStatus(200);
         $data = $response->json('data');
@@ -145,7 +145,7 @@ class CallRoutingPolicyApiTest extends TestCase
         $policy = CallRoutingPolicy::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}");
 
         $response->assertStatus(404);
     }

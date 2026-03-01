@@ -23,7 +23,7 @@ class TenantApiTest extends TestCase
 
     public function test_unauthenticated_requests_return_401(): void
     {
-        $response = $this->getJson('/api/tenants');
+        $response = $this->getJson('/api/v1/tenants');
 
         $response->assertStatus(401);
     }
@@ -39,7 +39,7 @@ class TenantApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/tenants');
+            ->getJson('/api/v1/tenants');
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => 'Tenant One']);
@@ -62,7 +62,7 @@ class TenantApiTest extends TestCase
         $user = $this->tenantUser($tenant);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/tenants');
+            ->getJson('/api/v1/tenants');
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => 'My Tenant']);
@@ -74,7 +74,7 @@ class TenantApiTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants', [
+            ->postJson('/api/v1/tenants', [
                 'name' => 'New Tenant',
                 'domain' => 'new.example.com',
                 'slug' => 'new-tenant',
@@ -99,7 +99,7 @@ class TenantApiTest extends TestCase
         $user = $this->tenantUser($tenant);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants', [
+            ->postJson('/api/v1/tenants', [
                 'name' => 'New Tenant',
                 'domain' => 'new.example.com',
                 'slug' => 'new-tenant',
@@ -119,7 +119,7 @@ class TenantApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/tenants/{$tenant->id}");
+            ->getJson("/api/v1/tenants/{$tenant->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => 'Show Tenant']);
@@ -136,7 +136,7 @@ class TenantApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->putJson("/api/tenants/{$tenant->id}", [
+            ->putJson("/api/v1/tenants/{$tenant->id}", [
                 'name' => 'Updated Name',
                 'domain' => 'old.example.com',
                 'slug' => 'old-tenant',
@@ -157,7 +157,7 @@ class TenantApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->deleteJson("/api/tenants/{$tenant->id}");
+            ->deleteJson("/api/v1/tenants/{$tenant->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('tenants', ['id' => $tenant->id]);
@@ -168,7 +168,7 @@ class TenantApiTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants', []);
+            ->postJson('/api/v1/tenants', []);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name', 'domain', 'slug']);

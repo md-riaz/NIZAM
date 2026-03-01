@@ -29,7 +29,7 @@ class UserApiTest extends TestCase
     public function test_admin_can_list_users(): void
     {
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson('/api/users');
+            ->getJson('/api/v1/users');
 
         $response->assertStatus(200);
     }
@@ -37,7 +37,7 @@ class UserApiTest extends TestCase
     public function test_non_admin_cannot_list_users(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson('/api/users');
+            ->getJson('/api/v1/users');
 
         $response->assertStatus(403);
     }
@@ -45,7 +45,7 @@ class UserApiTest extends TestCase
     public function test_admin_can_create_user(): void
     {
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->postJson('/api/users', [
+            ->postJson('/api/v1/users', [
                 'name' => 'New User',
                 'email' => 'newuser@example.com',
                 'password' => 'password123',
@@ -60,7 +60,7 @@ class UserApiTest extends TestCase
     public function test_admin_can_update_user(): void
     {
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->putJson("/api/users/{$this->user->id}", [
+            ->putJson("/api/v1/users/{$this->user->id}", [
                 'name' => 'Updated Name',
             ]);
 
@@ -74,7 +74,7 @@ class UserApiTest extends TestCase
     public function test_admin_can_delete_user(): void
     {
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->deleteJson("/api/users/{$this->user->id}");
+            ->deleteJson("/api/v1/users/{$this->user->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('users', ['id' => $this->user->id]);
@@ -83,7 +83,7 @@ class UserApiTest extends TestCase
     public function test_admin_can_view_user_permissions(): void
     {
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/users/{$this->user->id}/permissions");
+            ->getJson("/api/v1/users/{$this->user->id}/permissions");
 
         $response->assertStatus(200);
         $response->assertJsonStructure(['permissions']);
@@ -95,7 +95,7 @@ class UserApiTest extends TestCase
         Permission::create(['slug' => 'extensions.create', 'module' => 'core']);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->postJson("/api/users/{$this->user->id}/permissions/grant", [
+            ->postJson("/api/v1/users/{$this->user->id}/permissions/grant", [
                 'permissions' => ['extensions.view', 'extensions.create'],
             ]);
 
@@ -109,7 +109,7 @@ class UserApiTest extends TestCase
         $this->user->grantPermissions(['extensions.view']);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->postJson("/api/users/{$this->user->id}/permissions/revoke", [
+            ->postJson("/api/v1/users/{$this->user->id}/permissions/revoke", [
                 'permissions' => ['extensions.view'],
             ]);
 
@@ -121,7 +121,7 @@ class UserApiTest extends TestCase
         Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson('/api/permissions');
+            ->getJson('/api/v1/permissions');
 
         $response->assertStatus(200);
         $response->assertJsonStructure(['permissions']);
@@ -130,7 +130,7 @@ class UserApiTest extends TestCase
     public function test_non_admin_cannot_create_users(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/users', [
+            ->postJson('/api/v1/users', [
                 'name' => 'New User',
                 'email' => 'newuser@example.com',
                 'password' => 'password123',
@@ -142,7 +142,7 @@ class UserApiTest extends TestCase
     public function test_can_filter_users_by_tenant(): void
     {
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/users?tenant_id={$this->tenant->id}");
+            ->getJson("/api/v1/users?tenant_id={$this->tenant->id}");
 
         $response->assertStatus(200);
     }

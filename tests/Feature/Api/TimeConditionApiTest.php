@@ -29,7 +29,7 @@ class TimeConditionApiTest extends TestCase
         TimeCondition::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/time-conditions");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/time-conditions");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -38,7 +38,7 @@ class TimeConditionApiTest extends TestCase
     public function test_can_create_a_time_condition(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/time-conditions", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/time-conditions", [
                 'name' => 'Business Hours',
                 'conditions' => [
                     ['wday' => 'mon-fri', 'time_from' => '09:00', 'time_to' => '17:00'],
@@ -61,7 +61,7 @@ class TimeConditionApiTest extends TestCase
         $tc = TimeCondition::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/time-conditions/{$tc->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/time-conditions/{$tc->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => $tc->name]);
@@ -72,7 +72,7 @@ class TimeConditionApiTest extends TestCase
         $tc = TimeCondition::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/time-conditions/{$tc->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/time-conditions/{$tc->id}", [
                 'name' => 'Updated Hours',
                 'conditions' => [
                     ['wday' => 'mon-sat', 'time_from' => '08:00', 'time_to' => '18:00'],
@@ -91,7 +91,7 @@ class TimeConditionApiTest extends TestCase
         $tc = TimeCondition::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/time-conditions/{$tc->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/time-conditions/{$tc->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('time_conditions', ['id' => $tc->id]);
@@ -100,7 +100,7 @@ class TimeConditionApiTest extends TestCase
     public function test_validates_required_fields_on_create(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/time-conditions", []);
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/time-conditions", []);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name']);
@@ -112,7 +112,7 @@ class TimeConditionApiTest extends TestCase
         $tc = TimeCondition::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/time-conditions/{$tc->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/time-conditions/{$tc->id}");
 
         $response->assertStatus(404);
     }

@@ -57,7 +57,7 @@ class TenantStatsTest extends TestCase
         CallFlow::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/stats");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/stats");
 
         $response->assertStatus(200);
         $response->assertJsonFragment([
@@ -77,7 +77,7 @@ class TenantStatsTest extends TestCase
 
     public function test_requires_authentication(): void
     {
-        $response = $this->getJson("/api/tenants/{$this->tenant->id}/stats");
+        $response = $this->getJson("/api/v1/tenants/{$this->tenant->id}/stats");
 
         $response->assertStatus(401);
     }
@@ -90,7 +90,7 @@ class TenantStatsTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/stats");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/stats");
 
         $response->assertStatus(200);
     }
@@ -104,7 +104,7 @@ class TenantStatsTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/stats");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/stats");
 
         $response->assertStatus(403);
     }

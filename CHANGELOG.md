@@ -6,13 +6,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.0.0] — 2026-03-01
+
+### Summary
+
+NIZAM v1.0.0 is the first stable, production-ready release of the Open Communications Control Platform.
+This release establishes a frozen API contract, defined scope, and operational readiness for multi-tenant PBX deployments.
+
+### Added
+
+#### Governance & Documentation
+- `LICENSE` — MIT License
+- `CONTRIBUTING.md` — Contributor guidelines including branch naming, testing, and code style
+- `CODE_OF_CONDUCT.md` — Contributor Covenant v2.1
+- `docs/v1-scope.md` — Explicit v1.0 feature boundary (included and excluded features)
+- `docs/performance-baseline.md` — Performance targets and regression thresholds under 200-call load
+- `docs/ARCHITECTURE.md` — Architectural doctrine and non-negotiables
+- `docs/api-reference.md` — Full REST API reference
+- `docs/module-development.md` — Module SDK documentation
+- `docs/deployment-scaling.md` — Deployment and scaling guide
+- `docs/environment-bootstrap.md` — Local and production environment setup
+- `docs/versioning-and-releases.md` — Semantic versioning and release policy
+- `docs/slos.md` — Service Level Objectives
+- `docs/escalation-checklist.md` — On-call escalation procedures
+- `docs/openapi.yaml` — OpenAPI 3.1 specification (versioned)
+- `docs/postman-collection.json` — Postman collection for all API endpoints
+- `docs/runbooks/` — Runbooks for FreeSWITCH node down, ESL disconnect storm, Redis pressure, webhook backlog, DB connection exhaustion
+
+#### API Contract
+- All API routes versioned under `/api/v1` prefix
+- OpenAPI spec updated to reflect `/api/v1` server base URL
+- Breaking changes forbidden after this release
+
+#### SDK
+- PHP SDK at `sdk/php/` with README and usage examples
+
+### Changed
+- API routes moved from `/api/*` to `/api/v1/*` (breaking change for pre-release clients)
+
+### Known Limitations
+See [docs/v1-scope.md](docs/v1-scope.md#known-limitations-v10) for the full list. Key limitations:
+- Single FreeSWITCH node only (no clustering)
+- No native WebRTC softphone
+- No visual flow builder (API-first only)
+- Analytics is rule-based (no ML)
+
+---
+
 ## [Unreleased]
 
 ### Added
 
 #### Infrastructure
 - Docker Compose baseline with 6 services: app, nginx, postgres, redis, freeswitch, queue worker
-- `GET /api/health` — unauthenticated endpoint reporting app, ESL, and FreeSWITCH status
+- `GET /api/v1/health` — unauthenticated endpoint reporting app, ESL, and FreeSWITCH status
 - FreeSWITCH container with `mod_xml_curl` and `mod_event_socket` configuration
 - Environment bootstrap documentation in README
 
