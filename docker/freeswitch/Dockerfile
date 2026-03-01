@@ -89,7 +89,7 @@ RUN set -eux; \
     liblua5.2-0 libpq5 unixodbc libxml2 libssl1.1 \
     libncurses6 libmpg123-0 libmp3lame0 libshout3 libmemcached11 \
     libvpx6 libuv1 \
-    ca-certificates \
+    gettext-base \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -113,9 +113,14 @@ RUN set -eux; \
 COPY docker/freeswitch/conf /etc/freeswitch
 RUN chown -R freeswitch:freeswitch /etc/freeswitch
 
+# Copy and wire up entrypoint (runs envsubst then execs freeswitch)
+COPY docker/freeswitch/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Drop to unprivileged user
 USER freeswitch
 
 EXPOSE 5060/tcp 5060/udp 5080/tcp 5080/udp 8021/tcp 16384-16484/udp
 
-CMD ["freeswitch", "-nonat", "-nf"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["-nonat", "-nf"]
