@@ -36,7 +36,7 @@ RUN set -eux; \
     && unzip v1.13.17.zip \
     && cd sofia-sip-1.13.17 \
     && sh autogen.sh \
-    && ./configure \
+    && ./configure CFLAGS="-g -ggdb" --with-pic --with-glib=no --without-doxygen --disable-stun \
     && make -j$(nproc) \
     && make install \
     && ldconfig
@@ -48,7 +48,7 @@ RUN set -eux; \
     && cd spandsp \
     && git reset --hard 0d2e6ac65e0e8f53d652665a743015a88bf048d4 \
     && sh autogen.sh \
-    && ./configure \
+    && ./configure CFLAGS="-g -ggdb" --with-pic \
     && make -j$(nproc) \
     && make install \
     && ldconfig
@@ -66,7 +66,7 @@ RUN set -eux; \
     && sed -i modules.conf -e s:'endpoints/mod_verto:#endpoints/mod_verto:' \
     && sed -i modules.conf -e s:'#applications/mod_callcenter:applications/mod_callcenter:' \
     && sed -i modules.conf -e s:'#formats/mod_shout:formats/mod_shout:' \
-    && ./configure -C --enable-portable-binary \
+    && ./configure CFLAGS="-g -ggdb" --with-pic \
        --with-openssl --enable-core-pgsql-support \
     && make -j$(nproc) \
     && make install \
@@ -84,7 +84,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux; \
     apt-get update && apt-get install -y --no-install-recommends \
     libuuid1 zlib1g libjpeg62-turbo libsqlite3-0 libcurl4 libpcre3 \
-    libspeexdsp1 libspeex1 libldns3 libedit2 libtiff5 libopus0 libsndfile1 \
+    libspeexdsp1 libspeex1 libldns2 libedit2 libtiff5 libopus0 libsndfile1 \
     libavformat58 libavcodec58 libavutil56 libswscale5 libswresample3 \
     liblua5.2-0 libpq5 unixodbc libxml2 libssl1.1 \
     libncurses6 libmpg123-0 libmp3lame0 libshout3 libmemcached11 \
@@ -118,4 +118,4 @@ USER freeswitch
 
 EXPOSE 5060/tcp 5060/udp 5080/tcp 5080/udp 8021/tcp 16384-16484/udp
 
-CMD ["freeswitch", "-nonat", "-nc"]
+CMD ["freeswitch", "-nonat", "-nf"]
