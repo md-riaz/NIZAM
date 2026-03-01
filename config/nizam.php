@@ -13,9 +13,9 @@ return [
     | NIZAM Module Registry (Telecom Hooks)
     |--------------------------------------------------------------------------
     |
-    | Maps NIZAM telecom module aliases to their NizamModule implementation
-    | classes. Each entry bridges a nwidart-discovered module with NIZAM's
-    | hook registry (dialplan, policy, events, permissions).
+    | NizamModule implementations are discovered automatically at boot time by
+    | scanning all nwidart-registered modules for a class matching the
+    | conventional path Modules\{Name}\{Name}Module that implements NizamModule.
     |
     | Activation state (enabled/disabled) is managed exclusively by
     | nwidart/laravel-modules via modules_statuses.json. Use:
@@ -23,29 +23,9 @@ return [
     |   php artisan module:enable  PbxRouting
     |   php artisan module:disable PbxRouting
     |
+    | Then restart the application process for the change to take effect.
     | Core functionality (tenants, auth, extensions, event bus, dialplan
     | compiler, policy engine, FreeSWITCH adapter) is always active.
     |
     */
-    'modules' => [
-        'pbx-routing' => [
-            'class' => \Modules\PbxRouting\PbxRoutingModule::class,
-        ],
-
-        'pbx-contact-center' => [
-            'class' => \Modules\PbxContactCenter\PbxContactCenterModule::class,
-        ],
-
-        'pbx-automation' => [
-            'class' => \Modules\PbxAutomation\PbxAutomationModule::class,
-        ],
-
-        'pbx-analytics' => [
-            'class' => \Modules\PbxAnalytics\PbxAnalyticsModule::class,
-        ],
-
-        'pbx-provisioning' => [
-            'class' => \Modules\PbxProvisioning\PbxProvisioningModule::class,
-        ],
-    ],
 ];

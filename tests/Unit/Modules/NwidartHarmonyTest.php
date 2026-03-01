@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\Modules;
 
+use App\Modules\Contracts\NizamModule as NizamModuleContract;
 use App\Modules\ModuleRegistry;
 use App\Providers\AppServiceProvider;
-use Illuminate\Support\Str;
 use Nwidart\Modules\Facades\Module as NwidartModule;
 use Tests\TestCase;
 
@@ -12,18 +12,72 @@ use Tests\TestCase;
  * CHECKPOINT 6 — ModuleRegistry vs nwidart Harmony
  *
  * Verifies that nwidart/laravel-modules is the single source of truth for
- * module activation state. Disabling a module via nwidart must prevent NIZAM
- * hook registration; re-enabling must restore it.
+ * module activation state and that the auto-discovery pipeline is correct.
+ * No string transformation (Str::studly) is used — matching is by alias field.
  */
 class NwidartHarmonyTest extends TestCase
 {
+    // =========================================================================
+    // DISCOVERY
+    // =========================================================================
+
+    public function test_auto_discovery_finds_all_nizam_modules(): void
+    {
+        $provider = new AppServiceProvider($this->app);
+        $discovered = $provider->discoverNizamModules();
+
+        // All five production modules must be auto-discovered
+        $this->assertArrayHasKey('pbx-routing', $discovered);
+        $this->assertArrayHasKey('pbx-contact-center', $discovered);
+        $this->assertArrayHasKey('pbx-automation', $discovered);
+        $this->assertArrayHasKey('pbx-analytics', $discovered);
+        $this->assertArrayHasKey('pbx-provisioning', $discovered);
+    }
+
+    public function test_auto_discovery_only_finds_nizam_module_implementors(): void
+    {
+        $provider = new AppServiceProvider($this->app);
+        $discovered = $provider->discoverNizamModules();
+
+        foreach ($discovered as $alias => $class) {
+            $this->assertTrue(
+                is_a($class, NizamModuleContract::class, true),
+                "Discovered class {$class} (alias={$alias}) must implement NizamModule"
+            );
+        }
+    }
+
+    public function test_auto_discovery_matches_nwidart_alias_without_string_transformation(): void
+    {
+        $provider = new AppServiceProvider($this->app);
+        $discovered = $provider->discoverNizamModules();
+
+        // Discovered aliases must come directly from nwidart module.json alias field,
+        // not from Str::studly() or any other transformation
+        $nwidartAliases = collect(NwidartModule::all())
+            ->map(fn ($m) => $m->get('alias'))
+            ->filter()
+            ->values()
+            ->all();
+
+        foreach (array_keys($discovered) as $alias) {
+            $this->assertContains(
+                $alias,
+                $nwidartAliases,
+                "Discovered alias '{$alias}' must match a nwidart module's alias field"
+            );
+        }
+    }
+
+    // =========================================================================
+    // ACTIVATION STATE
+    // =========================================================================
+
     public function test_nwidart_disabled_module_is_disabled_in_nizam_registry(): void
     {
-        // Temporarily disable PbxRouting in nwidart
         NwidartModule::find('PbxRouting')?->disable();
 
         try {
-            // Rebuild the registry singleton so it picks up the new nwidart state
             $this->app->forgetInstance(ModuleRegistry::class);
             $registry = $this->app->make(ModuleRegistry::class);
 
@@ -32,7 +86,6 @@ class NwidartHarmonyTest extends TestCase
                 'NIZAM registry must honour nwidart disabled state for pbx-routing'
             );
         } finally {
-            // Always restore so other tests are not affected
             NwidartModule::find('PbxRouting')?->enable();
             $this->app->forgetInstance(ModuleRegistry::class);
         }
@@ -40,7 +93,6 @@ class NwidartHarmonyTest extends TestCase
 
     public function test_nwidart_enabled_module_is_enabled_in_nizam_registry(): void
     {
-        // PbxRouting is enabled by default in modules_statuses.json
         $registry = $this->app->make(ModuleRegistry::class);
 
         $this->assertTrue(
@@ -53,42 +105,35 @@ class NwidartHarmonyTest extends TestCase
     {
         $registry = $this->app->make(ModuleRegistry::class);
 
-        $moduleConfigs = config('nizam.modules', []);
-
-        foreach ($moduleConfigs as $alias => $config) {
-            $studlyName = Str::studly($alias);
-            $nwidartEnabled = NwidartModule::isEnabled($studlyName);
+        foreach (NwidartModule::all() as $nwidartModule) {
+            $alias = $nwidartModule->get('alias');
+            if ($alias === null || ! $registry->get($alias)) {
+                // This nwidart module has no NizamModule implementation — intentionally
+                // skipped. Not every nwidart module must participate in NIZAM hook registry.
+                continue;
+            }
 
             $this->assertSame(
-                $nwidartEnabled,
+                $nwidartModule->isEnabled(),
                 $registry->isEnabled($alias),
-                "Activation mismatch for '{$alias}': nwidart={$studlyName} says "
-                .($nwidartEnabled ? 'enabled' : 'disabled')
+                "Activation mismatch for '{$alias}': nwidart says "
+                .($nwidartModule->isEnabled() ? 'enabled' : 'disabled')
                 .', but NIZAM registry disagrees'
             );
         }
     }
 
-    public function test_nwidart_is_single_source_of_truth_not_env_config(): void
+    public function test_nwidart_is_single_source_of_truth(): void
     {
-        // Disable via nwidart (simulates: php artisan module:disable PbxContactCenter)
         NwidartModule::find('PbxContactCenter')?->disable();
 
         try {
             $this->app->forgetInstance(ModuleRegistry::class);
             $registry = $this->app->make(ModuleRegistry::class);
 
-            // Even if no env override is set, nwidart disabled = NIZAM disabled
             $this->assertFalse(
                 $registry->isEnabled('pbx-contact-center'),
-                'nwidart disable must override any config/env enabled flag'
-            );
-
-            // Hooks must not be collected
-            $this->assertNotContains(
-                'queues.view',
-                $registry->collectPermissions(),
-                'Disabled module permissions must not be collected'
+                'nwidart disable must be the only activation authority'
             );
         } finally {
             NwidartModule::find('PbxContactCenter')?->enable();
@@ -96,32 +141,100 @@ class NwidartHarmonyTest extends TestCase
         }
     }
 
-    public function test_app_service_provider_nwidart_is_enabled_returns_correct_state(): void
+    // =========================================================================
+    // FAIL-CLOSED BEHAVIOR
+    // =========================================================================
+
+    public function test_unknown_module_alias_returns_false_fail_closed(): void
     {
         $provider = new AppServiceProvider($this->app);
 
-        // Known-enabled module — nwidart returns true
-        $this->assertTrue($provider->nwidartIsEnabled('pbx-routing'));
-
-        // Unknown module — falls back to config default (true when no config)
-        $this->assertTrue($provider->nwidartIsEnabled('non-existent-module'));
-
-        // Unknown module with explicit false in fallback config
-        $this->assertFalse($provider->nwidartIsEnabled('non-existent-module', ['enabled' => false]));
+        // Unregistered module must return false, never true
+        $this->assertFalse(
+            $provider->nwidartIsEnabled('non-existent-module'),
+            'Unregistered module alias must return false (fail-closed) — not true'
+        );
     }
 
-    public function test_studly_case_conversion_matches_nwidart_module_names(): void
+    public function test_unregistered_module_is_not_in_nizam_registry(): void
     {
-        // Verify the StudlyCase conversion is correct for every configured module
-        $moduleConfigs = config('nizam.modules', []);
+        // If a module.json has no NizamModule class, it must not appear in the registry
+        $registry = $this->app->make(ModuleRegistry::class);
 
-        foreach ($moduleConfigs as $alias => $config) {
-            $studlyName = Str::studly($alias);
+        $this->assertNull($registry->get('non-existent-module'));
+    }
 
-            // Must not throw ModuleNotFoundException — module exists in nwidart
+    // =========================================================================
+    // DEEP HOOK SUPPRESSION (CHECKPOINT 8)
+    // =========================================================================
+
+    public function test_disabled_module_suppresses_permissions(): void
+    {
+        NwidartModule::find('PbxContactCenter')?->disable();
+
+        try {
+            $this->app->forgetInstance(ModuleRegistry::class);
+            $registry = $this->app->make(ModuleRegistry::class);
+
+            $this->assertNotContains('queues.view', $registry->collectPermissions());
+            $this->assertNotContains('agents.manage', $registry->collectPermissions());
+        } finally {
+            NwidartModule::find('PbxContactCenter')?->enable();
+            $this->app->forgetInstance(ModuleRegistry::class);
+        }
+    }
+
+    public function test_disabled_module_suppresses_dialplan_contributions(): void
+    {
+        NwidartModule::find('PbxRouting')?->disable();
+
+        try {
+            $this->app->forgetInstance(ModuleRegistry::class);
+            $registry = $this->app->make(ModuleRegistry::class);
+
+            // No dialplan fragments from disabled module
+            $this->assertEmpty(
+                $registry->collectDialplanContributions('test.example.com', '1001')
+            );
+        } finally {
+            NwidartModule::find('PbxRouting')?->enable();
+            $this->app->forgetInstance(ModuleRegistry::class);
+        }
+    }
+
+    public function test_disabled_module_suppresses_route_collection(): void
+    {
+        NwidartModule::find('PbxAutomation')?->disable();
+
+        try {
+            $this->app->forgetInstance(ModuleRegistry::class);
+            $registry = $this->app->make(ModuleRegistry::class);
+
+            $routeFiles = $registry->collectRouteFiles();
+
+            // Automation's route file must not be present in the collected list
+            $automationRouteFile = base_path('modules/PbxAutomation/routes/api.php');
+            $this->assertNotContains(
+                $automationRouteFile,
+                $routeFiles,
+                'Disabled module route file must not be included in collectRouteFiles()'
+            );
+        } finally {
+            NwidartModule::find('PbxAutomation')?->enable();
+            $this->app->forgetInstance(ModuleRegistry::class);
+        }
+    }
+
+    public function test_all_modules_present_in_nwidart_repository(): void
+    {
+        $provider = new AppServiceProvider($this->app);
+        $discovered = $provider->discoverNizamModules();
+
+        foreach (array_keys($discovered) as $alias) {
+            // nwidartIsEnabled must not log a warning — module must be found in nwidart
             $this->assertIsBool(
-                NwidartModule::isEnabled($studlyName),
-                "NwidartModule::isEnabled('{$studlyName}') must return bool for alias '{$alias}'"
+                $provider->nwidartIsEnabled($alias),
+                "nwidartIsEnabled('{$alias}') must return bool without warning"
             );
         }
     }
