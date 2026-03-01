@@ -190,37 +190,35 @@ skew are **not** tested for starvation resistance beyond basic unit tests.
 
 ### Recording Retention Policies
 
-Per-tenant recording retention is configurable via `recording_retention_days` on
-the Tenant model. However, **automated deletion** of expired recordings is not
-implemented in v1.0.
+Per-tenant recording retention is enforced by the `nizam:prune-recordings`
+artisan command, which is scheduled to run daily via the task scheduler.
 
 **System behavior:**
-- The `recording_retention_days` field defaults to `null` (no automatic
-  retention policy).
-- No background job deletes recordings that exceed the retention period.
-- Legal hold, export, and GDPR deletion requests must be handled manually.
-- Storage growth is unbounded unless operators implement external cleanup.
+- The `recording_retention_days` field defaults to `null` (no retention policy
+  — recordings are kept indefinitely).
+- When set, the `nizam:prune-recordings` command deletes recordings (and their
+  backing files) older than the retention window.
+- The scheduler container in `docker-compose.yml` runs `php artisan
+  schedule:work`, which triggers the command at midnight UTC daily.
+- Legal hold, export, and GDPR deletion requests must still be handled manually
+  via the recordings API.
+- Audit logs (`audit_logs` table) are tenant-scoped but not encrypted at rest.
 
-**Recommendation:** Implement a scheduled job or external process to purge
-recordings based on `recording_retention_days`.
+**Operator tip:** Use `php artisan nizam:prune-recordings --dry-run` to preview
+which recordings would be deleted before running for real. Pass `--tenant=<uuid>`
+to restrict the run to a single tenant.
 
 ### PII / Sensitive Data in Logs
 
-NIZAM provides a `SensitiveDataSanitizer` log processor that masks SIP
-passwords, tokens, and other sensitive patterns in application logs. However,
-it must be **explicitly configured** in the logging stack.
+NIZAM automatically masks SIP passwords, Bearer tokens, API keys, and credit
+card numbers in log output via `SensitiveDataSanitizerTap`.
 
 **System behavior:**
-- The sanitizer masks patterns matching SIP passwords, Bearer tokens, API keys,
-  and credit card numbers in log output.
-- It is **not enabled by default** in `config/logging.php`.
-- Webhook payloads, SIP REGISTER details, and FreeSWITCH ESL messages may
-  contain sensitive data that passes through unsanitized if the processor is not
-  configured.
+- The `SensitiveDataSanitizerTap` is registered on the `single`, `daily`, and
+  `stderr` log channels in `config/logging.php`.
 - Audit logs (`audit_logs` table) are tenant-scoped but not encrypted at rest.
-
-**Recommendation:** Add `SensitiveDataSanitizer` to your production logging
-stack. Review FreeSWITCH log levels to avoid leaking SIP credentials.
+- FreeSWITCH log files (outside NIZAM) are not sanitized; keep FreeSWITCH log
+  levels at `warning` or above in production to avoid leaking SIP credentials.
 
 ---
 

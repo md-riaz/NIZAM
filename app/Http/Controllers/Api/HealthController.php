@@ -6,27 +6,57 @@ use App\Http\Controllers\Controller;
 use App\Services\EslConnectionManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class HealthController extends Controller
 {
     /**
-     * Return health status for the platform including FreeSWITCH and ESL connectivity.
+     * Return health status for the platform including FreeSWITCH, database, and cache connectivity.
      */
     public function __invoke(): JsonResponse
     {
+        $dbStatus = $this->checkDatabase();
+        $redisStatus = $this->checkRedis();
         $eslStatus = $this->checkEslConnection();
         $gatewayStatus = $this->getGatewayStatus();
 
-        $healthy = $eslStatus['connected'];
+        // The platform is healthy only when the critical backing services are reachable.
+        $healthy = $dbStatus['status'] === 'ok' && $redisStatus['status'] === 'ok';
 
         return response()->json([
             'status' => $healthy ? 'healthy' : 'degraded',
             'checks' => [
                 'app' => ['status' => 'ok'],
+                'database' => $dbStatus,
+                'cache' => $redisStatus,
                 'esl' => $eslStatus,
                 'gateways' => $gatewayStatus,
             ],
         ], $healthy ? 200 : 503);
+    }
+
+    protected function checkDatabase(): array
+    {
+        try {
+            DB::selectOne('SELECT 1');
+
+            return ['status' => 'ok'];
+        } catch (\Throwable $e) {
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
+    protected function checkRedis(): array
+    {
+        try {
+            // Use the configured cache store so the check works in all environments
+            // (array in tests, redis in production).
+            Cache::store()->put('nizam:health_probe', 1, 5);
+
+            return ['status' => 'ok'];
+        } catch (\Throwable $e) {
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
     }
 
     protected function checkEslConnection(): array
