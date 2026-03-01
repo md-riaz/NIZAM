@@ -323,13 +323,30 @@ Real-time streaming of call lifecycle events. Events are:
 
 ## Quick Start
 
-### Prerequisites
+### Option A — One-line VPS installer (Ubuntu 22.04 / Debian 12)
+
+Installs everything on a fresh VPS with zero user interaction and prints the URL and admin credentials on completion:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/md-riaz/NIZAM/main/install.sh)
+```
+
+> Installs: PHP 8.3, PostgreSQL 16, Redis 7, FreeSWITCH 1.10, nginx, Supervisor, UFW.  
+> FreeSWITCH is installed from packages on Debian 12 (~5 min) or compiled from source on Ubuntu 22.04 (~30 min).
+
+See [docs/installation-bare-metal.md](docs/installation-bare-metal.md) for the step-by-step equivalent.
+
+---
+
+### Option B — Docker (recommended for development)
+
+#### Prerequisites
 
 - Docker & Docker Compose
 - Git
 - `make` (optional, but recommended — run `make help` to see all shortcuts)
 
-### Setup
+#### Setup
 
 ```bash
 # 1. Clone
@@ -361,7 +378,7 @@ The API will be available at `http://localhost:8080/api/v1`.
 
 > **Health check:** `curl http://localhost:8080/api/v1/health`
 
-### Docker Services
+#### Docker Services
 
 | Service | Container | Port | Description |
 |---------|-----------|------|-------------|
@@ -374,7 +391,7 @@ The API will be available at `http://localhost:8080/api/v1`.
 | **scheduler** | `nizam-scheduler` | — | Periodic task runner |
 | **esl-listener** | `nizam-esl-listener` | — | FreeSWITCH event listener |
 
-### Environment Variables
+#### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -393,13 +410,7 @@ The API will be available at `http://localhost:8080/api/v1`.
 | `REDIS_HOST` | `127.0.0.1` | Redis host |
 | `QUEUE_CONNECTION` | `database` | Queue driver (`redis` recommended for production) |
 
-### Installation without Docker
-
-For Ubuntu / Debian bare-metal or VM deployment (includes FreeSWITCH build instructions, nginx, supervisor setup):
-
-📄 **[docs/installation-bare-metal.md](docs/installation-bare-metal.md)**
-
-Quick local dev without Docker:
+### Option C — Local dev (no Docker)
 
 ```bash
 composer install
@@ -526,6 +537,7 @@ More structured than FusionPBX. Simpler to operate than full Wazo microservices.
 | [API Reference](docs/api-reference.md) | Full REST endpoint reference with request/response examples |
 | [Environment Bootstrap](docs/environment-bootstrap.md) | Docker setup, FreeSWITCH config, production checklist, Makefile reference |
 | [Bare-Metal Installation](docs/installation-bare-metal.md) | Ubuntu/Debian install without Docker (PHP, PostgreSQL, Redis, FreeSWITCH, nginx, supervisor) |
+| [`install.sh`](install.sh) | Automated VPS installer — one command, zero interaction, prints URL + credentials |
 | [Module Development](docs/module-development.md) | NizamModule interface and module authoring guide |
 | [Deployment & Scaling](docs/deployment-scaling.md) | Production deployment, horizontal scaling, backup/restore |
 
