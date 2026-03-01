@@ -97,6 +97,12 @@ services:
       dockerfile: docker/freeswitch/Dockerfile
     container_name: nizam-freeswitch
     restart: unless-stopped
+    cap_add:
+      - SYS_NICE
+    ulimits:
+      rtprio:
+        soft: 99
+        hard: 99
     depends_on:
       app:
         condition: service_healthy
