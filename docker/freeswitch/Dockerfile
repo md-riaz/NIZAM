@@ -7,7 +7,8 @@ FROM debian:bullseye AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install build dependencies (mirrored from FusionPBX source-release.sh)
-RUN apt-get update && apt-get install -y \
+RUN set -eux; \
+    apt-get update && apt-get install -y \
     autoconf automake devscripts g++ git-core libncurses5-dev libtool make libjpeg-dev \
     pkg-config flac libgdbm-dev libdb-dev gettext equivs dpkg-dev libpq-dev \
     liblua5.2-dev libtiff5-dev libcurl4-openssl-dev libsqlite3-dev libpcre3-dev \
@@ -19,26 +20,30 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Build libks (full clone — FusionPBX approach, no tags, no shallow)
-RUN cd /usr/src \
+RUN set -eux; \
+    cd /usr/src \
     && git clone https://github.com/signalwire/libks.git libks \
     && cd libks \
     && cmake . \
     && make -j$(nproc) \
     && make install \
-    && export C_INCLUDE_PATH=/usr/include/libks
+    && ldconfig
 
-# Build sofia-sip (pinned tag)
-RUN cd /usr/src \
-    && wget -q https://github.com/freeswitch/sofia-sip/archive/refs/tags/v1.13.17.zip \
+# Build sofia-sip (pinned tag via zip download)
+RUN set -eux; \
+    cd /usr/src \
+    && wget https://github.com/freeswitch/sofia-sip/archive/refs/tags/v1.13.17.zip \
     && unzip v1.13.17.zip \
     && cd sofia-sip-1.13.17 \
     && sh autogen.sh \
     && ./configure \
     && make -j$(nproc) \
-    && make install
+    && make install \
+    && ldconfig
 
 # Build spandsp (pinned to FusionPBX's known-good commit)
-RUN cd /usr/src \
+RUN set -eux; \
+    cd /usr/src \
     && git clone https://github.com/freeswitch/spandsp.git spandsp \
     && cd spandsp \
     && git reset --hard 0d2e6ac65e0e8f53d652665a743015a88bf048d4 \
@@ -49,10 +54,13 @@ RUN cd /usr/src \
     && ldconfig
 
 # Build FreeSWITCH 1.10.12 from source
-RUN cd /usr/src \
-    && wget -q https://files.freeswitch.org/releases/freeswitch/freeswitch-1.10.12-release.tar.gz \
-    && tar -zxf freeswitch-1.10.12-release.tar.gz \
-    && cd freeswitch-1.10.12-release \
+RUN set -eux; \
+    cd /usr/src \
+    && wget https://files.freeswitch.org/releases/freeswitch/freeswitch-1.10.12.-release.tar.gz \
+    && ls -la freeswitch-1.10.12.-release.tar.gz \
+    && tar -zxf freeswitch-1.10.12.-release.tar.gz \
+    && ls -la \
+    && cd freeswitch-1.10.12.-release \
     && sed -i modules.conf -e s:'applications/mod_signalwire:#applications/mod_signalwire:' \
     && sed -i modules.conf -e s:'endpoints/mod_skinny:#endpoints/mod_skinny:' \
     && sed -i modules.conf -e s:'endpoints/mod_verto:#endpoints/mod_verto:' \
@@ -73,7 +81,8 @@ FROM debian:bullseye-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN set -eux; \
+    apt-get update && apt-get install -y --no-install-recommends \
     libuuid1 zlib1g libjpeg62-turbo libsqlite3-0 libcurl4 libpcre3 \
     libspeexdsp1 libspeex1 libldns3 libedit2 libtiff5 libopus0 libsndfile1 \
     libavformat58 libavcodec58 libavutil56 libswscale5 libswresample3 \
@@ -92,7 +101,8 @@ COPY --from=builder /usr/local/freeswitch /usr/local/freeswitch
 COPY --from=builder /usr/local/lib/ /usr/local/lib/
 
 # Create unprivileged freeswitch user, link binaries, refresh ldconfig
-RUN groupadd -r freeswitch && useradd -r -g freeswitch -d /usr/local/freeswitch -s /usr/sbin/nologin freeswitch \
+RUN set -eux; \
+    groupadd -r freeswitch && useradd -r -g freeswitch -d /usr/local/freeswitch -s /usr/sbin/nologin freeswitch \
     && ln -sf /usr/local/freeswitch/bin/freeswitch /usr/sbin/freeswitch \
     && ln -sf /usr/local/freeswitch/bin/fs_cli /usr/bin/fs_cli \
     && ln -sf /usr/local/freeswitch/conf /etc/freeswitch \
