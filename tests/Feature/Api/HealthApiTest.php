@@ -19,6 +19,8 @@ class HealthApiTest extends TestCase
             'status',
             'checks' => [
                 'app' => ['status'],
+                'database' => ['status'],
+                'cache' => ['status'],
                 'esl',
             ],
         ]);
@@ -46,4 +48,37 @@ class HealthApiTest extends TestCase
         $data = $response->json();
         $this->assertArrayHasKey('connected', $data['checks']['esl']);
     }
+
+    public function test_health_endpoint_includes_database_check(): void
+    {
+        $response = $this->getJson('/api/v1/health');
+
+        $response->assertJsonStructure([
+            'checks' => [
+                'database' => ['status'],
+            ],
+        ]);
+    }
+
+    public function test_health_endpoint_includes_cache_check(): void
+    {
+        $response = $this->getJson('/api/v1/health');
+
+        $response->assertJsonStructure([
+            'checks' => [
+                'cache' => ['status'],
+            ],
+        ]);
+    }
+
+    public function test_health_endpoint_is_healthy_when_database_and_cache_are_ok(): void
+    {
+        // In the test environment, database (SQLite in-memory) and cache (array) are always reachable.
+        $response = $this->getJson('/api/v1/health');
+
+        // Database and cache should be OK in the test environment
+        $response->assertJsonPath('checks.database.status', 'ok');
+        $response->assertJsonPath('checks.cache.status', 'ok');
+    }
 }
+
