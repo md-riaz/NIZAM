@@ -47,7 +47,7 @@ class AuditLogApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/audit-logs");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['action' => 'created']);
@@ -64,7 +64,7 @@ class AuditLogApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/audit-logs");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs");
 
         $response->assertStatus(200);
     }
@@ -85,7 +85,7 @@ class AuditLogApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/audit-logs?action=created");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs?action=created");
 
         $response->assertStatus(200);
         $data = $response->json('data');
@@ -109,7 +109,7 @@ class AuditLogApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/audit-logs?auditable_type=".urlencode(Extension::class));
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs?auditable_type=".urlencode(Extension::class));
 
         $response->assertStatus(200);
         $data = $response->json('data');
@@ -127,7 +127,7 @@ class AuditLogApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/audit-logs");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs");
 
         $response->assertStatus(200);
         $this->assertCount(0, $response->json('data'));
@@ -145,7 +145,7 @@ class AuditLogApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/audit-logs/{$log->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs/{$log->id}");
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.action', 'updated');
@@ -153,7 +153,7 @@ class AuditLogApiTest extends TestCase
 
     public function test_audit_log_requires_authentication(): void
     {
-        $response = $this->getJson("/api/tenants/{$this->tenant->id}/audit-logs");
+        $response = $this->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs");
 
         $response->assertStatus(401);
     }

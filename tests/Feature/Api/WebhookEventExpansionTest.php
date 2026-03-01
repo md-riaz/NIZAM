@@ -23,7 +23,7 @@ class WebhookEventExpansionTest extends TestCase
         $user = $this->adminUser($tenant);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/webhooks", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
                 'events' => ['extension.created', 'extension.updated', 'extension.deleted'],
             ]);
@@ -37,7 +37,7 @@ class WebhookEventExpansionTest extends TestCase
         $user = $this->adminUser($tenant);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/webhooks", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
                 'events' => ['did.created', 'did.updated', 'did.deleted'],
             ]);
@@ -51,7 +51,7 @@ class WebhookEventExpansionTest extends TestCase
         $user = $this->adminUser($tenant);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/webhooks", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
                 'events' => ['recording.created', 'tenant.updated', 'call.bridge'],
             ]);
@@ -65,7 +65,7 @@ class WebhookEventExpansionTest extends TestCase
         $user = $this->adminUser($tenant);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/webhooks", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
                 'events' => ['invalid.event'],
             ]);
@@ -91,7 +91,7 @@ class WebhookEventExpansionTest extends TestCase
 
         // Create extension
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/extensions", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/extensions", [
                 'extension' => '1001',
                 'password' => 'secret123456',
                 'directory_first_name' => 'Test',
@@ -126,7 +126,7 @@ class WebhookEventExpansionTest extends TestCase
 
         // Create DID
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/dids", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/dids", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
                 'destination_id' => $extension->id,

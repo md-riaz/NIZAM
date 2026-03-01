@@ -28,7 +28,7 @@ class RecordingApiTest extends TestCase
         Recording::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/recordings");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/recordings");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -39,7 +39,7 @@ class RecordingApiTest extends TestCase
         $recording = Recording::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/recordings/{$recording->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/recordings/{$recording->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['call_uuid' => $recording->call_uuid]);
@@ -51,7 +51,7 @@ class RecordingApiTest extends TestCase
         $recording = Recording::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/recordings/{$recording->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/recordings/{$recording->id}");
 
         $response->assertStatus(403);
     }
@@ -62,7 +62,7 @@ class RecordingApiTest extends TestCase
         Recording::factory()->count(2)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/recordings?call_uuid={$recording->call_uuid}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/recordings?call_uuid={$recording->call_uuid}");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -73,7 +73,7 @@ class RecordingApiTest extends TestCase
         $recording = Recording::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/recordings/{$recording->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/recordings/{$recording->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('recordings', ['id' => $recording->id]);

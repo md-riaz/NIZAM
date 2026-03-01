@@ -29,7 +29,7 @@ class RingGroupApiTest extends TestCase
         RingGroup::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/ring-groups");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/ring-groups");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -38,7 +38,7 @@ class RingGroupApiTest extends TestCase
     public function test_can_create_a_ring_group(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/ring-groups", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/ring-groups", [
                 'name' => 'Sales Team',
                 'strategy' => 'simultaneous',
                 'ring_timeout' => 30,
@@ -57,7 +57,7 @@ class RingGroupApiTest extends TestCase
         $ringGroup = RingGroup::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/ring-groups/{$ringGroup->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/ring-groups/{$ringGroup->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => $ringGroup->name]);
@@ -68,7 +68,7 @@ class RingGroupApiTest extends TestCase
         $ringGroup = RingGroup::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/ring-groups/{$ringGroup->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/ring-groups/{$ringGroup->id}", [
                 'name' => 'Updated Team',
                 'members' => [Str::uuid()->toString()],
             ]);
@@ -85,7 +85,7 @@ class RingGroupApiTest extends TestCase
         $ringGroup = RingGroup::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/ring-groups/{$ringGroup->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/ring-groups/{$ringGroup->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('ring_groups', ['id' => $ringGroup->id]);

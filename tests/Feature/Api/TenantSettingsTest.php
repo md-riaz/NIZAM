@@ -30,7 +30,7 @@ class TenantSettingsTest extends TestCase
     public function test_can_get_tenant_settings(): void
     {
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/settings");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/settings");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['timezone' => 'UTC', 'language' => 'en']);
@@ -39,7 +39,7 @@ class TenantSettingsTest extends TestCase
     public function test_can_update_tenant_settings_with_merge(): void
     {
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/settings", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/settings", [
                 'settings' => ['language' => 'fr', 'recording_format' => 'mp3'],
             ]);
 
@@ -59,7 +59,7 @@ class TenantSettingsTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/settings", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/settings", [
                 'settings' => ['language' => 'de'],
             ]);
 

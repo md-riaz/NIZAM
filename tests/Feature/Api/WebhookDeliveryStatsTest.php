@@ -44,7 +44,7 @@ class WebhookDeliveryStatsTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/webhooks/{$webhook->id}/delivery-stats");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/webhooks/{$webhook->id}/delivery-stats");
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.total_attempts', 5);
@@ -59,7 +59,7 @@ class WebhookDeliveryStatsTest extends TestCase
         $webhook = Webhook::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/webhooks/{$webhook->id}/delivery-stats");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/webhooks/{$webhook->id}/delivery-stats");
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.total_attempts', 0);
@@ -72,7 +72,7 @@ class WebhookDeliveryStatsTest extends TestCase
         $webhook = Webhook::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/webhooks/{$webhook->id}/delivery-stats");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/webhooks/{$webhook->id}/delivery-stats");
 
         $response->assertStatus(404);
     }

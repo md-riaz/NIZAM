@@ -51,7 +51,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/agents");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/agents");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
@@ -60,7 +60,7 @@ class AgentApiTest extends TestCase
     public function test_can_create_agent(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/agents", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents", [
                 'extension_id' => $this->extension->id,
                 'name' => 'Agent Smith',
                 'role' => 'agent',
@@ -85,7 +85,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/agents", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents", [
                 'extension_id' => $this->extension->id,
                 'name' => 'Agent Jones',
             ]);
@@ -103,7 +103,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/agents/{$agent->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}");
 
         $response->assertStatus(200)
             ->assertJsonFragment(['name' => 'Agent Smith']);
@@ -118,7 +118,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/agents/{$agent->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}", [
                 'name' => 'Agent Jones',
                 'role' => 'supervisor',
             ]);
@@ -136,7 +136,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/agents/{$agent->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('agents', ['id' => $agent->id]);
@@ -152,7 +152,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
                 'state' => 'available',
             ]);
 
@@ -175,7 +175,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
                 'state' => 'paused',
                 'pause_reason' => 'lunch',
             ]);
@@ -194,7 +194,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
                 'state' => 'paused',
             ]);
 
@@ -211,7 +211,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
                 'state' => 'invalid_state',
             ]);
 
@@ -242,7 +242,7 @@ class AgentApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/agents/{$otherAgent->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/agents/{$otherAgent->id}");
 
         $response->assertStatus(404);
     }

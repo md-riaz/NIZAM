@@ -12,7 +12,7 @@ class AuthApiTest extends TestCase
 
     public function test_can_register_a_new_user(): void
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password123',
@@ -26,7 +26,7 @@ class AuthApiTest extends TestCase
 
     public function test_registration_validates_required_fields(): void
     {
-        $response = $this->postJson('/api/auth/register', []);
+        $response = $this->postJson('/api/v1/auth/register', []);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name', 'email', 'password']);
@@ -36,7 +36,7 @@ class AuthApiTest extends TestCase
     {
         User::factory()->create(['email' => 'taken@example.com']);
 
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Another User',
             'email' => 'taken@example.com',
             'password' => 'password123',
@@ -54,7 +54,7 @@ class AuthApiTest extends TestCase
             'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'login@example.com',
             'password' => 'password123',
         ]);
@@ -70,7 +70,7 @@ class AuthApiTest extends TestCase
             'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'login@example.com',
             'password' => 'wrongpassword',
         ]);
@@ -84,7 +84,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/auth/me');
+            ->getJson('/api/v1/auth/me');
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['email' => $user->email]);
@@ -92,7 +92,7 @@ class AuthApiTest extends TestCase
 
     public function test_unauthenticated_user_cannot_access_me(): void
     {
-        $response = $this->getJson('/api/auth/me');
+        $response = $this->getJson('/api/v1/auth/me');
 
         $response->assertStatus(401);
     }
@@ -103,7 +103,7 @@ class AuthApiTest extends TestCase
         $token = $user->createToken('auth-token')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/api/auth/logout');
+            ->postJson('/api/v1/auth/logout');
 
         $response->assertStatus(204);
         $this->assertDatabaseCount('personal_access_tokens', 0);

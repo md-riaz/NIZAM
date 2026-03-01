@@ -36,7 +36,7 @@ class CdrExportTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->get("/api/tenants/{$this->tenant->id}/cdrs/export");
+            ->get("/api/v1/tenants/{$this->tenant->id}/cdrs/export");
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -61,7 +61,7 @@ class CdrExportTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->get("/api/tenants/{$this->tenant->id}/cdrs/export?direction=inbound");
+            ->get("/api/v1/tenants/{$this->tenant->id}/cdrs/export?direction=inbound");
 
         $content = $response->streamedContent();
         $this->assertStringContainsString('inbound-uuid', $content);
@@ -82,7 +82,7 @@ class CdrExportTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->get("/api/tenants/{$this->tenant->id}/cdrs/export?date_from=2024-01-01&date_to=2024-02-01");
+            ->get("/api/v1/tenants/{$this->tenant->id}/cdrs/export?date_from=2024-01-01&date_to=2024-02-01");
 
         $content = $response->streamedContent();
         $this->assertStringContainsString('in-range-uuid', $content);
@@ -91,7 +91,7 @@ class CdrExportTest extends TestCase
 
     public function test_export_requires_authentication(): void
     {
-        $response = $this->getJson("/api/tenants/{$this->tenant->id}/cdrs/export");
+        $response = $this->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs/export");
 
         $response->assertStatus(401);
     }

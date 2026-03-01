@@ -28,7 +28,7 @@ class CallFlowApiTest extends TestCase
         CallFlow::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-flows");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-flows");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -37,7 +37,7 @@ class CallFlowApiTest extends TestCase
     public function test_can_create_a_call_flow(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-flows", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-flows", [
                 'name' => 'Welcome Flow',
                 'description' => 'Main greeting flow',
                 'nodes' => [
@@ -68,7 +68,7 @@ class CallFlowApiTest extends TestCase
         $flow = CallFlow::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-flows/{$flow->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-flows/{$flow->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => $flow->name]);
@@ -79,7 +79,7 @@ class CallFlowApiTest extends TestCase
         $flow = CallFlow::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/call-flows/{$flow->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/call-flows/{$flow->id}", [
                 'name' => 'Updated Flow',
             ]);
 
@@ -95,7 +95,7 @@ class CallFlowApiTest extends TestCase
         $flow = CallFlow::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/call-flows/{$flow->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/call-flows/{$flow->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('call_flows', ['id' => $flow->id]);
@@ -104,7 +104,7 @@ class CallFlowApiTest extends TestCase
     public function test_validates_required_fields_on_create(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-flows", []);
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-flows", []);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name', 'nodes']);
@@ -113,7 +113,7 @@ class CallFlowApiTest extends TestCase
     public function test_validates_node_types(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/call-flows", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-flows", [
                 'name' => 'Test',
                 'nodes' => [
                     ['id' => 'start', 'type' => 'invalid_type', 'data' => [], 'next' => null],
@@ -130,7 +130,7 @@ class CallFlowApiTest extends TestCase
         $flow = CallFlow::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-flows/{$flow->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-flows/{$flow->id}");
 
         $response->assertStatus(404);
     }

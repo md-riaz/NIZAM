@@ -34,7 +34,7 @@ class DidUniquenessTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/dids", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/dids", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
                 'destination_id' => Str::uuid()->toString(),
@@ -60,7 +60,7 @@ class DidUniquenessTest extends TestCase
 
         // Create same DID number in tenant B — should succeed
         $response = $this->actingAs($userB, 'sanctum')
-            ->postJson("/api/tenants/{$tenantB->id}/dids", [
+            ->postJson("/api/v1/tenants/{$tenantB->id}/dids", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
                 'destination_id' => Str::uuid()->toString(),
@@ -80,7 +80,7 @@ class DidUniquenessTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/dids/{$did->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/dids/{$did->id}", [
                 'number' => '+15551234567',
                 'description' => 'Updated description',
                 'destination_type' => 'voicemail',
@@ -107,7 +107,7 @@ class DidUniquenessTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/dids/{$did2->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/dids/{$did2->id}", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
                 'destination_id' => Str::uuid()->toString(),

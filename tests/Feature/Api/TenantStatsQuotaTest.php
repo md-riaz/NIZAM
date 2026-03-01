@@ -30,7 +30,7 @@ class TenantStatsQuotaTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/tenants/{$tenant->id}/stats");
+            ->getJson("/api/v1/tenants/{$tenant->id}/stats");
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.extensions_count', 1);

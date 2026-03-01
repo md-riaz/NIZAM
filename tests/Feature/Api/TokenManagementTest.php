@@ -25,7 +25,7 @@ class TokenManagementTest extends TestCase
         $this->user->createToken('test-token');
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson('/api/auth/tokens');
+            ->getJson('/api/v1/auth/tokens');
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -35,7 +35,7 @@ class TokenManagementTest extends TestCase
     public function test_can_create_named_token(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson('/api/auth/tokens', ['name' => 'my-api-token']);
+            ->postJson('/api/v1/auth/tokens', ['name' => 'my-api-token']);
 
         $response->assertStatus(201);
         $response->assertJsonStructure(['plainTextToken', 'data']);
@@ -48,7 +48,7 @@ class TokenManagementTest extends TestCase
         $tokenId = $token->accessToken->id;
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/auth/tokens/{$tokenId}");
+            ->deleteJson("/api/v1/auth/tokens/{$tokenId}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('personal_access_tokens', ['id' => $tokenId]);
@@ -61,7 +61,7 @@ class TokenManagementTest extends TestCase
         $tokenId = $token->accessToken->id;
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/auth/tokens/{$tokenId}");
+            ->deleteJson("/api/v1/auth/tokens/{$tokenId}");
 
         $response->assertStatus(403);
         $this->assertDatabaseHas('personal_access_tokens', ['id' => $tokenId]);

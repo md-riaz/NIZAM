@@ -28,7 +28,7 @@ class CallDetailRecordApiTest extends TestCase
         CallDetailRecord::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/cdrs");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -39,7 +39,7 @@ class CallDetailRecordApiTest extends TestCase
         $cdr = CallDetailRecord::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['uuid' => $cdr->uuid]);
@@ -48,7 +48,7 @@ class CallDetailRecordApiTest extends TestCase
     public function test_cdrs_are_read_only_no_create(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/cdrs", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/cdrs", [
                 'uuid' => 'test-uuid',
                 'caller_id_number' => '1001',
                 'destination_number' => '1002',
@@ -62,7 +62,7 @@ class CallDetailRecordApiTest extends TestCase
         $cdr = CallDetailRecord::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
 
         $response->assertStatus(405);
     }
@@ -79,7 +79,7 @@ class CallDetailRecordApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/cdrs?direction=inbound");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?direction=inbound");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -97,7 +97,7 @@ class CallDetailRecordApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/cdrs?uuid=unique-call-uuid-123");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?uuid=unique-call-uuid-123");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -116,7 +116,7 @@ class CallDetailRecordApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/cdrs?caller_id_number=".urlencode('+15551234567'));
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?caller_id_number=".urlencode('+15551234567'));
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -134,7 +134,7 @@ class CallDetailRecordApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/cdrs?destination_number=1001");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?destination_number=1001");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -152,7 +152,7 @@ class CallDetailRecordApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/cdrs?hangup_cause=USER_BUSY");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?hangup_cause=USER_BUSY");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -164,7 +164,7 @@ class CallDetailRecordApiTest extends TestCase
         $cdr = CallDetailRecord::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
 
         $response->assertStatus(403);
     }
@@ -183,7 +183,7 @@ class CallDetailRecordApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/cdrs");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs");
 
         $response->assertStatus(200);
         $data = $response->json('data');

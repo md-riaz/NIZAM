@@ -38,7 +38,7 @@ class CallEventReplayTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-events/replay/{$event->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/replay/{$event->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment([
@@ -51,7 +51,7 @@ class CallEventReplayTest extends TestCase
     public function test_replay_returns_404_for_unknown_event(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-events/replay/nonexistent-id");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/replay/nonexistent-id");
 
         $response->assertStatus(404);
     }
@@ -69,7 +69,7 @@ class CallEventReplayTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-events/replay/{$event->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/replay/{$event->id}");
 
         $response->assertStatus(404);
     }

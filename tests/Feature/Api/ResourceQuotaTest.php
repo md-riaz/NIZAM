@@ -32,7 +32,7 @@ class ResourceQuotaTest extends TestCase
 
         // Try creating second extension (should fail)
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/extensions", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/extensions", [
                 'extension' => '1002',
                 'password' => 'secret456789',
                 'directory_first_name' => 'Test',
@@ -49,7 +49,7 @@ class ResourceQuotaTest extends TestCase
         $user = $this->adminUser($tenant);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/extensions", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/extensions", [
                 'extension' => '1001',
                 'password' => 'secret123456',
                 'directory_first_name' => 'Test',
@@ -80,7 +80,7 @@ class ResourceQuotaTest extends TestCase
 
         // Try creating second DID (should fail)
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/dids", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/dids", [
                 'number' => '+15559876543',
                 'destination_type' => 'extension',
                 'destination_id' => $extension->id,
@@ -111,7 +111,7 @@ class ResourceQuotaTest extends TestCase
 
         // Try creating second ring group (should fail)
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/tenants/{$tenant->id}/ring-groups", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/ring-groups", [
                 'name' => 'Group 2',
                 'strategy' => 'simultaneous',
                 'members' => [$extension->id],
@@ -126,7 +126,7 @@ class ResourceQuotaTest extends TestCase
         $user = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants', [
+            ->postJson('/api/v1/tenants', [
                 'name' => 'Quota Tenant',
                 'domain' => 'quota.example.com',
                 'slug' => 'quota-tenant',

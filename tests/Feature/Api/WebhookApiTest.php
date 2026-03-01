@@ -28,7 +28,7 @@ class WebhookApiTest extends TestCase
         Webhook::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/webhooks");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/webhooks");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -37,7 +37,7 @@ class WebhookApiTest extends TestCase
     public function test_can_create_a_webhook(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/webhooks", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
                 'events' => ['call.started', 'call.hangup'],
                 'description' => 'Test webhook',
@@ -56,7 +56,7 @@ class WebhookApiTest extends TestCase
         $webhook = Webhook::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/webhooks/{$webhook->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/webhooks/{$webhook->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['url' => $webhook->url]);
@@ -67,7 +67,7 @@ class WebhookApiTest extends TestCase
         $webhook = Webhook::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/webhooks/{$webhook->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/webhooks/{$webhook->id}", [
                 'url' => 'https://updated.example.com/hook',
                 'events' => ['call.answered'],
             ]);
@@ -84,7 +84,7 @@ class WebhookApiTest extends TestCase
         $webhook = Webhook::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/webhooks/{$webhook->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/webhooks/{$webhook->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('webhooks', ['id' => $webhook->id]);
@@ -93,7 +93,7 @@ class WebhookApiTest extends TestCase
     public function test_validates_required_fields_on_create(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/webhooks", []);
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/webhooks", []);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['url', 'events']);

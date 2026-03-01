@@ -21,7 +21,7 @@ class TenantLifecycleTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants', [
+            ->postJson('/api/v1/tenants', [
                 'name' => 'Trial Tenant',
                 'domain' => 'trial.example.com',
                 'slug' => 'trial-tenant',
@@ -38,7 +38,7 @@ class TenantLifecycleTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants', [
+            ->postJson('/api/v1/tenants', [
                 'name' => 'Default Status Tenant',
                 'domain' => 'default.example.com',
                 'slug' => 'default-tenant',
@@ -54,7 +54,7 @@ class TenantLifecycleTest extends TestCase
         $tenant = Tenant::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->putJson("/api/tenants/{$tenant->id}", [
+            ->putJson("/api/v1/tenants/{$tenant->id}", [
                 'name' => $tenant->name,
                 'domain' => $tenant->domain,
                 'slug' => $tenant->slug,
@@ -70,7 +70,7 @@ class TenantLifecycleTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/tenants', [
+            ->postJson('/api/v1/tenants', [
                 'name' => 'Bad Status',
                 'domain' => 'bad.example.com',
                 'slug' => 'bad-tenant',
@@ -92,7 +92,7 @@ class TenantLifecycleTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/tenants/{$tenant->id}");
+            ->getJson("/api/v1/tenants/{$tenant->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment([

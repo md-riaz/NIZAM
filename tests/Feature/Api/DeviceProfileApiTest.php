@@ -29,7 +29,7 @@ class DeviceProfileApiTest extends TestCase
         DeviceProfile::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/device-profiles");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/device-profiles");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -38,7 +38,7 @@ class DeviceProfileApiTest extends TestCase
     public function test_can_create_a_device_profile(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/device-profiles", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/device-profiles", [
                 'name' => 'Lobby Phone',
                 'vendor' => 'polycom',
                 'mac_address' => 'AA:BB:CC:DD:EE:FF',
@@ -58,7 +58,7 @@ class DeviceProfileApiTest extends TestCase
         $profile = DeviceProfile::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/device-profiles/{$profile->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/device-profiles/{$profile->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => $profile->name]);
@@ -69,7 +69,7 @@ class DeviceProfileApiTest extends TestCase
         $profile = DeviceProfile::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/device-profiles/{$profile->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/device-profiles/{$profile->id}", [
                 'name' => 'Updated Phone',
                 'vendor' => 'yealink',
             ]);
@@ -87,7 +87,7 @@ class DeviceProfileApiTest extends TestCase
         $profile = DeviceProfile::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/device-profiles/{$profile->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/device-profiles/{$profile->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('device_profiles', ['id' => $profile->id]);
@@ -96,7 +96,7 @@ class DeviceProfileApiTest extends TestCase
     public function test_validates_required_fields_on_create(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/device-profiles", []);
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/device-profiles", []);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name', 'vendor']);
@@ -107,7 +107,7 @@ class DeviceProfileApiTest extends TestCase
         $extension = Extension::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/device-profiles", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/device-profiles", [
                 'name' => 'Desk Phone',
                 'vendor' => 'grandstream',
                 'mac_address' => '11:22:33:44:55:66',
@@ -127,7 +127,7 @@ class DeviceProfileApiTest extends TestCase
         $profile = DeviceProfile::factory()->create(['tenant_id' => $otherTenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/device-profiles/{$profile->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/device-profiles/{$profile->id}");
 
         $response->assertStatus(404);
     }

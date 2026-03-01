@@ -42,7 +42,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/queues");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/queues");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
@@ -51,7 +51,7 @@ class QueueApiTest extends TestCase
     public function test_can_create_queue(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/queues", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues", [
                 'name' => 'Support Queue',
                 'strategy' => 'round_robin',
                 'max_wait_time' => 120,
@@ -75,7 +75,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/queues", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues", [
                 'name' => 'Support Queue',
             ]);
 
@@ -91,7 +91,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/queues/{$queue->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}", [
                 'strategy' => 'ring_all',
                 'max_wait_time' => 60,
             ]);
@@ -108,7 +108,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/queues/{$queue->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('queues', ['id' => $queue->id]);
@@ -135,7 +135,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/queues/{$queue->id}/members", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/members", [
                 'agent_id' => $agent->id,
                 'priority' => 1,
             ]);
@@ -170,7 +170,7 @@ class QueueApiTest extends TestCase
         $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 0]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/queues/{$queue->id}/members", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/members", [
                 'agent_id' => $agent->id,
             ]);
 
@@ -200,7 +200,7 @@ class QueueApiTest extends TestCase
         $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 0]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/queues/{$queue->id}/members/{$agent->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/members/{$agent->id}");
 
         $response->assertStatus(204);
     }
@@ -228,7 +228,7 @@ class QueueApiTest extends TestCase
         $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 0]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/queues/{$queue->id}/members");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/members");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
@@ -237,7 +237,7 @@ class QueueApiTest extends TestCase
     public function test_invalid_strategy_rejected(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/queues", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues", [
                 'name' => 'Test Queue',
                 'strategy' => 'invalid_strategy',
             ]);
@@ -261,7 +261,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/queues/{$otherQueue->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/queues/{$otherQueue->id}");
 
         $response->assertStatus(404);
     }
@@ -274,7 +274,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/queues/{$queue->id}/metrics/realtime");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/metrics/realtime");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -301,7 +301,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/queues/{$queue->id}/metrics/aggregate");
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/metrics/aggregate");
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('queue_metrics', [
@@ -317,7 +317,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/wallboard");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/wallboard");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -332,7 +332,7 @@ class QueueApiTest extends TestCase
     public function test_can_get_agent_states_summary(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/agent-states");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/agent-states");
 
         $response->assertStatus(200)
             ->assertJsonStructure([

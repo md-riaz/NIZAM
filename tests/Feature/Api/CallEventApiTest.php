@@ -34,7 +34,7 @@ class CallEventApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-events");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['call_uuid' => 'test-uuid-1']);
@@ -58,7 +58,7 @@ class CallEventApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-events?call_uuid=uuid-a");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events?call_uuid=uuid-a");
 
         $response->assertStatus(200);
         $data = $response->json('data');
@@ -81,7 +81,7 @@ class CallEventApiTest extends TestCase
         }
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-events/{$uuid}/trace");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/{$uuid}/trace");
 
         $response->assertStatus(200);
         $response->assertJsonPath('call_uuid', $uuid);
@@ -91,7 +91,7 @@ class CallEventApiTest extends TestCase
     public function test_trace_returns_404_for_unknown_uuid(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-events/nonexistent-uuid/trace");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/nonexistent-uuid/trace");
 
         $response->assertStatus(404);
     }
@@ -108,7 +108,7 @@ class CallEventApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/call-events?call_uuid=other-tenant-uuid");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events?call_uuid=other-tenant-uuid");
 
         $response->assertStatus(200);
         $this->assertCount(0, $response->json('data'));

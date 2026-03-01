@@ -29,7 +29,7 @@ class DidApiTest extends TestCase
         Did::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/dids");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/dids");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -38,7 +38,7 @@ class DidApiTest extends TestCase
     public function test_can_create_a_did(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/tenants/{$this->tenant->id}/dids", [
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/dids", [
                 'number' => '+15551234567',
                 'description' => 'Main line',
                 'destination_type' => 'extension',
@@ -58,7 +58,7 @@ class DidApiTest extends TestCase
         $did = Did::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/tenants/{$this->tenant->id}/dids/{$did->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/dids/{$did->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['number' => $did->number]);
@@ -69,7 +69,7 @@ class DidApiTest extends TestCase
         $did = Did::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/tenants/{$this->tenant->id}/dids/{$did->id}", [
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/dids/{$did->id}", [
                 'number' => '+15559999999',
                 'destination_type' => 'voicemail',
                 'destination_id' => Str::uuid()->toString(),
@@ -87,7 +87,7 @@ class DidApiTest extends TestCase
         $did = Did::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/tenants/{$this->tenant->id}/dids/{$did->id}");
+            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/dids/{$did->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('dids', ['id' => $did->id]);
