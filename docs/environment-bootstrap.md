@@ -11,6 +11,7 @@ This guide walks through setting up a NIZAM development environment from scratch
 | Docker | 24+ | Container runtime |
 | Docker Compose | 2.20+ | Service orchestration |
 | Git | 2.30+ | Source control |
+| Make | any | Convenience shortcuts (`make help`) |
 
 For local development without Docker:
 - PHP 8.2+
@@ -30,13 +31,34 @@ cd NIZAM
 cp .env.example .env
 ```
 
-### 2. Start Services
+### 2. Generate APP_KEY
+
+**The application key must be in `.env` before starting services.**  
+Laravel's encryption layer requires it at boot time.
+
+```bash
+# Using make (recommended)
+make setup          # handles everything in one step
+
+# Or manually:
+php artisan key:generate --show     # copy the output
+# Edit .env and paste it as APP_KEY=base64:...
+```
+
+> If you don't have PHP installed locally, you can use Docker:
+> ```bash
+> docker run --rm -v "$PWD":/app -w /app php:8.3-alpine \
+>   php artisan key:generate --show
+> ```
+> Paste the output into `.env` as `APP_KEY=base64:…`
+
+### 3. Start Services
 
 ```bash
 docker compose up -d
 ```
 
-This starts 6 containers:
+This starts 8 containers:
 
 | Container | Service | Port |
 |-----------|---------|------|
@@ -46,13 +68,12 @@ This starts 6 containers:
 | `nizam-redis` | Redis | `6379` |
 | `nizam-freeswitch` | FreeSWITCH | `5060` (SIP), `8021` (ESL) |
 | `nizam-queue` | Queue worker | — |
+| `nizam-scheduler` | Task scheduler | — |
+| `nizam-esl-listener` | FreeSWITCH event listener | — |
 
-### 3. Initialize Application
+### 4. Initialize Application
 
 ```bash
-# Generate application key (required for encryption)
-docker compose exec app php artisan key:generate
-
 # Run database migrations
 docker compose exec app php artisan migrate
 
@@ -60,27 +81,39 @@ docker compose exec app php artisan migrate
 docker compose exec app php artisan db:seed
 ```
 
-### 4. Start Event Listener
+Or use the Makefile shortcut:
 
 ```bash
-# In a separate terminal — connects to FreeSWITCH ESL
-docker compose exec app php artisan nizam:esl-listen
+make migrate
+make seed
 ```
 
 ### 5. Verify
 
 ```bash
 # Check health endpoint
-curl http://localhost:8080/api/health
+curl http://localhost:8080/api/v1/health
 
-# Expected response (when FreeSWITCH is running):
-# {"status":"healthy","checks":{"app":{"status":"ok"},"esl":{"connected":true,...},"gateways":{...}}}
+# Using make
+make health
+
+# Expected response:
+# {
+#   "status": "healthy",
+#   "checks": {
+#     "app":      { "status": "ok" },
+#     "database": { "status": "ok" },
+#     "cache":    { "status": "ok" },
+#     "esl":      { "connected": true,  "status": "ok" },
+#     "gateways": { "status": "ok" }
+#   }
+# }
 ```
 
 ### 6. Register First User
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Admin",
@@ -92,48 +125,43 @@ curl -X POST http://localhost:8080/api/auth/register \
 
 ---
 
+## Makefile Quick Reference
+
+Run `make help` to list all targets:
+
+```
+make setup          # First-time setup (copies .env, generates key, builds, migrates)
+make up             # Start all services
+make down           # Stop all services
+make logs           # Tail all logs
+make health         # Check /api/v1/health
+make shell          # Open shell inside app container
+make migrate        # Run database migrations
+make test           # Run test suite
+make lint / fix     # Check / fix code style
+make backup-db      # Dump PostgreSQL to ./backups/
+```
+
+---
+
 ## Local Development (Without Docker)
 
-### 1. Install Dependencies
+For full instructions see: [docs/installation-bare-metal.md](installation-bare-metal.md)
+
+### Quick start
 
 ```bash
+# Install PHP dependencies
 composer install
 cp .env.example .env
 php artisan key:generate
-```
 
-### 2. Configure Database
+# Configure for SQLite (easiest for local dev):
+# DB_CONNECTION=sqlite  (comment out other DB_ lines)
 
-For quick testing, SQLite works out of the box:
-
-```env
-DB_CONNECTION=sqlite
-# DB_DATABASE is auto-set to database/database.sqlite
-```
-
-For PostgreSQL (recommended for production parity):
-
-```env
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=nizam
-DB_USERNAME=nizam
-DB_PASSWORD=secret
-```
-
-### 3. Run Migrations
-
-```bash
 php artisan migrate
-php artisan db:seed  # optional
-```
-
-### 4. Start Development Server
-
-```bash
 php artisan serve
-# API available at http://localhost:8000/api
+# API available at http://localhost:8000/api/v1
 ```
 
 ---
@@ -144,17 +172,19 @@ NIZAM integrates with FreeSWITCH via two mechanisms:
 
 ### mod_xml_curl (Dynamic Configuration)
 
-FreeSWITCH fetches directory and dialplan XML from NIZAM at runtime:
+FreeSWITCH fetches directory and dialplan XML from NIZAM at runtime.
+
+In Docker, this is handled automatically via `NIZAM_XML_CURL_URL`.  
+For bare-metal, edit `/etc/freeswitch/autoload_configs/xml_curl.conf.xml`:
 
 ```xml
-<!-- In freeswitch/autoload_configs/xml_curl.conf.xml -->
 <configuration name="xml_curl.conf" description="cURL XML Gateway">
   <bindings>
     <binding name="directory">
-      <param name="gateway-url" value="http://nizam-nginx/freeswitch/xml-curl" bindings="directory"/>
+      <param name="gateway-url" value="http://127.0.0.1/freeswitch/xml-curl" bindings="directory"/>
     </binding>
     <binding name="dialplan">
-      <param name="gateway-url" value="http://nizam-nginx/freeswitch/xml-curl" bindings="dialplan"/>
+      <param name="gateway-url" value="http://127.0.0.1/freeswitch/xml-curl" bindings="dialplan"/>
     </binding>
   </bindings>
 </configuration>
@@ -185,8 +215,12 @@ The ESL listener subscribes to:
 # Full test suite (uses SQLite in-memory)
 php artisan test
 
+# Or via Docker
+make test
+
 # Specific test file
 php artisan test tests/Feature/Api/ExtensionApiTest.php
+make test-file F=tests/Feature/Api/ExtensionApiTest.php
 
 # With coverage
 php artisan test --coverage
@@ -196,10 +230,10 @@ php artisan test --coverage
 
 ```bash
 # Check code style
-vendor/bin/pint --test
+vendor/bin/pint --test    # or: make lint
 
 # Fix code style
-vendor/bin/pint
+vendor/bin/pint           # or: make fix
 ```
 
 ---
@@ -224,20 +258,20 @@ vendor/bin/pint
 ### Database Backup
 
 ```bash
-# Full PostgreSQL backup
-docker compose exec postgres pg_dump -U nizam nizam > backup_$(date +%Y%m%d_%H%M%S).sql
+# Via Docker
+make backup-db
 
-# Compressed backup
-docker compose exec postgres pg_dump -U nizam nizam | gzip > backup_$(date +%Y%m%d).sql.gz
+# Manual
+docker compose exec postgres pg_dump -U nizam nizam > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 ### Database Restore
 
 ```bash
-# Restore from SQL file
-docker compose exec -T postgres psql -U nizam nizam < backup_20260101.sql
+# Via make
+make restore-db F=backups/nizam_20260101.sql.gz
 
-# Restore from compressed backup
+# Manual
 gunzip -c backup_20260101.sql.gz | docker compose exec -T postgres psql -U nizam nizam
 ```
 
