@@ -84,7 +84,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux; \
     apt-get update && apt-get install -y --no-install-recommends \
     libuuid1 zlib1g libjpeg62-turbo libsqlite3-0 libcurl4 libpcre3 \
-    libspeexdsp1 libspeex1 libldns2 libedit2 libtiff5 libopus0 libsndfile1 \
+    libspeexdsp1 libspeex1 libldns3 libedit2 libtiff5 libopus0 libsndfile1 \
     libavformat58 libavcodec58 libavutil56 libswscale5 libswresample3 \
     liblua5.2-0 libpq5 unixodbc libxml2 libssl1.1 \
     libncurses6 libmpg123-0 libmp3lame0 libshout3 libmemcached11 \
