@@ -43,6 +43,8 @@ class TenantTest extends TestCase
             'max_concurrent_calls',
             'max_dids',
             'max_ring_groups',
+            'recording_retention_days',
+            'max_calls_per_minute',
             'is_active',
             'status',
         ], $tenant->getFillable());

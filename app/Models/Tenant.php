@@ -47,6 +47,8 @@ class Tenant extends Model
         'max_concurrent_calls',
         'max_dids',
         'max_ring_groups',
+        'recording_retention_days',
+        'max_calls_per_minute',
         'is_active',
         'status',
     ];
@@ -72,6 +74,8 @@ class Tenant extends Model
             'max_concurrent_calls' => 'integer',
             'max_dids' => 'integer',
             'max_ring_groups' => 'integer',
+            'recording_retention_days' => 'integer',
+            'max_calls_per_minute' => 'integer',
             'is_active' => 'boolean',
         ];
     }

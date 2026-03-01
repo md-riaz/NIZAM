@@ -23,6 +23,7 @@ class Queue extends Model
         'overflow_destination',
         'music_on_hold',
         'service_level_threshold',
+        'wrapup_seconds',
         'is_active',
     ];
 
@@ -55,6 +56,7 @@ class Queue extends Model
         return [
             'max_wait_time' => 'integer',
             'service_level_threshold' => 'integer',
+            'wrapup_seconds' => 'integer',
             'is_active' => 'boolean',
         ];
     }

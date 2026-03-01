@@ -10,6 +10,39 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Media & NAT Configuration
+    |--------------------------------------------------------------------------
+    |
+    | These settings document the expected FreeSWITCH media posture. They are
+    | consumed by the dialplan compiler and provisioning templates. Actual
+    | FreeSWITCH SIP profile settings must match these values.
+    |
+    */
+    'media' => [
+        'rtp_port_range_start' => (int) env('RTP_PORT_RANGE_START', 16384),
+        'rtp_port_range_end' => (int) env('RTP_PORT_RANGE_END', 32768),
+        'ext_rtp_ip' => env('EXT_RTP_IP', 'auto-nat'),
+        'ext_sip_ip' => env('EXT_SIP_IP', 'auto-nat'),
+        'dtmf_type' => env('DTMF_TYPE', 'rfc2833'),
+        'srtp_policy' => env('SRTP_POLICY', 'optional'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Emergency Number Patterns
+    |--------------------------------------------------------------------------
+    |
+    | NIZAM does not support emergency calling in v1.0. These patterns are
+    | provided so operators can implement blocking rules in custom dialplan
+    | or SBC configurations. See docs/KNOWN_LIMITATIONS.md for details.
+    |
+    */
+    'emergency' => [
+        'patterns' => ['911', '112', '999', '000', '110', '119'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | NIZAM Module Registry (Telecom Hooks)
     |--------------------------------------------------------------------------
     |
