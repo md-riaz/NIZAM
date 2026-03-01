@@ -84,9 +84,9 @@ class PruneExpiredRecordingsCommand extends Command
             }
 
             try {
-                // Remove the file from storage if it exists
-                if ($recording->file_path && Storage::exists($recording->file_path)) {
-                    Storage::delete($recording->file_path);
+                // Remove the file from the recordings disk (same disk used by RecordingController)
+                if ($recording->file_path && Storage::disk('recordings')->exists($recording->file_path)) {
+                    Storage::disk('recordings')->delete($recording->file_path);
                 }
 
                 $recording->delete();

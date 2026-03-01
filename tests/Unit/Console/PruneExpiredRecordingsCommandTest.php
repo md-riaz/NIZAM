@@ -14,7 +14,7 @@ class PruneExpiredRecordingsCommandTest extends TestCase
 
     public function test_it_deletes_recordings_past_retention_window(): void
     {
-        Storage::fake();
+        Storage::fake('recordings');
 
         $tenant = Tenant::factory()->create(['recording_retention_days' => 30]);
 
@@ -41,7 +41,7 @@ class PruneExpiredRecordingsCommandTest extends TestCase
 
     public function test_it_respects_tenant_retention_boundary(): void
     {
-        Storage::fake();
+        Storage::fake('recordings');
 
         $tenant = Tenant::factory()->create(['recording_retention_days' => 7]);
 
@@ -63,7 +63,7 @@ class PruneExpiredRecordingsCommandTest extends TestCase
 
     public function test_dry_run_does_not_delete_recordings(): void
     {
-        Storage::fake();
+        Storage::fake('recordings');
 
         $tenant = Tenant::factory()->create(['recording_retention_days' => 1]);
 
@@ -79,7 +79,7 @@ class PruneExpiredRecordingsCommandTest extends TestCase
 
     public function test_it_skips_tenants_without_retention_policy(): void
     {
-        Storage::fake();
+        Storage::fake('recordings');
 
         // Tenant with no retention policy (null)
         $tenant = Tenant::factory()->create(['recording_retention_days' => null]);
@@ -95,7 +95,7 @@ class PruneExpiredRecordingsCommandTest extends TestCase
 
     public function test_tenant_option_restricts_pruning_to_single_tenant(): void
     {
-        Storage::fake();
+        Storage::fake('recordings');
 
         $tenantA = Tenant::factory()->create(['recording_retention_days' => 1]);
         $tenantB = Tenant::factory()->create(['recording_retention_days' => 1]);
@@ -118,7 +118,7 @@ class PruneExpiredRecordingsCommandTest extends TestCase
 
     public function test_it_deletes_backing_file_from_storage(): void
     {
-        $disk = Storage::fake();
+        $disk = Storage::fake('recordings');
 
         $tenant = Tenant::factory()->create(['recording_retention_days' => 1]);
 
