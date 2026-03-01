@@ -67,7 +67,7 @@ class CallDetailRecordTest extends TestCase
             'tenant_id', 'uuid', 'caller_id_name', 'caller_id_number',
             'destination_number', 'context', 'start_stamp', 'answer_stamp',
             'end_stamp', 'duration', 'billsec', 'hangup_cause', 'direction',
-            'recording_path',
+            'recording_path', 'read_codec', 'write_codec', 'negotiated_codec',
         ];
 
         $this->assertEquals($expected, $cdr->getFillable());

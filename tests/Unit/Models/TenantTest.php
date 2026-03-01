@@ -38,6 +38,7 @@ class TenantTest extends TestCase
             'domain',
             'slug',
             'settings',
+            'codec_policy',
             'max_extensions',
             'max_concurrent_calls',
             'max_dids',

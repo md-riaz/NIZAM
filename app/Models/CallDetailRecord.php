@@ -32,6 +32,9 @@ class CallDetailRecord extends Model
         'hangup_cause',
         'direction',
         'recording_path',
+        'read_codec',
+        'write_codec',
+        'negotiated_codec',
     ];
 
     /**
