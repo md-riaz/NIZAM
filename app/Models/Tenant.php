@@ -42,6 +42,7 @@ class Tenant extends Model
         'domain',
         'slug',
         'settings',
+        'codec_policy',
         'max_extensions',
         'max_concurrent_calls',
         'max_dids',
@@ -66,6 +67,7 @@ class Tenant extends Model
     {
         return [
             'settings' => 'array',
+            'codec_policy' => 'array',
             'max_extensions' => 'integer',
             'max_concurrent_calls' => 'integer',
             'max_dids' => 'integer',
@@ -167,5 +169,10 @@ class Tenant extends Model
     public function alerts(): HasMany
     {
         return $this->hasMany(Alert::class);
+    }
+
+    public function gateways(): HasMany
+    {
+        return $this->hasMany(Gateway::class);
     }
 }

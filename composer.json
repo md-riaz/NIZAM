@@ -35,7 +35,9 @@
             "Modules\\PbxAnalytics\\": "modules/PbxAnalytics/app/",
             "Modules\\PbxAnalytics\\Providers\\": "modules/PbxAnalytics/app/Providers/",
             "Modules\\PbxProvisioning\\": "modules/PbxProvisioning/app/",
-            "Modules\\PbxProvisioning\\Providers\\": "modules/PbxProvisioning/app/Providers/"
+            "Modules\\PbxProvisioning\\Providers\\": "modules/PbxProvisioning/app/Providers/",
+            "Modules\\PbxMediaPolicy\\": "modules/PbxMediaPolicy/app/",
+            "Modules\\PbxMediaPolicy\\Providers\\": "modules/PbxMediaPolicy/app/Providers/"
         }
     },
     "autoload-dev": {

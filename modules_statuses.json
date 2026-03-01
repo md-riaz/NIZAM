@@ -3,5 +3,6 @@
     "PbxContactCenter": true,
     "PbxAutomation": true,
     "PbxAnalytics": true,
-    "PbxProvisioning": true
+    "PbxProvisioning": true,
+    "PbxMediaPolicy": true
 }
