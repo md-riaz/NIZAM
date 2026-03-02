@@ -37,6 +37,8 @@ return [
 
     'nizam' => [
         'ws_url' => env('NIZAM_WS_URL'),
+        'ws_jwt_secret' => env('NIZAM_WS_JWT_SECRET'),
+        'ws_jwt_ttl_minutes' => (int) env('NIZAM_WS_JWT_TTL_MINUTES', 5),
     ],
 
 ];

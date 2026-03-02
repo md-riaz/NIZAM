@@ -11,7 +11,9 @@ use App\Models\Queue;
 use App\Models\QueueEntry;
 use App\Models\QueueMetric;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Models\WebhookDeliveryAttempt;
+use App\Modules\ModuleRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -114,7 +116,7 @@ class UiController extends Controller
                     'name' => $module->getName(),
                     'alias' => (string) $module->get('alias'),
                     'enabled' => $module->isEnabled(),
-                    'registry_enabled' => app(\App\Modules\ModuleRegistry::class)->isEnabled((string) $module->get('alias')),
+                    'registry_enabled' => app(ModuleRegistry::class)->isEnabled((string) $module->get('alias')),
                 ])
                 ->values(),
         ]);
@@ -142,7 +144,7 @@ class UiController extends Controller
                 'name' => $moduleName,
                 'alias' => (string) $module->get('alias'),
                 'enabled' => Module::find($moduleName)?->isEnabled() ?? false,
-                'registry_enabled' => app(\App\Modules\ModuleRegistry::class)->isEnabled((string) $module->get('alias')),
+                'registry_enabled' => app(ModuleRegistry::class)->isEnabled((string) $module->get('alias')),
             ],
         ]);
     }
@@ -185,7 +187,7 @@ class UiController extends Controller
             'active_calls' => CallDetailRecord::query()->where('tenant_id', $tenant->id)->whereNull('end_stamp')->count(),
             'waiting_calls' => QueueEntry::query()->where('tenant_id', $tenant->id)->where('status', QueueEntry::STATUS_WAITING)->count(),
             'available_agents' => Agent::query()->where('tenant_id', $tenant->id)->where('state', Agent::STATE_AVAILABLE)->where('is_active', true)->count(),
-            'sla_percent' => number_format((float) QueueMetric::query()->where('tenant_id', $tenant->id)->avg('service_level'), 2),
+            'sla_percent' => round((float) QueueMetric::query()->where('tenant_id', $tenant->id)->avg('service_level'), 2),
             'gateway_status' => Gateway::query()->where('tenant_id', $tenant->id)->where('is_active', true)->exists() ? 'up' : 'down',
             'webhook_health' => WebhookDeliveryAttempt::query()->whereHas('webhook', fn ($query) => $query->where('tenant_id', $tenant->id))->where('success', false)->exists() ? 'degraded' : 'healthy',
         ];
@@ -215,7 +217,29 @@ class UiController extends Controller
                 ['label' => 'Admin Dashboard', 'href' => '/api/v1/admin/dashboard'],
             ] : [],
             'ws_stream' => config('services.nizam.ws_url'),
-            'ws_jwt' => null,
+            'ws_jwt' => $user instanceof User && config('services.nizam.ws_jwt_secret')
+                ? $this->websocketJwt($user, $tenant)
+                : null,
         ];
+    }
+
+    private function websocketJwt(User $user, Tenant $tenant): string
+    {
+        $ttlMinutes = max(1, (int) config('services.nizam.ws_jwt_ttl_minutes', 5));
+        $secret = (string) config('services.nizam.ws_jwt_secret');
+        $header = $this->base64UrlEncode(json_encode(['alg' => 'HS256', 'typ' => 'JWT']) ?: '{}');
+        $payload = $this->base64UrlEncode(json_encode([
+            'sub' => $user->id,
+            'tenant_id' => $tenant->id,
+            'exp' => now()->addMinutes($ttlMinutes)->timestamp,
+        ]) ?: '{}');
+        $signature = hash_hmac('sha256', "{$header}.{$payload}", $secret, true);
+
+        return "{$header}.{$payload}.".$this->base64UrlEncode($signature);
+    }
+
+    private function base64UrlEncode(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 }

@@ -16,11 +16,25 @@ window.toggleTheme = () => {
     applyTheme(nextTheme);
 };
 
-const dashboard = document.querySelector('[data-dashboard-stream]');
-if (dashboard) {
+document.addEventListener('htmx:configRequest', (event) => {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (csrf) {
+        event.detail.headers['X-CSRF-TOKEN'] = csrf;
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const dashboard = document.querySelector('[data-dashboard-stream]');
+    if (!dashboard) {
+        return;
+    }
+
+    const MAX_SEEN_EVENTS = 500;
+    const RECONNECT_DELAY_MS = 1500;
     let socket;
     let reconnectTimer;
     const seen = new Set();
+    const seenOrder = [];
 
     const applyMetric = (name, value) => {
         const target = document.querySelector(`[data-metric="${name}"]`);
@@ -37,17 +51,35 @@ if (dashboard) {
             return;
         }
 
-        socket = new WebSocket(`${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(jwt)}`);
+        socket = new WebSocket(url);
+
+        socket.addEventListener('open', () => {
+            socket.send(JSON.stringify({ type: 'auth', token: jwt }));
+        });
 
         socket.addEventListener('message', (event) => {
             const payload = JSON.parse(event.data);
-            const id = payload?.id ?? `${payload?.type}-${payload?.tenant_id}-${payload?.timestamp}`;
+            if (!payload || typeof payload !== 'object') {
+                return;
+            }
+
+            const fallbackId = payload.type && payload.tenant_id && payload.timestamp
+                ? `${payload.type}-${payload.tenant_id}-${payload.timestamp}`
+                : null;
+            const id = payload.id ?? fallbackId;
+            if (!id) {
+                return;
+            }
             if (seen.has(id)) {
                 return;
             }
             seen.add(id);
-            if (seen.size > 500) {
-                seen.clear();
+            seenOrder.push(id);
+            if (seen.size > MAX_SEEN_EVENTS) {
+                const oldest = seenOrder.shift();
+                if (oldest) {
+                    seen.delete(oldest);
+                }
             }
 
             if (payload.metrics) {
@@ -56,7 +88,7 @@ if (dashboard) {
         });
 
         socket.addEventListener('close', () => {
-            reconnectTimer = window.setTimeout(connect, 1500);
+            reconnectTimer = window.setTimeout(connect, RECONNECT_DELAY_MS);
         });
     };
 
@@ -66,4 +98,4 @@ if (dashboard) {
         window.clearTimeout(reconnectTimer);
         socket?.close();
     });
-}
+});
