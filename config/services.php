@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'nizam' => [
+        'ws_url' => env('NIZAM_WS_URL'),
+    ],
+
 ];
