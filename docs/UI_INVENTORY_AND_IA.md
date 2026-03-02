@@ -59,8 +59,13 @@ Primary nav (module-filtered):
 - System Health → `route('ui.health', ['tenant' => $tenant])`
 - Modules → `route('ui.modules')`
 
-Platform nav (admin only):
-- Admin Dashboard → `/api/v1/admin/dashboard`
+Expansion nav (architecture-visible placeholders, coming soon):
+- Routing: DIDs, Ring Groups, IVR, Time Conditions
+- Contact Center: Queues, Agents, Wallboard
+- Automation: Webhooks, Event Logs
+- Analytics: Recordings, SLA Trends, Call Volume
+- Media Policy: Gateways, Codec Policy
+- Admin: Tenants, Node Health, Fraud Alerts
 
 Other page links:
 - Welcome CTA: Open Dashboard → `route('ui.dashboard')`
@@ -82,7 +87,6 @@ Current module route files are API-only (`/api/v1/...`), no module-specific web 
 
 - `/ui/modules/{tenant?}` (module lifecycle panel)
 - `/ui/modules/{moduleName}/toggle` (admin-only action)
-- `/api/v1/admin/dashboard` (linked from platform nav)
 
 ### Tenant scope
 
@@ -158,8 +162,7 @@ Based on available backend modules/routes/models, these high-value UI surfaces a
 Potential redundancies/drift:
 
 1. **Entry-point drift**: `/` welcome page acts as launcher while `/login` is the real auth entry.
-2. **Navigation drift**: Admin link points to API JSON endpoint (`/api/v1/admin/dashboard`) instead of a browser UI page.
-3. **Coverage drift**: Most modules expose mature APIs but not corresponding browser pages.
+2. **Coverage drift**: Most modules expose mature APIs but not corresponding browser pages.
 
 ## 8) Proposed Unified Navigation Tree (IA-first)
 

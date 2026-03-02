@@ -17,9 +17,14 @@
                 @foreach($ui['navigation'] as $item)
                     <a href="{{ route($item['route'], $item['parameters']) }}" class="block rounded-md px-3 py-2 text-sm hover:bg-muted">{{ $item['label'] }}</a>
                 @endforeach
-                @foreach($ui['platform_navigation'] as $item)
-                    <a href="{{ $item['href'] }}" class="block rounded-md px-3 py-2 text-sm hover:bg-muted">{{ $item['label'] }}</a>
-                @endforeach
+                <div class="mt-4 border-t border-border pt-3">
+                    @foreach($ui['expansion_navigation'] as $section)
+                        <p class="px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ $section['label'] }}</p>
+                        @foreach($section['items'] as $item)
+                            <span class="block rounded-md px-3 py-1 text-sm text-muted-foreground">{{ $item }} (Coming soon)</span>
+                        @endforeach
+                    @endforeach
+                </div>
             </nav>
         </aside>
 

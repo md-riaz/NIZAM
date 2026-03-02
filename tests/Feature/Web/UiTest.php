@@ -39,6 +39,8 @@ class UiTest extends TestCase
         $response->assertSee('Tenant Dashboard');
         $response->assertSee('Active calls');
         $response->assertSee('Extensions');
+        $response->assertSee('Routing');
+        $response->assertDontSee('/api/v1/admin/dashboard', false);
     }
 
     public function test_suspended_tenant_is_blocked_from_ui_pages_for_non_admin(): void

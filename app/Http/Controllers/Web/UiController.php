@@ -218,9 +218,32 @@ class UiController extends Controller
                 ->filter(fn ($item) => ! $item['module'] || in_array($item['module'], $enabledAliases, true))
                 ->values()
                 ->all(),
-            'platform_navigation' => $user?->isAdmin() ? [
-                ['label' => 'Admin Dashboard', 'href' => '/api/v1/admin/dashboard'],
-            ] : [],
+            'expansion_navigation' => [
+                [
+                    'label' => 'Routing',
+                    'items' => ['DIDs', 'Ring Groups', 'IVR', 'Time Conditions'],
+                ],
+                [
+                    'label' => 'Contact Center',
+                    'items' => ['Queues', 'Agents', 'Wallboard'],
+                ],
+                [
+                    'label' => 'Automation',
+                    'items' => ['Webhooks', 'Event Logs'],
+                ],
+                [
+                    'label' => 'Analytics',
+                    'items' => ['Recordings', 'SLA Trends', 'Call Volume'],
+                ],
+                [
+                    'label' => 'Media Policy',
+                    'items' => ['Gateways', 'Codec Policy'],
+                ],
+                [
+                    'label' => 'Admin',
+                    'items' => ['Tenants', 'Node Health', 'Fraud Alerts'],
+                ],
+            ],
             'ws_stream' => config('services.nizam.ws_url'),
             'ws_jwt' => $user instanceof User && config('services.nizam.ws_jwt_secret')
                 ? $this->websocketJwt($user, $tenant)
