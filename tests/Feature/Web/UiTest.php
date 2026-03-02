@@ -187,4 +187,25 @@ class UiTest extends TestCase
             $this->actingAs($user)->get($route)->assertForbidden();
         }
     }
+
+    public function test_surface_pages_render_domain_data_views(): void
+    {
+        $tenant = Tenant::factory()->create(['name' => 'Tenant One']);
+        $admin = User::factory()->create([
+            'tenant_id' => $tenant->id,
+            'role' => 'admin',
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/ui/routing/dids')
+            ->assertOk()
+            ->assertSee('Inbound DID inventory and destinations.')
+            ->assertSee('Data');
+
+        $this->actingAs($admin)
+            ->get('/ui/admin/tenants')
+            ->assertOk()
+            ->assertSee('Tenant lifecycle and status.')
+            ->assertSee('Tenant One');
+    }
 }

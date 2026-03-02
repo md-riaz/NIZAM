@@ -4,14 +4,22 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
+use App\Models\Alert;
 use App\Models\CallDetailRecord;
+use App\Models\CallEventLog;
+use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Gateway;
+use App\Models\Ivr;
 use App\Models\Queue;
 use App\Models\QueueEntry;
 use App\Models\QueueMetric;
+use App\Models\Recording;
+use App\Models\RingGroup;
 use App\Models\Tenant;
+use App\Models\TimeCondition;
 use App\Models\User;
+use App\Models\Webhook;
 use App\Models\WebhookDeliveryAttempt;
 use App\Modules\ModuleRegistry;
 use Illuminate\Http\RedirectResponse;
@@ -160,6 +168,7 @@ class UiController extends Controller
         return view('ui.surface.index', [
             'ui' => $this->uiContext($request, $tenant),
             'page' => $pageConfig,
+            'data' => $this->surfacePageData($page, $tenant),
         ]);
     }
 
@@ -336,5 +345,207 @@ class UiController extends Controller
             'admin.node-health-per-fs' => ['title' => 'Node Health per FS', 'section' => 'Admin', 'admin_only' => true],
             'admin.fraud-alerts' => ['title' => 'Fraud Alerts', 'section' => 'Admin', 'admin_only' => true],
         ];
+    }
+
+    private function surfacePageData(string $page, Tenant $tenant): array
+    {
+        return match ($page) {
+            'routing.dids' => [
+                'description' => 'Inbound DID inventory and destinations.',
+                'columns' => ['Number', 'Destination', 'Active'],
+                'rows' => Did::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (Did $did) => [$did->number, (string) $did->destination_type, $did->is_active ? 'Yes' : 'No'])
+                    ->all(),
+            ],
+            'routing.ring-groups' => [
+                'description' => 'Ring groups and failover behavior.',
+                'columns' => ['Name', 'Strategy', 'Active'],
+                'rows' => RingGroup::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (RingGroup $group) => [$group->name, (string) $group->strategy, $group->is_active ? 'Yes' : 'No'])
+                    ->all(),
+            ],
+            'routing.ivr' => [
+                'description' => 'IVR menus and timeout destinations.',
+                'columns' => ['Name', 'Timeout', 'Active'],
+                'rows' => Ivr::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (Ivr $ivr) => [$ivr->name, (string) $ivr->timeout, $ivr->is_active ? 'Yes' : 'No'])
+                    ->all(),
+            ],
+            'routing.time-conditions' => [
+                'description' => 'Time-based routing conditions.',
+                'columns' => ['Name', 'Match destination', 'Active'],
+                'rows' => TimeCondition::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (TimeCondition $condition) => [$condition->name, (string) $condition->match_destination_type, $condition->is_active ? 'Yes' : 'No'])
+                    ->all(),
+            ],
+            'contact-center.queues' => [
+                'description' => 'Queue definitions and waiting strategy.',
+                'columns' => ['Name', 'Strategy', 'Max wait'],
+                'rows' => Queue::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (Queue $queue) => [$queue->name, (string) $queue->strategy, (string) $queue->max_wait_time])
+                    ->all(),
+            ],
+            'contact-center.agents' => [
+                'description' => 'Agent roster and live state.',
+                'columns' => ['Name', 'Role', 'State'],
+                'rows' => Agent::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (Agent $agent) => [$agent->name, (string) $agent->role, (string) $agent->state])
+                    ->all(),
+            ],
+            'contact-center.wallboard' => [
+                'description' => 'Realtime operational queue snapshot.',
+                'stats' => [
+                    ['label' => 'Waiting calls', 'value' => QueueEntry::query()->where('tenant_id', $tenant->id)->where('status', QueueEntry::STATUS_WAITING)->count()],
+                    ['label' => 'Available agents', 'value' => Agent::query()->where('tenant_id', $tenant->id)->where('state', Agent::STATE_AVAILABLE)->where('is_active', true)->count()],
+                ],
+            ],
+            'automation.webhooks' => [
+                'description' => 'Configured outbound webhooks.',
+                'columns' => ['Description', 'URL', 'Active'],
+                'rows' => Webhook::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (Webhook $webhook) => [(string) $webhook->description, $webhook->url, $webhook->is_active ? 'Yes' : 'No'])
+                    ->all(),
+            ],
+            'automation.event-log-viewer' => [
+                'description' => 'Latest platform call/event activity.',
+                'columns' => ['Event type', 'Call UUID', 'Occurred'],
+                'rows' => CallEventLog::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest('occurred_at')
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (CallEventLog $event) => [$event->event_type, (string) $event->call_uuid, $event->occurred_at?->toDateTimeString() ?? ''])
+                    ->all(),
+            ],
+            'automation.retry-management' => [
+                'description' => 'Failed webhook delivery attempts requiring retry.',
+                'columns' => ['Event', 'HTTP status', 'Delivered at'],
+                'rows' => WebhookDeliveryAttempt::query()
+                    ->whereHas('webhook', fn ($query) => $query->where('tenant_id', $tenant->id))
+                    ->where('success', false)
+                    ->latest('delivered_at')
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (WebhookDeliveryAttempt $attempt) => [$attempt->event_type, (string) $attempt->response_status, $attempt->delivered_at?->toDateTimeString() ?? ''])
+                    ->all(),
+            ],
+            'analytics.recordings' => [
+                'description' => 'Call recording inventory.',
+                'columns' => ['File', 'Duration', 'Direction'],
+                'rows' => Recording::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (Recording $recording) => [$recording->file_name, (string) $recording->duration, (string) $recording->direction])
+                    ->all(),
+            ],
+            'analytics.sla-trends' => [
+                'description' => 'Recent queue SLA service levels.',
+                'columns' => ['Queue', 'Period start', 'Service level'],
+                'rows' => QueueMetric::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest('period_start')
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (QueueMetric $metric) => [(string) $metric->queue_id, $metric->period_start?->toDateTimeString() ?? '', (string) $metric->service_level])
+                    ->all(),
+            ],
+            'analytics.call-volume' => [
+                'description' => 'Call traffic counters.',
+                'stats' => [
+                    ['label' => 'Total calls', 'value' => CallDetailRecord::query()->where('tenant_id', $tenant->id)->count()],
+                    ['label' => 'Active calls', 'value' => CallDetailRecord::query()->where('tenant_id', $tenant->id)->whereNull('end_stamp')->count()],
+                ],
+            ],
+            'media-policy.gateways' => [
+                'description' => 'SIP gateway inventory and status.',
+                'columns' => ['Name', 'Host', 'Active'],
+                'rows' => Gateway::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (Gateway $gateway) => [$gateway->name, $gateway->host, $gateway->is_active ? 'Yes' : 'No'])
+                    ->all(),
+            ],
+            'media-policy.codec-policy' => [
+                'description' => 'Tenant codec policy configuration.',
+                'columns' => ['Key', 'Value'],
+                'rows' => collect($tenant->codec_policy ?? [])
+                    ->map(fn ($value, $key) => [(string) $key, is_scalar($value) ? (string) $value : (json_encode($value) ?: '[unencodable]')])
+                    ->values()
+                    ->all(),
+            ],
+            'media-policy.transcoding-stats' => [
+                'description' => 'Codec negotiation/transcoding visibility.',
+                'columns' => ['Read codec', 'Write codec', 'Negotiated codec'],
+                'rows' => CallDetailRecord::query()
+                    ->where('tenant_id', $tenant->id)
+                    ->whereNotNull('read_codec')
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (CallDetailRecord $cdr) => [(string) $cdr->read_codec, (string) $cdr->write_codec, (string) $cdr->negotiated_codec])
+                    ->all(),
+            ],
+            'admin.tenants' => [
+                'description' => 'Tenant lifecycle and status.',
+                'columns' => ['Name', 'Domain', 'Status'],
+                'rows' => Tenant::query()
+                    ->orderBy('name')
+                    ->limit(50)
+                    ->get()
+                    ->map(fn (Tenant $listedTenant) => [$listedTenant->name, $listedTenant->domain, $listedTenant->status])
+                    ->all(),
+            ],
+            'admin.node-health-per-fs' => [
+                'description' => 'Gateway-node proxy health view.',
+                'stats' => [
+                    ['label' => 'Active gateways', 'value' => Gateway::query()->where('is_active', true)->count()],
+                    ['label' => 'Total gateways', 'value' => Gateway::query()->count()],
+                ],
+            ],
+            'admin.fraud-alerts' => [
+                'description' => 'Open fraud/security alert overview.',
+                'columns' => ['Severity', 'Metric', 'Status'],
+                'rows' => Alert::query()
+                    ->where('status', Alert::STATUS_OPEN)
+                    ->latest()
+                    ->limit(25)
+                    ->get()
+                    ->map(fn (Alert $alert) => [$alert->severity, $alert->metric, $alert->status])
+                    ->all(),
+            ],
+            default => [],
+        };
     }
 }
