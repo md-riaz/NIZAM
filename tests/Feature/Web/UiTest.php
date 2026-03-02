@@ -11,6 +11,13 @@ class UiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutVite();
+    }
+
     public function test_dashboard_route_requires_authentication(): void
     {
         $response = $this->get('/ui/dashboard');
@@ -32,6 +39,35 @@ class UiTest extends TestCase
         $response->assertSee('Tenant Dashboard');
         $response->assertSee('Active calls');
         $response->assertSee('Extensions');
+    }
+
+    public function test_suspended_tenant_is_blocked_from_ui_pages_for_non_admin(): void
+    {
+        $tenant = Tenant::factory()->suspended()->create();
+        $user = User::factory()->create([
+            'tenant_id' => $tenant->id,
+            'role' => 'user',
+        ]);
+
+        $this->actingAs($user)->get('/ui/dashboard')->assertForbidden();
+        $this->actingAs($user)->get('/ui/system-health')->assertForbidden();
+        $this->actingAs($user)->get('/ui/modules')->assertForbidden();
+    }
+
+    public function test_non_admin_tenant_selector_does_not_leak_other_tenants(): void
+    {
+        $tenant = Tenant::factory()->create(['name' => 'Allowed Tenant']);
+        $otherTenant = Tenant::factory()->create(['name' => 'Hidden Tenant']);
+        $user = User::factory()->create([
+            'tenant_id' => $tenant->id,
+            'role' => 'user',
+        ]);
+
+        $response = $this->actingAs($user)->get('/ui/dashboard?tenant='.$otherTenant->id);
+
+        $response->assertOk();
+        $response->assertSee('Allowed Tenant');
+        $response->assertDontSee('Hidden Tenant');
     }
 
     public function test_extensions_can_be_created_via_htmx_partial_response(): void
@@ -71,5 +107,25 @@ class UiTest extends TestCase
         $response = $this->actingAs($user)->post('/ui/modules/PbxRouting/toggle');
 
         $response->assertForbidden();
+    }
+
+    public function test_login_page_renders_and_allows_web_session_login(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = User::factory()->create([
+            'tenant_id' => $tenant->id,
+            'password' => 'password',
+        ]);
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('Sign in');
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertRedirect('/ui/dashboard');
+
+        $this->assertAuthenticatedAs($user);
     }
 }

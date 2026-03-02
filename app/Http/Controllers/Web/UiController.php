@@ -167,7 +167,10 @@ class UiController extends Controller
                 abort(403);
             }
 
-            return Tenant::query()->findOrFail($user->tenant_id);
+            $resolvedTenant = Tenant::query()->findOrFail($user->tenant_id);
+            abort_unless($resolvedTenant->isOperational(), 403);
+
+            return $resolvedTenant;
         }
 
         if (! $tenant && $requestedTenant) {
@@ -207,7 +210,9 @@ class UiController extends Controller
 
         return [
             'tenant' => $tenant,
-            'tenants' => Tenant::query()->orderBy('name')->get(['id', 'name']),
+            'tenants' => $user?->isAdmin()
+                ? Tenant::query()->orderBy('name')->get(['id', 'name'])
+                : Tenant::query()->whereKey($tenant->id)->get(['id', 'name']),
             'user' => $user,
             'navigation' => collect($baseNav)
                 ->filter(fn ($item) => ! $item['module'] || in_array($item['module'], $enabledAliases, true))

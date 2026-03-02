@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FreeswitchXmlController;
+use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\UiController;
 use Illuminate\Support\Facades\Route;
 
@@ -8,7 +9,14 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::view('/login', 'welcome')->name('login');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'create'])->name('login');
+    Route::post('/login', [AuthController::class, 'store'])->name('login.store');
+});
+
+Route::post('/logout', [AuthController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('logout');
 
 Route::post('/freeswitch/xml-curl', [FreeswitchXmlController::class, 'handle'])
     ->name('freeswitch.xml-curl');
