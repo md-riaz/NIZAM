@@ -149,6 +149,20 @@ class UiController extends Controller
         ]);
     }
 
+    public function surfacePage(Request $request, string $page): View
+    {
+        $tenant = $this->resolveTenant($request, null);
+        $pageConfig = $this->surfacePages()[$page] ?? null;
+
+        abort_if(! $pageConfig, 404);
+        abort_if(($pageConfig['admin_only'] ?? false) && ! $request->user()?->isAdmin(), 403);
+
+        return view('ui.surface.index', [
+            'ui' => $this->uiContext($request, $tenant),
+            'page' => $pageConfig,
+        ]);
+    }
+
     private function extensionTable(Tenant $tenant): View
     {
         return view('ui.extensions._table', [
@@ -221,27 +235,52 @@ class UiController extends Controller
             'expansion_navigation' => collect([
                 [
                     'label' => 'Routing',
-                    'items' => ['DIDs', 'Ring Groups', 'IVR', 'Time Conditions'],
+                    'items' => [
+                        ['label' => 'DIDs', 'route' => 'ui.routing.dids'],
+                        ['label' => 'Ring Groups', 'route' => 'ui.routing.ring-groups'],
+                        ['label' => 'IVR', 'route' => 'ui.routing.ivr'],
+                        ['label' => 'Time Conditions', 'route' => 'ui.routing.time-conditions'],
+                    ],
                 ],
                 [
                     'label' => 'Contact Center',
-                    'items' => ['Queues', 'Agents', 'Wallboard'],
+                    'items' => [
+                        ['label' => 'Queues', 'route' => 'ui.contact-center.queues'],
+                        ['label' => 'Agents', 'route' => 'ui.contact-center.agents'],
+                        ['label' => 'Wallboard', 'route' => 'ui.contact-center.wallboard'],
+                    ],
                 ],
                 [
                     'label' => 'Automation',
-                    'items' => ['Webhooks', 'Event Logs'],
+                    'items' => [
+                        ['label' => 'Webhooks', 'route' => 'ui.automation.webhooks'],
+                        ['label' => 'Event Log Viewer', 'route' => 'ui.automation.event-log-viewer'],
+                        ['label' => 'Retry Management', 'route' => 'ui.automation.retry-management'],
+                    ],
                 ],
                 [
                     'label' => 'Analytics',
-                    'items' => ['Recordings', 'SLA Trends', 'Call Volume'],
+                    'items' => [
+                        ['label' => 'Recordings', 'route' => 'ui.analytics.recordings'],
+                        ['label' => 'SLA Trends', 'route' => 'ui.analytics.sla-trends'],
+                        ['label' => 'Call Volume', 'route' => 'ui.analytics.call-volume'],
+                    ],
                 ],
                 [
                     'label' => 'Media Policy',
-                    'items' => ['Gateways', 'Codec Policy'],
+                    'items' => [
+                        ['label' => 'Gateways', 'route' => 'ui.media-policy.gateways'],
+                        ['label' => 'Codec Policy', 'route' => 'ui.media-policy.codec-policy'],
+                        ['label' => 'Transcoding Stats', 'route' => 'ui.media-policy.transcoding-stats'],
+                    ],
                 ],
                 [
                     'label' => 'Admin',
-                    'items' => ['Tenants', 'Node Health', 'Fraud Alerts'],
+                    'items' => [
+                        ['label' => 'Tenants', 'route' => 'ui.admin.tenants'],
+                        ['label' => 'Node Health per FS', 'route' => 'ui.admin.node-health-per-fs'],
+                        ['label' => 'Fraud Alerts', 'route' => 'ui.admin.fraud-alerts'],
+                    ],
                     'admin_only' => true,
                 ],
             ])->filter(fn ($section) => ! ($section['admin_only'] ?? false) || $user?->isAdmin())
@@ -272,5 +311,30 @@ class UiController extends Controller
     private function base64UrlEncode(string $data): string
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    private function surfacePages(): array
+    {
+        return [
+            'routing.dids' => ['title' => 'DIDs', 'section' => 'Routing'],
+            'routing.ring-groups' => ['title' => 'Ring Groups', 'section' => 'Routing'],
+            'routing.ivr' => ['title' => 'IVR', 'section' => 'Routing'],
+            'routing.time-conditions' => ['title' => 'Time Conditions', 'section' => 'Routing'],
+            'contact-center.queues' => ['title' => 'Queues', 'section' => 'Contact Center'],
+            'contact-center.agents' => ['title' => 'Agents', 'section' => 'Contact Center'],
+            'contact-center.wallboard' => ['title' => 'Wallboard', 'section' => 'Contact Center'],
+            'automation.webhooks' => ['title' => 'Webhooks', 'section' => 'Automation'],
+            'automation.event-log-viewer' => ['title' => 'Event Log Viewer', 'section' => 'Automation'],
+            'automation.retry-management' => ['title' => 'Retry Management', 'section' => 'Automation'],
+            'analytics.recordings' => ['title' => 'Recordings', 'section' => 'Analytics'],
+            'analytics.sla-trends' => ['title' => 'SLA Trends', 'section' => 'Analytics'],
+            'analytics.call-volume' => ['title' => 'Call Volume', 'section' => 'Analytics'],
+            'media-policy.gateways' => ['title' => 'Gateways', 'section' => 'Media Policy'],
+            'media-policy.codec-policy' => ['title' => 'Codec Policy', 'section' => 'Media Policy'],
+            'media-policy.transcoding-stats' => ['title' => 'Transcoding Stats', 'section' => 'Media Policy'],
+            'admin.tenants' => ['title' => 'Tenants', 'section' => 'Admin', 'admin_only' => true],
+            'admin.node-health-per-fs' => ['title' => 'Node Health per FS', 'section' => 'Admin', 'admin_only' => true],
+            'admin.fraud-alerts' => ['title' => 'Fraud Alerts', 'section' => 'Admin', 'admin_only' => true],
+        ];
     }
 }

@@ -21,7 +21,7 @@
                     @foreach($ui['expansion_navigation'] as $section)
                         <p class="px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ $section['label'] }}</p>
                         @foreach($section['items'] as $item)
-                            <span class="block rounded-md px-3 py-1 text-sm text-muted-foreground">{{ $item }} (Coming soon)</span>
+                            <a href="{{ route($item['route']) }}" class="block rounded-md px-3 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">{{ $item['label'] }}</a>
                         @endforeach
                     @endforeach
                 </div>
