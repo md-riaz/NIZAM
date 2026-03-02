@@ -218,7 +218,7 @@ class UiController extends Controller
                 ->filter(fn ($item) => ! $item['module'] || in_array($item['module'], $enabledAliases, true))
                 ->values()
                 ->all(),
-            'expansion_navigation' => [
+            'expansion_navigation' => collect([
                 [
                     'label' => 'Routing',
                     'items' => ['DIDs', 'Ring Groups', 'IVR', 'Time Conditions'],
@@ -242,8 +242,11 @@ class UiController extends Controller
                 [
                     'label' => 'Admin',
                     'items' => ['Tenants', 'Node Health', 'Fraud Alerts'],
+                    'admin_only' => true,
                 ],
-            ],
+            ])->filter(fn ($section) => ! ($section['admin_only'] ?? false) || $user?->isAdmin())
+                ->values()
+                ->all(),
             'ws_stream' => config('services.nizam.ws_url'),
             'ws_jwt' => $user instanceof User && config('services.nizam.ws_jwt_secret')
                 ? $this->websocketJwt($user, $tenant)

@@ -40,6 +40,7 @@ class UiTest extends TestCase
         $response->assertSee('Active calls');
         $response->assertSee('Extensions');
         $response->assertSee('Routing');
+        $response->assertDontSee('Fraud Alerts (Coming soon)');
         $response->assertDontSee('/api/v1/admin/dashboard', false);
     }
 
