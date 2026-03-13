@@ -22,9 +22,12 @@ use App\Models\User;
 use App\Models\Webhook;
 use App\Models\WebhookDeliveryAttempt;
 use App\Modules\ModuleRegistry;
+use App\Services\EslConnectionManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Nwidart\Modules\Facades\Module;
@@ -34,26 +37,24 @@ class UiController extends Controller
     public function dashboard(Request $request, ?Tenant $tenant = null): View
     {
         $tenant = $this->resolveTenant($request, $tenant);
+        $systemHealth = $this->systemHealthChecks($tenant);
 
         return view('ui.dashboard.index', [
             'ui' => $this->uiContext($request, $tenant),
             'metrics' => $this->dashboardMetrics($tenant),
+            'systemHealth' => $systemHealth,
         ]);
     }
 
     public function systemHealth(Request $request, ?Tenant $tenant = null): View
     {
         $tenant = $this->resolveTenant($request, $tenant);
+        $systemHealth = $this->systemHealthChecks($tenant);
 
         return view('ui.dashboard.health', [
             'ui' => $this->uiContext($request, $tenant),
-            'health' => [
-                'switch_node_health' => Gateway::query()->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
-                'event_lag' => (int) Queue::query()->where('tenant_id', $tenant->id)->avg('max_wait_time'),
-                'webhook_backlog' => WebhookDeliveryAttempt::query()->whereHas('webhook', fn ($query) => $query->where('tenant_id', $tenant->id))->where('success', false)->count(),
-                'active_channels' => CallDetailRecord::query()->where('tenant_id', $tenant->id)->whereNull('end_stamp')->count(),
-                'fraud_alerts' => 0,
-            ],
+            'health' => $systemHealth['checks'],
+            'healthSummary' => $systemHealth['summary'],
         ]);
     }
 
@@ -214,9 +215,242 @@ class UiController extends Controller
             'waiting_calls' => QueueEntry::query()->where('tenant_id', $tenant->id)->where('status', QueueEntry::STATUS_WAITING)->count(),
             'available_agents' => Agent::query()->where('tenant_id', $tenant->id)->where('state', Agent::STATE_AVAILABLE)->where('is_active', true)->count(),
             'sla_percent' => round((float) QueueMetric::query()->where('tenant_id', $tenant->id)->avg('service_level'), 2),
-            'gateway_status' => Gateway::query()->where('tenant_id', $tenant->id)->where('is_active', true)->exists() ? 'up' : 'down',
+            'gateway_status' => $this->dashboardGatewayStatus($tenant),
             'webhook_health' => WebhookDeliveryAttempt::query()->whereHas('webhook', fn ($query) => $query->where('tenant_id', $tenant->id))->where('success', false)->exists() ? 'degraded' : 'healthy',
         ];
+    }
+
+    private function dashboardGatewayStatus(Tenant $tenant): string
+    {
+        $activeGateways = Gateway::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->count();
+
+        if ($activeGateways === 0) {
+            return 'not configured';
+        }
+
+        $cached = Cache::get('nizam:gateway_status', [
+            'status' => 'unknown',
+            'registrations' => ['count' => 0],
+        ]);
+
+        $registered = (int) data_get($cached, 'registrations.count', 0);
+
+        return $registered > 0 ? 'up' : 'down';
+    }
+
+    private function systemHealthChecks(Tenant $tenant): array
+    {
+        $checks = [
+            'app' => [
+                'label' => 'Application',
+                'status' => 'ok',
+                'detail' => sprintf('APP_ENV=%s', (string) config('app.env')),
+                'meta' => [
+                    'url' => (string) config('app.url'),
+                ],
+            ],
+            'database' => $this->databaseHealthCheck(),
+            'redis' => $this->redisHealthCheck(),
+            'freeswitch' => $this->freeswitchHealthCheck(),
+            'gateways' => $this->gatewayHealthCheck($tenant),
+            'queue' => $this->queueHealthCheck(),
+            'webhooks' => $this->webhookHealthCheck($tenant),
+        ];
+
+        $summaryStatus = collect($checks)->contains(fn (array $check) => $check['status'] === 'error')
+            ? 'degraded'
+            : 'healthy';
+
+        return [
+            'summary' => [
+                'status' => $summaryStatus,
+                'checked_at' => now(),
+            ],
+            'checks' => $checks,
+        ];
+    }
+
+    private function databaseHealthCheck(): array
+    {
+        try {
+            DB::selectOne('SELECT 1');
+
+            return [
+                'label' => 'Database',
+                'status' => 'ok',
+                'detail' => 'SELECT 1 ok',
+                'meta' => [
+                    'connection' => DB::getDefaultConnection(),
+                ],
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'label' => 'Database',
+                'status' => 'error',
+                'detail' => 'Connection failed',
+                'meta' => [
+                    'message' => $e->getMessage(),
+                ],
+            ];
+        }
+    }
+
+    private function redisHealthCheck(): array
+    {
+        try {
+            Cache::store()->put('nizam:health_probe', 1, 5);
+
+            return [
+                'label' => 'Redis / Cache',
+                'status' => 'ok',
+                'detail' => 'Cache probe ok',
+                'meta' => [
+                    'store' => (string) config('cache.default'),
+                ],
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'label' => 'Redis / Cache',
+                'status' => 'error',
+                'detail' => 'Cache probe failed',
+                'meta' => [
+                    'message' => $e->getMessage(),
+                ],
+            ];
+        }
+    }
+
+    private function freeswitchHealthCheck(): array
+    {
+        try {
+            $esl = EslConnectionManager::fromConfig();
+            $connected = $esl->connect();
+
+            if (! $connected) {
+                return [
+                    'label' => 'FreeSWITCH ESL',
+                    'status' => 'error',
+                    'detail' => 'ESL unreachable',
+                    'meta' => [
+                        'host' => (string) config('nizam.freeswitch.esl_host'),
+                        'port' => (string) config('nizam.freeswitch.esl_port'),
+                    ],
+                ];
+            }
+
+            $statusResponse = $esl->api('status');
+            $esl->disconnect();
+            $parsed = $this->parseFreeswitchStatus($statusResponse);
+
+            return [
+                'label' => 'FreeSWITCH ESL',
+                'status' => 'ok',
+                'detail' => 'Connected'.(isset($parsed['uptime']) ? ', uptime '.$parsed['uptime'] : ''),
+                'meta' => [
+                    'sessions' => $parsed['sessions'] ?? null,
+                    'uptime' => $parsed['uptime'] ?? null,
+                ],
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'label' => 'FreeSWITCH ESL',
+                'status' => 'error',
+                'detail' => 'ESL check failed',
+                'meta' => [
+                    'message' => $e->getMessage(),
+                ],
+            ];
+        }
+    }
+
+    private function gatewayHealthCheck(Tenant $tenant): array
+    {
+        $cached = Cache::get('nizam:gateway_status', [
+            'status' => 'unknown',
+            'registrations' => ['count' => 0, 'entries' => []],
+            'checked_at' => null,
+        ]);
+
+        $activeGateways = Gateway::query()->where('tenant_id', $tenant->id)->where('is_active', true)->count();
+        $registered = (int) data_get($cached, 'registrations.count', 0);
+        $status = $activeGateways > 0 && $registered === 0 ? 'error' : 'ok';
+
+        return [
+            'label' => 'Gateways',
+            'status' => $status,
+            'detail' => sprintf('%d active, %d registered', $activeGateways, $registered),
+            'meta' => [
+                'active_gateways' => $activeGateways,
+                'registered' => $registered,
+                'checked_at' => data_get($cached, 'checked_at'),
+            ],
+        ];
+    }
+
+    private function queueHealthCheck(): array
+    {
+        try {
+            $pendingJobs = DB::table('jobs')->count();
+
+            return [
+                'label' => 'Queue',
+                'status' => $pendingJobs > 100 ? 'error' : 'ok',
+                'detail' => sprintf('%d pending job(s)', $pendingJobs),
+                'meta' => [
+                    'pending_jobs' => $pendingJobs,
+                ],
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'label' => 'Queue',
+                'status' => 'error',
+                'detail' => 'Queue table unavailable',
+                'meta' => [
+                    'message' => $e->getMessage(),
+                ],
+            ];
+        }
+    }
+
+    private function webhookHealthCheck(Tenant $tenant): array
+    {
+        $failedAttempts = WebhookDeliveryAttempt::query()
+            ->whereHas('webhook', fn ($query) => $query->where('tenant_id', $tenant->id))
+            ->where('success', false)
+            ->count();
+
+        return [
+            'label' => 'Webhooks',
+            'status' => $failedAttempts > 0 ? 'error' : 'ok',
+            'detail' => sprintf('%d failed delivery attempt(s)', $failedAttempts),
+            'meta' => [
+                'failed_attempts' => $failedAttempts,
+            ],
+        ];
+    }
+
+    private function parseFreeswitchStatus(?string $response): array
+    {
+        if (! $response) {
+            return ['raw' => null];
+        }
+
+        $data = ['raw' => trim($response)];
+
+        if (preg_match('/UP (\d+) years?,\s*(\d+) days?/i', $response, $matches)) {
+            $data['uptime'] = "{$matches[1]}y {$matches[2]}d";
+        } elseif (preg_match('/UP (\d+) days?/i', $response, $matches)) {
+            $data['uptime'] = "{$matches[1]}d";
+        }
+
+        if (preg_match('/(\d+) session\(s\)/i', $response, $matches)) {
+            $data['sessions'] = (int) $matches[1];
+        }
+
+        return $data;
     }
 
     private function uiContext(Request $request, Tenant $tenant): array
