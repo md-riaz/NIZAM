@@ -364,9 +364,15 @@ docker compose up -d --build
 # 4. Run migrations
 docker compose exec app php artisan migrate
 
-# 5. (Optional) Seed demo data
+# 5. (Optional) Seed demo data / bootstrap first admin
+# For production-like installs, set ADMIN_EMAIL and ADMIN_PASSWORD in .env first.
 docker compose exec app php artisan db:seed
 ```
+
+Behavior:
+- non-production with blank admin env vars: seeds demo login `admin@nizam.local` / `password`
+- production with blank admin env vars: seeds demo data but does **not** create a login user
+- any environment with `ADMIN_EMAIL` + `ADMIN_PASSWORD` set: creates or updates that admin user idempotently
 
 Or use the **one-step shortcut** (handles steps 2–4 automatically):
 
@@ -399,6 +405,12 @@ The API will be available at `http://localhost:8091/api/v1` by default.
 | `APP_KEY` | — | Auto-generated on first container boot if missing |
 | `APP_PORT` | `8091` | Published Docker port for the web UI and API |
 | `APP_URL` | `http://localhost:8091` | Public URL of the application |
+| `ADMIN_NAME` | `Administrator` | Bootstrap admin display name used by `db:seed` |
+| `ADMIN_EMAIL` | blank | Required in production if you want `db:seed` to create the first admin |
+| `ADMIN_PASSWORD` | blank | Required in production if you want `db:seed` to create the first admin |
+| `ADMIN_TENANT_NAME` | `Demo Company` | Tenant name created by the bootstrap seeder |
+| `ADMIN_TENANT_SLUG` | `demo-company` | Tenant slug created by the bootstrap seeder |
+| `ADMIN_TENANT_DOMAIN` | `demo.nizam.local` | Tenant domain created by the bootstrap seeder |
 | `DB_CONNECTION` | `pgsql` | Database driver |
 | `DB_HOST` | `127.0.0.1` | Database host |
 | `DB_DATABASE` | `nizam` | Database name |

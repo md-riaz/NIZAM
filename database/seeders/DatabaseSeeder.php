@@ -24,24 +24,40 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Demo tenant
-        $tenant = Tenant::create([
-            'name' => 'Demo Company',
-            'domain' => 'demo.nizam.local',
-            'slug' => 'demo-company',
-            'settings' => [],
-            'max_extensions' => 50,
-            'is_active' => true,
-        ]);
+        // 1. Demo/default tenant
+        $tenant = Tenant::updateOrCreate(
+            ['slug' => env('ADMIN_TENANT_SLUG', 'demo-company')],
+            [
+                'name' => env('ADMIN_TENANT_NAME', 'Demo Company'),
+                'domain' => env('ADMIN_TENANT_DOMAIN', 'demo.nizam.local'),
+                'settings' => [],
+                'max_extensions' => 50,
+                'is_active' => true,
+            ]
+        );
+
+        $bootstrapEmail = env('ADMIN_EMAIL');
+        $bootstrapPassword = env('ADMIN_PASSWORD');
+        $bootstrapName = env('ADMIN_NAME', 'Administrator');
+
+        if (! $bootstrapEmail && ! app()->environment('production')) {
+            $bootstrapEmail = 'admin@nizam.local';
+            $bootstrapPassword = $bootstrapPassword ?: 'password';
+            $bootstrapName = env('ADMIN_NAME', 'Admin User');
+        }
 
         // 2. Admin user associated with the tenant
-        User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@nizam.local',
-            'password' => 'password',
-            'tenant_id' => $tenant->id,
-            'role' => 'admin',
-        ]);
+        if ($bootstrapEmail && $bootstrapPassword) {
+            User::updateOrCreate(
+                ['email' => $bootstrapEmail],
+                [
+                    'name' => $bootstrapName,
+                    'password' => $bootstrapPassword,
+                    'tenant_id' => $tenant->id,
+                    'role' => 'admin',
+                ]
+            );
+        }
 
         // 3. Extensions 1001-1005
         $extensionNames = [
@@ -135,8 +151,38 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 8. CDR records
-        CallDetailRecord::factory()->count(2)->create([
+        CallDetailRecord::create([
             'tenant_id' => $tenant->id,
+            'uuid' => (string) str()->uuid(),
+            'caller_id_name' => 'Alice Smith',
+            'caller_id_number' => '+15551001001',
+            'destination_number' => '1001',
+            'context' => 'public',
+            'start_stamp' => now()->subMinutes(15),
+            'answer_stamp' => now()->subMinutes(15)->addSeconds(5),
+            'end_stamp' => now()->subMinutes(12),
+            'duration' => 180,
+            'billsec' => 175,
+            'hangup_cause' => 'NORMAL_CLEARING',
+            'direction' => 'inbound',
+            'recording_path' => null,
+        ]);
+
+        CallDetailRecord::create([
+            'tenant_id' => $tenant->id,
+            'uuid' => (string) str()->uuid(),
+            'caller_id_name' => 'Bob Johnson',
+            'caller_id_number' => '+15551001002',
+            'destination_number' => '1002',
+            'context' => 'public',
+            'start_stamp' => now()->subMinutes(8),
+            'answer_stamp' => now()->subMinutes(8)->addSeconds(4),
+            'end_stamp' => now()->subMinutes(6),
+            'duration' => 120,
+            'billsec' => 116,
+            'hangup_cause' => 'NORMAL_CLEARING',
+            'direction' => 'inbound',
+            'recording_path' => null,
         ]);
 
         // 9. Device Profile
