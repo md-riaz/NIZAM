@@ -8,6 +8,10 @@ use App\Http\Controllers\Api\CallFlowController;
 use App\Http\Controllers\Api\CallRoutingPolicyController;
 use App\Http\Controllers\Api\ExtensionController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\HolidayCalendarController;
+use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\FlowController;
+use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\TenantStatsController;
 use App\Http\Controllers\Api\TokenController;
@@ -66,6 +70,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
         // Core resources
         Route::apiResource('extensions', ExtensionController::class);
+        Route::apiResource('holiday-calendars', HolidayCalendarController::class);
+        Route::apiResource('schedules', ScheduleController::class);
+        Route::apiResource('teams', TeamController::class);
+        Route::apiResource('flows', FlowController::class);
         Route::get('cdrs/export', [CallDetailRecordController::class, 'export'])->name('cdrs.export');
         Route::apiResource('cdrs', CallDetailRecordController::class)->only(['index', 'show']);
 

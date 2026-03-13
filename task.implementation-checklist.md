@@ -264,10 +264,10 @@ You need this before number resolution becomes trustworthy.
 - support only the nodes needed to prove architecture
 
 ### Database
-- [ ] Create migration: `flows`
-- [ ] Create migration: `flow_versions`
-- [ ] Create migration: `flow_nodes`
-- [ ] Create migration: `flow_edges`
+- [x] Create migration: `flows`
+- [x] Create migration: `flow_versions`
+- [x] Create migration: `flow_nodes`
+- [x] Create migration: `flow_edges`
 
 ### Required `flows` fields
 - [ ] `id`

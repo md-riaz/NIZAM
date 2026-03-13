@@ -70,15 +70,16 @@ class FreeswitchXmlController extends Controller
                     $gatewayContext['gateway_registration'] ?? null,
                 );
 
-                $callFlow = $did?->destination_type === 'call_flow'
+                $flow = $did?->destination_type === 'flow'
                     ? $did->destination
                     : null;
+                $flowVersion = $flow?->activeVersion;
 
                 $session = $this->callSessionService->getOrCreateInboundSession(
                     $tenant,
                     $callUuid,
                     $did,
-                    $callFlow,
+                    null,
                     [
                         'domain' => $domain,
                         'destination_number' => $destinationNumber,
@@ -88,6 +89,12 @@ class FreeswitchXmlController extends Controller
                     ],
                 );
 
+                if ($flowVersion) {
+                    $session->forceFill([
+                        'flow_version_id' => $flowVersion->id,
+                    ])->save();
+                }
+
                 $this->traceWriter->write($session, 'dialplan.lookup.started', [
                     'domain' => $domain,
                     'destination_number' => $destinationNumber,
@@ -96,6 +103,8 @@ class FreeswitchXmlController extends Controller
                     'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                     'did_id' => $did?->id,
                     'destination_type' => $did?->destination_type,
+                    'flow_id' => $flow?->id,
+                    'flow_version_id' => $flowVersion?->id,
                 ]);
 
                 $this->callEventIngestionService->ingest(
@@ -109,13 +118,15 @@ class FreeswitchXmlController extends Controller
                         'gateway_id' => $gatewayContext['gateway']?->id,
                         'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                         'did_id' => $did?->id,
+                        'flow_id' => $flow?->id,
+                        'flow_version_id' => $flowVersion?->id,
                     ],
                     $session,
                     'xml_curl'
                 );
 
-                if ($callFlow && is_array($callFlow->nodes) && $callFlow->nodes !== []) {
-                    $this->flowRuntimeStarter->start($session, $callFlow);
+                if ($flowVersion) {
+                    $this->flowRuntimeStarter->start($session, $flowVersion);
                 }
             }
         }

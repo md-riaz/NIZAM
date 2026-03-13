@@ -428,6 +428,11 @@ Need explicit guarantees around:
 - number resolution isolation
 - flow lookup isolation
 
+Current progress:
+- schedule CRUD controllers are tenant-scoped
+- holiday calendar CRUD controllers are tenant-scoped
+- schedule lookup in `ScheduleCheckNodeHandler` is tenant-scoped
+
 ### 7. Schedule Model Depth
 The master doc introduces breaks and exceptions, but schema for exceptions needs to be locked properly.
 
@@ -555,6 +560,14 @@ That is enough to prove the architecture without getting lost in feature sprawl.
 ---
 
 ## Bottom Line
+Implementation progress now also includes the new graph-native domain model:
+- `teams`
+- `team_members`
+- `flows`
+- `flow_versions`
+- `flow_nodes`
+- `flow_edges`
+
 All task files point to the same conclusion:
 
 **NIZAM should be rebuilt as a layered, API-first, policy-driven workflow platform on top of FreeSWITCH, not as a traditional PBX admin app.**

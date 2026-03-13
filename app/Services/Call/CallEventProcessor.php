@@ -3,6 +3,7 @@
 namespace App\Services\Call;
 
 use App\Models\CallEventLog;
+use App\Models\FlowVersion;
 use App\Services\Flow\FlowRuntimeStarter;
 
 class CallEventProcessor
@@ -16,7 +17,7 @@ class CallEventProcessor
     {
         $session = $event->callSession;
 
-        if (! $session || ! $session->callFlow) {
+        if (! $session || ! $session->flow_version_id) {
             return null;
         }
 
@@ -45,6 +46,12 @@ class CallEventProcessor
             'event_id' => $event->event_id,
         ]);
 
-        return $this->flowRuntimeStarter->start($session, $session->callFlow);
+        $flowVersion = FlowVersion::find($session->flow_version_id);
+
+        if (! $flowVersion) {
+            return null;
+        }
+
+        return $this->flowRuntimeStarter->start($session, $flowVersion);
     }
 }

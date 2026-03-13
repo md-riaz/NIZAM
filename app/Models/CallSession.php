@@ -52,6 +52,11 @@ class CallSession extends Model
         return $this->belongsTo(CallFlow::class);
     }
 
+    public function flowVersion(): BelongsTo
+    {
+        return $this->belongsTo(FlowVersion::class, 'flow_version_id');
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(CallEventLog::class);

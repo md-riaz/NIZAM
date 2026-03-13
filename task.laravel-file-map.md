@@ -68,6 +68,7 @@ It follows the implementation checklist in execution order.
 - `app/Services/DialplanCompiler.php`
 
 ## Phase 5: Flow engine core
+Status: partially implemented with new graph-native schema and models.
 ### Migrations
 - `database/migrations/*_create_flows_table.php`
 - `database/migrations/*_create_flow_versions_table.php`
@@ -121,7 +122,7 @@ Status: partially implemented
 - `app/Services/Team/TeamRoutingService.php`
 
 ## Phase 8+: APIs and UI
-Media control skeleton and flow validators are now partially implemented.
+Media control skeleton, flow validators, and schedule CRUD/API are now partially implemented.
 - `app/Http/Controllers/Api/*` updates
 - `app/Http/Requests/*` new validators
 - separate frontend repo later

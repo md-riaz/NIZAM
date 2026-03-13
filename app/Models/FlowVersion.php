@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class FlowVersion extends Model
+{
+    use HasUuids;
+
+    protected $fillable = [
+        'flow_id',
+        'version_number',
+        'definition_checksum',
+        'status',
+        'is_published',
+        'definition_json',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_published' => 'boolean',
+            'definition_json' => 'array',
+        ];
+    }
+
+    public function flow(): BelongsTo
+    {
+        return $this->belongsTo(Flow::class);
+    }
+
+    public function nodes(): HasMany
+    {
+        return $this->hasMany(FlowNode::class);
+    }
+
+    public function edges(): HasMany
+    {
+        return $this->hasMany(FlowEdge::class);
+    }
+}

@@ -199,4 +199,14 @@ class Tenant extends Model
     {
         return $this->hasMany(Schedule::class);
     }
+
+    public function teams(): HasMany
+    {
+        return $this->hasMany(Team::class);
+    }
+
+    public function flows(): HasMany
+    {
+        return $this->hasMany(Flow::class);
+    }
 }
