@@ -27,18 +27,14 @@ help: ## Show this help message
 # First-time setup
 # ────────────────────────────────────────────────────────────────────
 
-setup: ## First-time setup: copy .env, generate key, start services, migrate
+setup: ## First-time setup: copy .env, start services, migrate
 	@[ -f .env ] || cp .env.example .env
-	@grep -q '^APP_KEY=base64:' .env || \
-	  { KEY=$$(php artisan key:generate --show --no-ansi); \
-	    sed -i "s|^APP_KEY=.*|APP_KEY=$$KEY|" .env; \
-	    echo "APP_KEY generated and written to .env"; }
 	$(COMPOSE) up -d --build
 	@echo "Waiting for app to become healthy..."
 	@$(COMPOSE) exec -T app php -r "exit(0);" 2>/dev/null || sleep 10
 	$(ARTISAN) migrate --force
 	@echo ""
-	@echo "  Setup complete. API → http://localhost:8080/api/v1/health"
+	@echo "  Setup complete. API → http://localhost:$${APP_PORT:-8091}/api/v1/health"
 	@echo "  Run 'make seed' to load demo data."
 	@echo ""
 
@@ -71,8 +67,8 @@ status: ## Show running container status
 	$(COMPOSE) ps
 
 health: ## Hit the health endpoint and pretty-print JSON
-	@curl -s http://localhost:$${APP_PORT:-8080}/api/v1/health | python3 -m json.tool 2>/dev/null \
-	  || curl -s http://localhost:$${APP_PORT:-8080}/api/v1/health
+	@curl -s http://localhost:$${APP_PORT:-8091}/api/v1/health | python3 -m json.tool 2>/dev/null \
+	  || curl -s http://localhost:$${APP_PORT:-8091}/api/v1/health
 
 # ────────────────────────────────────────────────────────────────────
 # Application management

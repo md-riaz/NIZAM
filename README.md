@@ -353,13 +353,13 @@ See [docs/installation-bare-metal.md](docs/installation-bare-metal.md) for the s
 git clone https://github.com/md-riaz/NIZAM.git
 cd NIZAM
 
-# 2. Copy environment and generate APP_KEY (must be done before starting services)
+# 2. Copy environment
 cp .env.example .env
-php artisan key:generate --show   # copy output and paste into .env as APP_KEY=base64:...
-# No local PHP? Use: docker run --rm php:8.3-alpine php artisan key:generate --show
 
 # 3. Start all 8 services
-docker compose up -d
+# The app container will auto-generate APP_KEY on first boot if missing,
+# and will build frontend assets automatically when public/build is absent.
+docker compose up -d --build
 
 # 4. Run migrations
 docker compose exec app php artisan migrate
@@ -374,16 +374,16 @@ Or use the **one-step shortcut** (handles steps 2–4 automatically):
 make setup
 ```
 
-The API will be available at `http://localhost:8080/api/v1`.
+The API will be available at `http://localhost:8091/api/v1` by default.
 
-> **Health check:** `curl http://localhost:8080/api/v1/health`
+> **Health check:** `curl http://localhost:8091/api/v1/health`
 
 #### Docker Services
 
 | Service | Container | Port | Description |
 |---------|-----------|------|-------------|
 | **app** | `nizam-app` | — | PHP-FPM application |
-| **nginx** | `nizam-nginx` | `8080` | Web server (reverse proxy) |
+| **nginx** | `nizam-nginx` | `8091` | Web server (reverse proxy) |
 | **postgres** | `nizam-postgres` | `5432` | PostgreSQL database |
 | **redis** | `nizam-redis` | `6379` | Cache and queue broker |
 | **freeswitch** | `nizam-freeswitch` | `5060` (SIP), `8021` (ESL) | Media engine |
@@ -396,8 +396,9 @@ The API will be available at `http://localhost:8080/api/v1`.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_ENV` | `local` | Application environment |
-| `APP_KEY` | — | **Required before first boot** — generate with `php artisan key:generate --show` |
-| `APP_URL` | `http://localhost:8080` | Public URL of the application |
+| `APP_KEY` | — | Auto-generated on first container boot if missing |
+| `APP_PORT` | `8091` | Published Docker port for the web UI and API |
+| `APP_URL` | `http://localhost:8091` | Public URL of the application |
 | `DB_CONNECTION` | `pgsql` | Database driver |
 | `DB_HOST` | `127.0.0.1` | Database host |
 | `DB_DATABASE` | `nizam` | Database name |
@@ -408,7 +409,8 @@ The API will be available at `http://localhost:8080/api/v1`.
 | `FREESWITCH_ESL_PASSWORD` | `ClueCon` | FreeSWITCH ESL password — **change in production** |
 | `NIZAM_XML_CURL_URL` | `http://nginx/freeswitch/xml-curl` | URL FreeSWITCH uses to fetch dialplan from NIZAM |
 | `REDIS_HOST` | `127.0.0.1` | Redis host |
-| `QUEUE_CONNECTION` | `database` | Queue driver (`redis` recommended for production) |
+| `REDIS_PASSWORD` | blank | Leave blank for local Docker. Set a real password in production |
+| `QUEUE_CONNECTION` | `database` | Queue driver. Use `redis` in production if Redis auth/config is in place |
 
 ### Option C — Local dev (no Docker)
 

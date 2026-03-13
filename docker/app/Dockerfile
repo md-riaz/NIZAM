@@ -7,7 +7,9 @@ RUN apk add --no-cache \
     libpq-dev \
     libxml2-dev \
     oniguruma-dev \
-    linux-headers
+    linux-headers \
+    nodejs \
+    npm
 
 # Install PHP extensions (including opcache for production performance)
 RUN docker-php-ext-install \
