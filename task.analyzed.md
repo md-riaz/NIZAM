@@ -415,6 +415,10 @@ Recommendation:
 - default fallback policy should be explicit
 - errors must be written to `call_trace_events`
 
+Current progress:
+- media actions now execute through `FreeSwitchCommandService`
+- publish now blocks invalid flow graphs via `FlowIntegrityValidator`
+
 Examples:
 - menu timeout → voicemail
 - ring timeout → next edge or voicemail

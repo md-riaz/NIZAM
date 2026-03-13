@@ -204,5 +204,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
             'description' => 'Demo call event webhook',
         ]);
+
+        $this->call(GraphFlowDemoSeeder::class);
     }
 }

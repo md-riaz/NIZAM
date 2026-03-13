@@ -9,6 +9,9 @@ use RuntimeException;
 
 class FlowPublishService
 {
+    public function __construct(
+        protected FlowIntegrityValidator $flowIntegrityValidator,
+    ) {}
     public function publish(FlowVersion $flowVersion): FlowVersion
     {
         return DB::transaction(function () use ($flowVersion) {
@@ -16,6 +19,12 @@ class FlowPublishService
 
             if (! $flowVersion->nodes()->exists()) {
                 throw new RuntimeException('Cannot publish a flow version with no nodes.');
+            }
+
+            $errors = $this->flowIntegrityValidator->validate($flowVersion);
+
+            if ($errors !== []) {
+                throw new RuntimeException('Cannot publish invalid flow version: '.implode(' | ', $errors));
             }
 
             $flowVersion->flow->versions()
