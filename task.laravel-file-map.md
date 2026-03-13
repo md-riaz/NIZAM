@@ -68,7 +68,7 @@ It follows the implementation checklist in execution order.
 - `app/Services/DialplanCompiler.php`
 
 ## Phase 5: Flow engine core
-Status: partially implemented with new graph-native schema and models.
+Status: partially implemented with new graph-native schema, models, and publish service.
 ### Migrations
 - `database/migrations/*_create_flows_table.php`
 - `database/migrations/*_create_flow_versions_table.php`

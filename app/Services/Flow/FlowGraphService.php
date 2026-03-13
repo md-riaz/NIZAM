@@ -9,6 +9,9 @@ use Illuminate\Support\Str;
 
 class FlowGraphService
 {
+    public function __construct(
+        protected FlowPublishService $flowPublishService,
+    ) {}
     public function createFlowWithVersion(string $tenantId, array $payload): Flow
     {
         return DB::transaction(function () use ($tenantId, $payload) {
@@ -50,17 +53,10 @@ class FlowGraphService
 
     protected function createVersion(Flow $flow, array $definition, bool $publish): FlowVersion
     {
-        $nextVersionNumber = ((int) $flow->versions()->max('version_number')) + 1;
         $nodes = $definition['nodes'] ?? [];
         $edges = $definition['edges'] ?? [];
 
-        $version = $flow->versions()->create([
-            'version_number' => $nextVersionNumber,
-            'definition_checksum' => md5(json_encode($definition)),
-            'status' => $publish ? 'published' : 'draft',
-            'is_published' => $publish,
-            'definition_json' => $definition,
-        ]);
+        $version = $this->flowPublishService->createDraft($flow, $definition);
 
         $nodeIdMap = [];
 
@@ -83,6 +79,12 @@ class FlowGraphService
                 'target_node_id' => $nodeIdMap[$edge['target_node_id'] ?? $edge['target'] ?? null] ?? ($edge['target_node_id'] ?? null),
                 'condition' => $edge['condition'] ?? 'default',
             ]);
+        }
+
+        $version = $version->fresh(['nodes', 'edges']);
+
+        if ($publish) {
+            $version = $this->flowPublishService->publish($version);
         }
 
         return $version->fresh(['nodes', 'edges']);

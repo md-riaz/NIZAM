@@ -2,21 +2,28 @@
 
 namespace App\Services\Team;
 
-use App\Models\RingGroup;
+use App\Models\Team;
 
 class TeamRoutingService
 {
-    public function resolveMembers(RingGroup $ringGroup): array
+    public function resolveMembers(Team $team): array
     {
-        $members = collect($ringGroup->members ?? [])
-            ->filter(fn ($member) => ! empty($member['extension'] ?? $member['id'] ?? null))
+        $members = $team->members()
+            ->where('is_active', true)
+            ->orderBy('priority')
+            ->get()
+            ->map(fn ($member) => [
+                'endpoint_type' => $member->endpoint_type,
+                'endpoint_id' => $member->endpoint_id,
+                'priority' => $member->priority,
+            ])
             ->values()
             ->all();
 
-        return match ($ringGroup->strategy) {
+        return match ($team->strategy) {
             'round_robin' => $this->roundRobin($members),
-            'simultaneous', 'ring_all' => $members,
             'priority' => $this->priority($members),
+            'simultaneous' => $members,
             default => $members,
         };
     }

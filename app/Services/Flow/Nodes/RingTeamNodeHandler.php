@@ -5,12 +5,15 @@ namespace App\Services\Flow\Nodes;
 use App\Domain\Flow\CallContext;
 use App\Domain\Flow\Contracts\NodeHandler;
 use App\Domain\Flow\NodeResult;
+use App\Models\Team;
 use App\Services\Media\MediaControlService;
+use App\Services\Team\TeamRoutingService;
 
 class RingTeamNodeHandler implements NodeHandler
 {
     public function __construct(
         protected MediaControlService $mediaControlService,
+        protected TeamRoutingService $teamRoutingService,
     ) {}
 
     public function execute(array $node, CallContext $context): NodeResult
@@ -31,14 +34,19 @@ class RingTeamNodeHandler implements NodeHandler
         }
 
         $timeout = (int) data_get($node, 'config.timeout', 20);
+        $team = $teamId
+            ? Team::query()->where('tenant_id', $context->tenantId())->whereKey($teamId)->where('is_active', true)->first()
+            : null;
+        $members = $team ? $this->teamRoutingService->resolveMembers($team) : [];
 
-        if ($teamId) {
-            $this->mediaControlService->ringTeam($context->callSession, (string) $teamId, $timeout);
+        if ($team) {
+            $this->mediaControlService->ringTeam($context->callSession, (string) $teamId, $timeout, $members);
         }
 
         return NodeResult::wait('call.answered', [
             'team_id' => $teamId,
             'timeout' => $timeout,
+            'members' => $members,
         ]);
     }
 }

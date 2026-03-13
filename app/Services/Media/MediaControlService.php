@@ -23,12 +23,13 @@ class MediaControlService
         return $payload;
     }
 
-    public function ringTeam(CallSession $callSession, string $teamId, int $timeout = 20): array
+    public function ringTeam(CallSession $callSession, string $teamId, int $timeout = 20, array $members = []): array
     {
         $payload = [
             'command' => 'ring_team',
             'team_id' => $teamId,
             'timeout' => $timeout,
+            'members' => $members,
         ];
 
         $this->traceWriter->write($callSession, 'media.ring_team.requested', $payload);

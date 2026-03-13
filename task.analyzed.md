@@ -403,8 +403,9 @@ Needs a formal lifecycle like:
 - published
 - archived
 
-Published flows should be immutable.
-Edits should always create a new version.
+This is now partially implemented.
+Published flows are promoted through `FlowPublishService`, and publishing updates the flow's `active_version_id`.
+Edits create new versions instead of mutating an existing published graph.
 
 ### 5. Error and Compensation Policy
 The docs mention fallback to hangup or voicemail, but this should be formalized per node or per flow.

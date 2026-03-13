@@ -74,6 +74,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::apiResource('schedules', ScheduleController::class);
         Route::apiResource('teams', TeamController::class);
         Route::apiResource('flows', FlowController::class);
+        Route::post('flows/{flow}/publish', [FlowController::class, 'publish'])->name('flows.publish');
         Route::get('cdrs/export', [CallDetailRecordController::class, 'export'])->name('cdrs.export');
         Route::apiResource('cdrs', CallDetailRecordController::class)->only(['index', 'show']);
 

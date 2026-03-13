@@ -9,12 +9,14 @@ use App\Http\Resources\FlowResource;
 use App\Models\Flow;
 use App\Models\Tenant;
 use App\Services\Flow\FlowGraphService;
+use App\Services\Flow\FlowPublishService;
 use Illuminate\Http\JsonResponse;
 
 class FlowController extends Controller
 {
     public function __construct(
         protected FlowGraphService $flowGraphService,
+        protected FlowPublishService $flowPublishService,
     ) {}
 
     public function index(Tenant $tenant)
@@ -58,5 +60,22 @@ class FlowController extends Controller
         $flow->delete();
 
         return response()->json(null, 204);
+    }
+
+    public function publish(Tenant $tenant, Flow $flow): JsonResponse|FlowResource
+    {
+        if ($flow->tenant_id !== $tenant->id) {
+            return response()->json(['message' => 'Flow not found.'], 404);
+        }
+
+        $version = $flow->versions()->latest('version_number')->first();
+
+        if (! $version) {
+            return response()->json(['message' => 'No flow version available to publish.'], 422);
+        }
+
+        $this->flowPublishService->publish($version);
+
+        return new FlowResource($flow->fresh(['activeVersion.nodes', 'activeVersion.edges', 'versions']));
     }
 }
