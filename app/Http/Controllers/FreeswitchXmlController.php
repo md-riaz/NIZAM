@@ -2,14 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Tenant;
+use App\Services\Call\CallEventIngestionService;
+use App\Services\Call\CallSessionService;
+use App\Services\Call\TraceWriter;
 use App\Services\DialplanCompiler;
+use App\Services\Flow\FlowRuntimeStarter;
+use App\Services\Routing\GatewayResolutionService;
+use App\Services\Routing\NumberRoutingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class FreeswitchXmlController extends Controller
 {
     public function __construct(
-        protected DialplanCompiler $compiler
+        protected DialplanCompiler $compiler,
+        protected CallSessionService $callSessionService,
+        protected CallEventIngestionService $callEventIngestionService,
+        protected TraceWriter $traceWriter,
+        protected GatewayResolutionService $gatewayResolutionService,
+        protected NumberRoutingService $numberRoutingService,
+        protected FlowRuntimeStarter $flowRuntimeStarter,
     ) {}
 
     /**
@@ -24,7 +37,12 @@ class FreeswitchXmlController extends Controller
 
         return match ($section) {
             'directory' => $this->handleDirectory($domain),
-            'dialplan' => $this->handleDialplan($domain, $request->input('Caller-Destination-Number', ''), $request->input('Caller-Caller-ID-Number')),
+            'dialplan' => $this->handleDialplan(
+                $domain,
+                $request->input('Caller-Destination-Number', ''),
+                $request->input('Caller-Caller-ID-Number'),
+                $request->all(),
+            ),
             default => $this->notFoundResponse(),
         };
     }
@@ -36,9 +54,73 @@ class FreeswitchXmlController extends Controller
         return response($xml, 200, ['Content-Type' => 'text/xml']);
     }
 
-    protected function handleDialplan(string $domain, string $destinationNumber, ?string $callerIdNumber = null): Response
+    protected function handleDialplan(string $domain, string $destinationNumber, ?string $callerIdNumber = null, array $requestPayload = []): Response
     {
-        $xml = $this->compiler->compileDialplan($domain, $destinationNumber, $callerIdNumber);
+        $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
+
+        if ($tenant && $tenant->isOperational()) {
+            $callUuid = (string) ($requestPayload['Unique-ID'] ?? $requestPayload['Channel-Call-UUID'] ?? $requestPayload['variable_uuid'] ?? '');
+
+            if ($callUuid !== '') {
+                $gatewayContext = $this->gatewayResolutionService->resolveFromXmlCurl($tenant, $requestPayload);
+                $did = $this->numberRoutingService->resolveInboundDid(
+                    $tenant,
+                    $destinationNumber,
+                    $gatewayContext['gateway'] ?? null,
+                    $gatewayContext['gateway_registration'] ?? null,
+                );
+
+                $callFlow = $did?->destination_type === 'call_flow'
+                    ? $did->destination
+                    : null;
+
+                $session = $this->callSessionService->getOrCreateInboundSession(
+                    $tenant,
+                    $callUuid,
+                    $did,
+                    $callFlow,
+                    [
+                        'domain' => $domain,
+                        'destination_number' => $destinationNumber,
+                        'caller_id_number' => $callerIdNumber,
+                        'gateway_id' => $gatewayContext['gateway']?->id,
+                        'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
+                    ],
+                );
+
+                $this->traceWriter->write($session, 'dialplan.lookup.started', [
+                    'domain' => $domain,
+                    'destination_number' => $destinationNumber,
+                    'caller_id_number' => $callerIdNumber,
+                    'gateway_id' => $gatewayContext['gateway']?->id,
+                    'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
+                    'did_id' => $did?->id,
+                    'destination_type' => $did?->destination_type,
+                ]);
+
+                $this->callEventIngestionService->ingest(
+                    $tenant,
+                    'call.started',
+                    $callUuid,
+                    [
+                        'domain' => $domain,
+                        'destination_number' => $destinationNumber,
+                        'caller_id_number' => $callerIdNumber,
+                        'gateway_id' => $gatewayContext['gateway']?->id,
+                        'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
+                        'did_id' => $did?->id,
+                    ],
+                    $session,
+                    'xml_curl'
+                );
+
+                if ($callFlow && is_array($callFlow->nodes) && $callFlow->nodes !== []) {
+                    $this->flowRuntimeStarter->start($session, $callFlow);
+                }
+            }
+        }
+
+        $xml = $this->compiler->compileDialplan($domain, $destinationNumber, $callerIdNumber, $requestPayload);
 
         return response($xml, 200, ['Content-Type' => 'text/xml']);
     }

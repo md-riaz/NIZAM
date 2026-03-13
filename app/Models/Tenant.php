@@ -179,4 +179,24 @@ class Tenant extends Model
     {
         return $this->hasMany(Gateway::class);
     }
+
+    public function callSessions(): HasMany
+    {
+        return $this->hasMany(CallSession::class);
+    }
+
+    public function callEventLogs(): HasMany
+    {
+        return $this->hasMany(CallEventLog::class);
+    }
+
+    public function holidayCalendars(): HasMany
+    {
+        return $this->hasMany(HolidayCalendar::class);
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class);
+    }
 }

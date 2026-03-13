@@ -40,12 +40,16 @@ class CallEventLog extends Model
     protected $table = 'call_events';
 
     protected $fillable = [
+        'call_session_id',
         'tenant_id',
         'call_uuid',
+        'event_id',
         'event_type',
+        'source',
         'payload',
         'schema_version',
         'occurred_at',
+        'received_at',
     ];
 
     protected $attributes = [
@@ -57,11 +61,17 @@ class CallEventLog extends Model
         return [
             'payload' => 'array',
             'occurred_at' => 'datetime',
+            'received_at' => 'datetime',
         ];
     }
 
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function callSession(): BelongsTo
+    {
+        return $this->belongsTo(CallSession::class);
     }
 }

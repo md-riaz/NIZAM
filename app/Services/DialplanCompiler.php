@@ -9,9 +9,15 @@ use App\Models\Extension;
 use App\Models\RingGroup;
 use App\Models\Tenant;
 use App\Models\TimeCondition;
+use App\Services\Routing\GatewayResolutionService;
+use App\Services\Routing\NumberRoutingService;
 
 class DialplanCompiler
 {
+    public function __construct(
+        protected NumberRoutingService $numberRoutingService,
+        protected GatewayResolutionService $gatewayResolutionService,
+    ) {}
     /**
      * Compile the SIP directory XML for a given domain.
      */
@@ -89,7 +95,7 @@ class DialplanCompiler
     /**
      * Compile the inbound dialplan XML for a given domain.
      */
-    public function compileDialplan(string $domain, string $destinationNumber, ?string $callerIdNumber = null): string
+    public function compileDialplan(string $domain, string $destinationNumber, ?string $callerIdNumber = null, array $requestPayload = []): string
     {
         $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
 
@@ -111,10 +117,13 @@ class DialplanCompiler
         }
 
         // Check if it's a DID routing
-        $did = $tenant->dids()
-            ->where('number', $destinationNumber)
-            ->where('is_active', true)
-            ->first();
+        $gatewayContext = $this->gatewayResolutionService->resolveFromXmlCurl($tenant, $requestPayload);
+        $did = $this->numberRoutingService->resolveInboundDid(
+            $tenant,
+            $destinationNumber,
+            $gatewayContext['gateway'] ?? null,
+            $gatewayContext['gateway_registration'] ?? null,
+        );
 
         if ($did) {
             return $this->compileDidRouting($tenant, $did);

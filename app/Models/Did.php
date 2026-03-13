@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\DidNormalizationService;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,7 +22,10 @@ class Did extends Model
      */
     protected $fillable = [
         'tenant_id',
+        'gateway_id',
+        'gateway_registration_id',
         'number',
+        'normalized_number',
         'description',
         'destination_type',
         'destination_id',
@@ -51,6 +55,13 @@ class Did extends Model
             'call_routing_policy' => CallRoutingPolicy::class,
             'call_flow' => CallFlow::class,
         ]);
+
+        static::saving(function (Did $did): void {
+            if ($did->number) {
+                $defaultCountryCode = (string) data_get($did->tenant?->settings, 'default_country_code', '1');
+                $did->normalized_number = DidNormalizationService::toE164($did->number, $defaultCountryCode);
+            }
+        });
     }
 
     public function tenant(): BelongsTo
@@ -61,5 +72,15 @@ class Did extends Model
     public function destination(): MorphTo
     {
         return $this->morphTo(name: 'destination', type: 'destination_type', id: 'destination_id');
+    }
+
+    public function gateway(): BelongsTo
+    {
+        return $this->belongsTo(Gateway::class);
+    }
+
+    public function gatewayRegistration(): BelongsTo
+    {
+        return $this->belongsTo(GatewayRegistration::class);
     }
 }

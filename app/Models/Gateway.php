@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Gateway extends Model
 {
@@ -51,5 +52,15 @@ class Gateway extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(GatewayRegistration::class);
+    }
+
+    public function dids(): HasMany
+    {
+        return $this->hasMany(Did::class);
     }
 }
