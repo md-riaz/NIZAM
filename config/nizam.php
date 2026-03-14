@@ -10,6 +10,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Flow Runtime Mode
+    |--------------------------------------------------------------------------
+    |
+    | Controls which runtime engine executes published flows.
+    | - "interpreted": PHP-based FlowExecutionService (v0, legacy)
+    | - "compiled": FreeSWITCH dialplan + Lua helpers (v1, target)
+    |
+    | Can be overridden per-flow or per-tenant via flow_version.runtime_mode.
+    | Global default here allows gradual migration.
+    |
+    */
+    'flow_runtime_mode' => env('FLOW_RUNTIME_MODE', 'interpreted'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Media & NAT Configuration
     |--------------------------------------------------------------------------
     |

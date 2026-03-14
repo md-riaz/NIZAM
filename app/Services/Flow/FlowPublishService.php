@@ -37,6 +37,7 @@ class FlowPublishService
             $flowVersion->forceFill([
                 'is_published' => true,
                 'status' => 'published',
+                'runtime_mode' => config('nizam.flow_runtime_mode', 'interpreted'),
             ])->save();
 
             $flowVersion->flow->forceFill([

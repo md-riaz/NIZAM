@@ -17,6 +17,7 @@ class FlowVersion extends Model
         'definition_checksum',
         'status',
         'is_published',
+        'runtime_mode',
         'definition_json',
     ];
 
