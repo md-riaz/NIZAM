@@ -33,7 +33,7 @@ class TenantStatsController extends Controller
                 'device_profiles_count' => $tenant->deviceProfiles()->count(),
                 'webhooks_count' => $tenant->webhooks()->count(),
                 'call_routing_policies_count' => $tenant->callRoutingPolicies()->count(),
-                'call_flows_count' => $tenant->callFlows()->count(),
+                'flows_count' => $tenant->flows()->count(),
                 'quotas' => [
                     'max_extensions' => $tenant->max_extensions,
                     'max_concurrent_calls' => $tenant->max_concurrent_calls,

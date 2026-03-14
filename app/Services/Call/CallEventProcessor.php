@@ -11,6 +11,7 @@ class CallEventProcessor
     public function __construct(
         protected FlowRuntimeStarter $flowRuntimeStarter,
         protected TraceWriter $traceWriter,
+        protected CallLockService $callLockService,
     ) {}
 
     public function process(CallEventLog $event): ?array
@@ -21,37 +22,55 @@ class CallEventProcessor
             return null;
         }
 
-        $variables = $session->variables ?? [];
+        return $this->callLockService->withLock($session->call_uuid, function () use ($event, $session) {
+            // Reload session to ensure we have the latest state and lock version
+            $session->refresh();
 
-        if ($event->event_type === 'menu.selection') {
-            $variables['menu_digit'] = (string) data_get($event->payload, 'digit');
-        }
+            // Idempotency check: if the event was already processed, skip
+            if ($session->events()->where('id', $event->id)->where('status', 'processed')->exists() || isset($event->payload['processed_at'])) {
+                // Actually, event status isn't built yet, so we'll just check if it's already marked in variables
+                $processedEvents = $session->variables['processed_events'] ?? [];
+                if (in_array($event->id, $processedEvents, true)) {
+                    return null;
+                }
+            }
 
-        if ($event->event_type === 'call.answered') {
-            $variables['team_answered'] = true;
-        }
+            $variables = $session->variables ?? [];
 
-        if ($event->event_type === 'call.timeout') {
-            $variables['team_answered'] = false;
-        }
+            if ($event->event_type === 'menu.selection') {
+                $variables['menu_digit'] = (string) data_get($event->payload, 'digit');
+            }
 
-        $session->forceFill([
-            'variables' => $variables,
-            'state' => 'resuming',
-            'lock_version' => $session->lock_version + 1,
-        ])->save();
+            if ($event->event_type === 'call.answered') {
+                $variables['team_answered'] = true;
+            }
 
-        $this->traceWriter->write($session, 'call.event.processed', [
-            'event_type' => $event->event_type,
-            'event_id' => $event->event_id,
-        ]);
+            if ($event->event_type === 'call.timeout') {
+                $variables['team_answered'] = false;
+            }
 
-        $flowVersion = FlowVersion::find($session->flow_version_id);
+            $processedEvents = $variables['processed_events'] ?? [];
+            $processedEvents[] = $event->id;
+            $variables['processed_events'] = $processedEvents;
 
-        if (! $flowVersion) {
-            return null;
-        }
+            $session->forceFill([
+                'variables' => $variables,
+                'state' => 'resuming',
+                'lock_version' => $session->lock_version + 1,
+            ])->save();
 
-        return $this->flowRuntimeStarter->start($session, $flowVersion);
+            $this->traceWriter->write($session, 'call.event.processed', [
+                'event_type' => $event->event_type,
+                'event_id' => $event->event_id,
+            ]);
+
+            $flowVersion = FlowVersion::find($session->flow_version_id);
+
+            if (! $flowVersion) {
+                return null;
+            }
+
+            return $this->flowRuntimeStarter->start($session, $flowVersion);
+        });
     }
 }

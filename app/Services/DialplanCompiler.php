@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\CallFlow;
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
@@ -298,10 +297,11 @@ class DialplanCompiler
                     $xml .= $this->compilePolicyRouting($tenant, $policy);
                 }
                 break;
-            case 'call_flow':
-                $flow = $tenant->callFlows()->find($did->destination_id);
+            case 'flow':
+                $flow = $tenant->flows()->find($did->destination_id);
                 if ($flow) {
-                    $xml .= $this->compileCallFlowActions($tenant, $flow);
+                    $xml .= '            <action application="answer"/>'."\n";
+                    $xml .= '            <action application="park"/>'."\n";
                 }
                 break;
         }
@@ -450,12 +450,6 @@ class DialplanCompiler
                     return '            <anti-action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
-            case 'call_flow':
-                $flow = $tenant->callFlows()->find($id);
-                if ($flow) {
-                    return $this->compileCallFlowActions($tenant, $flow);
-                }
-                break;
         }
 
         return '';
@@ -486,12 +480,6 @@ class DialplanCompiler
                 $ivr = $tenant->ivrs()->find($id);
                 if ($ivr) {
                     return '            <action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-                }
-                break;
-            case 'call_flow':
-                $flow = $tenant->callFlows()->find($id);
-                if ($flow) {
-                    return $this->compileCallFlowActions($tenant, $flow);
                 }
                 break;
         }
@@ -569,51 +557,6 @@ class DialplanCompiler
     /**
      * Compile a call flow into dialplan actions.
      */
-    protected function compileCallFlowActions(Tenant $tenant, CallFlow $flow): string
-    {
-        $nodes = $flow->nodes ?? [];
-        $xml = '';
-
-        foreach ($nodes as $node) {
-            $type = $node['type'] ?? '';
-            $data = $node['data'] ?? [];
-
-            switch ($type) {
-                case 'play_prompt':
-                    $file = $data['file'] ?? '';
-                    if ($file) {
-                        $xml .= '            <action application="playback" data="'.htmlspecialchars($file, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-                    }
-                    break;
-                case 'collect_input':
-                    $min = (int) ($data['min_digits'] ?? 1);
-                    $max = (int) ($data['max_digits'] ?? 1);
-                    $timeout = (int) ($data['timeout'] ?? 5);
-                    $file = $data['file'] ?? 'silence_stream://250';
-                    $xml .= '            <action application="play_and_get_digits" data="'.$min.' '.$max.' 3 '.$timeout.'000 # '.htmlspecialchars($file, ENT_QUOTES | ENT_XML1).' silence_stream://250 digits \d+"/>'."\n";
-                    break;
-                case 'bridge':
-                    $destType = $data['destination_type'] ?? '';
-                    $destId = $data['destination_id'] ?? '';
-                    if ($destType && $destId) {
-                        $xml .= $this->compileDestinationAction($tenant, $destType, $destId);
-                    }
-                    break;
-                case 'record':
-                    $path = $data['path'] ?? $this->tenantRecordingPath($tenant).'/${uuid}.wav';
-                    $xml .= '            <action application="record" data="'.htmlspecialchars($path, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-                    break;
-                case 'webhook':
-                    $url = $data['url'] ?? '';
-                    if ($url) {
-                        $xml .= '            <action application="curl" data="'.htmlspecialchars($url, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-                    }
-                    break;
-            }
-        }
-
-        return $xml;
-    }
 
     protected function compileFailsafeDialplan(string $domain, string $destinationNumber): string
     {

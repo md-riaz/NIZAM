@@ -17,7 +17,6 @@ class CallSession extends Model
         'call_uuid',
         'tenant_id',
         'did_id',
-        'call_flow_id',
         'flow_version_id',
         'current_node_id',
         'state',
@@ -45,11 +44,6 @@ class CallSession extends Model
     public function did(): BelongsTo
     {
         return $this->belongsTo(Did::class);
-    }
-
-    public function callFlow(): BelongsTo
-    {
-        return $this->belongsTo(CallFlow::class);
     }
 
     public function flowVersion(): BelongsTo

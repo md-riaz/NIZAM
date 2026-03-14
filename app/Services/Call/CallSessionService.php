@@ -2,7 +2,6 @@
 
 namespace App\Services\Call;
 
-use App\Models\CallFlow;
 use App\Models\CallSession;
 use App\Models\Did;
 use App\Models\Tenant;
@@ -17,7 +16,6 @@ class CallSessionService
         Tenant $tenant,
         string $callUuid,
         ?Did $did = null,
-        ?CallFlow $callFlow = null,
         array $variables = []
     ): CallSession {
         $session = CallSession::firstOrNew(['call_uuid' => $callUuid]);
@@ -27,7 +25,6 @@ class CallSessionService
         $session->fill([
             'tenant_id' => $tenant->id,
             'did_id' => $did?->id,
-            'call_flow_id' => $callFlow?->id,
             'state' => $session->state ?: 'initiated',
             'variables' => array_merge($session->variables ?? [], $variables),
             'started_at' => $session->started_at ?? now(),
@@ -39,7 +36,6 @@ class CallSessionService
             $this->traceWriter->write($session, 'call_session.created', [
                 'tenant_id' => $tenant->id,
                 'did_id' => $did?->id,
-                'call_flow_id' => $callFlow?->id,
             ]);
         }
 

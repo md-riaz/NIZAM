@@ -79,7 +79,6 @@ class FreeswitchXmlController extends Controller
                     $tenant,
                     $callUuid,
                     $did,
-                    null,
                     [
                         'domain' => $domain,
                         'destination_number' => $destinationNumber,

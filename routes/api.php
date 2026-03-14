@@ -4,8 +4,8 @@ use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CallDetailRecordController;
-use App\Http\Controllers\Api\CallFlowController;
 use App\Http\Controllers\Api\CallRoutingPolicyController;
+use App\Http\Controllers\Api\CallSessionController;
 use App\Http\Controllers\Api\ExtensionController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HolidayCalendarController;
@@ -81,7 +81,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::apiResource('call-routing-policies', CallRoutingPolicyController::class);
         Route::post('call-routing-policies/{call_routing_policy}/evaluate', [CallRoutingPolicyController::class, 'evaluate'])
             ->name('call-routing-policies.evaluate');
-        Route::apiResource('call-flows', CallFlowController::class);
 
         // Audit logs (read-only)
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
