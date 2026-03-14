@@ -75,6 +75,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::apiResource('teams', TeamController::class);
         Route::apiResource('flows', FlowController::class);
         Route::post('flows/{flow}/publish', [FlowController::class, 'publish'])->name('flows.publish');
+
+        // Call sessions & traces
+        Route::get('calls', [CallSessionController::class, 'index'])->name('calls.index');
+        Route::get('calls/{callSession}', [CallSessionController::class, 'show'])->name('calls.show');
+        Route::get('calls/{callSession}/analyze', [CallSessionController::class, 'analyze'])->name('calls.analyze');
+
         Route::get('cdrs/export', [CallDetailRecordController::class, 'export'])->name('cdrs.export');
         Route::apiResource('cdrs', CallDetailRecordController::class)->only(['index', 'show']);
 

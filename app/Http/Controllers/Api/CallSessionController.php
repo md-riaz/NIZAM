@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CallSessionResource;
 use App\Models\CallSession;
 use App\Models\Tenant;
+use App\Services\Call\CallTraceAnalyzer;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -41,5 +42,19 @@ class CallSessionController extends Controller
         }]);
 
         return new CallSessionResource($callSession);
+    }
+
+    /**
+     * Return computed replay timeline and node metrics for a call session.
+     */
+    public function analyze(Tenant $tenant, CallSession $callSession, CallTraceAnalyzer $analyzer): JsonResponse
+    {
+        if ($callSession->tenant_id !== $tenant->id) {
+            return response()->json(['message' => 'Call session not found.'], 404);
+        }
+
+        return response()->json([
+            'data' => $analyzer->analyze($callSession)
+        ]);
     }
 }
