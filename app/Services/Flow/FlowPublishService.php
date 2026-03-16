@@ -2,62 +2,98 @@
 
 namespace App\Services\Flow;
 
-use App\Models\Flow;
 use App\Models\FlowVersion;
+use App\Models\TenantDialplanManifest;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 class FlowPublishService
 {
     public function __construct(
-        protected FlowIntegrityValidator $flowIntegrityValidator,
+        protected FlowArtifactService $artifactService,
     ) {}
-    public function publish(FlowVersion $flowVersion): FlowVersion
+
+    /**
+     * Publish a flow version.
+     *
+     * This method:
+     * 1. Compiles the flow into IR and generates dialplan XML
+     * 2. Stores the compiled artifact
+     * 3. Creates/updates the tenant's dialplan manifest
+     * 4. Activates the manifest for the tenant
+     *
+     * If compilation fails, the publish fails and no changes are made.
+     */
+    public function publish(FlowVersion $flowVersion): array
     {
+        // Validate flow version is ready for publishing
+        if ($flowVersion->status !== 'draft' && $flowVersion->status !== 'published') {
+            return [
+                'success' => false,
+                'error' => 'Flow version is not in a publishable state',
+            ];
+        }
+
+        // Validate all node types have compilers registered
+        if (!$this->artifactService->getFlowToIrCompiler()->canCompile($flowVersion)) {
+            return [
+                'success' => false,
+                'error' => 'Flow contains node types without registered compilers',
+            ];
+        }
+
+        // Start transaction to ensure atomicity
         return DB::transaction(function () use ($flowVersion) {
-            $flowVersion->loadMissing('flow');
+            // Step 1: Compile and store the flow artifact
+            $artifactResult = $this->artifactService->compileAndStore($flowVersion);
 
-            if (! $flowVersion->nodes()->exists()) {
-                throw new RuntimeException('Cannot publish a flow version with no nodes.');
+            if (!$artifactResult['success']) {
+                throw new \RuntimeException($artifactResult['error']);
             }
 
-            $errors = $this->flowIntegrityValidator->validate($flowVersion);
+            // Step 2: Create/update the tenant's dialplan manifest
+            $manifest = TenantDialplanManifest::updateOrCreate(
+                [
+                    'tenant_id' => $flowVersion->flow->tenant_id,
+                    'manifest_type' => 'inbound_routing',
+                ],
+                [
+                    'content' => $artifactResult['content'] ?? '',
+                    'checksum' => $artifactResult['checksum'],
+                ]
+            );
 
-            if ($errors !== []) {
-                throw new RuntimeException('Cannot publish invalid flow version: '.implode(' | ', $errors));
-            }
+            // Step 3: Activate the manifest
+            $this->artifactService->activateManifest($manifest);
 
-            $flowVersion->flow->versions()
-                ->where('id', '!=', $flowVersion->id)
-                ->update([
-                    'is_published' => false,
-                    'status' => 'archived',
-                ]);
+            // Update flow version status
+            $flowVersion->update(['status' => 'published']);
 
-            $flowVersion->forceFill([
-                'is_published' => true,
-                'status' => 'published',
-                'runtime_mode' => config('nizam.flow_runtime_mode', 'interpreted'),
-            ])->save();
-
-            $flowVersion->flow->forceFill([
-                'active_version_id' => $flowVersion->id,
-            ])->save();
-
-            return $flowVersion->fresh();
+            return [
+                'success' => true,
+                'artifact_id' => $artifactResult['artifact_id'] ?? null,
+                'manifest_id' => $manifest->id,
+                'checksum' => $artifactResult['checksum'],
+            ];
         });
     }
 
-    public function createDraft(Flow $flow, array $definition): FlowVersion
+    /**
+     * Rollback a published flow version.
+     *
+     * This deactivates the tenant's manifest, effectively rolling back
+     * to the previous state (or interpreted mode if no previous manifest exists).
+     */
+    public function rollback(FlowVersion $flowVersion): bool
     {
-        $nextVersionNumber = ((int) $flow->versions()->max('version_number')) + 1;
+        return DB::transaction(function () use ($flowVersion) {
+            // Deactivate the tenant's manifest
+            TenantDialplanManifest::where('tenant_id', $flowVersion->flow->tenant_id)
+                ->where('manifest_type', 'inbound_routing')
+                ->where('is_active', true)
+                ->update(['is_active' => false]);
 
-        return $flow->versions()->create([
-            'version_number' => $nextVersionNumber,
-            'definition_checksum' => md5(json_encode($definition)),
-            'status' => 'draft',
-            'is_published' => false,
-            'definition_json' => $definition,
-        ]);
+            // Update flow version status
+            return $flowVersion->update(['status' => 'draft']);
+        });
     }
 }
