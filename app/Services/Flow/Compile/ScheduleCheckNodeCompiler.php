@@ -25,7 +25,7 @@ class ScheduleCheckNodeCompiler implements NodeCompiler
         // Build transition map from edges
         $transitions = [];
         foreach ($outgoingEdges as $edge) {
-            $result = $edge->transition_result ?? 'open';
+            $result = $edge->condition ?? 'open';
             $transitions[$result] = "node_{$edge->target_node_id}";
         }
 

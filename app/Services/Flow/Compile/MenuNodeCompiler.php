@@ -15,7 +15,7 @@ class MenuNodeCompiler implements NodeCompiler
         
         $transitions = [];
         foreach ($outgoingEdges as $edge) {
-            $result = $edge->transition_result ?? 'timeout';
+            $result = $edge->condition ?? 'timeout';
             $transitions[$result] = "node_{$edge->target_node_id}";
         }
 

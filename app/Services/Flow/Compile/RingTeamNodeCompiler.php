@@ -17,7 +17,7 @@ class RingTeamNodeCompiler implements NodeCompiler
         
         $transitions = [];
         foreach ($outgoingEdges as $edge) {
-            $result = $edge->transition_result ?? 'no_answer';
+            $result = $edge->condition ?? 'no_answer';
             $transitions[$result] = "node_{$edge->target_node_id}";
         }
 

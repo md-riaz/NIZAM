@@ -21,7 +21,7 @@ class StartNodeCompiler implements NodeCompiler
         // Find the next node from edges
         $nextNodeId = null;
         foreach ($outgoingEdges as $edge) {
-            if ($edge->transition_result === 'next' || $edge->transition_result === null) {
+            if ($edge->condition === 'next' || $edge->condition === null) {
                 $nextNodeId = $edge->target_node_id;
                 break;
             }

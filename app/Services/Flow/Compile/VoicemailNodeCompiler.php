@@ -15,7 +15,7 @@ class VoicemailNodeCompiler implements NodeCompiler
         
         $transitions = [];
         foreach ($outgoingEdges as $edge) {
-            $result = $edge->transition_result ?? 'completed';
+            $result = $edge->condition ?? 'completed';
             $transitions[$result] = "node_{$edge->target_node_id}";
         }
 
