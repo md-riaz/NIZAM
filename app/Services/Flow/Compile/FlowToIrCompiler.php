@@ -28,6 +28,7 @@ class FlowToIrCompiler
             new StartNodeCompiler(),
             new ScheduleCheckNodeCompiler(),
             new MenuNodeCompiler(),
+            new RingTeamNodeCompiler(),
             new VoicemailNodeCompiler(),
             new HangupNodeCompiler(),
         ]);
