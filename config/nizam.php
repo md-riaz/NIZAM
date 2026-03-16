@@ -25,6 +25,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Interpreted Mode Deprecation
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, interpreted mode triggers a warning and logs usage.
+    | This flag allows gradual migration from interpreted to compiled runtime.
+    | Once compiled runtime is stable, interpreted mode can be fully removed.
+    |
+    */
+    'interpreted_mode_deprecated' => env('INTERPRETED_MODE_DEPRECATED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Media & NAT Configuration
     |--------------------------------------------------------------------------
     |
