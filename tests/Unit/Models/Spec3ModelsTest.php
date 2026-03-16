@@ -2,7 +2,8 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\CallFlow;
+use App\Models\Flow;
+use App\Models\FlowVersion;
 use App\Models\CallRoutingPolicy;
 use App\Models\Tenant;
 use App\Models\Webhook;
@@ -34,24 +35,26 @@ class Spec3ModelsTest extends TestCase
         $this->assertEquals('time_of_day', $policy->fresh()->conditions[0]['type']);
     }
 
-    public function test_call_flow_belongs_to_tenant(): void
+    public function test_flow_belongs_to_tenant(): void
     {
         $tenant = Tenant::factory()->create();
-        $flow = CallFlow::factory()->create(['tenant_id' => $tenant->id]);
+        $flow = Flow::factory()->create(['tenant_id' => $tenant->id]);
 
         $this->assertTrue($flow->tenant->is($tenant));
     }
 
-    public function test_call_flow_casts_nodes_as_array(): void
+    public function test_flow_version_casts_definition_json_as_array(): void
     {
-        $nodes = [
-            ['id' => 'start', 'type' => 'play_prompt', 'data' => ['file' => 'welcome.wav'], 'next' => null],
+        $definition = [
+            'nodes' => [
+                ['id' => 'start', 'type' => 'play_prompt', 'data' => ['file' => 'welcome.wav'], 'next' => null],
+            ]
         ];
 
-        $flow = CallFlow::factory()->create(['nodes' => $nodes]);
+        $flowVersion = FlowVersion::factory()->create(['definition_json' => $definition]);
 
-        $this->assertIsArray($flow->fresh()->nodes);
-        $this->assertEquals('play_prompt', $flow->fresh()->nodes[0]['type']);
+        $this->assertIsArray($flowVersion->fresh()->definition_json);
+        $this->assertEquals('play_prompt', $flowVersion->fresh()->definition_json['nodes'][0]['type']);
     }
 
     public function test_webhook_delivery_attempt_belongs_to_webhook(): void
@@ -78,11 +81,11 @@ class Spec3ModelsTest extends TestCase
         $this->assertCount(2, $tenant->callRoutingPolicies);
     }
 
-    public function test_tenant_has_many_call_flows(): void
+    public function test_tenant_has_many_flows(): void
     {
         $tenant = Tenant::factory()->create();
-        CallFlow::factory()->count(2)->create(['tenant_id' => $tenant->id]);
+        Flow::factory()->count(2)->create(['tenant_id' => $tenant->id]);
 
-        $this->assertCount(2, $tenant->callFlows);
+        $this->assertCount(2, $tenant->flows);
     }
 }

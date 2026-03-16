@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\CallFlow;
+use App\Models\Flow;
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
@@ -20,7 +20,10 @@ class DialplanCompilerPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->compiler = new DialplanCompiler;
+        $this->compiler = new DialplanCompiler(
+            app(\App\Services\Routing\NumberRoutingService::class),
+            app(\App\Services\Routing\GatewayResolutionService::class),
+        );
     }
 
     public function test_compiles_did_routing_via_call_routing_policy(): void
@@ -65,7 +68,7 @@ class DialplanCompilerPolicyTest extends TestCase
             'is_active' => true,
         ]);
 
-        $flow = CallFlow::factory()->create([
+        $flow = Flow::factory()->create([
             'tenant_id' => $tenant->id,
             'nodes' => [
                 [
@@ -142,7 +145,7 @@ class DialplanCompilerPolicyTest extends TestCase
     {
         $tenant = Tenant::factory()->create(['is_active' => true]);
 
-        $flow = CallFlow::factory()->create([
+        $flow = Flow::factory()->create([
             'tenant_id' => $tenant->id,
             'nodes' => [
                 [
@@ -172,7 +175,7 @@ class DialplanCompilerPolicyTest extends TestCase
     {
         $tenant = Tenant::factory()->create(['is_active' => true]);
 
-        $flow = CallFlow::factory()->create([
+        $flow = Flow::factory()->create([
             'tenant_id' => $tenant->id,
             'nodes' => [
                 [

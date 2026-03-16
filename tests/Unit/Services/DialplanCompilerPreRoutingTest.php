@@ -19,7 +19,10 @@ class DialplanCompilerPreRoutingTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->compiler = new DialplanCompiler;
+        $this->compiler = new DialplanCompiler(
+            app(\App\Services\Routing\NumberRoutingService::class),
+            app(\App\Services\Routing\GatewayResolutionService::class),
+        );
     }
 
     public function test_pre_routing_blacklist_rejects_call(): void

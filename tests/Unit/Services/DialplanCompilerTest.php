@@ -16,7 +16,10 @@ class DialplanCompilerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->compiler = new DialplanCompiler;
+        $this->compiler = new DialplanCompiler(
+            app(\App\Services\Routing\NumberRoutingService::class),
+            app(\App\Services\Routing\GatewayResolutionService::class),
+        );
     }
 
     private function createTenantWithExtension(): array

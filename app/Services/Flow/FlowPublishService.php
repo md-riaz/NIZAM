@@ -14,6 +14,24 @@ class FlowPublishService
     ) {}
 
     /**
+     * Create a draft flow version.
+     */
+    public function createDraft(\App\Models\Flow $flow, array $definition): FlowVersion
+    {
+        $version = FlowVersion::create([
+            'flow_id' => $flow->id,
+            'version_number' => $flow->versions()->count() + 1,
+            'definition_checksum' => md5(json_encode($definition)),
+            'status' => 'draft',
+            'is_published' => false,
+            'runtime_mode' => 'compiled',
+            'definition_json' => $definition,
+        ]);
+
+        return $version;
+    }
+
+    /**
      * Publish a flow version.
      *
      * This method:

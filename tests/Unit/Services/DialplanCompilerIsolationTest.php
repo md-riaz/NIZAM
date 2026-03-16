@@ -16,7 +16,10 @@ class DialplanCompilerIsolationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->compiler = new DialplanCompiler;
+        $this->compiler = new DialplanCompiler(
+            app(\App\Services\Routing\NumberRoutingService::class),
+            app(\App\Services\Routing\GatewayResolutionService::class),
+        );
     }
 
     public function test_concurrent_call_limit_included_in_did_routing(): void
@@ -100,7 +103,10 @@ class DialplanCompilerIsolationTest extends TestCase
             'status' => Tenant::STATUS_ACTIVE,
         ]);
 
-        $compiler = new DialplanCompiler;
+        $compiler = new DialplanCompiler(
+            app(\App\Services\Routing\NumberRoutingService::class),
+            app(\App\Services\Routing\GatewayResolutionService::class),
+        );
         $method = new \ReflectionMethod($compiler, 'tenantRecordingPath');
 
         $path = $method->invoke($compiler, $tenant);

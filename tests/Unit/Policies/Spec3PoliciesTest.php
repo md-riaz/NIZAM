@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Policies;
 
-use App\Models\CallFlow;
+use App\Models\Flow;
 use App\Models\CallRoutingPolicy;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Policies\CallFlowPolicy;
+use App\Policies\FlowPolicy;
 use App\Policies\CallRoutingPolicyPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -29,7 +29,7 @@ class Spec3PoliciesTest extends TestCase
     public function test_admin_can_do_anything_on_call_flow(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $policy = new CallFlowPolicy;
+        $policy = new FlowPolicy;
 
         $this->assertTrue($policy->before($admin, 'viewAny'));
         $this->assertTrue($policy->before($admin, 'create'));
@@ -65,9 +65,9 @@ class Spec3PoliciesTest extends TestCase
     {
         $tenant = Tenant::factory()->create();
         $user = User::factory()->create(['tenant_id' => $tenant->id]);
-        $flow = CallFlow::factory()->create(['tenant_id' => $tenant->id]);
+        $flow = Flow::factory()->create(['tenant_id' => $tenant->id]);
 
-        $policy = new CallFlowPolicy;
+        $policy = new FlowPolicy;
 
         $this->assertTrue($policy->view($user, $flow));
     }
@@ -77,9 +77,9 @@ class Spec3PoliciesTest extends TestCase
         $tenant1 = Tenant::factory()->create();
         $tenant2 = Tenant::factory()->create();
         $user = User::factory()->create(['tenant_id' => $tenant1->id]);
-        $flow = CallFlow::factory()->create(['tenant_id' => $tenant2->id]);
+        $flow = Flow::factory()->create(['tenant_id' => $tenant2->id]);
 
-        $policy = new CallFlowPolicy;
+        $policy = new FlowPolicy;
 
         $this->assertFalse($policy->view($user, $flow));
     }

@@ -18,6 +18,7 @@ class RecordingFactory extends Factory
         $uuid = fake()->unique()->uuid();
 
         return [
+            'id' => (string) fake()->uuid(),
             'tenant_id' => Tenant::factory(),
             'call_uuid' => $uuid,
             'file_path' => "recordings/{$uuid}.wav",
