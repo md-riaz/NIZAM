@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Flow extends Model
 {
-    use HasUuids;
+    use HasUuids, \Illuminate\Database\Eloquent\Factories\HasFactory;
 
     protected $fillable = [
         'tenant_id',

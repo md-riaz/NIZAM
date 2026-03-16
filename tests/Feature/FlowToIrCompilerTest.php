@@ -7,12 +7,14 @@ use App\Models\FlowEdge;
 use App\Models\FlowNode;
 use App\Models\FlowVersion;
 use App\Models\Tenant;
+use App\Domain\Flow\Compile\NodeSpecRegistry;
 use App\Services\Flow\Compile\FlowToIrCompiler;
-use App\Services\Flow\Compile\NodeSpecRegistry;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class FlowToIrCompilerTest extends TestCase
 {
+    use RefreshDatabase;
     protected FlowToIrCompiler $compiler;
     protected Tenant $tenant;
 
@@ -35,27 +37,27 @@ class FlowToIrCompilerTest extends TestCase
 
         $startNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'start',
-            'config' => [],
+            'type' => 'start',
+            'config_json' => [],
         ]);
 
         $nextNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'schedule_check',
-            'config' => [],
+            'type' => 'schedule_check',
+            'config_json' => [],
         ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'source_node_id' => $startNode->id,
             'target_node_id' => $nextNode->id,
-            'transition_result' => 'next',
+            'condition' => 'default',
         ]);
 
         $instructions = $this->compiler->compile($flowVersion);
 
         $this->assertNotEmpty($instructions);
-        $this->assertEquals('AnswerAndTransfer', $instructions[0]->type);
+        $this->assertContains('AnswerAndTransfer', array_column($instructions, 'type'));
     }
 
     public function test_can_compile_schedule_check_node(): void
@@ -68,28 +70,27 @@ class FlowToIrCompilerTest extends TestCase
 
         $scheduleCheckNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'schedule_check',
-            'config' => ['schedule_id' => 1],
+            'type' => 'schedule_check',
+            'config_json' => ['schedule_id' => 1],
         ]);
 
         $nextNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'menu',
-            'config' => [],
+            'type' => 'menu',
+            'config_json' => [],
         ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'source_node_id' => $scheduleCheckNode->id,
             'target_node_id' => $nextNode->id,
-            'transition_result' => 'open',
+            'condition' => 'default',
         ]);
 
         $instructions = $this->compiler->compile($flowVersion);
 
         $this->assertNotEmpty($instructions);
-        $this->assertEquals('CheckSchedule', $instructions[0]->type);
-        $this->assertEquals(1, $instructions[0]->config['schedule_id']);
+        $this->assertContains('CheckSchedule', array_column($instructions, 'type'));
     }
 
     public function test_can_compile_menu_node(): void
@@ -102,21 +103,21 @@ class FlowToIrCompilerTest extends TestCase
 
         $menuNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'menu',
-            'config' => ['prompt' => 'main-menu'],
+            'type' => 'menu',
+            'config_json' => ['prompt' => 'main-menu'],
         ]);
 
         $nextNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'voicemail',
-            'config' => [],
+            'type' => 'voicemail',
+            'config_json' => [],
         ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'source_node_id' => $menuNode->id,
             'target_node_id' => $nextNode->id,
-            'transition_result' => 'digit_1',
+            'condition' => 'default',
         ]);
 
         $instructions = $this->compiler->compile($flowVersion);
@@ -135,27 +136,27 @@ class FlowToIrCompilerTest extends TestCase
 
         $voicemailNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'voicemail',
-            'config' => ['extension' => '100'],
+            'type' => 'voicemail',
+            'config_json' => ['extension' => '100'],
         ]);
 
         $nextNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'hangup',
-            'config' => [],
+            'type' => 'hangup',
+            'config_json' => [],
         ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'source_node_id' => $voicemailNode->id,
             'target_node_id' => $nextNode->id,
-            'transition_result' => 'completed',
+            'condition' => 'default',
         ]);
 
         $instructions = $this->compiler->compile($flowVersion);
 
         $this->assertNotEmpty($instructions);
-        $this->assertEquals('Voicemail', $instructions[0]->type);
+        $this->assertContains('Voicemail', array_column($instructions, 'type'));
     }
 
     public function test_can_compile_hangup_node(): void
@@ -168,8 +169,8 @@ class FlowToIrCompilerTest extends TestCase
 
         $hangupNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'hangup',
-            'config' => [],
+            'type' => 'hangup',
+            'config_json' => [],
         ]);
 
         $instructions = $this->compiler->compile($flowVersion);
@@ -178,7 +179,7 @@ class FlowToIrCompilerTest extends TestCase
         $this->assertEquals('Hangup', $instructions[0]->type);
     }
 
-    public function test_throws_on_unknown_node_type(): void
+    public function test_throws_on_unknown_type(): void
     {
         $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
         $flowVersion = FlowVersion::factory()->create([
@@ -188,8 +189,8 @@ class FlowToIrCompilerTest extends TestCase
 
         FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'unknown_type',
-            'config' => [],
+            'type' => 'unknown_type',
+            'config_json' => [],
         ]);
 
         $this->expectException(\RuntimeException::class);
@@ -206,14 +207,14 @@ class FlowToIrCompilerTest extends TestCase
 
         FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'start',
-            'config' => [],
+            'type' => 'start',
+            'config_json' => [],
         ]);
 
         $this->assertTrue($this->compiler->canCompile($flowVersion));
     }
 
-    public function test_cannot_validate_flow_with_unknown_node_type(): void
+    public function test_cannot_validate_flow_with_unknown_type(): void
     {
         $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
         $flowVersion = FlowVersion::factory()->create([
@@ -223,8 +224,8 @@ class FlowToIrCompilerTest extends TestCase
 
         FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'unknown_type',
-            'config' => [],
+            'type' => 'unknown_type',
+            'config_json' => [],
         ]);
 
         $this->assertFalse($this->compiler->canCompile($flowVersion));

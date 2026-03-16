@@ -11,7 +11,7 @@ class RingTeamNodeCompiler implements NodeCompiler
 {
     public function compile(FlowNode $node, array $outgoingEdges): array
     {
-        $config = $node->config ?? [];
+        $config = $node->config_json ?? [];
         $teamId = $config['team_id'] ?? null;
         $timeout = $config['timeout'] ?? 30;
         

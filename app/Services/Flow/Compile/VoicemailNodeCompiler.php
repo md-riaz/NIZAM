@@ -11,7 +11,7 @@ class VoicemailNodeCompiler implements NodeCompiler
 {
     public function compile(FlowNode $node, array $outgoingEdges): array
     {
-        $config = $node->config ?? [];
+        $config = $node->config_json ?? [];
         
         $transitions = [];
         foreach ($outgoingEdges as $edge) {

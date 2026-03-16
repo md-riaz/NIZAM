@@ -19,7 +19,7 @@ class ScheduleCheckNodeCompiler implements NodeCompiler
     {
         $instructions = [];
 
-        $config = $node->config ?? [];
+        $config = $node->config_json ?? [];
         $scheduleId = $config['schedule_id'] ?? null;
 
         // Build transition map from edges

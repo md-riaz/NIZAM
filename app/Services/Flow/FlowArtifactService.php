@@ -75,17 +75,29 @@ class FlowArtifactService
         $xml .= '  <section name="dialplan">'."\n";
         $xml .= '    <context name="'.$flowVersion->flow->tenant->domain.'">'."\n";
 
-        // Generate extension for this flow
-        $xml .= '      <extension name="flow_'.$flowVersion->flow->id.'">'."\n";
-        $xml .= '        <condition field="destination_number" expression="^flow_'.$flowVersion->flow->id.'$">'."\n";
-
-        // Generate dialplan actions from IR instructions
+        $startNodeId = null;
         foreach ($irInstructions as $instruction) {
-            $xml .= $this->generateInstructionXml($instruction);
+            if ($instruction->type === 'AnswerAndTransfer') {
+                $startNodeId = $instruction->params['node_id'] ?? null;
+                break;
+            }
         }
 
+        // Generate entry extension for this flow
+        $xml .= '      <extension name="flow_'.$flowVersion->flow->id.'">'."\n";
+        $xml .= '        <condition field="destination_number" expression="^flow_'.$flowVersion->flow->id.'$">'."\n";
+        if ($startNodeId) {
+            $xml .= '          <action application="transfer" data="node_'.$startNodeId.' XML default"/>'."\n";
+        } else {
+            $xml .= '          <action application="hangup"/>'."\n";
+        }
         $xml .= '        </condition>'."\n";
-        $xml .= '      </extension>'."\n";
+        $xml .= '      </extension>'."\n\n";
+
+        // Generate dialplan extensions for each IR instruction
+        foreach ($irInstructions as $instruction) {
+            $xml .= $this->generateInstructionXml($flowVersion, $instruction);
+        }
 
         $xml .= '    </context>'."\n";
         $xml .= '  </section>'."\n";
@@ -97,51 +109,158 @@ class FlowArtifactService
     /**
      * Generate XML for a single IR instruction.
      */
-    protected function generateInstructionXml(object $instruction): string
+    protected function generateInstructionXml(FlowVersion $flowVersion, object $instruction): string
     {
-        $xml = '';
+        $nodeId = $instruction->params['node_id'] ?? 'unknown';
+        $xml = '      <extension name="node_'.$nodeId.'">'."\n";
+        $xml .= '        <condition field="destination_number" expression="^node_'.$nodeId.'$">'."\n";
 
         // Generate condition based on instruction type
         switch ($instruction->type) {
             case 'AnswerAndTransfer':
                 $xml .= '          <action application="answer"/>'."\n";
-                if ($instruction->next_node_id) {
-                    $xml .= '          <action application="transfer" data="node_'.$instruction->next_node_id.' XML default"/>'."\n";
+                $nextNodeLabel = $instruction->transitions['next'] ?? null;
+                if ($nextNodeLabel) {
+                    $xml .= '          <action application="transfer" data="'.$nextNodeLabel.' XML default"/>'."\n";
+                } else {
+                    $xml .= '          <action application="hangup"/>'."\n";
                 }
                 break;
 
             case 'CheckSchedule':
-                // Schedule check is handled by ScheduleCompiler
-                $scheduleId = $instruction->config['schedule_id'] ?? null;
+                $scheduleId = $instruction->params['schedule_id'] ?? null;
                 if ($scheduleId) {
-                    $xml .= '          <action application="set" data="nizam_schedule_state=open"/>'."\n";
+                    // Set return node and state
+                    $xml .= '          <action application="set" data="nizam_schedule_state="/>'."\n";
+                    $xml .= '          <action application="set" data="nizam_schedule_return_node=node_'.$nodeId.'_resume"/>'."\n";
+                    // Transfer to schedule XML
                     $xml .= '          <action application="transfer" data="schedule_'.$scheduleId.' XML default"/>'."\n";
+                    
+                    // Resume extension
+                    $xml .= '        </condition>'."\n";
+                    $xml .= '      </extension>'."\n\n";
+                    
+                    $xml .= '      <extension name="node_'.$nodeId.'_resume">'."\n";
+                    $xml .= '        <condition field="destination_number" expression="^node_'.$nodeId.'_resume$">'."\n";
+                    $xml .= '          <action application="log" data="INFO Schedule state is ${nizam_schedule_state}"/>'."\n";
+                    
+                    // Route based on state
+                    foreach (['holiday', 'exception_open', 'exception_closed', 'break', 'open', 'closed'] as $state) {
+                        $target = $instruction->transitions[$state] ?? ($instruction->transitions['closed'] ?? null);
+                        if ($target) {
+                            $xml .= '          <condition field="${nizam_schedule_state}" expression="^'.$state.'$">'."\n";
+                            $xml .= '            <action application="transfer" data="'.$target.' XML default"/>'."\n";
+                            $xml .= '          </condition>'."\n";
+                        }
+                    }
+                    
+                    // Fallback
+                    $fallback = $instruction->transitions['closed'] ?? null;
+                    if ($fallback) {
+                        $xml .= '          <action application="transfer" data="'.$fallback.' XML default"/>'."\n";
+                    } else {
+                        $xml .= '          <action application="hangup"/>'."\n";
+                    }
+                } else {
+                    $fallback = $instruction->transitions['open'] ?? null;
+                    if ($fallback) {
+                        $xml .= '          <action application="transfer" data="'.$fallback.' XML default"/>'."\n";
+                    } else {
+                        $xml .= '          <action application="hangup"/>'."\n";
+                    }
                 }
                 break;
 
             case 'CollectDigits':
                 // Menu digit collection
-                $xml .= '          <action application="read" data="1 1 1 # digit 5000"/>'."\n";
+                $config = $instruction->params['config'] ?? [];
+                $minDigits = $config['min_digits'] ?? 1;
+                $maxDigits = $config['max_digits'] ?? 1;
+                $maxTries = $config['max_tries'] ?? 3;
+                $timeout = $config['timeout'] ?? 5000;
+                $terminators = $config['terminators'] ?? '#';
+                $prompt = $config['prompt'] ?? 'silence_stream://1000';
+                
+                $xml .= '          <action application="play_and_get_digits" data="'.$minDigits.' '.$maxDigits.' '.$maxTries.' '.$timeout.' '.$terminators.' '.$prompt.' silence_stream://250 nizam_menu_digits \d+"/>'."\n";
+                
+                foreach ($instruction->transitions as $result => $targetLabel) {
+                    if (str_starts_with($result, 'digit_')) {
+                        $digit = str_replace('digit_', '', $result);
+                        $xml .= '          <condition field="${nizam_menu_digits}" expression="^'.$digit.'$">'."\n";
+                        $xml .= '            <action application="transfer" data="'.$targetLabel.' XML default"/>'."\n";
+                        $xml .= '          </condition>'."\n";
+                    }
+                }
+                
+                $timeoutTarget = $instruction->transitions['timeout'] ?? null;
+                if ($timeoutTarget) {
+                    $xml .= '          <condition field="${nizam_menu_digits}" expression="^$">'."\n";
+                    $xml .= '            <action application="transfer" data="'.$timeoutTarget.' XML default"/>'."\n";
+                    $xml .= '          </condition>'."\n";
+                }
+                
+                $invalidTarget = $instruction->transitions['invalid'] ?? null;
+                if ($invalidTarget) {
+                    $xml .= '          <action application="transfer" data="'.$invalidTarget.' XML default"/>'."\n";
+                } elseif ($timeoutTarget) {
+                    $xml .= '          <action application="transfer" data="'.$timeoutTarget.' XML default"/>'."\n";
+                } else {
+                    $xml .= '          <action application="hangup"/>'."\n";
+                }
                 break;
 
             case 'BridgeTeam':
                 // Team routing with Lua helper
-                $teamId = $instruction->config['team_id'] ?? null;
-                $timeout = $instruction->config['timeout'] ?? 30;
-                if ($teamId) {
-                    $xml .= '          <action application="lua" data="/usr/local/freeswitch/scripts/nizam_ring_team.lua"/>'."\n";
+                $teamId = $instruction->params['team_id'] ?? null;
+                $timeout = $instruction->params['timeout'] ?? 30;
+                
+                $answeredTarget = $instruction->transitions['answered'] ?? 'null';
+                $noAnswerTarget = $instruction->transitions['no_answer'] ?? 'null';
+                $timeoutTarget = $instruction->transitions['timeout'] ?? $noAnswerTarget;
+                
+                $tenant = $flowVersion->flow->tenant;
+                $ringGroup = $tenant->ringGroups()->find($teamId);
+                
+                $dialString = '';
+                if ($ringGroup) {
+                    $memberIds = $ringGroup->members ?? [];
+                    $extensions = $tenant->extensions()->whereIn('id', $memberIds)->where('is_active', true)->get();
+                    if ($extensions->isNotEmpty()) {
+                        $strings = $extensions->map(fn ($ext) => 'user/'.$ext->extension.'@'.$tenant->domain);
+                        $dialString = $strings->implode($ringGroup->strategy === 'simultaneous' ? ',' : '|');
+                    }
+                }
+                
+                if (empty($dialString)) {
+                    $xml .= '          <action application="log" data="WARNING BridgeTeam node_'.$nodeId.' resolved to empty dial string"/>'."\n";
+                    $xml .= '          <action application="transfer" data="'.$noAnswerTarget.' XML default"/>'."\n";
+                } else {
+                    $xml .= '          <action application="set" data="team_id='.$teamId.'"/>'."\n";
+                    $xml .= '          <action application="lua" data="/usr/local/freeswitch/scripts/nizam_ring_team.lua \''.$dialString.'\' '.$timeout.' '.$answeredTarget.' '.$noAnswerTarget.' '.$timeoutTarget.'"/>'."\n";
                 }
                 break;
 
             case 'Voicemail':
                 // Voicemail handling
-                $xml .= '          <action application="voicemail" data="default ${domain} ${destination_number}"/>'."\n";
+                $config = $instruction->params['config'] ?? [];
+                $extension = $config['extension'] ?? '${destination_number}';
+                $xml .= '          <action application="voicemail" data="default ${domain_name} '.$extension.'"/>'."\n";
+                
+                $completedTarget = $instruction->transitions['completed'] ?? null;
+                if ($completedTarget) {
+                    $xml .= '          <action application="transfer" data="'.$completedTarget.' XML default"/>'."\n";
+                } else {
+                    $xml .= '          <action application="hangup"/>'."\n";
+                }
                 break;
 
             case 'Hangup':
                 $xml .= '          <action application="hangup"/>'."\n";
                 break;
         }
+
+        $xml .= '        </condition>'."\n";
+        $xml .= '      </extension>'."\n\n";
 
         return $xml;
     }

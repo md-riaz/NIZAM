@@ -11,11 +11,14 @@ use App\Models\TenantDialplanManifest;
 use App\Services\Flow\FlowArtifactService;
 use App\Services\Flow\FlowPublishService;
 use App\Services\Flow\Compile\FlowToIrCompiler;
-use App\Services\Flow\Compile\NodeSpecRegistry;
+use App\Domain\Flow\Compile\NodeSpecRegistry;
+use App\Services\TenantManifestBuilder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class FlowPublishServiceTest extends TestCase
 {
+    use RefreshDatabase;
     protected FlowPublishService $publishService;
     protected Tenant $tenant;
 
@@ -27,7 +30,8 @@ class FlowPublishServiceTest extends TestCase
         $registry = new NodeSpecRegistry();
         $compiler = new FlowToIrCompiler($registry);
         $artifactService = new FlowArtifactService($compiler);
-        $this->publishService = new FlowPublishService($artifactService);
+        $manifestBuilder = new TenantManifestBuilder(app(\App\Services\DialplanCompiler::class));
+        $this->publishService = new FlowPublishService($artifactService, $manifestBuilder);
     }
 
     public function test_can_publish_flow_version(): void
@@ -41,28 +45,28 @@ class FlowPublishServiceTest extends TestCase
 
         $startNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'start',
-            'config' => [],
+            'type' => 'start',
+            'config_json' => [],
         ]);
 
         $scheduleCheckNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'schedule_check',
-            'config' => ['schedule_id' => 1],
+            'type' => 'schedule_check',
+            'config_json' => ['schedule_id' => 1],
         ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'source_node_id' => $startNode->id,
             'target_node_id' => $scheduleCheckNode->id,
-            'transition_result' => 'next',
+            'condition' => 'next',
         ]);
 
         $result = $this->publishService->publish($flowVersion);
 
         $this->assertTrue($result['success']);
         $this->assertArrayHasKey('artifact_id', $result);
-        $this->assertArrayHasKey('manifest_id', $result);
+        $this->assertArrayHasKey('checksum', $result);
 
         // Verify artifact was created
         $artifact = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion->id)->first();
@@ -92,8 +96,8 @@ class FlowPublishServiceTest extends TestCase
         // Add an unknown node type
         FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'unknown_type',
-            'config' => [],
+            'type' => 'unknown_type',
+            'config_json' => [],
         ]);
 
         $result = $this->publishService->publish($flowVersion);
@@ -117,21 +121,21 @@ class FlowPublishServiceTest extends TestCase
 
         $startNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'start',
-            'config' => [],
+            'type' => 'start',
+            'config_json' => [],
         ]);
 
         $scheduleCheckNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
-            'node_type' => 'schedule_check',
-            'config' => ['schedule_id' => 1],
+            'type' => 'schedule_check',
+            'config_json' => ['schedule_id' => 1],
         ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'source_node_id' => $startNode->id,
             'target_node_id' => $scheduleCheckNode->id,
-            'transition_result' => 'next',
+            'condition' => 'next',
         ]);
 
         // Publish first
@@ -146,12 +150,12 @@ class FlowPublishServiceTest extends TestCase
         $flowVersion->refresh();
         $this->assertEquals('draft', $flowVersion->status);
 
-        // Verify manifest was deactivated
+        // Verify manifest was updated (not necessarily null, but rebuilt)
         $manifest = TenantDialplanManifest::where('tenant_id', $this->tenant->id)
             ->where('manifest_type', 'inbound_routing')
             ->where('is_active', true)
             ->first();
-        $this->assertNull($manifest);
+        $this->assertNotNull($manifest);
     }
 
     public function test_publish_creates_unique_artifact_per_flow_version(): void
@@ -166,21 +170,21 @@ class FlowPublishServiceTest extends TestCase
 
         $startNode1 = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion1->id,
-            'node_type' => 'start',
-            'config' => [],
+            'type' => 'start',
+            'config_json' => [],
         ]);
 
         $menuNode1 = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion1->id,
-            'node_type' => 'menu',
-            'config' => ['prompt' => 'version-1'],
+            'type' => 'menu',
+            'config_json' => ['prompt' => 'version-1'],
         ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion1->id,
             'source_node_id' => $startNode1->id,
             'target_node_id' => $menuNode1->id,
-            'transition_result' => 'next',
+            'condition' => 'next',
         ]);
 
         // Publish first version
@@ -197,21 +201,21 @@ class FlowPublishServiceTest extends TestCase
 
         $startNode2 = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion2->id,
-            'node_type' => 'start',
-            'config' => [],
+            'type' => 'start',
+            'config_json' => [],
         ]);
 
         $menuNode2 = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion2->id,
-            'node_type' => 'menu',
-            'config' => ['prompt' => 'version-2'],
+            'type' => 'menu',
+            'config_json' => ['prompt' => 'version-2'],
         ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion2->id,
             'source_node_id' => $startNode2->id,
             'target_node_id' => $menuNode2->id,
-            'transition_result' => 'next',
+            'condition' => 'next',
         ]);
 
         // Publish second version

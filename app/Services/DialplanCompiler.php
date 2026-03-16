@@ -253,10 +253,9 @@ class DialplanCompiler
         return $basePath.'/'.$tenant->id;
     }
 
-    protected function compileDidRouting(Tenant $tenant, Did $did): string
+    public function compileDidExtension(Tenant $tenant, Did $did): string
     {
-        $xml = $this->dialplanHeader($tenant->domain);
-        $xml .= '        <extension name="did-'.htmlspecialchars($did->number, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml = '        <extension name="did-'.htmlspecialchars($did->number, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($did->number, '/').'$">'."\n";
         $xml .= $this->compileConcurrentCallLimit($tenant);
 
@@ -308,7 +307,27 @@ class DialplanCompiler
 
         $xml .= '          </condition>'."\n";
         $xml .= '        </extension>'."\n";
+
+        return $xml;
+    }
+
+    protected function compileDidRouting(Tenant $tenant, Did $did): string
+    {
+        $xml = $this->dialplanHeader($tenant->domain);
+        $xml .= $this->compileDidExtension($tenant, $did);
         $xml .= $this->dialplanFooter();
+
+        return $xml;
+    }
+
+    public function compileLocalExtension(Tenant $tenant, Extension $extension): string
+    {
+        $xml = '        <extension name="local-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
+        $xml .= $this->compileConcurrentCallLimit($tenant);
+        $xml .= '            <action application="bridge" data="user/'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
 
         return $xml;
     }
@@ -316,12 +335,7 @@ class DialplanCompiler
     protected function compileExtensionDialplan(Tenant $tenant, Extension $extension): string
     {
         $xml = $this->dialplanHeader($tenant->domain);
-        $xml .= '        <extension name="local-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
-        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
-        $xml .= $this->compileConcurrentCallLimit($tenant);
-        $xml .= '            <action application="bridge" data="user/'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-        $xml .= '          </condition>'."\n";
-        $xml .= '        </extension>'."\n";
+        $xml .= $this->compileLocalExtension($tenant, $extension);
         $xml .= $this->dialplanFooter();
 
         return $xml;

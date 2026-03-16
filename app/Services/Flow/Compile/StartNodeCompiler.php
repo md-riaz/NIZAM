@@ -31,7 +31,7 @@ class StartNodeCompiler implements NodeCompiler
         $instruction = IrInstruction::make('AnswerAndTransfer', [
             'node_id' => $node->id,
             'node_type' => 'start',
-            'config' => $node->config ?? [],
+            'config' => $node->config_json ?? [],
             'next_node_id' => $nextNodeId,
         ]);
 

@@ -56,23 +56,23 @@ class FlowToIrCompiler
         $instructions = [];
 
         foreach ($flowVersion->nodes as $node) {
-            $spec = $this->nodeSpecRegistry->get($node->node_type);
+            $spec = $this->nodeSpecRegistry->get($node->type);
 
             if (!$spec) {
-                throw new RuntimeException("Unknown node type: {$node->node_type}");
+                throw new RuntimeException("Unknown node type: {$node->type}");
             }
 
             $nodeEdges = $edgesBySource[$node->id] ?? collect([]);
             // Convert to array of FlowEdge models
             $nodeEdgesArray = $nodeEdges->all();
 
-            $compiler = $this->nodeCompilers[$node->node_type] ?? null;
+            $compiler = $this->nodeCompilers[$node->type] ?? null;
 
             if (!$compiler) {
                 // Fallback or just throw if we want strictly modular
-                // throw new RuntimeException("No NodeCompiler registered for type: {$node->node_type}");
+                // throw new RuntimeException("No NodeCompiler registered for type: {$node->type}");
                 // For now, let's throw to enforce modular compilation
-                throw new RuntimeException("No NodeCompiler registered for type: {$node->node_type}");
+                throw new RuntimeException("No NodeCompiler registered for type: {$node->type}");
             }
 
             $nodeInstructions = $compiler->compile($node, $nodeEdgesArray);
@@ -91,10 +91,10 @@ class FlowToIrCompiler
     public function canCompile(FlowVersion $flowVersion): bool
     {
         foreach ($flowVersion->nodes as $node) {
-            if (!$this->nodeSpecRegistry->has($node->node_type)) {
+            if (!$this->nodeSpecRegistry->has($node->type)) {
                 return false;
             }
-            if (!isset($this->nodeCompilers[$node->node_type])) {
+            if (!isset($this->nodeCompilers[$node->type])) {
                 return false;
             }
         }

@@ -3,13 +3,14 @@
 namespace App\Services\Flow;
 
 use App\Models\FlowVersion;
-use App\Models\TenantDialplanManifest;
+use App\Services\TenantManifestBuilder;
 use Illuminate\Support\Facades\DB;
 
 class FlowPublishService
 {
     public function __construct(
         protected FlowArtifactService $artifactService,
+        protected TenantManifestBuilder $manifestBuilder,
     ) {}
 
     /**
@@ -18,8 +19,7 @@ class FlowPublishService
      * This method:
      * 1. Compiles the flow into IR and generates dialplan XML
      * 2. Stores the compiled artifact
-     * 3. Creates/updates the tenant's dialplan manifest
-     * 4. Activates the manifest for the tenant
+     * 3. Rebuilds and activates the tenant's complete dialplan manifest
      *
      * If compilation fails, the publish fails and no changes are made.
      */
@@ -50,28 +50,18 @@ class FlowPublishService
                 throw new \RuntimeException($artifactResult['error']);
             }
 
-            // Step 2: Create/update the tenant's dialplan manifest
-            $manifest = TenantDialplanManifest::updateOrCreate(
-                [
-                    'tenant_id' => $flowVersion->flow->tenant_id,
-                    'manifest_type' => 'inbound_routing',
-                ],
-                [
-                    'content' => $artifactResult['content'] ?? '',
-                    'checksum' => $artifactResult['checksum'],
-                ]
-            );
-
-            // Step 3: Activate the manifest
-            $this->artifactService->activateManifest($manifest);
-
-            // Update flow version status
+            // Update flow version status so the builder picks it up
             $flowVersion->update(['status' => 'published']);
+            
+            // Also need to ensure this is the active version for the flow
+            $flowVersion->flow->update(['active_version_id' => $flowVersion->id]);
+
+            // Step 2 & 3: Rebuild and activate the tenant's complete manifest
+            $this->manifestBuilder->buildAndActivate($flowVersion->flow->tenant);
 
             return [
                 'success' => true,
                 'artifact_id' => $artifactResult['artifact_id'] ?? null,
-                'manifest_id' => $manifest->id,
                 'checksum' => $artifactResult['checksum'],
             ];
         });
@@ -79,21 +69,29 @@ class FlowPublishService
 
     /**
      * Rollback a published flow version.
-     *
-     * This deactivates the tenant's manifest, effectively rolling back
-     * to the previous state (or interpreted mode if no previous manifest exists).
      */
     public function rollback(FlowVersion $flowVersion): bool
     {
         return DB::transaction(function () use ($flowVersion) {
-            // Deactivate the tenant's manifest
-            TenantDialplanManifest::where('tenant_id', $flowVersion->flow->tenant_id)
-                ->where('manifest_type', 'inbound_routing')
-                ->where('is_active', true)
-                ->update(['is_active' => false]);
-
-            // Update flow version status
-            return $flowVersion->update(['status' => 'draft']);
+            // Revert flow version status
+            $flowVersion->update(['status' => 'draft']);
+            
+            // Clear active version if it was this one
+            if ($flowVersion->flow->active_version_id === $flowVersion->id) {
+                // Find previous published version or set null
+                $prev = $flowVersion->flow->versions()
+                    ->where('status', 'published')
+                    ->where('id', '!=', $flowVersion->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                    
+                $flowVersion->flow->update(['active_version_id' => $prev?->id]);
+            }
+            
+            // Rebuild manifest without this flow version
+            $this->manifestBuilder->buildAndActivate($flowVersion->flow->tenant);
+            
+            return true;
         });
     }
 }
