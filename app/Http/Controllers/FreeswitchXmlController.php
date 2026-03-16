@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
+use App\Models\TenantDialplanManifest;
 use App\Services\Call\CallEventIngestionService;
 use App\Services\Call\CallSessionService;
 use App\Services\Call\TraceWriter;
@@ -58,75 +59,88 @@ class FreeswitchXmlController extends Controller
     {
         $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
 
-        if ($tenant && $tenant->isOperational()) {
-            $callUuid = (string) ($requestPayload['Unique-ID'] ?? $requestPayload['Channel-Call-UUID'] ?? $requestPayload['variable_uuid'] ?? '');
+        if (!$tenant || !$tenant->isOperational()) {
+            return $this->notFoundResponse();
+        }
 
-            if ($callUuid !== '') {
-                $gatewayContext = $this->gatewayResolutionService->resolveFromXmlCurl($tenant, $requestPayload);
-                $did = $this->numberRoutingService->resolveInboundDid(
-                    $tenant,
-                    $destinationNumber,
-                    $gatewayContext['gateway'] ?? null,
-                    $gatewayContext['gateway_registration'] ?? null,
-                );
+        // STEP 7: Serve compiled manifest if available
+        $manifest = TenantDialplanManifest::where('tenant_id', $tenant->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
 
-                $flow = $did?->destination_type === 'flow'
-                    ? $did->destination
-                    : null;
-                $flowVersion = $flow?->activeVersion;
+        if ($manifest) {
+            return response($manifest->content, 200, ['Content-Type' => 'text/xml']);
+        }
 
-                $session = $this->callSessionService->getOrCreateInboundSession(
-                    $tenant,
-                    $callUuid,
-                    $did,
-                    [
-                        'domain' => $domain,
-                        'destination_number' => $destinationNumber,
-                        'caller_id_number' => $callerIdNumber,
-                        'gateway_id' => $gatewayContext['gateway']?->id,
-                        'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
-                    ],
-                );
+        // FALLBACK: Interpreted runtime (Legacy)
+        $callUuid = (string) ($requestPayload['Unique-ID'] ?? $requestPayload['Channel-Call-UUID'] ?? $requestPayload['variable_uuid'] ?? '');
 
-                if ($flowVersion) {
-                    $session->forceFill([
-                        'flow_version_id' => $flowVersion->id,
-                    ])->save();
-                }
+        if ($callUuid !== '') {
+            $gatewayContext = $this->gatewayResolutionService->resolveFromXmlCurl($tenant, $requestPayload);
+            $did = $this->numberRoutingService->resolveInboundDid(
+                $tenant,
+                $destinationNumber,
+                $gatewayContext['gateway'] ?? null,
+                $gatewayContext['gateway_registration'] ?? null,
+            );
 
-                $this->traceWriter->write($session, 'dialplan.lookup.started', [
+            $flow = $did?->destination_type === 'flow'
+                ? $did->destination
+                : null;
+            $flowVersion = $flow?->activeVersion;
+
+            $session = $this->callSessionService->getOrCreateInboundSession(
+                $tenant,
+                $callUuid,
+                $did,
+                [
+                    'domain' => $domain,
+                    'destination_number' => $destinationNumber,
+                    'caller_id_number' => $callerIdNumber,
+                    'gateway_id' => $gatewayContext['gateway']?->id,
+                    'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
+                ],
+            );
+
+            if ($flowVersion) {
+                $session->forceFill([
+                    'flow_version_id' => $flowVersion->id,
+                ])->save();
+            }
+
+            $this->traceWriter->write($session, 'dialplan.lookup.started', [
+                'domain' => $domain,
+                'destination_number' => $destinationNumber,
+                'caller_id_number' => $callerIdNumber,
+                'gateway_id' => $gatewayContext['gateway']?->id,
+                'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
+                'did_id' => $did?->id,
+                'destination_type' => $did?->destination_type,
+                'flow_id' => $flow?->id,
+                'flow_version_id' => $flowVersion?->id,
+            ]);
+
+            $this->callEventIngestionService->ingest(
+                $tenant,
+                'call.started',
+                $callUuid,
+                [
                     'domain' => $domain,
                     'destination_number' => $destinationNumber,
                     'caller_id_number' => $callerIdNumber,
                     'gateway_id' => $gatewayContext['gateway']?->id,
                     'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                     'did_id' => $did?->id,
-                    'destination_type' => $did?->destination_type,
                     'flow_id' => $flow?->id,
                     'flow_version_id' => $flowVersion?->id,
-                ]);
+                ],
+                $session,
+                'xml_curl'
+            );
 
-                $this->callEventIngestionService->ingest(
-                    $tenant,
-                    'call.started',
-                    $callUuid,
-                    [
-                        'domain' => $domain,
-                        'destination_number' => $destinationNumber,
-                        'caller_id_number' => $callerIdNumber,
-                        'gateway_id' => $gatewayContext['gateway']?->id,
-                        'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
-                        'did_id' => $did?->id,
-                        'flow_id' => $flow?->id,
-                        'flow_version_id' => $flowVersion?->id,
-                    ],
-                    $session,
-                    'xml_curl'
-                );
-
-                if ($flowVersion) {
-                    $this->flowRuntimeStarter->start($session, $flowVersion);
-                }
+            if ($flowVersion) {
+                $this->flowRuntimeStarter->start($session, $flowVersion);
             }
         }
 
