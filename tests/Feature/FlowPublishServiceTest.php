@@ -1,0 +1,229 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Flow;
+use App\Models\FlowEdge;
+use App\Models\FlowNode;
+use App\Models\FlowVersion;
+use App\Models\Tenant;
+use App\Models\TenantDialplanManifest;
+use App\Services\Flow\FlowArtifactService;
+use App\Services\Flow\FlowPublishService;
+use App\Services\Flow\Compile\FlowToIrCompiler;
+use App\Services\Flow\Compile\NodeSpecRegistry;
+use Tests\TestCase;
+
+class FlowPublishServiceTest extends TestCase
+{
+    protected FlowPublishService $publishService;
+    protected Tenant $tenant;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
+        $registry = new NodeSpecRegistry();
+        $compiler = new FlowToIrCompiler($registry);
+        $artifactService = new FlowArtifactService($compiler);
+        $this->publishService = new FlowPublishService($artifactService);
+    }
+
+    public function test_can_publish_flow_version(): void
+    {
+        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flowVersion = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'status' => 'draft',
+            'definition_json' => [],
+        ]);
+
+        $startNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'node_type' => 'start',
+            'config' => [],
+        ]);
+
+        $scheduleCheckNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'node_type' => 'schedule_check',
+            'config' => ['schedule_id' => 1],
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $startNode->id,
+            'target_node_id' => $scheduleCheckNode->id,
+            'transition_result' => 'next',
+        ]);
+
+        $result = $this->publishService->publish($flowVersion);
+
+        $this->assertTrue($result['success']);
+        $this->assertArrayHasKey('artifact_id', $result);
+        $this->assertArrayHasKey('manifest_id', $result);
+
+        // Verify artifact was created
+        $artifact = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion->id)->first();
+        $this->assertNotNull($artifact);
+
+        // Verify manifest was created and activated
+        $manifest = TenantDialplanManifest::where('tenant_id', $this->tenant->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
+        $this->assertNotNull($manifest);
+
+        // Verify flow version status was updated
+        $flowVersion->refresh();
+        $this->assertEquals('published', $flowVersion->status);
+    }
+
+    public function test_publish_fails_for_invalid_flow(): void
+    {
+        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flowVersion = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'status' => 'draft',
+            'definition_json' => [],
+        ]);
+
+        // Add an unknown node type
+        FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'node_type' => 'unknown_type',
+            'config' => [],
+        ]);
+
+        $result = $this->publishService->publish($flowVersion);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('compiler', $result['error']);
+
+        // Verify no artifact was created
+        $artifact = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion->id)->first();
+        $this->assertNull($artifact);
+    }
+
+    public function test_rollback_flow_version(): void
+    {
+        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flowVersion = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'status' => 'published',
+            'definition_json' => [],
+        ]);
+
+        $startNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'node_type' => 'start',
+            'config' => [],
+        ]);
+
+        $scheduleCheckNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'node_type' => 'schedule_check',
+            'config' => ['schedule_id' => 1],
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $startNode->id,
+            'target_node_id' => $scheduleCheckNode->id,
+            'transition_result' => 'next',
+        ]);
+
+        // Publish first
+        $this->publishService->publish($flowVersion);
+
+        // Rollback
+        $result = $this->publishService->rollback($flowVersion);
+
+        $this->assertTrue($result);
+
+        // Verify flow version status was updated
+        $flowVersion->refresh();
+        $this->assertEquals('draft', $flowVersion->status);
+
+        // Verify manifest was deactivated
+        $manifest = TenantDialplanManifest::where('tenant_id', $this->tenant->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
+        $this->assertNull($manifest);
+    }
+
+    public function test_publish_creates_unique_artifact_per_flow_version(): void
+    {
+        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flowVersion1 = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'version_number' => 1,
+            'status' => 'draft',
+            'definition_json' => [],
+        ]);
+
+        $startNode1 = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion1->id,
+            'node_type' => 'start',
+            'config' => [],
+        ]);
+
+        $menuNode1 = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion1->id,
+            'node_type' => 'menu',
+            'config' => ['prompt' => 'version-1'],
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion1->id,
+            'source_node_id' => $startNode1->id,
+            'target_node_id' => $menuNode1->id,
+            'transition_result' => 'next',
+        ]);
+
+        // Publish first version
+        $result1 = $this->publishService->publish($flowVersion1);
+        $this->assertTrue($result1['success']);
+
+        // Create second version
+        $flowVersion2 = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'version_number' => 2,
+            'status' => 'draft',
+            'definition_json' => [],
+        ]);
+
+        $startNode2 = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion2->id,
+            'node_type' => 'start',
+            'config' => [],
+        ]);
+
+        $menuNode2 = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion2->id,
+            'node_type' => 'menu',
+            'config' => ['prompt' => 'version-2'],
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion2->id,
+            'source_node_id' => $startNode2->id,
+            'target_node_id' => $menuNode2->id,
+            'transition_result' => 'next',
+        ]);
+
+        // Publish second version
+        $result2 = $this->publishService->publish($flowVersion2);
+        $this->assertTrue($result2['success']);
+
+        // Verify both artifacts exist
+        $artifact1 = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion1->id)->first();
+        $artifact2 = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion2->id)->first();
+
+        $this->assertNotNull($artifact1);
+        $this->assertNotNull($artifact2);
+        $this->assertNotEquals($artifact1->checksum, $artifact2->checksum);
+    }
+}
