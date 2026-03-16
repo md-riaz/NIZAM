@@ -5,6 +5,7 @@ namespace App\Services\Flow\Compile;
 use App\Domain\Flow\Compile\IrInstruction;
 use App\Domain\Flow\Compile\NodeSpecRegistry;
 use App\Models\FlowVersion;
+use App\Services\Flow\Compile\Contracts\NodeCompiler;
 use RuntimeException;
 
 /**
@@ -15,9 +16,29 @@ use RuntimeException;
  */
 class FlowToIrCompiler
 {
+    /**
+     * @var array<string, NodeCompiler>
+     */
+    protected array $nodeCompilers = [];
+
     public function __construct(
         protected NodeSpecRegistry $nodeSpecRegistry,
-    ) {}
+    ) {
+        $this->registerCompilers([
+            new StartNodeCompiler(),
+            new ScheduleCheckNodeCompiler(),
+            new MenuNodeCompiler(),
+            new VoicemailNodeCompiler(),
+            new HangupNodeCompiler(),
+        ]);
+    }
+
+    public function registerCompilers(array $compilers): void
+    {
+        foreach ($compilers as $compiler) {
+            $this->nodeCompilers[$compiler->nodeType()] = $compiler;
+        }
+    }
 
     /**
      * Compile a flow version into a list of IR instructions.
@@ -40,51 +61,27 @@ class FlowToIrCompiler
                 throw new RuntimeException("Unknown node type: {$node->node_type}");
             }
 
-            $nodeEdges = $edgesBySource[$node->id] ?? [];
+            $nodeEdges = $edgesBySource[$node->id] ?? collect([]);
+            // Convert to array of FlowEdge models
+            $nodeEdgesArray = $nodeEdges->all();
 
-            $instruction = $this->compileNode($node, $spec, $nodeEdges, $nodes);
+            $compiler = $this->nodeCompilers[$node->node_type] ?? null;
 
-            if ($instruction) {
+            if (!$compiler) {
+                // Fallback or just throw if we want strictly modular
+                // throw new RuntimeException("No NodeCompiler registered for type: {$node->node_type}");
+                // For now, let's throw to enforce modular compilation
+                throw new RuntimeException("No NodeCompiler registered for type: {$node->node_type}");
+            }
+
+            $nodeInstructions = $compiler->compile($node, $nodeEdgesArray);
+            
+            foreach ($nodeInstructions as $instruction) {
                 $instructions[] = $instruction;
             }
         }
 
         return $instructions;
-    }
-
-    /**
-     * Compile a single node into an IR instruction.
-     */
-    protected function compileNode(
-        object $node,
-        object $spec,
-        array $edges,
-        object $nodes
-    ): ?IrInstruction {
-        $instruction = IrInstruction::make($spec->irType, [
-            'node_id' => $node->id,
-            'node_type' => $node->node_type,
-            'config' => $node->config ?? [],
-        ]);
-
-        // Build transitions from edges
-        foreach ($edges as $edge) {
-            $targetNode = $nodes[$edge->target_node_id] ?? null;
-
-            if (!$targetNode) {
-                continue;
-            }
-
-            $transitionResult = $edge->transition_result ?? 'next';
-            $targetLabel = "node_{$targetNode->id}";
-
-            $instruction->withTransition($transitionResult, $targetLabel);
-        }
-
-        // Set label for this node
-        $instruction->withLabel("node_{$node->id}");
-
-        return $instruction;
     }
 
     /**
@@ -94,6 +91,9 @@ class FlowToIrCompiler
     {
         foreach ($flowVersion->nodes as $node) {
             if (!$this->nodeSpecRegistry->has($node->node_type)) {
+                return false;
+            }
+            if (!isset($this->nodeCompilers[$node->node_type])) {
                 return false;
             }
         }
