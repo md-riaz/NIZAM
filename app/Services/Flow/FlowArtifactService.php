@@ -14,6 +14,11 @@ class FlowArtifactService
         protected FlowToIrCompiler $flowToIrCompiler,
     ) {}
 
+    public function getFlowToIrCompiler(): FlowToIrCompiler
+    {
+        return $this->flowToIrCompiler;
+    }
+
     /**
      * Compile and store flow artifacts for a flow version.
      *
