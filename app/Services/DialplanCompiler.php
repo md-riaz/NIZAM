@@ -300,8 +300,8 @@ class DialplanCompiler
             case 'flow':
                 $flow = $tenant->flows()->find($did->destination_id);
                 if ($flow) {
-                    $xml .= '            <action application="answer"/>'."\n";
-                    $xml .= '            <action application="park"/>'."\n";
+                    // STEP 8: Route to compiled flow entry extension instead of answer + park
+                    $xml .= '            <action application="transfer" data="flow_'.$flow->id.' XML default"/>'."\n";
                 }
                 break;
         }
