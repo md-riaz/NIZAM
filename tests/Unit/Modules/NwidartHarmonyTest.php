@@ -6,6 +6,7 @@ use App\Modules\Contracts\NizamModule as NizamModuleContract;
 use App\Modules\ModuleRegistry;
 use App\Providers\AppServiceProvider;
 use Nwidart\Modules\Facades\Module as NwidartModule;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -17,6 +18,7 @@ use Tests\TestCase;
  */
 class NwidartHarmonyTest extends TestCase
 {
+    use RefreshDatabase;
     // =========================================================================
     // DISCOVERY
     // =========================================================================

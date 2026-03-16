@@ -1235,17 +1235,9 @@ class SystemCheckpointAuditTest extends TestCase
 
     public function test_cp12_recording_metadata_prepared_for_ai(): void
     {
-        $recording = Recording::create([
+        $recording = Recording::factory()->create([
             'tenant_id' => $this->tenantA->id,
             'call_uuid' => (string) Str::uuid(),
-            'file_path' => '/recordings/test.wav',
-            'file_name' => 'test.wav',
-            'file_size' => 1024,
-            'format' => 'wav',
-            'duration' => 60,
-            'direction' => 'inbound',
-            'caller_id_number' => '+15551234567',
-            'destination_number' => '1001',
             'queue_name' => 'Support Queue',
             'agent_id' => 'agent-uuid',
             'wait_time' => 15,

@@ -20,22 +20,13 @@ class RecordingEnrichmentTest extends TestCase
             'max_extensions' => 50,
         ]);
 
-        $recording = Recording::create([
+        $recording = Recording::factory()->create([
             'tenant_id' => $tenant->id,
             'call_uuid' => 'test-uuid-123',
-            'file_path' => '/recordings/test.wav',
-            'file_name' => 'test.wav',
-            'file_size' => 1024,
-            'format' => 'wav',
-            'duration' => 60,
-            'direction' => 'inbound',
-            'caller_id_number' => '+15551234567',
-            'destination_number' => '1001',
             'queue_name' => 'Support Queue',
             'agent_id' => 'agent-uuid-123',
             'wait_time' => 15,
             'outcome' => 'answered',
-            'abandon_reason' => null,
         ]);
 
         $this->assertDatabaseHas('recordings', [
@@ -60,17 +51,9 @@ class RecordingEnrichmentTest extends TestCase
             'max_extensions' => 50,
         ]);
 
-        $recording = Recording::create([
+        $recording = Recording::factory()->create([
             'tenant_id' => $tenant->id,
             'call_uuid' => 'test-uuid-456',
-            'file_path' => '/recordings/test2.wav',
-            'file_name' => 'test2.wav',
-            'file_size' => 2048,
-            'format' => 'wav',
-            'duration' => 30,
-            'direction' => 'outbound',
-            'caller_id_number' => '+15551234567',
-            'destination_number' => '1002',
         ]);
 
         $recording->refresh();
@@ -90,17 +73,9 @@ class RecordingEnrichmentTest extends TestCase
             'max_extensions' => 50,
         ]);
 
-        $recording = Recording::create([
+        $recording = Recording::factory()->create([
             'tenant_id' => $tenant->id,
             'call_uuid' => 'test-uuid-789',
-            'file_path' => '/recordings/test3.wav',
-            'file_name' => 'test3.wav',
-            'file_size' => 512,
-            'format' => 'wav',
-            'duration' => 5,
-            'direction' => 'inbound',
-            'caller_id_number' => '+15559876543',
-            'destination_number' => '1001',
             'queue_name' => 'Sales Queue',
             'wait_time' => 120,
             'outcome' => 'abandoned',

@@ -12,6 +12,9 @@ class Recording extends Model
 {
     use Auditable, HasFactory;
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'tenant_id',
         'call_uuid',

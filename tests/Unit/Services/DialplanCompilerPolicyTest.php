@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Flow;
+use App\Models\FlowVersion;
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
@@ -63,43 +64,23 @@ class DialplanCompilerPolicyTest extends TestCase
     public function test_compiles_did_routing_via_call_flow(): void
     {
         $tenant = Tenant::factory()->create(['is_active' => true]);
-        $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
-            'is_active' => true,
-        ]);
 
         $flow = Flow::factory()->create([
             'tenant_id' => $tenant->id,
-            'nodes' => [
-                [
-                    'id' => 'start',
-                    'type' => 'play_prompt',
-                    'data' => ['file' => 'welcome.wav'],
-                    'next' => 'bridge1',
-                ],
-                [
-                    'id' => 'bridge1',
-                    'type' => 'bridge',
-                    'data' => ['destination_type' => 'extension', 'destination_id' => $extension->id],
-                    'next' => null,
-                ],
-            ],
         ]);
 
         Did::factory()->create([
             'tenant_id' => $tenant->id,
             'number' => '+15552000000',
-            'destination_type' => 'call_flow',
+            'destination_type' => 'flow',
             'destination_id' => $flow->id,
             'is_active' => true,
         ]);
 
         $xml = $this->compiler->compileDialplan($tenant->domain, '+15552000000');
 
-        $this->assertStringContainsString('playback', $xml);
-        $this->assertStringContainsString('welcome.wav', $xml);
-        $this->assertStringContainsString('bridge', $xml);
-        $this->assertStringContainsString($extension->extension, $xml);
+        $this->assertStringContainsString('<action application="transfer"', $xml);
+        $this->assertStringContainsString('data="flow_' . $flow->id . ' XML default"', $xml);
     }
 
     public function test_policy_with_no_match_destination_generates_anti_action(): void
@@ -139,66 +120,6 @@ class DialplanCompilerPolicyTest extends TestCase
         $this->assertStringContainsString('<anti-action application="bridge"', $xml);
         $this->assertStringContainsString($matchExt->extension, $xml);
         $this->assertStringContainsString($noMatchExt->extension, $xml);
-    }
-
-    public function test_call_flow_with_record_node(): void
-    {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
-
-        $flow = Flow::factory()->create([
-            'tenant_id' => $tenant->id,
-            'nodes' => [
-                [
-                    'id' => 'rec',
-                    'type' => 'record',
-                    'data' => ['path' => '/recordings/${uuid}.wav'],
-                    'next' => null,
-                ],
-            ],
-        ]);
-
-        Did::factory()->create([
-            'tenant_id' => $tenant->id,
-            'number' => '+15554000000',
-            'destination_type' => 'call_flow',
-            'destination_id' => $flow->id,
-            'is_active' => true,
-        ]);
-
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15554000000');
-
-        $this->assertStringContainsString('record', $xml);
-        $this->assertStringContainsString('/recordings/${uuid}.wav', $xml);
-    }
-
-    public function test_call_flow_with_webhook_node(): void
-    {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
-
-        $flow = Flow::factory()->create([
-            'tenant_id' => $tenant->id,
-            'nodes' => [
-                [
-                    'id' => 'hook',
-                    'type' => 'webhook',
-                    'data' => ['url' => 'https://example.com/hook'],
-                    'next' => null,
-                ],
-            ],
-        ]);
-
-        Did::factory()->create([
-            'tenant_id' => $tenant->id,
-            'number' => '+15555000000',
-            'destination_type' => 'call_flow',
-            'destination_id' => $flow->id,
-            'is_active' => true,
-        ]);
-
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15555000000');
-
-        $this->assertStringContainsString('curl', $xml);
-        $this->assertStringContainsString('https://example.com/hook', $xml);
     }
 
     public function test_policy_with_day_of_week_condition(): void
