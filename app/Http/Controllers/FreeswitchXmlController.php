@@ -70,6 +70,41 @@ class FreeswitchXmlController extends Controller
             ->first();
 
         if ($manifest) {
+            // STEP 9: Emit trace event for compiled manifest usage
+            $callUuid = (string) ($requestPayload['Unique-ID'] ?? $requestPayload['Channel-Call-UUID'] ?? $requestPayload['variable_uuid'] ?? '');
+            if ($callUuid !== '') {
+                $gatewayContext = $this->gatewayResolutionService->resolveFromXmlCurl($tenant, $requestPayload);
+                $did = $this->numberRoutingService->resolveInboundDid(
+                    $tenant,
+                    $destinationNumber,
+                    $gatewayContext['gateway'] ?? null,
+                    $gatewayContext['gateway_registration'] ?? null,
+                );
+
+                $session = $this->callSessionService->getOrCreateInboundSession(
+                    $tenant,
+                    $callUuid,
+                    $did,
+                    [
+                        'domain' => $domain,
+                        'destination_number' => $destinationNumber,
+                        'caller_id_number' => $callerIdNumber,
+                        'gateway_id' => $gatewayContext['gateway']?->id,
+                        'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
+                    ],
+                );
+
+                $this->traceWriter->write($session, 'compiled.manifest.served', [
+                    'domain' => $domain,
+                    'destination_number' => $destinationNumber,
+                    'caller_id_number' => $callerIdNumber,
+                    'gateway_id' => $gatewayContext['gateway']?->id,
+                    'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
+                    'did_id' => $did?->id,
+                    'manifest_checksum' => $manifest->checksum,
+                ]);
+            }
+
             return response($manifest->content, 200, ['Content-Type' => 'text/xml']);
         }
 
