@@ -3,6 +3,7 @@
 namespace Tests\Unit\Policies;
 
 use App\Models\Tenant;
+use App\Models\Extension;
 use App\Models\User;
 use App\Policies\DeviceProfilePolicy;
 use App\Policies\DidPolicy;
