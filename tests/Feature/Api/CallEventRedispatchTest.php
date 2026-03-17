@@ -55,8 +55,10 @@ class CallEventRedispatchTest extends TestCase
 
     public function test_redispatch_returns_404_for_missing_event(): void
     {
+        $missingEventId = (string) \Illuminate\Support\Str::uuid();
+
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-events/redispatch/nonexistent-id");
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-events/redispatch/{$missingEventId}");
 
         $response->assertStatus(404);
     }
