@@ -4,63 +4,57 @@ namespace Tests\Unit\Observers;
 
 use App\Models\Schedule;
 use App\Models\Tenant;
-use App\Observers\ScheduleObserver;
 use App\Services\TenantManifestBuilder;
-use Mockery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ScheduleObserverTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_schedule_created_triggers_manifest_rebuild(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
+        $tenant = Tenant::factory()->create();
 
-        $builder = Mockery::mock(TenantManifestBuilder::class);
-        $builder->shouldReceive('buildAndActivate')
-            ->once()
-            ->with($tenant);
+        $builder = $this->mock(TenantManifestBuilder::class);
+        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($tenant));
 
-        $this->app->instance(TenantManifestBuilder::class, $builder);
+        $schedule = Schedule::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Business Hours',
+            'timezone' => 'UTC',
+            'is_active' => true,
+        ]);
 
-        $observer = new ScheduleObserver($builder);
-        $schedule = Schedule::factory()->create(['tenant_id' => $tenant->id]);
-
-        $this->assertEquals($tenant->id, $schedule->tenant_id);
+        $this->assertDatabaseHas('schedules', ['id' => $schedule->id]);
     }
 
     public function test_schedule_updated_triggers_manifest_rebuild(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
+        $tenant = Tenant::factory()->create();
         $schedule = Schedule::factory()->create(['tenant_id' => $tenant->id]);
 
-        $builder = Mockery::mock(TenantManifestBuilder::class);
-        $builder->shouldReceive('buildAndActivate')
-            ->once()
-            ->with($tenant);
+        $builder = $this->mock(TenantManifestBuilder::class);
+        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($tenant));
 
-        $this->app->instance(TenantManifestBuilder::class, $builder);
-
-        $observer = new ScheduleObserver($builder);
         $schedule->update(['name' => 'Updated Schedule']);
 
-        $this->assertEquals('Updated Schedule', $schedule->fresh()->name);
+        $this->assertDatabaseHas('schedules', [
+            'id' => $schedule->id,
+            'name' => 'Updated Schedule',
+        ]);
     }
 
     public function test_schedule_deleted_triggers_manifest_rebuild(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
+        $tenant = Tenant::factory()->create();
         $schedule = Schedule::factory()->create(['tenant_id' => $tenant->id]);
 
-        $builder = Mockery::mock(TenantManifestBuilder::class);
-        $builder->shouldReceive('buildAndActivate')
-            ->once()
-            ->with($tenant);
+        $builder = $this->mock(TenantManifestBuilder::class);
+        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($tenant));
 
-        $this->app->instance(TenantManifestBuilder::class, $builder);
-
-        $observer = new ScheduleObserver($builder);
         $schedule->delete();
 
-        $this->assertNull(Schedule::find($schedule->id));
+        $this->assertDatabaseMissing('schedules', ['id' => $schedule->id]);
     }
 }
