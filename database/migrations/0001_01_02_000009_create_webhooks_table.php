@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->string('url');
             $table->json('events');
-            $table->string('secret');
+            $table->text('secret');
             $table->boolean('is_active')->default(true);
             $table->string('description')->nullable();
             $table->timestamps();
