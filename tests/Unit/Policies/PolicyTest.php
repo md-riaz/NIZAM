@@ -105,10 +105,11 @@ class PolicyTest extends TestCase
     {
         $tenant = Tenant::factory()->create();
         $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
+        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
         $did = $tenant->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
-            'destination_id' => 'test-id',
+            'destination_id' => $extension->id,
         ]);
 
         $policy = new DidPolicy;
@@ -120,10 +121,11 @@ class PolicyTest extends TestCase
         $tenantA = Tenant::factory()->create();
         $tenantB = Tenant::factory()->create();
         $user = User::factory()->create(['tenant_id' => $tenantA->id, 'role' => 'user']);
+        $extension = Extension::factory()->create(['tenant_id' => $tenantB->id]);
         $did = $tenantB->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
-            'destination_id' => 'test-id',
+            'destination_id' => $extension->id,
         ]);
 
         $policy = new DidPolicy;
