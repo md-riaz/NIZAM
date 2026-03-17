@@ -50,7 +50,7 @@ class QueueEntry extends Model
             'join_time' => 'datetime',
             'answer_time' => 'datetime',
             'abandon_time' => 'datetime',
-            'wait_duration' => 'integer',
+            'wait_duration' => 'decimal:4',
         ];
     }
 

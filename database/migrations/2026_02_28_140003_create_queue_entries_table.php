@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamp('join_time');
             $table->timestamp('answer_time')->nullable();
             $table->timestamp('abandon_time')->nullable();
-            $table->integer('wait_duration')->nullable(); // seconds
+            $table->decimal('wait_duration', 10, 4)->nullable(); // seconds with sub-second precision
             $table->string('abandon_reason')->nullable();
             $table->timestamps();
             $table->index(['queue_id', 'status']);
