@@ -77,7 +77,7 @@ class NwidartHarmonyTest extends TestCase
 
     public function test_nwidart_disabled_module_is_disabled_in_nizam_registry(): void
     {
-        NwidartModule::find('PbxRouting')?->disable();
+        NwidartModule::find('PbxRouting')?->setActive(false);
 
         try {
             $this->app->forgetInstance(ModuleRegistry::class);
@@ -88,7 +88,7 @@ class NwidartHarmonyTest extends TestCase
                 'NIZAM registry must honour nwidart disabled state for pbx-routing'
             );
         } finally {
-            NwidartModule::find('PbxRouting')?->enable();
+            NwidartModule::find('PbxRouting')?->setActive(true);
             $this->app->forgetInstance(ModuleRegistry::class);
         }
     }
@@ -127,7 +127,7 @@ class NwidartHarmonyTest extends TestCase
 
     public function test_nwidart_is_single_source_of_truth(): void
     {
-        NwidartModule::find('PbxContactCenter')?->disable();
+        NwidartModule::find('PbxContactCenter')?->setActive(false);
 
         try {
             $this->app->forgetInstance(ModuleRegistry::class);
@@ -138,7 +138,7 @@ class NwidartHarmonyTest extends TestCase
                 'nwidart disable must be the only activation authority'
             );
         } finally {
-            NwidartModule::find('PbxContactCenter')?->enable();
+            NwidartModule::find('PbxContactCenter')?->setActive(true);
             $this->app->forgetInstance(ModuleRegistry::class);
         }
     }
@@ -172,7 +172,7 @@ class NwidartHarmonyTest extends TestCase
 
     public function test_disabled_module_suppresses_permissions(): void
     {
-        NwidartModule::find('PbxContactCenter')?->disable();
+        NwidartModule::find('PbxContactCenter')?->setActive(false);
 
         try {
             $this->app->forgetInstance(ModuleRegistry::class);
@@ -181,14 +181,14 @@ class NwidartHarmonyTest extends TestCase
             $this->assertNotContains('queues.view', $registry->collectPermissions());
             $this->assertNotContains('agents.manage', $registry->collectPermissions());
         } finally {
-            NwidartModule::find('PbxContactCenter')?->enable();
+            NwidartModule::find('PbxContactCenter')?->setActive(true);
             $this->app->forgetInstance(ModuleRegistry::class);
         }
     }
 
     public function test_disabled_module_suppresses_dialplan_contributions(): void
     {
-        NwidartModule::find('PbxRouting')?->disable();
+        NwidartModule::find('PbxRouting')?->setActive(false);
 
         try {
             $this->app->forgetInstance(ModuleRegistry::class);
@@ -199,14 +199,14 @@ class NwidartHarmonyTest extends TestCase
                 $registry->collectDialplanContributions('test.example.com', '1001')
             );
         } finally {
-            NwidartModule::find('PbxRouting')?->enable();
+            NwidartModule::find('PbxRouting')?->setActive(true);
             $this->app->forgetInstance(ModuleRegistry::class);
         }
     }
 
     public function test_disabled_module_suppresses_route_collection(): void
     {
-        NwidartModule::find('PbxAutomation')?->disable();
+        NwidartModule::find('PbxAutomation')?->setActive(false);
 
         try {
             $this->app->forgetInstance(ModuleRegistry::class);
@@ -222,7 +222,7 @@ class NwidartHarmonyTest extends TestCase
                 'Disabled module route file must not be included in collectRouteFiles()'
             );
         } finally {
-            NwidartModule::find('PbxAutomation')?->enable();
+            NwidartModule::find('PbxAutomation')?->setActive(true);
             $this->app->forgetInstance(ModuleRegistry::class);
         }
     }
