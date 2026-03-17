@@ -2,17 +2,17 @@ openapi: 3.1.0
 info:
   title: NIZAM — Open Communications Control Platform API
   description: |
-    Multi-tenant VoIP/PBX platform API built on FreeSWITCH + Laravel.
-    Provides tenant lifecycle management, call routing, IVR, queues,
-    contact center, webhooks, analytics, and intelligence services.
-  version: 1.0.0
+    Current API specification generated from the active Laravel route tree.
+    Covers core routes and module-provided routes under /api/v1.
+  version: 1.0.1
   contact:
     name: NIZAM Support
   license:
     name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost/api/v1
+  - url: http://localhost:8091/api/v1
     description: Local development
   - url: https://api.nizam.example.com/api/v1
     description: Production
@@ -22,64 +22,49 @@ security:
 
 tags:
   - name: Authentication
-    description: User registration, login, and token management
+  - name: Health
   - name: Tenants
-    description: Tenant lifecycle and settings
   - name: Extensions
-    description: PBX extension management
   - name: DIDs
-    description: Direct Inward Dialing number management
   - name: Ring Groups
-    description: Ring group management
   - name: IVRs
-    description: Interactive Voice Response management
   - name: Time Conditions
-    description: Time-based routing conditions
-  - name: Calls
-    description: Call control (originate, hangup, transfer, hold)
-  - name: CDRs
-    description: Call Detail Records
-  - name: Recordings
-    description: Call recordings
-  - name: Webhooks
-    description: Webhook management and delivery tracking
   - name: Call Routing Policies
-    description: Call routing policy evaluation
-  - name: Call Flows
-    description: Call flow definitions
-  - name: Agents
-    description: Contact center agent management
-  - name: Queues
-    description: Contact center queue management
-  - name: Queue Metrics
-    description: Queue performance metrics and wallboard
+  - name: Flows
+  - name: Call Sessions
+  - name: Calls
+  - name: CDRs
+  - name: Recordings
+  - name: Webhooks
   - name: Call Events
-    description: Call event stream and audit trail
-  - name: Insights
-    description: Analytics, health scoring, anomaly detection
+  - name: Device Profiles
+  - name: Gateways
+  - name: Codec Metrics
+  - name: Holiday Calendars
+  - name: Schedules
+  - name: Teams
+  - name: Agents
+  - name: Queues
+  - name: Queue Metrics
   - name: Usage
-    description: Usage metering and reconciliation
   - name: Admin
-    description: User and permission management
+  - name: Users
+  - name: Audit Logs
 
 paths:
   /health:
     get:
-      tags: [Authentication]
+      tags: [Health]
       summary: Health check
       security: []
       operationId: healthCheck
       responses:
         '200':
-          description: System healthy
+          description: Healthy or degraded status
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  status:
-                    type: string
-                    example: ok
 
   /auth/register:
     post:
@@ -92,23 +77,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [name, email, password, password_confirmation]
-              properties:
-                name:
-                  type: string
-                  example: John Doe
-                email:
-                  type: string
-                  format: email
-                  example: john@example.com
-                password:
-                  type: string
-                  format: password
-                  minLength: 8
-                password_confirmation:
-                  type: string
-                  format: password
+              $ref: '#/components/schemas/RegisterRequest'
       responses:
         '201':
           description: User registered
@@ -122,7 +91,7 @@ paths:
   /auth/login:
     post:
       tags: [Authentication]
-      summary: Login
+      summary: Login and receive bearer token
       security: []
       operationId: login
       requestBody:
@@ -130,15 +99,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [email, password]
-              properties:
-                email:
-                  type: string
-                  format: email
-                password:
-                  type: string
-                  format: password
+              $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
           description: Login successful
@@ -152,7 +113,7 @@ paths:
   /auth/logout:
     post:
       tags: [Authentication]
-      summary: Logout (revoke current token)
+      summary: Logout current token
       operationId: logout
       responses:
         '200':
@@ -161,11 +122,11 @@ paths:
   /auth/me:
     get:
       tags: [Authentication]
-      summary: Get current user
+      summary: Get current authenticated user
       operationId: me
       responses:
         '200':
-          description: Current user info
+          description: Current user
           content:
             application/json:
               schema:
@@ -178,7 +139,11 @@ paths:
       operationId: listTokens
       responses:
         '200':
-          description: List of tokens
+          description: Token list
+          content:
+            application/json:
+              schema:
+                type: object
     post:
       tags: [Authentication]
       summary: Create API token
@@ -188,19 +153,25 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [name]
-              properties:
-                name:
-                  type: string
-                  example: my-integration
-                abilities:
-                  type: array
-                  items:
-                    type: string
+              $ref: '#/components/schemas/CreateTokenRequest'
       responses:
         '201':
           description: Token created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /auth/tokens/{tokenId}:
+    parameters:
+      - $ref: '#/components/parameters/TokenId'
+    delete:
+      tags: [Authentication]
+      summary: Revoke API token
+      operationId: revokeToken
+      responses:
+        '204':
+          description: Token revoked
 
   /tenants:
     get:
@@ -209,16 +180,7 @@ paths:
       operationId: listTenants
       responses:
         '200':
-          description: List of tenants
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Tenant'
+          description: Tenant list
     post:
       tags: [Tenants]
       summary: Create tenant
@@ -232,29 +194,32 @@ paths:
       responses:
         '201':
           description: Tenant created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tenant'
-        '422':
-          $ref: '#/components/responses/ValidationError'
+
+  /tenants/provision:
+    post:
+      tags: [Tenants]
+      summary: Provision tenant with automated setup
+      operationId: provisionTenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantProvisionRequest'
+      responses:
+        '201':
+          description: Tenant provisioned
 
   /tenants/{tenantId}:
     parameters:
       - $ref: '#/components/parameters/TenantId'
     get:
       tags: [Tenants]
-      summary: Get tenant details
+      summary: Get tenant
       operationId: getTenant
       responses:
         '200':
           description: Tenant details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tenant'
-        '404':
-          $ref: '#/components/responses/NotFound'
     put:
       tags: [Tenants]
       summary: Update tenant
@@ -285,10 +250,10 @@ paths:
       operationId: getTenantSettings
       responses:
         '200':
-          description: Tenant settings
+          description: Settings response
     put:
       tags: [Tenants]
-      summary: Update tenant settings
+      summary: Merge-update tenant settings
       operationId: updateTenantSettings
       requestBody:
         required: true
@@ -296,32 +261,172 @@ paths:
           application/json:
             schema:
               type: object
+              properties:
+                settings:
+                  type: object
       responses:
         '200':
           description: Settings updated
 
-  /tenants/provision:
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: System-wide admin dashboard
+      operationId: adminDashboard
+      responses:
+        '200':
+          description: Dashboard data
+
+  /users:
+    get:
+      tags: [Users]
+      summary: List users
+      operationId: listUsers
+      responses:
+        '200':
+          description: User list
     post:
-      tags: [Tenants]
-      summary: Provision a new tenant (full setup)
-      operationId: provisionTenant
+      tags: [Users]
+      summary: Create user
+      operationId: createUser
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [name, domain]
-              properties:
-                name:
-                  type: string
-                domain:
-                  type: string
-                max_extensions:
-                  type: integer
+              $ref: '#/components/schemas/UserInput'
       responses:
         '201':
-          description: Tenant provisioned
+          description: User created
+
+  /users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Users]
+      summary: Get user
+      operationId: getUser
+      responses:
+        '200':
+          description: User details
+    put:
+      tags: [Users]
+      summary: Update user
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '200':
+          description: User updated
+    delete:
+      tags: [Users]
+      summary: Delete user
+      operationId: deleteUser
+      responses:
+        '204':
+          description: User deleted
+
+  /users/{userId}/permissions:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Users]
+      summary: List user permissions
+      operationId: listUserPermissions
+      responses:
+        '200':
+          description: Permission list
+
+  /users/{userId}/permissions/grant:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [Users]
+      summary: Grant permissions to user
+      operationId: grantUserPermissions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionMutationRequest'
+      responses:
+        '200':
+          description: Permissions granted
+
+  /users/{userId}/permissions/revoke:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [Users]
+      summary: Revoke permissions from user
+      operationId: revokeUserPermissions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionMutationRequest'
+      responses:
+        '200':
+          description: Permissions revoked
+
+  /permissions:
+    get:
+      tags: [Users]
+      summary: List available permissions
+      operationId: listAvailablePermissions
+      responses:
+        '200':
+          description: Available permissions
+
+  /tenants/{tenantId}/stats:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Tenants]
+      summary: Get tenant stats
+      operationId: tenantStats
+      responses:
+        '200':
+          description: Tenant statistics
+
+  /tenants/{tenantId}/usage/summary:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Usage]
+      summary: Get usage summary
+      operationId: usageSummary
+      responses:
+        '200':
+          description: Usage summary
+
+  /tenants/{tenantId}/usage/collect:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      tags: [Usage]
+      summary: Collect usage snapshot
+      operationId: usageCollect
+      responses:
+        '200':
+          description: Usage snapshot collected
+
+  /tenants/{tenantId}/usage/reconcile:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Usage]
+      summary: Reconcile usage against CDRs
+      operationId: usageReconcile
+      responses:
+        '200':
+          description: Usage reconciliation
 
   /tenants/{tenantId}/extensions:
     parameters:
@@ -332,7 +437,7 @@ paths:
       operationId: listExtensions
       responses:
         '200':
-          description: List of extensions
+          description: Extension list
     post:
       tags: [Extensions]
       summary: Create extension
@@ -347,6 +452,417 @@ paths:
         '201':
           description: Extension created
 
+  /tenants/{tenantId}/extensions/{extensionId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/ExtensionId'
+    get:
+      tags: [Extensions]
+      summary: Get extension
+      operationId: getExtension
+      responses:
+        '200':
+          description: Extension details
+    put:
+      tags: [Extensions]
+      summary: Update extension
+      operationId: updateExtension
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtensionInput'
+      responses:
+        '200':
+          description: Extension updated
+    delete:
+      tags: [Extensions]
+      summary: Delete extension
+      operationId: deleteExtension
+      responses:
+        '204':
+          description: Extension deleted
+
+  /tenants/{tenantId}/holiday-calendars:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Holiday Calendars]
+      summary: List holiday calendars
+      operationId: listHolidayCalendars
+      responses:
+        '200':
+          description: Holiday calendar list
+    post:
+      tags: [Holiday Calendars]
+      summary: Create holiday calendar
+      operationId: createHolidayCalendar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HolidayCalendarInput'
+      responses:
+        '201':
+          description: Holiday calendar created
+
+  /tenants/{tenantId}/holiday-calendars/{holidayCalendarId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/HolidayCalendarId'
+    get:
+      tags: [Holiday Calendars]
+      summary: Get holiday calendar
+      operationId: getHolidayCalendar
+      responses:
+        '200':
+          description: Holiday calendar details
+    put:
+      tags: [Holiday Calendars]
+      summary: Update holiday calendar
+      operationId: updateHolidayCalendar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HolidayCalendarInput'
+      responses:
+        '200':
+          description: Holiday calendar updated
+    delete:
+      tags: [Holiday Calendars]
+      summary: Delete holiday calendar
+      operationId: deleteHolidayCalendar
+      responses:
+        '204':
+          description: Holiday calendar deleted
+
+  /tenants/{tenantId}/schedules:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Schedules]
+      summary: List schedules
+      operationId: listSchedules
+      responses:
+        '200':
+          description: Schedule list
+    post:
+      tags: [Schedules]
+      summary: Create schedule
+      operationId: createSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleInput'
+      responses:
+        '201':
+          description: Schedule created
+
+  /tenants/{tenantId}/schedules/{scheduleId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/ScheduleId'
+    get:
+      tags: [Schedules]
+      summary: Get schedule
+      operationId: getSchedule
+      responses:
+        '200':
+          description: Schedule details
+    put:
+      tags: [Schedules]
+      summary: Update schedule
+      operationId: updateSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleInput'
+      responses:
+        '200':
+          description: Schedule updated
+    delete:
+      tags: [Schedules]
+      summary: Delete schedule
+      operationId: deleteSchedule
+      responses:
+        '204':
+          description: Schedule deleted
+
+  /tenants/{tenantId}/teams:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Teams]
+      summary: List teams
+      operationId: listTeams
+      responses:
+        '200':
+          description: Team list
+    post:
+      tags: [Teams]
+      summary: Create team
+      operationId: createTeam
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamInput'
+      responses:
+        '201':
+          description: Team created
+
+  /tenants/{tenantId}/teams/{teamId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TeamId'
+    get:
+      tags: [Teams]
+      summary: Get team
+      operationId: getTeam
+      responses:
+        '200':
+          description: Team details
+    put:
+      tags: [Teams]
+      summary: Update team
+      operationId: updateTeam
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamInput'
+      responses:
+        '200':
+          description: Team updated
+    delete:
+      tags: [Teams]
+      summary: Delete team
+      operationId: deleteTeam
+      responses:
+        '204':
+          description: Team deleted
+
+  /tenants/{tenantId}/flows:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Flows]
+      summary: List flows
+      operationId: listFlows
+      responses:
+        '200':
+          description: Flow list
+    post:
+      tags: [Flows]
+      summary: Create flow
+      operationId: createFlow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowInput'
+      responses:
+        '201':
+          description: Flow created
+
+  /tenants/{tenantId}/flows/{flowId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/FlowId'
+    get:
+      tags: [Flows]
+      summary: Get flow
+      operationId: getFlow
+      responses:
+        '200':
+          description: Flow details
+    put:
+      tags: [Flows]
+      summary: Update flow
+      operationId: updateFlow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowInput'
+      responses:
+        '200':
+          description: Flow updated
+    delete:
+      tags: [Flows]
+      summary: Delete flow
+      operationId: deleteFlow
+      responses:
+        '204':
+          description: Flow deleted
+
+  /tenants/{tenantId}/flows/{flowId}/publish:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/FlowId'
+    post:
+      tags: [Flows]
+      summary: Publish latest flow version
+      operationId: publishFlow
+      responses:
+        '200':
+          description: Flow published
+
+  /tenants/{tenantId}/calls:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Call Sessions]
+      summary: List call sessions
+      operationId: listCallSessions
+      responses:
+        '200':
+          description: Call session list
+
+  /tenants/{tenantId}/calls/{callSessionId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CallSessionId'
+    get:
+      tags: [Call Sessions]
+      summary: Get call session
+      operationId: getCallSession
+      responses:
+        '200':
+          description: Call session details
+
+  /tenants/{tenantId}/calls/{callSessionId}/analyze:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CallSessionId'
+    get:
+      tags: [Call Sessions]
+      summary: Analyze call session trace
+      operationId: analyzeCallSession
+      responses:
+        '200':
+          description: Call session analysis
+
+  /tenants/{tenantId}/cdrs/export:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [CDRs]
+      summary: Export CDRs as CSV
+      operationId: exportCdrs
+      responses:
+        '200':
+          description: CSV export stream
+
+  /tenants/{tenantId}/cdrs:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [CDRs]
+      summary: List CDRs
+      operationId: listCdrs
+      responses:
+        '200':
+          description: CDR list
+
+  /tenants/{tenantId}/cdrs/{cdrId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CdrId'
+    get:
+      tags: [CDRs]
+      summary: Get CDR
+      operationId: getCdr
+      responses:
+        '200':
+          description: CDR details
+
+  /tenants/{tenantId}/call-routing-policies:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Call Routing Policies]
+      summary: List call routing policies
+      operationId: listCallRoutingPolicies
+      responses:
+        '200':
+          description: Policy list
+    post:
+      tags: [Call Routing Policies]
+      summary: Create call routing policy
+      operationId: createCallRoutingPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallRoutingPolicyInput'
+      responses:
+        '201':
+          description: Policy created
+
+  /tenants/{tenantId}/call-routing-policies/{policyId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/PolicyId'
+    get:
+      tags: [Call Routing Policies]
+      summary: Get call routing policy
+      operationId: getCallRoutingPolicy
+      responses:
+        '200':
+          description: Policy details
+    put:
+      tags: [Call Routing Policies]
+      summary: Update call routing policy
+      operationId: updateCallRoutingPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallRoutingPolicyInput'
+      responses:
+        '200':
+          description: Policy updated
+    delete:
+      tags: [Call Routing Policies]
+      summary: Delete call routing policy
+      operationId: deleteCallRoutingPolicy
+      responses:
+        '204':
+          description: Policy deleted
+
+  /tenants/{tenantId}/call-routing-policies/{policyId}/evaluate:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/PolicyId'
+    post:
+      tags: [Call Routing Policies]
+      summary: Evaluate call routing policy
+      operationId: evaluateCallRoutingPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyEvaluationRequest'
+      responses:
+        '200':
+          description: Evaluation result
+
   /tenants/{tenantId}/dids:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -356,7 +872,7 @@ paths:
       operationId: listDids
       responses:
         '200':
-          description: List of DIDs
+          description: DID list
     post:
       tags: [DIDs]
       summary: Create DID
@@ -371,6 +887,38 @@ paths:
         '201':
           description: DID created
 
+  /tenants/{tenantId}/dids/{didId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/DidId'
+    get:
+      tags: [DIDs]
+      summary: Get DID
+      operationId: getDid
+      responses:
+        '200':
+          description: DID details
+    put:
+      tags: [DIDs]
+      summary: Update DID
+      operationId: updateDid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DidInput'
+      responses:
+        '200':
+          description: DID updated
+    delete:
+      tags: [DIDs]
+      summary: Delete DID
+      operationId: deleteDid
+      responses:
+        '204':
+          description: DID deleted
+
   /tenants/{tenantId}/ring-groups:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -380,14 +928,52 @@ paths:
       operationId: listRingGroups
       responses:
         '200':
-          description: List of ring groups
+          description: Ring group list
     post:
       tags: [Ring Groups]
       summary: Create ring group
       operationId: createRingGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RingGroupInput'
       responses:
         '201':
           description: Ring group created
+
+  /tenants/{tenantId}/ring-groups/{ringGroupId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/RingGroupId'
+    get:
+      tags: [Ring Groups]
+      summary: Get ring group
+      operationId: getRingGroup
+      responses:
+        '200':
+          description: Ring group details
+    put:
+      tags: [Ring Groups]
+      summary: Update ring group
+      operationId: updateRingGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RingGroupInput'
+      responses:
+        '200':
+          description: Ring group updated
+    delete:
+      tags: [Ring Groups]
+      summary: Delete ring group
+      operationId: deleteRingGroup
+      responses:
+        '204':
+          description: Ring group deleted
 
   /tenants/{tenantId}/ivrs:
     parameters:
@@ -398,14 +984,108 @@ paths:
       operationId: listIvrs
       responses:
         '200':
-          description: List of IVRs
+          description: IVR list
     post:
       tags: [IVRs]
       summary: Create IVR
       operationId: createIvr
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IvrInput'
       responses:
         '201':
           description: IVR created
+
+  /tenants/{tenantId}/ivrs/{ivrId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/IvrId'
+    get:
+      tags: [IVRs]
+      summary: Get IVR
+      operationId: getIvr
+      responses:
+        '200':
+          description: IVR details
+    put:
+      tags: [IVRs]
+      summary: Update IVR
+      operationId: updateIvr
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IvrInput'
+      responses:
+        '200':
+          description: IVR updated
+    delete:
+      tags: [IVRs]
+      summary: Delete IVR
+      operationId: deleteIvr
+      responses:
+        '204':
+          description: IVR deleted
+
+  /tenants/{tenantId}/time-conditions:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Time Conditions]
+      summary: List time conditions
+      operationId: listTimeConditions
+      responses:
+        '200':
+          description: Time condition list
+    post:
+      tags: [Time Conditions]
+      summary: Create time condition
+      operationId: createTimeCondition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeConditionInput'
+      responses:
+        '201':
+          description: Time condition created
+
+  /tenants/{tenantId}/time-conditions/{timeConditionId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/TimeConditionId'
+    get:
+      tags: [Time Conditions]
+      summary: Get time condition
+      operationId: getTimeCondition
+      responses:
+        '200':
+          description: Time condition details
+    put:
+      tags: [Time Conditions]
+      summary: Update time condition
+      operationId: updateTimeCondition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeConditionInput'
+      responses:
+        '200':
+          description: Time condition updated
+    delete:
+      tags: [Time Conditions]
+      summary: Delete time condition
+      operationId: deleteTimeCondition
+      responses:
+        '204':
+          description: Time condition deleted
 
   /tenants/{tenantId}/webhooks:
     parameters:
@@ -416,7 +1096,7 @@ paths:
       operationId: listWebhooks
       responses:
         '200':
-          description: List of webhooks
+          description: Webhook list
     post:
       tags: [Webhooks]
       summary: Create webhook
@@ -431,32 +1111,54 @@ paths:
         '201':
           description: Webhook created
 
+  /tenants/{tenantId}/webhooks/{webhookId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/WebhookId'
+    get:
+      tags: [Webhooks]
+      summary: Get webhook
+      operationId: getWebhook
+      responses:
+        '200':
+          description: Webhook details
+    put:
+      tags: [Webhooks]
+      summary: Update webhook
+      operationId: updateWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookInput'
+      responses:
+        '200':
+          description: Webhook updated
+    delete:
+      tags: [Webhooks]
+      summary: Delete webhook
+      operationId: deleteWebhook
+      responses:
+        '204':
+          description: Webhook deleted
+
   /tenants/{tenantId}/webhooks/{webhookId}/delivery-attempts:
     parameters:
       - $ref: '#/components/parameters/TenantId'
-      - name: webhookId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/WebhookId'
     get:
       tags: [Webhooks]
-      summary: List delivery attempts
+      summary: List webhook delivery attempts
       operationId: listWebhookDeliveryAttempts
       responses:
         '200':
-          description: Delivery attempts
+          description: Delivery attempt list
 
   /tenants/{tenantId}/webhooks/{webhookId}/delivery-stats:
     parameters:
       - $ref: '#/components/parameters/TenantId'
-      - name: webhookId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/WebhookId'
     get:
       tags: [Webhooks]
       summary: Get webhook delivery stats
@@ -464,6 +1166,68 @@ paths:
       responses:
         '200':
           description: Delivery statistics
+
+  /tenants/{tenantId}/call-events:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Call Events]
+      summary: List call events
+      operationId: listCallEvents
+      responses:
+        '200':
+          description: Call event list
+
+  /tenants/{tenantId}/call-events/stream:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Call Events]
+      summary: Stream call events via SSE
+      operationId: streamCallEvents
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /tenants/{tenantId}/call-events/{callUuid}/trace:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CallUuid'
+    get:
+      tags: [Call Events]
+      summary: Get trace for call UUID
+      operationId: traceCallEvents
+      responses:
+        '200':
+          description: Call trace
+
+  /tenants/{tenantId}/call-events/replay/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/EventId'
+    get:
+      tags: [Call Events]
+      summary: Replay stored call event
+      operationId: replayCallEvent
+      responses:
+        '200':
+          description: Event payload
+
+  /tenants/{tenantId}/call-events/redispatch/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/EventId'
+    post:
+      tags: [Call Events]
+      summary: Redispatch stored event to matching webhooks
+      operationId: redispatchCallEvent
+      responses:
+        '200':
+          description: Redispatch result
 
   /tenants/{tenantId}/calls/originate:
     parameters:
@@ -477,20 +1241,21 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [extension, destination]
-              properties:
-                extension:
-                  type: string
-                  example: '1001'
-                destination:
-                  type: string
-                  example: '+15551234567'
+              $ref: '#/components/schemas/OriginateCallRequest'
       responses:
         '200':
           description: Call initiated
-        '403':
-          description: Call control permission denied
+
+  /tenants/{tenantId}/calls/status:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Calls]
+      summary: Get active call status
+      operationId: callStatus
+      responses:
+        '200':
+          description: Call status
 
   /tenants/{tenantId}/calls/hangup:
     parameters:
@@ -504,12 +1269,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [call_uuid]
-              properties:
-                call_uuid:
-                  type: string
-                  format: uuid
+              $ref: '#/components/schemas/HangupCallRequest'
       responses:
         '200':
           description: Call terminated
@@ -526,59 +1286,44 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [call_uuid, destination]
-              properties:
-                call_uuid:
-                  type: string
-                  format: uuid
-                destination:
-                  type: string
+              $ref: '#/components/schemas/TransferCallRequest'
       responses:
         '200':
           description: Call transferred
+
+  /tenants/{tenantId}/calls/recording:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      tags: [Calls]
+      summary: Start or stop call recording
+      operationId: toggleCallRecording
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallRecordingRequest'
+      responses:
+        '200':
+          description: Recording action applied
 
   /tenants/{tenantId}/calls/hold:
     parameters:
       - $ref: '#/components/parameters/TenantId'
     post:
       tags: [Calls]
-      summary: Toggle call hold
+      summary: Hold or unhold a call
       operationId: holdCall
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [call_uuid]
-              properties:
-                call_uuid:
-                  type: string
-                  format: uuid
+              $ref: '#/components/schemas/HoldCallRequest'
       responses:
         '200':
-          description: Hold toggled
-
-  /tenants/{tenantId}/cdrs:
-    parameters:
-      - $ref: '#/components/parameters/TenantId'
-    get:
-      tags: [CDRs]
-      summary: List CDRs
-      operationId: listCdrs
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-        - name: per_page
-          in: query
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: CDR listing
+          description: Hold action applied
 
   /tenants/{tenantId}/recordings:
     parameters:
@@ -589,7 +1334,161 @@ paths:
       operationId: listRecordings
       responses:
         '200':
-          description: List of recordings
+          description: Recording list
+
+  /tenants/{tenantId}/recordings/{recordingId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/RecordingId'
+    get:
+      tags: [Recordings]
+      summary: Get recording metadata
+      operationId: getRecording
+      responses:
+        '200':
+          description: Recording details
+    delete:
+      tags: [Recordings]
+      summary: Delete recording
+      operationId: deleteRecording
+      responses:
+        '204':
+          description: Recording deleted
+
+  /tenants/{tenantId}/recordings/{recordingId}/download:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/RecordingId'
+    get:
+      tags: [Recordings]
+      summary: Download recording file
+      operationId: downloadRecording
+      responses:
+        '200':
+          description: Recording file stream
+
+  /tenants/{tenantId}/device-profiles:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Device Profiles]
+      summary: List device profiles
+      operationId: listDeviceProfiles
+      responses:
+        '200':
+          description: Device profile list
+    post:
+      tags: [Device Profiles]
+      summary: Create device profile
+      operationId: createDeviceProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceProfileInput'
+      responses:
+        '201':
+          description: Device profile created
+
+  /tenants/{tenantId}/device-profiles/{deviceProfileId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/DeviceProfileId'
+    get:
+      tags: [Device Profiles]
+      summary: Get device profile
+      operationId: getDeviceProfile
+      responses:
+        '200':
+          description: Device profile details
+    put:
+      tags: [Device Profiles]
+      summary: Update device profile
+      operationId: updateDeviceProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceProfileInput'
+      responses:
+        '200':
+          description: Device profile updated
+    delete:
+      tags: [Device Profiles]
+      summary: Delete device profile
+      operationId: deleteDeviceProfile
+      responses:
+        '204':
+          description: Device profile deleted
+
+  /tenants/{tenantId}/gateways:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Gateways]
+      summary: List gateways
+      operationId: listGateways
+      responses:
+        '200':
+          description: Gateway list
+    post:
+      tags: [Gateways]
+      summary: Create gateway
+      operationId: createGateway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayInput'
+      responses:
+        '201':
+          description: Gateway created
+
+  /tenants/{tenantId}/gateways/{gatewayId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/GatewayId'
+    get:
+      tags: [Gateways]
+      summary: Get gateway
+      operationId: getGateway
+      responses:
+        '200':
+          description: Gateway details
+    put:
+      tags: [Gateways]
+      summary: Update gateway
+      operationId: updateGateway
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayInput'
+      responses:
+        '200':
+          description: Gateway updated
+    delete:
+      tags: [Gateways]
+      summary: Delete gateway
+      operationId: deleteGateway
+      responses:
+        '204':
+          description: Gateway deleted
+
+  /tenants/{tenantId}/codec-metrics:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Codec Metrics]
+      summary: Get codec metrics
+      operationId: codecMetrics
+      responses:
+        '200':
+          description: Codec metrics
 
   /tenants/{tenantId}/agents:
     parameters:
@@ -600,7 +1499,7 @@ paths:
       operationId: listAgents
       responses:
         '200':
-          description: List of agents
+          description: Agent list
     post:
       tags: [Agents]
       summary: Create agent
@@ -615,15 +1514,42 @@ paths:
         '201':
           description: Agent created
 
+  /tenants/{tenantId}/agents/{agentId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AgentId'
+    get:
+      tags: [Agents]
+      summary: Get agent
+      operationId: getAgent
+      responses:
+        '200':
+          description: Agent details
+    put:
+      tags: [Agents]
+      summary: Update agent
+      operationId: updateAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentInput'
+      responses:
+        '200':
+          description: Agent updated
+    delete:
+      tags: [Agents]
+      summary: Delete agent
+      operationId: deleteAgent
+      responses:
+        '204':
+          description: Agent deleted
+
   /tenants/{tenantId}/agents/{agentId}/state:
     parameters:
       - $ref: '#/components/parameters/TenantId'
-      - name: agentId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/AgentId'
     post:
       tags: [Agents]
       summary: Change agent state
@@ -633,18 +1559,10 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [state]
-              properties:
-                state:
-                  type: string
-                  enum: [available, busy, ringing, paused, offline]
-                pause_reason:
-                  type: string
-                  enum: [break, lunch, after_call_work, custom]
+              $ref: '#/components/schemas/AgentStateChangeRequest'
       responses:
         '200':
-          description: State changed
+          description: Agent state changed
 
   /tenants/{tenantId}/queues:
     parameters:
@@ -655,7 +1573,7 @@ paths:
       operationId: listQueues
       responses:
         '200':
-          description: List of queues
+          description: Queue list
     post:
       tags: [Queues]
       summary: Create queue
@@ -670,86 +1588,156 @@ paths:
         '201':
           description: Queue created
 
+  /tenants/{tenantId}/queues/{queueId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/QueueId'
+    get:
+      tags: [Queues]
+      summary: Get queue
+      operationId: getQueue
+      responses:
+        '200':
+          description: Queue details
+    put:
+      tags: [Queues]
+      summary: Update queue
+      operationId: updateQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueueInput'
+      responses:
+        '200':
+          description: Queue updated
+    delete:
+      tags: [Queues]
+      summary: Delete queue
+      operationId: deleteQueue
+      responses:
+        '204':
+          description: Queue deleted
+
+  /tenants/{tenantId}/queues/{queueId}/members:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/QueueId'
+    get:
+      tags: [Queues]
+      summary: List queue members
+      operationId: listQueueMembers
+      responses:
+        '200':
+          description: Queue members
+    post:
+      tags: [Queues]
+      summary: Add queue member
+      operationId: addQueueMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueueMemberAddRequest'
+      responses:
+        '200':
+          description: Queue member added
+
+  /tenants/{tenantId}/queues/{queueId}/members/{agentId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/QueueId'
+      - $ref: '#/components/parameters/AgentId'
+    delete:
+      tags: [Queues]
+      summary: Remove queue member
+      operationId: removeQueueMember
+      responses:
+        '204':
+          description: Queue member removed
+
   /tenants/{tenantId}/queues/{queueId}/metrics/realtime:
     parameters:
       - $ref: '#/components/parameters/TenantId'
-      - name: queueId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+      - $ref: '#/components/parameters/QueueId'
     get:
       tags: [Queue Metrics]
       summary: Get real-time queue metrics
-      operationId: getRealtimeMetrics
+      operationId: realtimeQueueMetrics
       responses:
         '200':
-          description: Real-time metrics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueueMetrics'
+          description: Realtime queue metrics
+
+  /tenants/{tenantId}/queues/{queueId}/metrics/aggregate:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/QueueId'
+    post:
+      tags: [Queue Metrics]
+      summary: Aggregate queue metrics
+      operationId: aggregateQueueMetrics
+      responses:
+        '200':
+          description: Aggregated queue metrics
+
+  /tenants/{tenantId}/queues/{queueId}/metrics/history:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/QueueId'
+    get:
+      tags: [Queue Metrics]
+      summary: Queue metrics history
+      operationId: historyQueueMetrics
+      responses:
+        '200':
+          description: Queue metric history
 
   /tenants/{tenantId}/wallboard:
     parameters:
       - $ref: '#/components/parameters/TenantId'
     get:
       tags: [Queue Metrics]
-      summary: Get wallboard data
-      operationId: getWallboard
+      summary: Wallboard data for tenant queues
+      operationId: wallboard
       responses:
         '200':
-          description: Wallboard data
+          description: Wallboard metrics
 
-  /tenants/{tenantId}/call-events:
+  /tenants/{tenantId}/agent-states:
     parameters:
       - $ref: '#/components/parameters/TenantId'
     get:
-      tags: [Call Events]
-      summary: List call events
-      operationId: listCallEvents
-      parameters:
-        - name: call_uuid
-          in: query
-          schema:
-            type: string
-        - name: event_type
-          in: query
-          schema:
-            type: string
+      tags: [Queue Metrics]
+      summary: Agent state overview
+      operationId: agentStates
       responses:
         '200':
-          description: Call events
+          description: Agent states
 
-  /tenants/{tenantId}/call-routing-policies:
+  /tenants/{tenantId}/audit-logs:
     parameters:
       - $ref: '#/components/parameters/TenantId'
     get:
-      tags: [Call Routing Policies]
-      summary: List call routing policies
-      operationId: listPolicies
+      tags: [Audit Logs]
+      summary: List audit logs
+      operationId: listAuditLogs
       responses:
         '200':
-          description: List of policies
-    post:
-      tags: [Call Routing Policies]
-      summary: Create routing policy
-      operationId: createPolicy
-      responses:
-        '201':
-          description: Policy created
+          description: Audit log list
 
-  /tenants/{tenantId}/usage/summary:
+  /tenants/{tenantId}/audit-logs/{auditLogId}:
     parameters:
       - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AuditLogId'
     get:
-      tags: [Usage]
-      summary: Get usage summary
-      operationId: getUsageSummary
+      tags: [Audit Logs]
+      summary: Get audit log
+      operationId: getAuditLog
       responses:
         '200':
-          description: Usage summary
+          description: Audit log details
 
 components:
   securitySchemes:
@@ -757,19 +1745,32 @@ components:
       type: http
       scheme: bearer
       bearerFormat: Token
-      description: |
-        Use Laravel Sanctum token authentication.
-        Include in header: `Authorization: Bearer <token>`
 
   parameters:
-    TenantId:
-      name: tenantId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: Tenant UUID
+    TenantId: { name: tenantId, in: path, required: true, schema: { type: string, format: uuid } }
+    TokenId: { name: tokenId, in: path, required: true, schema: { type: integer } }
+    UserId: { name: userId, in: path, required: true, schema: { type: integer } }
+    ExtensionId: { name: extensionId, in: path, required: true, schema: { type: string, format: uuid } }
+    HolidayCalendarId: { name: holidayCalendarId, in: path, required: true, schema: { type: string, format: uuid } }
+    ScheduleId: { name: scheduleId, in: path, required: true, schema: { type: string, format: uuid } }
+    TeamId: { name: teamId, in: path, required: true, schema: { type: string, format: uuid } }
+    FlowId: { name: flowId, in: path, required: true, schema: { type: string, format: uuid } }
+    CallSessionId: { name: callSessionId, in: path, required: true, schema: { type: string, format: uuid } }
+    CdrId: { name: cdrId, in: path, required: true, schema: { type: string, format: uuid } }
+    PolicyId: { name: policyId, in: path, required: true, schema: { type: string, format: uuid } }
+    DidId: { name: didId, in: path, required: true, schema: { type: string, format: uuid } }
+    RingGroupId: { name: ringGroupId, in: path, required: true, schema: { type: string, format: uuid } }
+    IvrId: { name: ivrId, in: path, required: true, schema: { type: string, format: uuid } }
+    TimeConditionId: { name: timeConditionId, in: path, required: true, schema: { type: string, format: uuid } }
+    WebhookId: { name: webhookId, in: path, required: true, schema: { type: string, format: uuid } }
+    CallUuid: { name: callUuid, in: path, required: true, schema: { type: string } }
+    EventId: { name: eventId, in: path, required: true, schema: { type: string, format: uuid } }
+    RecordingId: { name: recordingId, in: path, required: true, schema: { type: string, format: uuid } }
+    DeviceProfileId: { name: deviceProfileId, in: path, required: true, schema: { type: string, format: uuid } }
+    GatewayId: { name: gatewayId, in: path, required: true, schema: { type: string, format: uuid } }
+    AgentId: { name: agentId, in: path, required: true, schema: { type: string, format: uuid } }
+    QueueId: { name: queueId, in: path, required: true, schema: { type: string, format: uuid } }
+    AuditLogId: { name: auditLogId, in: path, required: true, schema: { type: string, format: uuid } }
 
   responses:
     Unauthorized:
@@ -777,23 +1778,19 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              message:
-                type: string
-                example: Unauthenticated.
-
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              message:
-                type: string
-                example: Resource not found.
-
+            $ref: '#/components/schemas/ErrorResponse'
     ValidationError:
       description: Validation failed
       content:
@@ -803,7 +1800,6 @@ components:
             properties:
               message:
                 type: string
-                example: The given data was invalid.
               errors:
                 type: object
                 additionalProperties:
@@ -811,18 +1807,13 @@ components:
                   items:
                     type: string
 
-    Forbidden:
-      description: Permission denied
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-                example: This action is unauthorized.
-
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
     AuthResponse:
       type: object
       properties:
@@ -830,189 +1821,330 @@ components:
           $ref: '#/components/schemas/User'
         token:
           type: string
-          example: 1|abc123def456
 
     User:
       type: object
       properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        tenant_id:
-          type: string
-          format: uuid
-          nullable: true
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string }
+        tenant_id: { type: string, format: uuid, nullable: true }
 
-    Tenant:
+    RegisterRequest:
       type: object
+      required: [name, email, password, password_confirmation]
       properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: Acme Corp
-        domain:
-          type: string
-          example: acme.example.com
-        slug:
-          type: string
-          example: acme-corp-1234
-        status:
-          type: string
-          enum: [trial, active, suspended, terminated]
-        is_active:
-          type: boolean
-        max_extensions:
-          type: integer
-        max_concurrent_calls:
-          type: integer
-        max_dids:
-          type: integer
-        settings:
-          type: object
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        password_confirmation: { type: string, format: password }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+
+    CreateTokenRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        abilities:
+          type: array
+          items: { type: string }
 
     TenantInput:
       type: object
-      required: [name, domain]
+      required: [name]
       properties:
-        name:
-          type: string
-        domain:
-          type: string
-        max_extensions:
-          type: integer
-          default: 10
-        max_concurrent_calls:
-          type: integer
-          default: 0
-        settings:
-          type: object
+        name: { type: string }
+        domain: { type: string }
+        slug: { type: string }
+        max_extensions: { type: integer }
+        max_concurrent_calls: { type: integer }
+        max_dids: { type: integer }
+        max_ring_groups: { type: integer }
+        is_active: { type: boolean }
+        settings: { type: object }
+
+    TenantProvisionRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        domain: { type: string }
+        slug: { type: string }
+        max_extensions: { type: integer }
+        max_concurrent_calls: { type: integer }
+        max_dids: { type: integer }
+        max_ring_groups: { type: integer }
+
+    UserInput:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        role: { type: string }
+        tenant_id: { type: string, format: uuid, nullable: true }
+
+    PermissionMutationRequest:
+      type: object
+      required: [permissions]
+      properties:
+        permissions:
+          type: array
+          items: { type: string }
 
     ExtensionInput:
       type: object
       required: [extension, password]
       properties:
-        extension:
-          type: string
-          example: '1001'
-        password:
-          type: string
-        directory_first_name:
-          type: string
-        directory_last_name:
-          type: string
-        outbound_caller_id_number:
-          type: string
+        extension: { type: string }
+        password: { type: string }
+        directory_first_name: { type: string }
+        directory_last_name: { type: string }
+        effective_caller_id_name: { type: string }
+        effective_caller_id_number: { type: string }
+        outbound_caller_id_name: { type: string }
+        outbound_caller_id_number: { type: string }
+        voicemail_enabled: { type: boolean }
+        voicemail_pin: { type: string }
+        is_active: { type: boolean }
+
+    HolidayCalendarInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        is_active: { type: boolean }
+
+    ScheduleInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        timezone: { type: string }
+        rules:
+          type: array
+          items: { type: object }
+        exceptions:
+          type: array
+          items: { type: object }
+        breaks:
+          type: array
+          items: { type: object }
+        is_active: { type: boolean }
+
+    TeamInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        is_active: { type: boolean }
+        members:
+          type: array
+          items: { type: object }
+
+    FlowInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        nodes:
+          type: array
+          items: { type: object }
+        edges:
+          type: array
+          items: { type: object }
+        is_active: { type: boolean }
+
+    CallRoutingPolicyInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        conditions:
+          type: array
+          items: { type: object }
+        match_destination_type: { type: string }
+        match_destination_id: { type: string, format: uuid }
+        no_match_destination_type: { type: string }
+        no_match_destination_id: { type: string, format: uuid }
+        priority: { type: integer }
+        is_active: { type: boolean }
+
+    PolicyEvaluationRequest:
+      type: object
+      properties:
+        did: { type: string }
+        caller_id: { type: string }
+        time: { type: string, format: date-time }
+        metadata: { type: object }
 
     DidInput:
       type: object
       required: [number]
       properties:
-        number:
-          type: string
-          example: '+15551234567'
-        destination_type:
-          type: string
-          enum: [extension, ring_group, ivr, queue, voicemail]
-        destination_id:
-          type: string
-          format: uuid
+        number: { type: string }
+        destination_type: { type: string }
+        destination_id: { type: string, format: uuid }
+        description: { type: string }
+        is_active: { type: boolean }
+
+    RingGroupInput:
+      type: object
+      required: [name, strategy]
+      properties:
+        name: { type: string }
+        strategy: { type: string, enum: [simultaneous, sequential] }
+        members:
+          type: array
+          items: { type: string, format: uuid }
+        ring_timeout: { type: integer }
+        timeout_destination_type: { type: string }
+        timeout_destination_id: { type: string, format: uuid }
+        is_active: { type: boolean }
+
+    IvrInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        greet_long: { type: string }
+        greet_short: { type: string }
+        options: { type: object }
+        timeout: { type: integer }
+        max_failures: { type: integer }
+        timeout_destination_type: { type: string }
+        timeout_destination_id: { type: string, format: uuid }
+        is_active: { type: boolean }
+
+    TimeConditionInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        rules:
+          type: array
+          items: { type: object }
+        match_destination_type: { type: string }
+        match_destination_id: { type: string, format: uuid }
+        no_match_destination_type: { type: string }
+        no_match_destination_id: { type: string, format: uuid }
+        is_active: { type: boolean }
 
     WebhookInput:
       type: object
       required: [url, events, secret]
       properties:
-        url:
-          type: string
-          format: uri
-          example: https://hooks.example.com/nizam
+        url: { type: string, format: uri }
         events:
           type: array
-          items:
-            type: string
-          example: ['call.created', 'call.hangup']
-        secret:
-          type: string
-          description: Shared secret for HMAC signature verification
-        is_active:
-          type: boolean
-          default: true
-        description:
-          type: string
+          items: { type: string }
+        secret: { type: string }
+        is_active: { type: boolean }
+
+    OriginateCallRequest:
+      type: object
+      required: [extension, destination]
+      properties:
+        extension: { type: string }
+        destination: { type: string }
+
+    HangupCallRequest:
+      type: object
+      required: [uuid]
+      properties:
+        uuid: { type: string }
+        cause: { type: string }
+
+    TransferCallRequest:
+      type: object
+      required: [uuid, destination]
+      properties:
+        uuid: { type: string }
+        destination: { type: string }
+        leg: { type: string, enum: [aleg, bleg, both] }
+
+    CallRecordingRequest:
+      type: object
+      required: [uuid, action]
+      properties:
+        uuid: { type: string }
+        action: { type: string, enum: [start, stop] }
+
+    HoldCallRequest:
+      type: object
+      required: [uuid, action]
+      properties:
+        uuid: { type: string }
+        action: { type: string, enum: [hold, unhold] }
+
+    DeviceProfileInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        vendor: { type: string }
+        model: { type: string }
+        mac_address: { type: string }
+        config: { type: object }
+        is_active: { type: boolean }
+
+    GatewayInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        host: { type: string }
+        port: { type: integer }
+        username: { type: string }
+        password: { type: string }
+        transport: { type: string }
+        register: { type: boolean }
+        is_active: { type: boolean }
 
     AgentInput:
       type: object
       required: [name, extension_id]
       properties:
-        name:
-          type: string
-        extension_id:
-          type: string
-          format: uuid
-        role:
-          type: string
-          enum: [agent, supervisor]
-          default: agent
+        name: { type: string }
+        extension_id: { type: string, format: uuid }
+        role: { type: string }
+        is_active: { type: boolean }
+
+    AgentStateChangeRequest:
+      type: object
+      required: [state]
+      properties:
+        state: { type: string }
+        note: { type: string }
 
     QueueInput:
       type: object
       required: [name]
       properties:
-        name:
-          type: string
-        strategy:
-          type: string
-          enum: [ring_all, round_robin, least_recent]
-          default: ring_all
-        max_wait_time:
-          type: integer
-          description: Max wait in seconds
-        service_level_threshold:
-          type: integer
-          default: 30
-        music_on_hold:
-          type: string
+        name: { type: string }
+        strategy: { type: string }
+        max_wait_time: { type: integer }
+        service_level_threshold: { type: integer }
+        music_on_hold: { type: string }
+        is_active: { type: boolean }
 
-    QueueMetrics:
+    QueueMemberAddRequest:
       type: object
+      required: [agent_id]
       properties:
-        queue_id:
-          type: string
-          format: uuid
-        queue_name:
-          type: string
-        waiting_count:
-          type: integer
-        calls_offered:
-          type: integer
-        calls_answered:
-          type: integer
-        calls_abandoned:
-          type: integer
-        average_wait_time:
-          type: number
-          format: float
-        max_wait_time:
-          type: number
-          format: float
-        service_level:
-          type: number
-          format: float
-          description: Percentage of calls answered within SLA
-        abandon_rate:
-          type: number
-          format: float
-        agent_occupancy:
-          type: number
-          format: float
+        agent_id: { type: string, format: uuid }
+        weight: { type: integer }
+        paused: { type: boolean }

@@ -1163,6 +1163,132 @@ Authorization: Bearer {token}
 
 ---
 
+## Call Sessions
+
+View active and completed call sessions with full trace events.
+
+```http
+GET    /api/tenants/{tenant_id}/calls
+GET    /api/tenants/{tenant_id}/calls/{callSession}
+GET    /api/tenants/{tenant_id}/calls/{callSession}/analyze
+```
+
+### List Call Sessions
+
+```http
+GET /api/tenants/{tenant_id}/calls
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "tenant_id": "uuid",
+      "call_uuid": "abc-123",
+      "caller_id_number": "+15551234567",
+      "destination_number": "1001",
+      "direction": "inbound",
+      "start_stamp": "2026-01-15T10:30:00Z",
+      "answer_stamp": "2026-01-15T10:30:05Z",
+      "end_stamp": "2026-01-15T10:30:35Z",
+      "duration": 35,
+      "billsec": 30,
+      "hangup_cause": "NORMAL_CLEARING"
+    }
+  ]
+}
+```
+
+### Get Call Session
+
+```http
+GET /api/tenants/{tenant_id}/calls/{callSession}
+Authorization: Bearer YOUR_TOKEN
+```
+
+Returns the call session with its trace events.
+
+### Analyze Call Session
+
+```http
+GET /api/tenants/{tenant_id}/calls/{callSession}/analyze
+Authorization: Bearer YOUR_TOKEN
+```
+
+Returns computed replay timeline and node metrics for the call session.
+
+---
+
+## Holiday Calendars
+
+```http
+GET    /api/tenants/{tenant_id}/holiday-calendars
+POST   /api/tenants/{tenant_id}/holiday-calendars
+GET    /api/tenants/{tenant_id}/holiday-calendars/{id}
+PUT    /api/tenants/{tenant_id}/holiday-calendars/{id}
+DELETE /api/tenants/{tenant_id}/holiday-calendars/{id}
+```
+
+### Create Holiday Calendar
+
+```json
+{
+  "name": "Company Holidays",
+  "description": "Company-wide holidays",
+  "is_active": true
+}
+```
+
+---
+
+## Schedules
+
+```http
+GET    /api/tenants/{tenant_id}/schedules
+POST   /api/tenants/{tenant_id}/schedules
+GET    /api/tenants/{tenant_id}/schedules/{id}
+PUT    /api/tenants/{tenant_id}/schedules/{id}
+DELETE /api/tenants/{tenant_id}/schedules/{id}
+```
+
+### Create Schedule
+
+```json
+{
+  "name": "Business Hours",
+  "description": "Standard business hours",
+  "timezone": "Asia/Dhaka",
+  "is_active": true
+}
+```
+
+---
+
+## Teams
+
+```http
+GET    /api/tenants/{tenant_id}/teams
+POST   /api/tenants/{tenant_id}/teams
+GET    /api/tenants/{tenant_id}/teams/{id}
+PUT    /api/tenants/{tenant_id}/teams/{id}
+DELETE /api/tenants/{tenant_id}/teams/{id}
+```
+
+### Create Team
+
+```json
+{
+  "name": "Support Team",
+  "description": "Customer support agents",
+  "is_active": true
+}
+```
+
+---
+
 ## Audit Logs
 
 Read-only API for querying audit trail entries. All domain model changes (create, update, delete) are automatically logged.
