@@ -50,8 +50,10 @@ class CallEventReplayTest extends TestCase
 
     public function test_replay_returns_404_for_unknown_event(): void
     {
+        $missingEventId = (string) \Illuminate\Support\Str::uuid();
+
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/replay/nonexistent-id");
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/replay/{$missingEventId}");
 
         $response->assertStatus(404);
     }
