@@ -8,7 +8,6 @@ use App\Services\Call\CallEventIngestionService;
 use App\Services\Call\CallSessionService;
 use App\Services\Call\TraceWriter;
 use App\Services\DialplanCompiler;
-use App\Services\Flow\FlowRuntimeStarter;
 use App\Services\Routing\GatewayResolutionService;
 use App\Services\Routing\NumberRoutingService;
 use Illuminate\Http\Request;
@@ -23,7 +22,6 @@ class FreeswitchXmlController extends Controller
         protected TraceWriter $traceWriter,
         protected GatewayResolutionService $gatewayResolutionService,
         protected NumberRoutingService $numberRoutingService,
-        protected FlowRuntimeStarter $flowRuntimeStarter,
     ) {}
 
     /**
@@ -120,11 +118,6 @@ class FreeswitchXmlController extends Controller
                 $gatewayContext['gateway_registration'] ?? null,
             );
 
-            $flow = $did?->destination_type === 'flow'
-                ? $did->destination
-                : null;
-            $flowVersion = $flow?->activeVersion;
-
             $session = $this->callSessionService->getOrCreateInboundSession(
                 $tenant,
                 $callUuid,
@@ -138,12 +131,6 @@ class FreeswitchXmlController extends Controller
                 ],
             );
 
-            if ($flowVersion) {
-                $session->forceFill([
-                    'flow_version_id' => $flowVersion->id,
-                ])->save();
-            }
-
             $this->traceWriter->write($session, 'dialplan.lookup.started', [
                 'domain' => $domain,
                 'destination_number' => $destinationNumber,
@@ -152,8 +139,6 @@ class FreeswitchXmlController extends Controller
                 'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                 'did_id' => $did?->id,
                 'destination_type' => $did?->destination_type,
-                'flow_id' => $flow?->id,
-                'flow_version_id' => $flowVersion?->id,
             ]);
 
             $this->callEventIngestionService->ingest(
@@ -167,16 +152,10 @@ class FreeswitchXmlController extends Controller
                     'gateway_id' => $gatewayContext['gateway']?->id,
                     'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                     'did_id' => $did?->id,
-                    'flow_id' => $flow?->id,
-                    'flow_version_id' => $flowVersion?->id,
                 ],
                 $session,
                 'xml_curl'
             );
-
-            if ($flowVersion) {
-                $this->flowRuntimeStarter->start($session, $flowVersion);
-            }
         }
 
         $xml = $this->compiler->compileDialplan($domain, $destinationNumber, $callerIdNumber, $requestPayload);
