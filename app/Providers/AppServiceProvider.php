@@ -3,9 +3,21 @@
 namespace App\Providers;
 
 use App\Models\Extension;
+use App\Models\Holiday;
+use App\Models\HolidayCalendar;
+use App\Models\Schedule;
+use App\Models\ScheduleBreak;
+use App\Models\ScheduleException;
+use App\Models\ScheduleRule;
 use App\Modules\Contracts\NizamModule as NizamModuleContract;
 use App\Modules\ModuleRegistry;
 use App\Observers\ExtensionObserver;
+use App\Observers\HolidayCalendarObserver;
+use App\Observers\HolidayObserver;
+use App\Observers\ScheduleBreakObserver;
+use App\Observers\ScheduleExceptionObserver;
+use App\Observers\ScheduleObserver;
+use App\Observers\ScheduleRuleObserver;
 use App\Policies\CallPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -50,6 +62,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Extension::observe(ExtensionObserver::class);
+        Schedule::observe(ScheduleObserver::class);
+        ScheduleRule::observe(ScheduleRuleObserver::class);
+        ScheduleBreak::observe(ScheduleBreakObserver::class);
+        ScheduleException::observe(ScheduleExceptionObserver::class);
+        HolidayCalendar::observe(HolidayCalendarObserver::class);
+        Holiday::observe(HolidayObserver::class);
 
         // Register non-model call authorization gates
         $callPolicy = new CallPolicy;
