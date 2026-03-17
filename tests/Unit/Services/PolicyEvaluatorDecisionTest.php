@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\CallRoutingPolicy;
+use App\Models\Extension;
 use App\Models\Tenant;
 use App\Services\PolicyEvaluator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -68,32 +69,35 @@ class PolicyEvaluatorDecisionTest extends TestCase
     public function test_evaluate_policy_returns_redirect_on_match(): void
     {
         $tenant = Tenant::factory()->create();
+        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
         $policy = CallRoutingPolicy::factory()->create([
             'tenant_id' => $tenant->id,
             'conditions' => [],
             'match_destination_type' => 'extension',
-            'match_destination_id' => 'some-id',
+            'match_destination_id' => $extension->id,
         ]);
 
         $result = $this->evaluator->evaluatePolicy($policy, ['tenant_id' => $tenant->id]);
 
         $this->assertEquals(PolicyEvaluator::DECISION_REDIRECT, $result['decision']);
         $this->assertEquals('extension', $result['redirect_to']['type']);
-        $this->assertEquals('some-id', $result['redirect_to']['id']);
+        $this->assertEquals($extension->id, $result['redirect_to']['id']);
     }
 
     public function test_evaluate_policy_returns_redirect_on_no_match(): void
     {
         $tenant = Tenant::factory()->create();
+        $matchExtension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $voicemailExtension = Extension::factory()->create(['tenant_id' => $tenant->id]);
         $policy = CallRoutingPolicy::factory()->create([
             'tenant_id' => $tenant->id,
             'conditions' => [
                 ['type' => 'time_of_day', 'params' => ['start' => '23:00', 'end' => '23:01']],
             ],
             'match_destination_type' => 'extension',
-            'match_destination_id' => 'match-id',
+            'match_destination_id' => $matchExtension->id,
             'no_match_destination_type' => 'voicemail',
-            'no_match_destination_id' => 'nomatch-id',
+            'no_match_destination_id' => $voicemailExtension->id,
         ]);
 
         $now = \Carbon\Carbon::parse('2024-01-01 10:00:00');
@@ -104,6 +108,7 @@ class PolicyEvaluatorDecisionTest extends TestCase
 
         $this->assertEquals(PolicyEvaluator::DECISION_REDIRECT, $result['decision']);
         $this->assertEquals('voicemail', $result['redirect_to']['type']);
+        $this->assertEquals($voicemailExtension->id, $result['redirect_to']['id']);
     }
 
     public function test_evaluate_policy_allows_operational_tenant(): void
