@@ -3,23 +3,28 @@
 namespace App\Observers;
 
 use App\Models\HolidayCalendar;
+use App\Services\TenantManifestBuilder;
+use Illuminate\Support\Facades\Log;
 
 class HolidayCalendarObserver
 {
-    use RebuildsTenantManifest;
+    public function __construct(
+        protected TenantManifestBuilder $manifestBuilder
+    ) {}
 
-    public function created(HolidayCalendar $holidayCalendar): void
+    protected function rebuildManifest(HolidayCalendar $calendar): void
     {
-        $this->rebuildTenantManifestForModel($holidayCalendar);
+        try {
+            $this->manifestBuilder->buildAndActivate($calendar->tenant);
+        } catch (\Exception $e) {
+            Log::error('Failed to rebuild manifest on holiday calendar change', [
+                'calendar_id' => $calendar->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
-    public function updated(HolidayCalendar $holidayCalendar): void
-    {
-        $this->rebuildTenantManifestForModel($holidayCalendar);
-    }
-
-    public function deleted(HolidayCalendar $holidayCalendar): void
-    {
-        $this->rebuildTenantManifestForModel($holidayCalendar);
-    }
+    public function created(HolidayCalendar $calendar): void { $this->rebuildManifest($calendar); }
+    public function updated(HolidayCalendar $calendar): void { $this->rebuildManifest($calendar); }
+    public function deleted(HolidayCalendar $calendar): void { $this->rebuildManifest($calendar); }
 }

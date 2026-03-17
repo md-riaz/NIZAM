@@ -3,23 +3,28 @@
 namespace App\Observers;
 
 use App\Models\Schedule;
+use App\Services\TenantManifestBuilder;
+use Illuminate\Support\Facades\Log;
 
 class ScheduleObserver
 {
-    use RebuildsTenantManifest;
+    public function __construct(
+        protected TenantManifestBuilder $manifestBuilder
+    ) {}
 
-    public function created(Schedule $schedule): void
+    protected function rebuildManifest(Schedule $schedule): void
     {
-        $this->rebuildTenantManifestForModel($schedule);
+        try {
+            $this->manifestBuilder->buildAndActivate($schedule->tenant);
+        } catch (\Exception $e) {
+            Log::error('Failed to rebuild manifest on schedule change', [
+                'schedule_id' => $schedule->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
-    public function updated(Schedule $schedule): void
-    {
-        $this->rebuildTenantManifestForModel($schedule);
-    }
-
-    public function deleted(Schedule $schedule): void
-    {
-        $this->rebuildTenantManifestForModel($schedule);
-    }
+    public function created(Schedule $schedule): void { $this->rebuildManifest($schedule); }
+    public function updated(Schedule $schedule): void { $this->rebuildManifest($schedule); }
+    public function deleted(Schedule $schedule): void { $this->rebuildManifest($schedule); }
 }
