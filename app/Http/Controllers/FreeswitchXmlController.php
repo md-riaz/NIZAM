@@ -32,7 +32,8 @@ class FreeswitchXmlController extends Controller
     public function handle(Request $request): Response
     {
         $section = $request->input('section', '');
-        $domain = $request->input('domain', '');
+        // Support both 'domain' and 'domain_name' parameters
+        $domain = $request->input('domain_name', $request->input('domain', ''));
 
         return match ($section) {
             'directory' => $this->handleDirectory($domain),
