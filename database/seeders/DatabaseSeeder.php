@@ -70,18 +70,19 @@ class DatabaseSeeder extends Seeder
 
         $extensions = [];
         foreach ($extensionNames as $ext => [$first, $last]) {
-            $extensions[$ext] = Extension::create([
-                'tenant_id' => $tenant->id,
-                'extension' => $ext,
-                'password' => 'pass'.$ext,
-                'directory_first_name' => $first,
-                'directory_last_name' => $last,
-                'effective_caller_id_name' => "$first $last",
-                'effective_caller_id_number' => $ext,
-                'voicemail_enabled' => true,
-                'voicemail_pin' => $ext,
-                'is_active' => true,
-            ]);
+            $extensions[$ext] = Extension::firstOrCreate(
+                ['tenant_id' => $tenant->id, 'extension' => $ext],
+                [
+                    'password' => 'pass'.$ext,
+                    'directory_first_name' => $first,
+                    'directory_last_name' => $last,
+                    'effective_caller_id_name' => "$first $last",
+                    'effective_caller_id_number' => $ext,
+                    'voicemail_enabled' => true,
+                    'voicemail_pin' => $ext,
+                    'is_active' => true,
+                ]
+            );
         }
 
         // 4. DIDs routed to extensions

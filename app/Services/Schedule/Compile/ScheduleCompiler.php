@@ -62,7 +62,7 @@ class ScheduleCompiler
      */
     protected function compileHolidayCheck(Schedule $schedule): ?string
     {
-        $holidays = $schedule->holidayCalendar?->holidays ?? [];
+        $holidays = $schedule->holidayCalendar?->holidays->toArray() ?? [];
 
         if (empty($holidays)) {
             return null;

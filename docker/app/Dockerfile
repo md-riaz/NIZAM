@@ -47,6 +47,9 @@ COPY . .
 # Generate optimised classmap and run post-install scripts (package:discover)
 RUN composer dump-autoload --optimize --no-interaction
 
+# Build frontend assets during Docker build to avoid npm conflicts at runtime
+RUN npm ci --no-audit --no-fund --force && npm run build
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 

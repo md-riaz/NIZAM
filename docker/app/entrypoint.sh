@@ -21,9 +21,9 @@ if [ -f "$APP_ROOT/package.json" ] && [ ! -f "$VITE_MANIFEST" ]; then
     echo "[entrypoint] Vite manifest missing. Building frontend assets..."
 
     if [ -f "$APP_ROOT/package-lock.json" ]; then
-        npm ci --no-audit --no-fund
+        npm ci --no-audit --no-fund --force
     else
-        npm install --no-audit --no-fund
+        npm install --no-audit --no-fund --force
     fi
 
     npm run build

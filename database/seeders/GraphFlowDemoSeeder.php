@@ -149,7 +149,7 @@ class GraphFlowDemoSeeder extends Seeder
                 ],
             ]);
 
-            $flow = $flow->fresh(['activeVersion']);
+            $flow->fresh(['activeVersion']);
         }
 
         Did::updateOrCreate(

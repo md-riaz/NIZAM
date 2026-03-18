@@ -84,7 +84,7 @@ class FlowGraphService
         $version = $version->fresh(['nodes', 'edges']);
 
         if ($publish) {
-            $version = $this->flowPublishService->publish($version);
+            $this->flowPublishService->publish($version);
         }
 
         return $version->fresh(['nodes', 'edges']);
