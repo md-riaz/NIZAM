@@ -277,6 +277,122 @@ paths:
         '200':
           description: Dashboard data
 
+  /admin/sip-profiles:
+    get:
+      tags: [Admin]
+      summary: List SIP profiles
+      operationId: listSipProfiles
+      responses:
+        '200':
+          description: SIP profile list
+    post:
+      tags: [Admin]
+      summary: Create SIP profile
+      operationId: createSipProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SipProfileInput'
+      responses:
+        '201':
+          description: SIP profile created
+
+  /admin/sip-profiles/{sipProfileId}:
+    parameters:
+      - name: sipProfileId
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Admin]
+      summary: Get SIP profile
+      operationId: getSipProfile
+      responses:
+        '200':
+          description: SIP profile details
+    put:
+      tags: [Admin]
+      summary: Update SIP profile
+      operationId: updateSipProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SipProfileInput'
+      responses:
+        '200':
+          description: SIP profile updated
+    delete:
+      tags: [Admin]
+      summary: Delete SIP profile
+      operationId: deleteSipProfile
+      responses:
+        '204':
+          description: SIP profile deleted
+
+  /admin/blocked-destinations:
+    get:
+      tags: [Admin]
+      summary: List blocked destinations
+      operationId: listBlockedDestinations
+      parameters:
+        - name: tenant_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Blocked destination list
+    post:
+      tags: [Admin]
+      summary: Create blocked destination
+      operationId: createBlockedDestination
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockedDestinationInput'
+      responses:
+        '201':
+          description: Blocked destination created
+
+  /admin/blocked-destinations/{blockedDestinationId}:
+    parameters:
+      - name: blockedDestinationId
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Admin]
+      summary: Get blocked destination
+      operationId: getBlockedDestination
+      responses:
+        '200':
+          description: Blocked destination details
+    put:
+      tags: [Admin]
+      summary: Update blocked destination
+      operationId: updateBlockedDestination
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockedDestinationInput'
+      responses:
+        '200':
+          description: Blocked destination updated
+    delete:
+      tags: [Admin]
+      summary: Delete blocked destination
+      operationId: deleteBlockedDestination
+      responses:
+        '204':
+          description: Blocked destination deleted
+
   /users:
     get:
       tags: [Users]
@@ -2338,3 +2454,20 @@ components:
           destination: { type: string }
           calls: { type: integer }
           duration: { type: integer }
+
+    SipProfileInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        settings: { type: object }
+        is_active: { type: boolean }
+
+    BlockedDestinationInput:
+      type: object
+      required: [pattern]
+      properties:
+        tenant_id: { type: string, format: uuid, nullable: true }
+        pattern: { type: string }
+        description: { type: string }
