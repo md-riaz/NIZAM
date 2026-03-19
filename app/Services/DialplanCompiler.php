@@ -90,21 +90,28 @@ class DialplanCompiler
             $normalizedOutbound = ltrim($normalizedOutboundE164, '+');
             $xml .= '                <variable name="outbound_caller_id_number" value="'.htmlspecialchars($normalizedOutbound, ENT_QUOTES | ENT_XML1).'"/>'."\n";
             
-            // P-Asserted-Identity injection
-            if ($extension->outbound_caller_id_pai) {
+            // P-Asserted-Identity injection from Tenant settings
+            $sendPai = data_get($extension->tenant?->settings, 'outbound_caller_id_pai');
+            if ($sendPai === null) {
+                $sendPai = config('nizam.media.outbound_caller_id_pai', false);
+            }
+            
+            if ($sendPai) {
                 $xml .= '                <variable name="sip_h_P-Asserted-Identity" value="&lt;sip:'.htmlspecialchars($normalizedOutboundE164, ENT_QUOTES | ENT_XML1).'@${domain}&gt;"/>'."\n";
             }
-        }
 
-        // Privacy header manipulation
-        if ($extension->outbound_caller_id_privacy && $extension->outbound_caller_id_privacy !== 'none') {
-            $privacy = htmlspecialchars($extension->outbound_caller_id_privacy, ENT_QUOTES | ENT_XML1);
-            $xml .= '                <variable name="sip_h_Privacy" value="'.$privacy.'"/>'."\n";
-            $xml .= '                <variable name="origination_privacy" value="'.$privacy.'"/>'."\n";
-            
-            if ($extension->outbound_caller_id_privacy === 'hide' || $extension->outbound_caller_id_privacy === 'full') {
-                $xml .= '                <variable name="effective_caller_id_number" value="anonymous"/>'."\n";
-                $xml .= '                <variable name="effective_caller_id_name" value="Anonymous"/>'."\n";
+            // Privacy header manipulation from Tenant settings
+            $privacyMode = data_get($extension->tenant?->settings, 'outbound_caller_id_privacy', 'none');
+
+            if ($privacyMode !== 'none') {
+                $privacy = htmlspecialchars($privacyMode, ENT_QUOTES | ENT_XML1);
+                $xml .= '                <variable name="sip_h_Privacy" value="'.$privacy.'"/>'."\n";
+                $xml .= '                <variable name="origination_privacy" value="'.$privacy.'"/>'."\n";
+                
+                if ($privacyMode === 'hide' || $privacyMode === 'full') {
+                    $xml .= '                <variable name="effective_caller_id_number" value="anonymous"/>'."\n";
+                    $xml .= '                <variable name="effective_caller_id_name" value="Anonymous"/>'."\n";
+                }
             }
         }
 

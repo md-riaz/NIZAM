@@ -56,6 +56,7 @@ return [
         'local_network_acl' => env('LOCAL_NETWORK_ACL', 'localnet.auto'),
         'dtmf_type' => env('DTMF_TYPE', 'rfc2833'),
         'srtp_policy' => env('SRTP_POLICY', 'optional'),
+        'outbound_caller_id_pai' => env('OUTBOUND_CALLER_ID_PAI', false),
     ],
 
     /*

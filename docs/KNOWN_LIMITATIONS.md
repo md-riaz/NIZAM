@@ -90,10 +90,16 @@ automatic CID rewriting, P-Asserted-Identity injection, or privacy header
 manipulation for carrier compliance.
 
 **System behavior:**
-- The `effective_caller_id_number` from the extension model is sent as-is.
-- No E.164 formatting or carrier-specific header adaptation is applied
-  automatically.
-- Anonymous / restricted call presentation is not implemented.
+- Caller ID numbers (effective and outbound) are automatically normalized to
+  E.164 format using `DidNormalizationService::toE164()`, with the leading `+`
+  stripped for the dialplan variables to ensure carrier compatibility.
+- P-Asserted-Identity injection and Privacy headers are managed at the **Tenant level**.
+- Settings are stored in the Tenant's `settings` JSON field (`outbound_caller_id_pai`
+  and `outbound_caller_id_privacy`).
+- If a tenant does not specify a PAI preference (set to `null`), it falls back to
+  the global `OUTBOUND_CALLER_ID_PAI` setting in `config/nizam.php`.
+- Anonymous call presentation is supported by setting privacy to `hide` or `full`
+  at the tenant level.
 
 **Recommendation:** Use `DidNormalizationService::toE164()` for E.164
 formatting. Carrier-specific SIP header manipulation should be handled in
