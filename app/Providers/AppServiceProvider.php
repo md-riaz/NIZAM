@@ -19,8 +19,11 @@ use App\Observers\ScheduleExceptionObserver;
 use App\Observers\ScheduleObserver;
 use App\Observers\ScheduleRuleObserver;
 use App\Policies\CallPolicy;
+use App\Events\CallDetailRecordCreated;
+use App\Listeners\EnrichCallDetailRecord;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -68,6 +71,11 @@ class AppServiceProvider extends ServiceProvider
         ScheduleException::observe(ScheduleExceptionObserver::class);
         HolidayCalendar::observe(HolidayCalendarObserver::class);
         Holiday::observe(HolidayObserver::class);
+
+        Event::listen(
+            CallDetailRecordCreated::class,
+            EnrichCallDetailRecord::class,
+        );
 
         // Register non-model call authorization gates
         $callPolicy = new CallPolicy;

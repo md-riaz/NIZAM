@@ -43,6 +43,8 @@ class SyncPermissionsCommand extends Command
         'time_conditions.update' => 'Update time conditions',
         'time_conditions.delete' => 'Delete time conditions',
         'cdrs.view' => 'View call detail records',
+        'cdrs.analytics' => 'View call detail record analytics',
+        'cdrs.export' => 'Export call detail records',
         'call_events.view' => 'View call events',
         'webhooks.view' => 'View webhooks',
         'webhooks.create' => 'Create webhooks',

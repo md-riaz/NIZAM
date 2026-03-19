@@ -764,6 +764,13 @@ data: {"id":43,"call_uuid":"abc-123","event_type":"answered","payload":{...},"oc
 
 The stream sends heartbeat comments every 15 seconds and auto-disconnects after 5 minutes (clients should reconnect using `Last-Event-ID`). Maximum 50 concurrent connections per tenant.
 
+### ESL Listener Commands
+
+| Command | Description |
+|---|---|
+| `php artisan freeswitch:listen` | Start ESL event listener with auto-reconnection |
+| `php artisan freeswitch:listen --max-retries=5` | ESL listener with limited reconnection attempts |
+
 ---
 
 ## Device Profiles
@@ -805,6 +812,22 @@ Content-Type: application/json
 X-Nizam-Signature: sha256=<hmac-hash>
 X-Nizam-Event: call.hangup
 ```
+
+**Normalized Event Types:**
+
+| Event Type | Source | Description |
+|-----------|--------|-------------|
+| `call.created` | `CHANNEL_CREATE` | Call leg created in FreeSWITCH |
+| `call.started` | `CHANNEL_CREATE` | Call initiated (application layer) |
+| `call.answered` | `CHANNEL_ANSWER` | Call answered |
+| `call.bridge` | `CHANNEL_BRIDGE` | Call legs bridged (includes `other_leg_uuid`) |
+| `call.ended` | `CHANNEL_HANGUP` | Call leg ended (hangup cause available) |
+| `call.completed`| `CHANNEL_HANGUP_COMPLETE` | Call sequence finished (final billing data) |
+| `call.hangup` | `CHANNEL_HANGUP_COMPLETE` | Legacy event for call end |
+| `call.missed` | `CHANNEL_HANGUP_COMPLETE` | Missed call (hangup cause = `NO_ANSWER`) |
+| `voicemail.received` | `CUSTOM vm::maintenance` | New voicemail message |
+| `registration.registered` | `CUSTOM sofia::register` | SIP device registered |
+| `registration.unregistered` | `CUSTOM sofia::unregister` | SIP device unregistered |
 
 **Available Events:**
 - `call.started` — Call initiated

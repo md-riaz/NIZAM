@@ -106,7 +106,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Events: `call.started`, `call.answered`, `call.bridge`, `call.missed`, `call.hangup`, `voicemail.received`, `registration.registered`, `registration.unregistered`
 
 ### Event Bus & Observability
-- FreeSWITCH ESL event listener with automatic reconnection (`php artisan nizam:esl-listen`)
+- FreeSWITCH ESL event listener with automatic reconnection (`php artisan freeswitch:listen`)
 - Exponential backoff on ESL disconnect (1s → 30s max)
 - SIGINT/SIGTERM signal handling for graceful shutdown
 - Real-time call event processing and CDR creation
@@ -308,8 +308,8 @@ Real-time streaming of call lifecycle events. Events are:
 
 | Command | Description |
 |---------|-------------|
-| `php artisan nizam:esl-listen` | Start ESL event listener with auto-reconnection |
-| `php artisan nizam:esl-listen --max-retries=5` | ESL listener with limited reconnection attempts |
+| `php artisan freeswitch:listen` | Start ESL event listener with auto-reconnection |
+| `php artisan freeswitch:listen --max-retries=5` | ESL listener with limited reconnection attempts |
 | `php artisan nizam:gateway-status` | Poll and cache FreeSWITCH gateway/registration status |
 | `php artisan nizam:sync-permissions` | Sync core + module permissions to database |
 | `php artisan make:nizam-module {name}` | Generate a module skeleton with all required hooks |
@@ -451,7 +451,7 @@ php artisan serve      # API at http://localhost:8000/api/v1
 ```
 NIZAM/
 ├── app/
-│   ├── Console/Commands/       # Artisan commands (nizam:esl-listen, nizam:gateway-status, nizam:sync-permissions, make:nizam-module)
+│   ├── Console/Commands/       # Artisan commands (freeswitch:listen, nizam:gateway-status, nizam:sync-permissions, make:nizam-module)
 │   ├── Events/                 # Event classes (CallEvent)
 │   ├── Http/
 │   │   ├── Controllers/
