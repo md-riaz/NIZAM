@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\FlowController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TenantController;
+use App\Http\Controllers\Api\SslController;
 use App\Http\Controllers\Api\TenantStatsController;
 use App\Http\Controllers\Api\TokenController;
 use App\Http\Controllers\Api\UsageController;
@@ -54,6 +55,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     // Admin observability dashboard
     Route::get('admin/dashboard', AdminDashboardController::class)->name('admin.dashboard');
+
+    // SSL management
+    Route::get('admin/ssl', [SslController::class, 'index'])->name('admin.ssl.index');
+    Route::put('admin/ssl', [SslController::class, 'update'])->name('admin.ssl.update');
+    Route::post('admin/ssl/request', [SslController::class, 'requestCertificate'])->name('admin.ssl.request');
 
     // User management (admin-only)
     Route::apiResource('users', UserController::class);

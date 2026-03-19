@@ -8,6 +8,7 @@ use App\Models\Extension;
 use App\Models\RingGroup;
 use App\Models\Tenant;
 use App\Models\TimeCondition;
+use App\Services\DidNormalizationService;
 use App\Services\Routing\GatewayResolutionService;
 use App\Services\Routing\NumberRoutingService;
 
@@ -72,17 +73,38 @@ class DialplanCompiler
         $xml .= '              </params>'."\n";
         $xml .= '              <variables>'."\n";
 
+        $defaultCountryCode = (string) data_get($extension->tenant?->settings, 'default_country_code', '1');
+        
         if ($extension->effective_caller_id_name) {
             $xml .= '                <variable name="effective_caller_id_name" value="'.htmlspecialchars($extension->effective_caller_id_name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         }
         if ($extension->effective_caller_id_number) {
-            $xml .= '                <variable name="effective_caller_id_number" value="'.htmlspecialchars($extension->effective_caller_id_number, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+            $normalizedEffective = DidNormalizationService::toE164($extension->effective_caller_id_number, $defaultCountryCode);
+            $xml .= '                <variable name="effective_caller_id_number" value="'.htmlspecialchars($normalizedEffective, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         }
         if ($extension->outbound_caller_id_name) {
             $xml .= '                <variable name="outbound_caller_id_name" value="'.htmlspecialchars($extension->outbound_caller_id_name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         }
         if ($extension->outbound_caller_id_number) {
-            $xml .= '                <variable name="outbound_caller_id_number" value="'.htmlspecialchars($extension->outbound_caller_id_number, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+            $normalizedOutbound = DidNormalizationService::toE164($extension->outbound_caller_id_number, $defaultCountryCode);
+            $xml .= '                <variable name="outbound_caller_id_number" value="'.htmlspecialchars($normalizedOutbound, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+            
+            // P-Asserted-Identity injection
+            if ($extension->outbound_caller_id_pai) {
+                $xml .= '                <variable name="sip_h_P-Asserted-Identity" value="&lt;sip:'.htmlspecialchars($normalizedOutbound, ENT_QUOTES | ENT_XML1).'@${domain}&gt;"/>'."\n";
+            }
+        }
+
+        // Privacy header manipulation
+        if ($extension->outbound_caller_id_privacy && $extension->outbound_caller_id_privacy !== 'none') {
+            $privacy = htmlspecialchars($extension->outbound_caller_id_privacy, ENT_QUOTES | ENT_XML1);
+            $xml .= '                <variable name="sip_h_Privacy" value="'.$privacy.'"/>'."\n";
+            $xml .= '                <variable name="origination_privacy" value="'.$privacy.'"/>'."\n";
+            
+            if ($extension->outbound_caller_id_privacy === 'hide' || $extension->outbound_caller_id_privacy === 'full') {
+                $xml .= '                <variable name="effective_caller_id_number" value="anonymous"/>'."\n";
+                $xml .= '                <variable name="effective_caller_id_name" value="Anonymous"/>'."\n";
+            }
         }
 
         $xml .= '              </variables>'."\n";

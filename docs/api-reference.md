@@ -636,7 +636,7 @@ DELETE /api/tenants/{tenant_id}/time-conditions/{id}
 
 ## CDRs (Call Detail Records)
 
-Read-only. Created automatically when calls end.
+Read-only. Created automatically when calls end and enriched asynchronously.
 
 ```http
 GET /api/tenants/{tenant_id}/cdrs
@@ -647,24 +647,69 @@ GET /api/tenants/{tenant_id}/cdrs/{id}
 
 | Parameter | Description |
 |-----------|-------------|
-| `direction` | Filter by direction (`inbound`, `outbound`, `local`) |
-| `uuid` | Filter by call UUID |
-| `hangup_cause` | Filter by hangup cause |
-| `caller_id_number` | Filter by caller ID number |
-| `destination_number` | Filter by destination number |
-| `date_from` | Filter CDRs after this datetime |
-| `date_to` | Filter CDRs before this datetime |
+| `q` | Full-text search on caller, destination, or UUID |
+| `call_type` | Filter by `inbound`, `outbound`, `internal`, `emergency` |
+| `direction` | Filter by `inbound`, `outbound` |
+| `quality_score_min` | Filter by minimum quality score (0-5) |
+| `hangup_cause` | Filter by FreeSWITCH hangup cause |
+| `start_date` | Filter CDRs after this ISO8601 datetime |
+| `end_date` | Filter CDRs before this ISO8601 datetime |
 
-### Export CDRs as CSV
+### CDR Enrichment & Quality Metrics
 
-Stream CDRs as a downloadable CSV file. Supports the same filters as the list endpoint. Limited to 10,000 records.
+Every CDR is enriched with:
+- **Quality Metrics**: MOS (Mean Opinion Score), Jitter, Latency, and Packet Loss.
+- **Geolocation**: Country and carrier information for external numbers.
+- **Metadata**: SIP User Agent, remote media IP, and custom tags.
 
+### CDR Analytics
+
+Get high-level insights into call performance and trends.
+
+#### Summary Analytics
 ```http
-GET /api/tenants/{tenant_id}/cdrs/export
-Authorization: Bearer YOUR_TOKEN
+GET /api/tenants/{tenant_id}/cdrs/analytics/summary
+```
+Returns: `total_calls`, `answered_calls`, `asr` (Answer Seizure Ratio), `acd` (Average Call Duration).
+
+#### Volume Trends
+```http
+GET /api/tenants/{tenant_id}/cdrs/analytics/volume?interval=day
+```
+Returns time-series data for call volume.
+
+#### Quality Trends
+```http
+GET /api/tenants/{tenant_id}/cdrs/analytics/quality
+```
+Returns MOS and packet loss trends over time.
+
+#### Top Destinations
+```http
+GET /api/tenants/{tenant_id}/cdrs/analytics/destinations
+```
+Returns top dialed numbers or countries.
+
+### Export CDRs
+
+#### Simple Export (CSV)
+```http
+GET /api/tenants/{tenant_id}/cdrs/export?format=csv
 ```
 
-**Response**: Streamed CSV with headers: `uuid`, `caller_id_name`, `caller_id_number`, `destination_number`, `direction`, `start_stamp`, `answer_stamp`, `end_stamp`, `duration`, `billsec`, `hangup_cause`.
+#### Advanced Export (JSON/CSV)
+```http
+POST /api/tenants/{tenant_id}/cdrs/export
+Content-Type: application/json
+
+{
+  "format": "json",
+  "filters": {
+    "call_type": "outbound",
+    "quality_score_min": 4.0
+  }
+}
+```
 
 ---
 

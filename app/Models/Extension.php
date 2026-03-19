@@ -28,6 +28,8 @@ class Extension extends Model
         'effective_caller_id_number',
         'outbound_caller_id_name',
         'outbound_caller_id_number',
+        'outbound_caller_id_privacy',
+        'outbound_caller_id_pai',
         'voicemail_enabled',
         'voicemail_pin',
         'is_active',
@@ -54,6 +56,7 @@ class Extension extends Model
             'password' => 'encrypted',
             'voicemail_pin' => 'encrypted',
             'voicemail_enabled' => 'boolean',
+            'outbound_caller_id_pai' => 'boolean',
             'is_active' => 'boolean',
         ];
     }

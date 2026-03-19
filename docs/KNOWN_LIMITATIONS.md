@@ -119,20 +119,15 @@ Intrado) and route emergency patterns outside NIZAM.
 
 ### Inbound DID Normalization
 
-Carriers deliver inbound numbers in varying formats (`+1`, `001`, `1`,
-national, local). NIZAM provides `DidNormalizationService` to normalize numbers
-to E.164 before routing, but normalization is **not applied automatically** to
-all inbound calls.
+NIZAM automatically normalizes inbound numbers to E.164 before routing to ensure
+reliable matching regardless of carrier format.
 
 **System behavior:**
-- The DID `number` field stores whatever format was configured at creation time.
-- `DidNormalizationService::toE164()` is available for explicit normalization.
-- If a DID is stored as `+15551234567` but the carrier delivers `15551234567`,
-  routing will fail unless the DID is stored in the matching format or
-  normalization is applied in the lookup path.
-
-**Recommendation:** Store all DIDs in E.164 format and normalize inbound
-queries using `DidNormalizationService`.
+- All DIDs store a `normalized_number` field (E.164) generated automatically
+  on save.
+- `NumberRoutingService::resolveInboundDid()` normalizes the inbound destination
+  number using the tenant's default country code before querying the database.
+- Matches are performed against both the raw `number` and the `normalized_number`.
 
 ---
 

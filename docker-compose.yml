@@ -123,6 +123,7 @@ services:
       - "16384-16484:16384-16484/udp"
     volumes:
       - freeswitch_data:/var/lib/freeswitch
+      - certs_data:/usr/local/freeswitch/certs
     networks:
       - nizam
     environment:
@@ -145,6 +146,7 @@ services:
     volumes:
       - .:/var/www/html
       - vendor_data:/var/www/html/vendor
+      - certs_data:/etc/letsencrypt
     networks:
       - nizam
     environment:
@@ -176,6 +178,7 @@ services:
     volumes:
       - .:/var/www/html
       - vendor_data:/var/www/html/vendor
+      - certs_data:/etc/letsencrypt
     networks:
       - nizam
     environment:
@@ -196,7 +199,7 @@ services:
       dockerfile: docker/app/Dockerfile
     container_name: nizam-esl-listener
     restart: unless-stopped
-    command: php artisan nizam:esl-listen
+    command: php artisan freeswitch:listen
     depends_on:
       app:
         condition: service_healthy
@@ -224,11 +227,22 @@ services:
       - FREESWITCH_HOST=freeswitch
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
 
+  certbot:
+    image: certbot/certbot
+    container_name: nizam-certbot
+    volumes:
+      - certs_data:/etc/letsencrypt
+      - .:/var/www/html
+    networks:
+      - nizam
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
 volumes:
   postgres_data:
   redis_data:
   freeswitch_data:
   vendor_data:
+  certs_data:
 
 networks:
   nizam:

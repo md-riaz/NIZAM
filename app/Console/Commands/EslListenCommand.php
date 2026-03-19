@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class EslListenCommand extends Command
 {
-    protected $signature = 'nizam:esl-listen {--max-retries=0 : Maximum reconnection attempts (0 = unlimited)}';
+    protected $signature = 'freeswitch:listen {--max-retries=0 : Maximum reconnection attempts (0 = unlimited)}';
 
     protected $description = 'Connect to FreeSWITCH ESL and listen for events with automatic reconnection';
 

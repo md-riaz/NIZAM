@@ -760,22 +760,119 @@ paths:
       - $ref: '#/components/parameters/TenantId'
     get:
       tags: [CDRs]
-      summary: Export CDRs as CSV
+      summary: Export CDRs (Simple)
       operationId: exportCdrs
       responses:
         '200':
-          description: CSV export stream
+          description: CSV/JSON export stream
+    post:
+      tags: [CDRs]
+      summary: Advanced CDR Export
+      description: Export filtered CDRs in CSV or JSON format.
+      operationId: exportCdrsAdvanced
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format: { type: string, enum: [csv, json], default: csv }
+                filters: { type: object }
+      responses:
+        '200':
+          description: CDR export file
 
   /tenants/{tenantId}/cdrs:
     parameters:
       - $ref: '#/components/parameters/TenantId'
     get:
       tags: [CDRs]
-      summary: List CDRs
+      summary: List CDRs with advanced filtering
       operationId: listCdrs
+      parameters:
+        - name: q
+          in: query
+          description: Full-text search on caller, destination, UUID
+          schema: { type: string }
+        - name: call_type
+          in: query
+          schema: { type: string, enum: [inbound, outbound, internal, emergency] }
+        - name: quality_score_min
+          in: query
+          schema: { type: number, minimum: 0, maximum: 5 }
+        - name: direction
+          in: query
+          schema: { type: string, enum: [inbound, outbound] }
+        - name: start_date
+          in: query
+          schema: { type: string, format: date-time }
+        - name: end_date
+          in: query
+          schema: { type: string, format: date-time }
       responses:
         '200':
-          description: CDR list
+          description: CDR list with pagination and enrichment data
+
+  /tenants/{tenantId}/cdrs/analytics/summary:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [CDRs]
+      summary: Get CDR summary analytics (ASR, ACD)
+      operationId: cdrAnalyticsSummary
+      responses:
+        '200':
+          description: Summary stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CdrAnalyticsSummary'
+
+  /tenants/{tenantId}/cdrs/analytics/volume:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [CDRs]
+      summary: Get call volume trends
+      operationId: cdrAnalyticsVolume
+      responses:
+        '200':
+          description: Volume trends over time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CdrAnalyticsVolume'
+
+  /tenants/{tenantId}/cdrs/analytics/quality:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [CDRs]
+      summary: Get quality trends (MOS, Packet Loss)
+      operationId: cdrAnalyticsQuality
+      responses:
+        '200':
+          description: Quality metrics trends
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CdrAnalyticsQuality'
+
+  /tenants/{tenantId}/cdrs/analytics/destinations:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [CDRs]
+      summary: Get top call destinations
+      operationId: cdrAnalyticsDestinations
+      responses:
+        '200':
+          description: Top destinations list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CdrAnalyticsDestinations'
 
   /tenants/{tenantId}/cdrs/{cdrId}:
     parameters:
@@ -783,11 +880,15 @@ paths:
       - $ref: '#/components/parameters/CdrId'
     get:
       tags: [CDRs]
-      summary: Get CDR
+      summary: Get detailed CDR with enrichment data
       operationId: getCdr
       responses:
         '200':
-          description: CDR details
+          description: CDR details including quality metrics and geolocation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallDetailRecord'
 
   /tenants/{tenantId}/call-routing-policies:
     parameters:
@@ -2165,3 +2266,75 @@ components:
         agent_id: { type: string, format: uuid }
         weight: { type: integer }
         paused: { type: boolean }
+
+    CallDetailRecord:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        uuid: { type: string }
+        caller_id_name: { type: string }
+        caller_id_number: { type: string }
+        destination_number: { type: string }
+        context: { type: string }
+        start_stamp: { type: string, format: date-time }
+        answer_stamp: { type: string, format: date-time, nullable: true }
+        end_stamp: { type: string, format: date-time }
+        duration: { type: integer }
+        billsec: { type: integer }
+        hangup_cause: { type: string }
+        direction: { type: string, enum: [inbound, outbound] }
+        call_type: { type: string, enum: [inbound, outbound, internal, emergency] }
+        quality_score: { type: number, format: float, minimum: 0, maximum: 5 }
+        mos: { type: number, format: float }
+        packet_loss: { type: number, format: float }
+        jitter: { type: integer }
+        latency: { type: integer }
+        sip_user_agent: { type: string }
+        remote_media_ip: { type: string }
+        tags: { type: array, items: { type: string } }
+        metadata: { type: object }
+        enrichment:
+          $ref: '#/components/schemas/CdrEnrichment'
+
+    CdrEnrichment:
+      type: object
+      properties:
+        country_code: { type: string }
+        country_name: { type: string }
+        carrier_name: { type: string }
+        number_type: { type: string }
+        is_mobile: { type: boolean }
+        raw_data: { type: object }
+
+    CdrAnalyticsSummary:
+      type: object
+      properties:
+        total_calls: { type: integer }
+        answered_calls: { type: integer }
+        missed_calls: { type: integer }
+        total_duration: { type: integer }
+        total_billsec: { type: integer }
+        asr: { type: number, format: float }
+        acd: { type: number, format: float }
+
+    CdrAnalyticsVolume:
+      type: object
+      properties:
+        labels: { type: array, items: { type: string } }
+        data: { type: array, items: { type: integer } }
+
+    CdrAnalyticsQuality:
+      type: object
+      properties:
+        labels: { type: array, items: { type: string } }
+        mos: { type: array, items: { type: number } }
+        packet_loss: { type: array, items: { type: number } }
+
+    CdrAnalyticsDestinations:
+      type: array
+      items:
+        type: object
+        properties:
+          destination: { type: string }
+          calls: { type: integer }
+          duration: { type: integer }
