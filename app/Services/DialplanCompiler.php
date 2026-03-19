@@ -79,19 +79,20 @@ class DialplanCompiler
             $xml .= '                <variable name="effective_caller_id_name" value="'.htmlspecialchars($extension->effective_caller_id_name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         }
         if ($extension->effective_caller_id_number) {
-            $normalizedEffective = DidNormalizationService::toE164($extension->effective_caller_id_number, $defaultCountryCode);
+            $normalizedEffective = ltrim(DidNormalizationService::toE164($extension->effective_caller_id_number, $defaultCountryCode), '+');
             $xml .= '                <variable name="effective_caller_id_number" value="'.htmlspecialchars($normalizedEffective, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         }
         if ($extension->outbound_caller_id_name) {
             $xml .= '                <variable name="outbound_caller_id_name" value="'.htmlspecialchars($extension->outbound_caller_id_name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         }
         if ($extension->outbound_caller_id_number) {
-            $normalizedOutbound = DidNormalizationService::toE164($extension->outbound_caller_id_number, $defaultCountryCode);
+            $normalizedOutboundE164 = DidNormalizationService::toE164($extension->outbound_caller_id_number, $defaultCountryCode);
+            $normalizedOutbound = ltrim($normalizedOutboundE164, '+');
             $xml .= '                <variable name="outbound_caller_id_number" value="'.htmlspecialchars($normalizedOutbound, ENT_QUOTES | ENT_XML1).'"/>'."\n";
             
             // P-Asserted-Identity injection
             if ($extension->outbound_caller_id_pai) {
-                $xml .= '                <variable name="sip_h_P-Asserted-Identity" value="&lt;sip:'.htmlspecialchars($normalizedOutbound, ENT_QUOTES | ENT_XML1).'@${domain}&gt;"/>'."\n";
+                $xml .= '                <variable name="sip_h_P-Asserted-Identity" value="&lt;sip:'.htmlspecialchars($normalizedOutboundE164, ENT_QUOTES | ENT_XML1).'@${domain}&gt;"/>'."\n";
             }
         }
 

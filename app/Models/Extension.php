@@ -88,8 +88,16 @@ class Extension extends Model
     public function getWebRtcConfig(string $appUrl): array
     {
         $webrtcConfig = config('nizam.webrtc');
+        $sslSetting = \App\Models\SslSetting::where('is_enabled', true)->where('status', 'active')->first();
+        
         $parsedUrl = parse_url($appUrl);
         $host = $parsedUrl['host'] ?? 'localhost';
+        
+        // If SSL is active for a specific domain, use that domain instead of the app URL host
+        if ($sslSetting && !empty($sslSetting->domains)) {
+            $host = $sslSetting->domains[0];
+        }
+
         $wssPort = $webrtcConfig['wss_port'] ?? 7443;
 
         // Build ICE servers array for WebRTC clients
