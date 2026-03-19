@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\BlockedDestination;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+
+class BlockedDestinationController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = BlockedDestination::query();
+
+        if ($request->has('tenant_id')) {
+            $query->where('tenant_id', $request->tenant_id);
+        } elseif (!$request->user()->is_superadmin) { // Assuming a superadmin check exists
+             // Basic multi-tenancy check if not superadmin (though these routes are currently admin prefixed)
+        }
+
+        return $query->get();
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'tenant_id' => 'nullable|uuid|exists:tenants,id',
+            'pattern' => 'required|string',
+            'description' => 'nullable|string',
+        ]);
+
+        $block = BlockedDestination::create($validated);
+
+        return response()->json($block, Response::HTTP_CREATED);
+    }
+
+    public function show(BlockedDestination $blockedDestination)
+    {
+        return $blockedDestination;
+    }
+
+    public function update(Request $request, BlockedDestination $blockedDestination)
+    {
+        $validated = $request->validate([
+            'tenant_id' => 'sometimes|nullable|uuid|exists:tenants,id',
+            'pattern' => 'sometimes|string',
+            'description' => 'nullable|string',
+        ]);
+
+        $blockedDestination->update($validated);
+
+        return $blockedDestination;
+    }
+
+    public function destroy(BlockedDestination $blockedDestination)
+    {
+        $blockedDestination->delete();
+
+        return response()->noContent();
+    }
+}

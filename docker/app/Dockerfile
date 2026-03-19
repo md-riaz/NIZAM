@@ -10,10 +10,15 @@ RUN apk add --no-cache \
     linux-headers \
     nodejs \
     npm \
-    supervisor
+    supervisor \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    ffmpeg
 
-# Install PHP extensions (including opcache for production performance)
-RUN docker-php-ext-install \
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
     pdo_pgsql \
     pgsql \
     mbstring \
@@ -21,7 +26,9 @@ RUN docker-php-ext-install \
     bcmath \
     pcntl \
     sockets \
-    opcache
+    opcache \
+    exif \
+    gd
 
 # Install Redis extension
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \

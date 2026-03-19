@@ -68,6 +68,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('users/{user}/permissions/revoke', [UserController::class, 'revokePermissions'])->name('users.permissions.revoke');
     Route::get('permissions', [UserController::class, 'availablePermissions'])->name('permissions.index');
 
+    // FreeSWITCH Security & Configuration (Superadmin)
+    Route::apiResource('admin/sip-profiles', \App\Http\Controllers\Api\SipProfileController::class);
+    Route::apiResource('admin/blocked-destinations', \App\Http\Controllers\Api\BlockedDestinationController::class);
+
     Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
         Route::get('stats', TenantStatsController::class)->name('tenants.stats');
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BlockedDestination;
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
@@ -260,17 +261,52 @@ class DialplanCompiler
      */
     protected function compileConcurrentCallLimit(Tenant $tenant): string
     {
-        if ($tenant->max_concurrent_calls <= 0) {
-            return '';
+        $xml = '';
+        
+        // Concurrent calls limit (concurrency)
+        if ($tenant->max_concurrent_calls > 0) {
+            $xml .= '            <action application="limit" data="hash '
+                .htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1)
+                .' concurrent_calls '
+                .(int) $tenant->max_concurrent_calls
+                .' !NORMAL_TEMPORARY_FAILURE"/>'."\n";
         }
 
-        $xml = '            <action application="limit" data="hash '
-            .htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1)
-            .' tenant_calls '
-            .(int) $tenant->max_concurrent_calls
-            .' !NORMAL_TEMPORARY_FAILURE"/>'."\n";
+        // Rate limit (calls per minute)
+        if ($tenant->max_calls_per_minute > 0) {
+            // Using hash with a 60s interval effectively implements calls per minute
+            $xml .= '            <action application="limit" data="hash '
+                .htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1)
+                .' rate_limit '
+                .(int) $tenant->max_calls_per_minute
+                .'/60 !SWITCH_CONGESTION"/>'."\n";
+        }
 
         return $xml;
+    }
+
+    /**
+     * Check for blocked destinations and apply security restrictions.
+     */
+    protected function compileSecurityChecks(Tenant $tenant, string $destinationNumber): string
+    {
+        // Check for blocked destinations (Global or Tenant-specific)
+        $isBlocked = BlockedDestination::where(function($query) use ($tenant) {
+                $query->where('tenant_id', $tenant->id)
+                      ->orWhereNull('tenant_id');
+            })
+            ->get()
+            ->contains(function($block) use ($destinationNumber) {
+                return preg_match('/'.$block->pattern.'/', $destinationNumber);
+            });
+
+        if ($isBlocked) {
+            return '            <action application="log" data="WARNING Call to blocked destination: '.htmlspecialchars($destinationNumber, ENT_QUOTES | ENT_XML1).'"/>'."\n"
+                 .'            <action application="respond" data="403"/>'."\n"
+                 .'            <action application="hangup" data="CALL_REJECTED"/>'."\n";
+        }
+
+        return '';
     }
 
     /**
@@ -287,6 +323,7 @@ class DialplanCompiler
     {
         $xml = '        <extension name="did-'.htmlspecialchars($did->number, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($did->number, '/').'$">'."\n";
+        $xml .= $this->compileSecurityChecks($tenant, $did->number);
         $xml .= $this->compileConcurrentCallLimit($tenant);
 
         switch ($did->destination_type) {
@@ -354,6 +391,7 @@ class DialplanCompiler
     {
         $xml = '        <extension name="local-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
+        $xml .= $this->compileSecurityChecks($tenant, $extension->extension);
         $xml .= $this->compileConcurrentCallLimit($tenant);
         $xml .= '            <action application="bridge" data="user/'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         $xml .= '          </condition>'."\n";

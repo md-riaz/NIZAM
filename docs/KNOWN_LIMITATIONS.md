@@ -139,10 +139,10 @@ reliable matching regardless of carrier format.
 
 ## Contact Center
 
-### Agent Login Model
+### Agent Login Model (Planned)
 
 Agents are **permanently tied** to an extension in v1.0. Hotdesking (agent
-logging into different extensions/devices) is not supported.
+logging into different extensions/devices) is a **planned feature for v1.1**.
 
 **System behavior:**
 - The `agents` table has a required `extension_id` foreign key.
@@ -293,16 +293,17 @@ webhook signing secrets, or JWT secrets.
 
 ### Abuse Controls / Toll Fraud
 
-Per-tenant call rate limiting is configurable via `max_calls_per_minute` on the
-Tenant model. However, **enforcement is informational only** in v1.0.
+NIZAM enforces per-tenant call rate limiting (`max_calls_per_minute`) and 
+concurrent call limiting (`max_concurrent_calls`) in real-time.
 
 **System behavior:**
-- The `max_calls_per_minute` field is available for integrations to query and
-  enforce.
-- No automatic call blocking, international dialing restriction, or spend-cap
-  enforcement is built into the dialplan compiler.
-- Toll fraud detection (anomalous call patterns, high-cost destinations) is not
-  implemented.
+- The `DialplanCompiler` automatically injects FreeSWITCH `limit` application 
+  calls for every inbound and outbound call.
+- Destination blocking is enforced via the `BlockedDestination` model. 
+  Calls matching these patterns (Regex) are rejected with SIP 403 Forbidden.
+- Global and tenant-specific blocking rules are supported.
+- Toll fraud detection (anomalous patterns, high-cost destinations) is 
+  partially addressed via these blocking rules but lacks automatic heuristics.
 
 **Recommendation:** Implement rate-limit enforcement in the dialplan compiler
 or SBC layer. Monitor CDR patterns for anomalous activity.

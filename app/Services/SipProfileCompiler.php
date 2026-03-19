@@ -13,6 +13,11 @@ class SipProfileCompiler
     public function compileProfile(string $profileName = 'external'): string
     {
         $media = config('nizam.media', []);
+        
+        // Load persistent profile settings from database if available
+        $model = \App\Models\SipProfile::where('name', $profileName)
+            ->where('is_active', true)
+            ->first();
 
         $xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'."\n";
         $xml .= '<document type="freeswitch/xml">'."\n";
@@ -22,51 +27,47 @@ class SipProfileCompiler
         $xml .= '        <profile name="'.htmlspecialchars($profileName, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <settings>'."\n";
 
-        // Basic SIP settings
-        $xml .= '            <param name="debug" value="0"/>'."\n";
-        $xml .= '            <param name="sip-trace" value="no"/>'."\n";
-        $xml .= '            <param name="sip-capture" value="no"/>'."\n";
-        $xml .= '            <param name="rfc2833-pt" value="101"/>'."\n";
-        $xml .= '            <param name="sip-port" value="5080"/>'."\n";
-        $xml .= '            <param name="dialplan" value="XML"/>'."\n";
-        $xml .= '            <param name="context" value="public"/>'."\n";
-        $xml .= '            <param name="dtmf-duration" value="2000"/>'."\n";
-        $xml .= '            <param name="inbound-codec-prefs" value="PCMU,PCMA"/>'."\n";
-        $xml .= '            <param name="outbound-codec-prefs" value="PCMU,PCMA"/>'."\n";
-        $xml .= '            <param name="rtp-timer-name" value="soft"/>'."\n";
+        // Collect parameters
+        $params = [
+            'debug' => '0',
+            'sip-trace' => 'no',
+            'sip-capture' => 'no',
+            'rfc2833-pt' => '101',
+            'sip-port' => $profileName === 'internal' ? '5060' : '5080',
+            'dialplan' => 'XML',
+            'context' => 'public',
+            'dtmf-duration' => '2000',
+            'inbound-codec-prefs' => 'PCMU,PCMA',
+            'outbound-codec-prefs' => 'PCMU,PCMA',
+            'rtp-timer-name' => 'soft',
+            'local-network-acl' => $media['local_network_acl'] ?? 'localnet.auto',
+            'manage-presence' => 'false',
+            'inbound-codec-negotiation' => 'generous',
+            'nonce-ttl' => '60',
+            'auth-calls' => 'false',
+            'inbound-late-negotiation' => 'true',
+            'rtp-ip' => $media['rtp_ip'] ?? 'auto',
+            'sip-ip' => $media['sip_ip'] ?? 'auto',
+            'ext-rtp-ip' => $media['ext_rtp_ip'] ?? 'auto-nat',
+            'ext-sip-ip' => $media['ext_sip_ip'] ?? 'auto-nat',
+            'rtp-timeout-sec' => '300',
+            'rtp-hold-timeout-sec' => '1800',
+            'tls' => 'false',
+            'tls-only' => 'false',
+        ];
 
-        // NAT settings from config
-        $localNetworkAcl = $media['local_network_acl'] ?? 'localnet.auto';
-        $xml .= '            <param name="local-network-acl" value="'.htmlspecialchars($localNetworkAcl, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-
-        $aggressiveNat = $media['aggressive_nat_detection'] ?? false;
-        if ($aggressiveNat) {
-            $xml .= '            <param name="aggressive-nat-detection" value="true"/>'."\n";
+        if ($media['aggressive_nat_detection'] ?? false) {
+            $params['aggressive-nat-detection'] = 'true';
         }
 
-        $xml .= '            <param name="manage-presence" value="false"/>'."\n";
-        $xml .= '            <param name="inbound-codec-negotiation" value="generous"/>'."\n";
-        $xml .= '            <param name="nonce-ttl" value="60"/>'."\n";
-        $xml .= '            <param name="auth-calls" value="false"/>'."\n";
-        $xml .= '            <param name="inbound-late-negotiation" value="true"/>'."\n";
+        // Override with model settings if present
+        if ($model && !empty($model->settings)) {
+            $params = array_merge($params, $model->settings);
+        }
 
-        // IP address settings
-        $rtpIp = $media['rtp_ip'] ?? 'auto';
-        $sipIp = $media['sip_ip'] ?? 'auto';
-        $extRtpIp = $media['ext_rtp_ip'] ?? 'auto-nat';
-        $extSipIp = $media['ext_sip_ip'] ?? 'auto-nat';
-
-        $xml .= '            <param name="rtp-ip" value="'.htmlspecialchars($rtpIp, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-        $xml .= '            <param name="sip-ip" value="'.htmlspecialchars($sipIp, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-        $xml .= '            <param name="ext-rtp-ip" value="'.htmlspecialchars($extRtpIp, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-        $xml .= '            <param name="ext-sip-ip" value="'.htmlspecialchars($extSipIp, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-
-        $xml .= '            <param name="rtp-timeout-sec" value="300"/>'."\n";
-        $xml .= '            <param name="rtp-hold-timeout-sec" value="1800"/>'."\n";
-
-        // TLS settings (disabled by default)
-        $xml .= '            <param name="tls" value="false"/>'."\n";
-        $xml .= '            <param name="tls-only" value="false"/>'."\n";
+        foreach ($params as $name => $value) {
+            $xml .= '            <param name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'" value="'.htmlspecialchars((string)$value, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        }
 
         $xml .= '          </settings>'."\n";
         $xml .= '        </profile>'."\n";
