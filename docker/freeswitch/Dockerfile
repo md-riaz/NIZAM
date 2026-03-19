@@ -66,6 +66,8 @@ RUN set -eux; \
     && sed -i modules.conf -e s:'endpoints/mod_verto:#endpoints/mod_verto:' \
     && sed -i modules.conf -e s:'#applications/mod_callcenter:applications/mod_callcenter:' \
     && sed -i modules.conf -e s:'#formats/mod_shout:formats/mod_shout:' \
+    && sed -i modules.conf -e s:'#applications/mod_curl:applications/mod_curl:' \
+    && sed -i modules.conf -e s:'#xml_int/mod_xml_curl:xml_int/mod_xml_curl:' \
     && ./configure CFLAGS="-g -ggdb" --with-pic \
        --with-openssl --enable-core-pgsql-support \
     && make -j$(nproc) \
@@ -107,6 +109,10 @@ RUN set -eux; \
     && ln -sf /usr/local/freeswitch/bin/fs_cli /usr/bin/fs_cli \
     && ln -sf /usr/local/freeswitch/conf /etc/freeswitch \
     && chown -R freeswitch:freeswitch /usr/local/freeswitch \
+    && sed -i 's|<!--<load module="mod_callcenter"/>-->|<load module="mod_callcenter"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
+    && sed -i 's|<!-- <load module="mod_xml_curl"/> -->|<load module="mod_xml_curl"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
+    && sed -i 's|<!--<load module="mod_shout"/>-->|<load module="mod_shout"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
+    && sed -i 's|<!-- <load module="mod_curl"/> -->|<load module="mod_curl"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
     && ldconfig
 
 # Copy custom configuration (overrides defaults)
