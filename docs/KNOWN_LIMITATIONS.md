@@ -313,17 +313,20 @@ or SBC layer. Monitor CDR patterns for anomalous activity.
 
 ### RTP Quality Metrics
 
-NIZAM does not collect RTP quality metrics (jitter, packet loss, MOS) from
-FreeSWITCH in v1.0.
+NIZAM collects basic RTP quality metrics (jitter, packet loss, MOS) from
+FreeSWITCH hangup variables in v1.0.
 
 **System behavior:**
-- CDRs include `read_codec` and `write_codec` but no quality-of-experience
-  data.
-- One-way audio detection is not implemented.
-- Support teams cannot diagnose "audio is bad" from NIZAM data alone.
+- CDRs include `mos_score`, `packet_loss`, `jitter`, and `latency` extracted
+  from FreeSWITCH `variable_rtp_audio_in_*` channel variables.
+- Quality metrics are only available for the *inbound* direction relative to
+  each channel leg as reported by FreeSWITCH.
+- One-way audio detection is **not** implemented or automated.
+- Support teams can use these metrics in the CDR analytics view to identify
+  problematic calls or endpoints.
 
-**Recommendation:** Use FreeSWITCH `mod_rtcp` or external monitoring (Homer,
-VoIPmonitor) for RTP quality analysis.
+**Recommendation:** For deep packet-level analysis or real-time MOS monitoring,
+use external tools (Homer, VoIPmonitor).
 
 ### Correlation IDs
 
