@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CallDetailRecordController;
 use App\Http\Controllers\Api\CallRoutingPolicyController;
 use App\Http\Controllers\Api\CallSessionController;
+use App\Http\Controllers\Api\CdrAnalyticsController;
+use App\Http\Controllers\Api\CdrExportController;
 use App\Http\Controllers\Api\ExtensionController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HolidayCalendarController;
@@ -82,8 +84,17 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('calls/{callSession}', [CallSessionController::class, 'show'])->name('calls.show');
         Route::get('calls/{callSession}/analyze', [CallSessionController::class, 'analyze'])->name('calls.analyze');
 
-        Route::get('cdrs/export', [CallDetailRecordController::class, 'export'])->name('cdrs.export');
+        Route::get('cdrs/export', [CdrExportController::class, 'export'])->name('cdrs.export');
+        Route::post('cdrs/export', [CdrExportController::class, 'export'])->name('cdrs.export.post');
         Route::apiResource('cdrs', CallDetailRecordController::class)->only(['index', 'show']);
+
+        // CDR Analytics
+        Route::prefix('cdrs/analytics')->name('cdrs.analytics.')->group(function () {
+            Route::get('summary', [CdrAnalyticsController::class, 'summary'])->name('summary');
+            Route::get('volume', [CdrAnalyticsController::class, 'volume'])->name('volume');
+            Route::get('quality', [CdrAnalyticsController::class, 'quality'])->name('quality');
+            Route::get('destinations', [CdrAnalyticsController::class, 'destinations'])->name('destinations');
+        });
 
         Route::apiResource('call-routing-policies', CallRoutingPolicyController::class);
         Route::post('call-routing-policies/{call_routing_policy}/evaluate', [CallRoutingPolicyController::class, 'evaluate'])

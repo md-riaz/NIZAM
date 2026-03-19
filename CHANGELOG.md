@@ -62,12 +62,21 @@ See [docs/v1-scope.md](docs/v1-scope.md#known-limitations-v10) for the full list
 - `GET /api/v1/health` — unauthenticated endpoint reporting app, ESL, and FreeSWITCH status
 - FreeSWITCH container with `mod_xml_curl` and `mod_event_socket` configuration
 - Environment bootstrap documentation in README
+- Enabled essential FreeSWITCH modules in Dockerfile: `mod_callcenter`, `mod_shout`, `mod_xml_curl`, `mod_curl`
+- Fixed `fs_cli` connectivity by updating `event_socket.conf.xml` ACL to `any_v4.auto`
+- Added Supervisor configuration for ESL listener daemon (commented out by default for deployment)
 
 #### Switch Integration
 - XML directory endpoint for FreeSWITCH (`mod_xml_curl`)
 - XML dialplan endpoint with dynamic routing
 - Dialplan Compiler service generating XML from database state
 - ESL listener service with automatic reconnection and exponential backoff (1s → 30s)
+- **ESL Webhook Dispatcher** (`freeswitch:listen` artisan command):
+  - Connects to FreeSWITCH ESL via native PHP sockets (zero external dependencies)
+  - Subscribes to `CHANNEL_CREATE`, `CHANNEL_ANSWER`, `CHANNEL_HANGUP`, `CHANNEL_HANGUP_COMPLETE`
+  - Maps events to webhook types: `call.created`, `call.answered`, `call.ended`, `call.completed`
+  - Multi-tenant resolution via 3 strategies: `variable_domain_name`, `Caller-Context`, extension lookup
+  - Dispatches through existing `WebhookDispatcher` service with HMAC signing and delivery tracking
 - Event normalization layer: CHANNEL_CREATE, CHANNEL_ANSWER, CHANNEL_BRIDGE, CHANNEL_HANGUP_COMPLETE
 - SIP registration tracking via `sofia::register` / `sofia::unregister` custom events
 - SIGINT/SIGTERM signal handling for graceful ESL listener shutdown

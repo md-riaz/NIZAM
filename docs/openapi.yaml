@@ -2047,11 +2047,28 @@ components:
       type: object
       required: [url, events, secret]
       properties:
-        url: { type: string, format: uri }
+        url: { type: string, format: uri, description: "The endpoint URL that will receive webhook POST requests." }
         events:
           type: array
-          items: { type: string }
-        secret: { type: string }
+          description: |
+            List of event types this webhook subscribes to.
+            ESL-sourced call lifecycle events: call.created, call.answered, call.ended, call.completed.
+            Application events: call.started, call.bridge, call.missed, call.hangup, voicemail.received, registration.registered, registration.unregistered.
+          items:
+            type: string
+            enum:
+              - call.created
+              - call.answered
+              - call.ended
+              - call.completed
+              - call.started
+              - call.bridge
+              - call.missed
+              - call.hangup
+              - voicemail.received
+              - registration.registered
+              - registration.unregistered
+        secret: { type: string, description: "Shared secret used for HMAC-SHA256 signature verification." }
         is_active: { type: boolean }
 
     OriginateCallRequest:
