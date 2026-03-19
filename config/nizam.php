@@ -48,8 +48,12 @@ return [
     'media' => [
         'rtp_port_range_start' => (int) env('RTP_PORT_RANGE_START', 16384),
         'rtp_port_range_end' => (int) env('RTP_PORT_RANGE_END', 32768),
+        'rtp_ip' => env('RTP_IP', 'auto'),
+        'sip_ip' => env('SIP_IP', 'auto'),
         'ext_rtp_ip' => env('EXT_RTP_IP', 'auto-nat'),
         'ext_sip_ip' => env('EXT_SIP_IP', 'auto-nat'),
+        'aggressive_nat_detection' => env('AGGRESSIVE_NAT_DETECTION', false),
+        'local_network_acl' => env('LOCAL_NETWORK_ACL', 'localnet.auto'),
         'dtmf_type' => env('DTMF_TYPE', 'rfc2833'),
         'srtp_policy' => env('SRTP_POLICY', 'optional'),
     ],
@@ -88,4 +92,27 @@ return [
     | compiler, policy engine, FreeSWITCH adapter) is always active.
     |
     */
+
+    /*
+    |--------------------------------------------------------------------------
+    | WebRTC Configuration (System-Wide)
+    |--------------------------------------------------------------------------
+    |
+    | WebRTC settings are configured at the application level (like FusionPBX
+    | super admin settings). All tenants share the same WebRTC infrastructure.
+    |
+    | STUN servers help WebRTC clients discover their public IP addresses.
+    | TURN servers relay media when direct peer-to-peer connection fails.
+    |
+    */
+    'webrtc' => [
+        'enabled' => env('WEBRTC_ENABLED', false),
+        'wss_port' => (int) env('WEBRTC_WSS_PORT', 7443),
+        'stun_server' => env('WEBRTC_STUN_SERVER', 'stun:stun.l.google.com:19302'),
+        'turn_server' => env('WEBRTC_TURN_SERVER', null),
+        'turn_username' => env('WEBRTC_TURN_USERNAME', null),
+        'turn_password' => env('WEBRTC_TURN_PASSWORD', null),
+        'codec_prefs' => env('WEBRTC_CODEC_PREFS', 'OPUS,PCMU,PCMA,G722'),
+        'dtls_cert_dir' => env('WEBRTC_DTLS_CERT_DIR', '/usr/local/freeswitch/certs'),
+    ],
 ];

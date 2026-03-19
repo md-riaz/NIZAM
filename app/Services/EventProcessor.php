@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\CallDetailRecordCreated;
 use App\Events\CallEvent;
 use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
@@ -241,13 +242,72 @@ class EventProcessor
     }
 
     /**
+     * Extract RTP quality metrics from a FreeSWITCH hangup event.
+     */
+    protected function extractQualityMetrics(array $event): array
+    {
+        $rtpQuality = $event['variable_rtp_audio_in_quality_percentage'] ?? null;
+        $mosScore = $event['variable_rtp_audio_in_mos'] ?? null;
+
+        // Derive packet loss from FreeSWITCH RTP stats
+        $packetsReceived = (int) ($event['variable_rtp_audio_in_packet_count'] ?? 0);
+        $packetsLost = (int) ($event['variable_rtp_audio_in_skip_packet_count'] ?? 0);
+        $packetLoss = ($packetsReceived + $packetsLost) > 0
+            ? round(($packetsLost / ($packetsReceived + $packetsLost)) * 100, 2)
+            : null;
+
+        $jitter = $event['variable_rtp_audio_in_jitter_max_variance'] ?? null;
+        $latency = $event['variable_rtp_audio_in_mean_interval'] ?? null;
+
+        return [
+            'quality_score' => $rtpQuality !== null ? (int) round((float) $rtpQuality) : null,
+            'mos_score' => $mosScore !== null ? round((float) $mosScore, 2) : null,
+            'packet_loss' => $packetLoss,
+            'jitter' => $jitter !== null ? (int) round((float) $jitter) : null,
+            'latency' => $latency !== null ? (int) round((float) $latency) : null,
+        ];
+    }
+
+    /**
+     * Classify the call type based on direction and context.
+     */
+    protected function classifyCallType(array $event, string $direction): ?string
+    {
+        // Conference detection
+        $appName = $event['variable_current_application'] ?? '';
+        if ($appName === 'conference') {
+            return 'conference';
+        }
+
+        // Internal call detection: same domain on both legs
+        $callerDomain = $event['variable_domain_name'] ?? '';
+        $destDomain = $event['variable_dialed_domain'] ?? '';
+        if ($callerDomain && $destDomain && $callerDomain === $destDomain) {
+            return 'internal';
+        }
+
+        return match ($direction) {
+            'inbound' => 'inbound',
+            'outbound' => 'outbound',
+            default => null,
+        };
+    }
+
+    /**
      * Create a CDR from hangup event.
      */
     protected function createCdr(string $tenantId, array $data, array $event): void
     {
         try {
             $meta = $data['metadata'] ?? $data;
-            CallDetailRecord::create([
+            $direction = in_array($meta['direction'] ?? '', ['inbound', 'outbound', 'local'])
+                ? $meta['direction']
+                : 'local';
+
+            $qualityMetrics = $this->extractQualityMetrics($event);
+            $callType = $this->classifyCallType($event, $direction);
+
+            $cdr = CallDetailRecord::create([
                 'tenant_id' => $tenantId,
                 'uuid' => $meta['uuid'] ?? $data['call_uuid'] ?? '',
                 'caller_id_name' => $meta['caller_id_name'] ?? '',
@@ -260,15 +320,25 @@ class EventProcessor
                 'duration' => $meta['duration'] ?? 0,
                 'billsec' => $meta['billsec'] ?? 0,
                 'hangup_cause' => $meta['hangup_cause'] ?? 'NORMAL_CLEARING',
-                'direction' => in_array($meta['direction'] ?? '', ['inbound', 'outbound', 'local'])
-                    ? $meta['direction']
-                    : 'local',
+                'direction' => $direction,
                 'recording_path' => $event['variable_record_file_path'] ?? null,
+                'sip_user_agent' => $event['variable_sip_user_agent'] ?? null,
+                'remote_media_ip' => $event['variable_remote_media_ip'] ?? null,
+                'call_type' => $callType,
+                'quality_score' => $qualityMetrics['quality_score'],
+                'mos_score' => $qualityMetrics['mos_score'],
+                'packet_loss' => $qualityMetrics['packet_loss'],
+                'jitter' => $qualityMetrics['jitter'],
+                'latency' => $qualityMetrics['latency'],
             ]);
+
+            // Dispatch event for asynchronous enrichment
+            CallDetailRecordCreated::dispatch($cdr);
         } catch (\Exception $e) {
             Log::error('Failed to create CDR', ['error' => $e->getMessage(), 'uuid' => $data['call_uuid'] ?? 'unknown']);
         }
     }
+
 
     /**
      * Persist a call event for replay/audit.

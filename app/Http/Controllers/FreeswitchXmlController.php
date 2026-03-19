@@ -10,6 +10,7 @@ use App\Services\Call\TraceWriter;
 use App\Services\DialplanCompiler;
 use App\Services\Routing\GatewayResolutionService;
 use App\Services\Routing\NumberRoutingService;
+use App\Services\SipProfileCompiler;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -22,6 +23,7 @@ class FreeswitchXmlController extends Controller
         protected TraceWriter $traceWriter,
         protected GatewayResolutionService $gatewayResolutionService,
         protected NumberRoutingService $numberRoutingService,
+        protected SipProfileCompiler $sipProfileCompiler,
     ) {}
 
     /**
@@ -43,6 +45,7 @@ class FreeswitchXmlController extends Controller
                 $request->input('Caller-Caller-ID-Number'),
                 $request->all(),
             ),
+            'configuration' => $this->handleConfiguration($request),
             default => $this->notFoundResponse(),
         };
     }
@@ -50,6 +53,21 @@ class FreeswitchXmlController extends Controller
     protected function handleDirectory(string $domain): Response
     {
         $xml = $this->compiler->compileDirectory($domain);
+
+        return response($xml, 200, ['Content-Type' => 'text/xml']);
+    }
+
+    protected function handleConfiguration(Request $request): Response
+    {
+        $configName = $request->input('key_name', '');
+        $profileName = $request->input('profile', 'external');
+
+        // Only handle sofia.conf requests for SIP profiles
+        if ($configName !== 'sofia.conf') {
+            return $this->notFoundResponse();
+        }
+
+        $xml = $this->sipProfileCompiler->compileProfile($profileName);
 
         return response($xml, 200, ['Content-Type' => 'text/xml']);
     }

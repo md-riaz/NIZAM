@@ -72,4 +72,55 @@ class Extension extends Model
     {
         return $this->hasOne(Agent::class);
     }
+
+    /**
+     * Get WebRTC connection parameters for this extension.
+     *
+     * Reads from system-wide config (config/nizam.php → webrtc section).
+     * Returns everything a SIP.js or similar WebRTC client needs to connect.
+     *
+     * @param  string  $appUrl  The application base URL (used to construct WSS URL)
+     * @return array<string, mixed>
+     */
+    public function getWebRtcConfig(string $appUrl): array
+    {
+        $webrtcConfig = config('nizam.webrtc');
+        $parsedUrl = parse_url($appUrl);
+        $host = $parsedUrl['host'] ?? 'localhost';
+        $wssPort = $webrtcConfig['wss_port'] ?? 7443;
+
+        // Build ICE servers array for WebRTC clients
+        $iceServers = [];
+
+        if (!empty($webrtcConfig['stun_server'])) {
+            $iceServers[] = [
+                'urls' => $webrtcConfig['stun_server'],
+            ];
+        }
+
+        if (!empty($webrtcConfig['turn_server'])) {
+            $turnEntry = [
+                'urls' => $webrtcConfig['turn_server'],
+            ];
+            if (!empty($webrtcConfig['turn_username'])) {
+                $turnEntry['username'] = $webrtcConfig['turn_username'];
+            }
+            if (!empty($webrtcConfig['turn_password'])) {
+                $turnEntry['credential'] = $webrtcConfig['turn_password'];
+            }
+            $iceServers[] = $turnEntry;
+        }
+
+        return [
+            'enabled' => (bool) ($webrtcConfig['enabled'] ?? false),
+            'websocket_url' => "wss://{$host}:{$wssPort}",
+            'sip_uri' => "sip:{$this->extension}@{$this->tenant->domain}",
+            'sip_username' => $this->extension,
+            'sip_password' => $this->password,
+            'sip_domain' => $this->tenant->domain,
+            'display_name' => trim(($this->directory_first_name ?? '').' '.($this->directory_last_name ?? '')),
+            'ice_servers' => $iceServers,
+            'codec_prefs' => explode(',', $webrtcConfig['codec_prefs'] ?? 'OPUS,PCMU,PCMA,G722'),
+        ];
+    }
 }

@@ -1,0 +1,84 @@
+<profile name="wss">
+  <!-- WebRTC SIP Profile for Secure WebSocket connections -->
+  <!-- Based on FusionPBX WebRTC configuration -->
+  
+  <settings>
+    <param name="debug" value="0"/>
+    <param name="sip-trace" value="no"/>
+    <param name="sip-capture" value="no"/>
+    
+    <!-- WebSocket Secure (WSS) binding -->
+    <param name="ws-binding" value=":5066"/>
+    <param name="wss-binding" value=":7443"/>
+    
+    <!-- TLS Configuration for WSS -->
+    <param name="tls" value="true"/>
+    <param name="tls-only" value="false"/>
+    <param name="tls-bind-params" value="transport=wss"/>
+    <param name="tls-sip-port" value="7443"/>
+    <param name="tls-cert-dir" value="/usr/local/freeswitch/certs"/>
+    <param name="tls-version" value="tlsv1.2"/>
+    <param name="tls-verify-date" value="true"/>
+    <param name="tls-verify-policy" value="none"/>
+    <param name="tls-verify-depth" value="2"/>
+    
+    <!-- SIP Settings -->
+    <param name="sip-port" value="5066"/>
+    <param name="dialplan" value="XML"/>
+    <param name="context" value="public"/>
+    <param name="dtmf-duration" value="2000"/>
+    <param name="dtmf-type" value="rfc2833"/>
+    <param name="rfc2833-pt" value="101"/>
+    
+    <!-- Codec Configuration - Prioritize Opus for WebRTC -->
+    <param name="inbound-codec-prefs" value="OPUS,PCMU,PCMA,G722"/>
+    <param name="outbound-codec-prefs" value="OPUS,PCMU,PCMA,G722"/>
+    <param name="inbound-codec-negotiation" value="generous"/>
+    
+    <!-- RTP Settings -->
+    <param name="rtp-timer-name" value="soft"/>
+    <param name="rtp-ip" value="$${local_ip_v4}"/>
+    <param name="sip-ip" value="$${local_ip_v4}"/>
+    <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
+    <param name="ext-sip-ip" value="$${external_sip_ip}"/>
+    <param name="rtp-timeout-sec" value="300"/>
+    <param name="rtp-hold-timeout-sec" value="1800"/>
+    
+    <!-- DTLS-SRTP for WebRTC -->
+    <param name="dtls-srtp" value="true"/>
+    <param name="dtls-verify-policy" value="fingerprint"/>
+    
+    <!-- ICE Support for NAT Traversal -->
+    <param name="enable-ice" value="true"/>
+    
+    <!-- Liberal settings for WebRTC clients -->
+    <param name="auth-calls" value="true"/>
+    <param name="apply-inbound-acl" value="domains"/>
+    <param name="inbound-late-negotiation" value="true"/>
+    <param name="local-network-acl" value="localnet.auto"/>
+    <param name="manage-presence" value="true"/>
+    
+    <!-- CORS and WebRTC-friendly settings -->
+    <param name="aggressive-nat-detection" value="true"/>
+    <param name="NDLB-received-in-nat-reg-contact" value="true"/>
+    <param name="NDLB-force-rport" value="true"/>
+    <param name="NDLB-broken-auth-hash" value="true"/>
+    
+    <!-- Session timers -->
+    <param name="enable-timer" value="false"/>
+    <param name="minimum-session-expires" value="120"/>
+    <param name="session-timeout" value="1800"/>
+    
+    <!-- Disable SRV lookups for WebRTC -->
+    <param name="disable-srv" value="true"/>
+    <param name="disable-srv503" value="true"/>
+    
+    <!-- Challenge settings -->
+    <param name="challenge-realm" value="auto_from"/>
+    <param name="nonce-ttl" value="60"/>
+    <param name="auth-all-packets" value="false"/>
+    
+    <!-- User agent -->
+    <param name="user-agent-string" value="NIZAM WebRTC"/>
+  </settings>
+</profile>

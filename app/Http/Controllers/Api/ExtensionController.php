@@ -110,4 +110,29 @@ class ExtensionController extends Controller
 
         return response()->json(null, 204);
     }
+
+    /**
+     * Get WebRTC connection configuration for an extension.
+     *
+     * Returns everything a SIP.js or similar WebRTC client needs to register
+     * and make calls via WebSocket. Settings are read from system-wide config.
+     */
+    public function webRtcConfig(Tenant $tenant, Extension $extension): JsonResponse
+    {
+        if ($extension->tenant_id !== $tenant->id) {
+            return response()->json(['message' => 'Extension not found.'], 404);
+        }
+
+        $this->authorize('view', $extension);
+
+        if (!config('nizam.webrtc.enabled')) {
+            return response()->json([
+                'message' => 'WebRTC is not enabled on this system.',
+            ], 403);
+        }
+
+        $config = $extension->getWebRtcConfig(config('app.url'));
+
+        return response()->json(['data' => $config]);
+    }
 }

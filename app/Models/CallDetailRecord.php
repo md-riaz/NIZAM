@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CallDetailRecord extends Model
 {
@@ -35,6 +36,16 @@ class CallDetailRecord extends Model
         'read_codec',
         'write_codec',
         'negotiated_codec',
+        'mos_score',
+        'packet_loss',
+        'jitter',
+        'latency',
+        'quality_score',
+        'sip_user_agent',
+        'remote_media_ip',
+        'call_type',
+        'tags',
+        'metadata',
     ];
 
     /**
@@ -50,12 +61,27 @@ class CallDetailRecord extends Model
             'end_stamp' => 'datetime',
             'duration' => 'integer',
             'billsec' => 'integer',
+            'mos_score' => 'decimal:2',
+            'packet_loss' => 'decimal:2',
+            'jitter' => 'integer',
+            'latency' => 'integer',
+            'quality_score' => 'integer',
+            'tags' => 'array',
+            'metadata' => 'array',
         ];
     }
 
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * Get the enrichment data for this CDR.
+     */
+    public function enrichment(): HasOne
+    {
+        return $this->hasOne(CdrEnrichment::class, 'cdr_id');
     }
 
     /**

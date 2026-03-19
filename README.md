@@ -14,7 +14,7 @@ NIZAM separates concerns into distinct layers:
 
 | Layer | Technology | Responsibility |
 |-------|-----------|----------------|
-| **Media Core** | FreeSWITCH | SIP signaling, RTP media, call bridging, recording, conferencing |
+| **Media Core** | FreeSWITCH | SIP signaling, RTP media, WebRTC (WSS/DTLS), call bridging, recording, conferencing |
 | **Control Plane** | Laravel 12 | Business logic, tenant management, routing, provisioning |
 | **Integration Layer** | REST + WebSocket + Events | API access, real-time streaming, webhooks |
 | **Provisioning Layer** | Template engine | Device automation, vendor profiles |
@@ -129,6 +129,15 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Module skeleton generator (`php artisan make:nizam-module {name}`)
 - Migration isolation per module via `migrationsPath()` hook
 - Error isolation per module
+
+### WebRTC Support
+- Dedicated WSS (WebSocket Secure) SIP profile on port 7443
+- DTLS-SRTP for encrypted media transport
+- Opus codec prioritized for high-quality WebRTC audio
+- ICE/STUN/TURN support for NAT traversal
+- Per-extension WebRTC configuration API endpoint
+- System-wide STUN/TURN server settings
+- SIP.js-ready credential endpoint
 
 ### Security
 - SIP passwords stored as plaintext for webphone/sip.js integration
@@ -392,7 +401,7 @@ The API will be available at `http://localhost:8091/api/v1` by default.
 | **nginx** | `nizam-nginx` | `8091` | Web server (reverse proxy) |
 | **postgres** | `nizam-postgres` | `5432` | PostgreSQL database |
 | **redis** | `nizam-redis` | `6379` | Cache and queue broker |
-| **freeswitch** | `nizam-freeswitch` | `5060` (SIP), `8021` (ESL) | Media engine |
+| **freeswitch** | `nizam-freeswitch` | `5060` (SIP), `7443` (WSS), `8021` (ESL) | Media engine (SIP + WebRTC) |
 | **queue** | `nizam-queue` | — | Queue worker (webhook delivery, async jobs) |
 | **scheduler** | `nizam-scheduler` | — | Periodic task runner |
 | **esl-listener** | `nizam-esl-listener` | — | FreeSWITCH event listener |
@@ -520,7 +529,6 @@ NIZAM/
 ## Future Roadmap
 
 - [ ] Call Queues (ACD)
-- [ ] WebRTC Gateway
 - [ ] SMS Integration (Bandwidth/Twilio)
 - [ ] Billing Module
 - [ ] AI Call Analysis
@@ -552,6 +560,7 @@ More structured than FusionPBX. Simpler to operate than full Wazo microservices.
 | [Environment Bootstrap](docs/environment-bootstrap.md) | Docker setup, FreeSWITCH config, production checklist, Makefile reference |
 | [Bare-Metal Installation](docs/installation-bare-metal.md) | Ubuntu/Debian install without Docker (PHP, PostgreSQL, Redis, FreeSWITCH, nginx, supervisor) |
 | [`install.sh`](install.sh) | Automated VPS installer — one command, zero interaction, prints URL + credentials |
+| [WebRTC Setup](docs/webrtc-setup.md) | WSS/DTLS configuration, SIP.js integration, certificate setup |
 | [Module Development](docs/module-development.md) | NizamModule interface and module authoring guide |
 | [Deployment & Scaling](docs/deployment-scaling.md) | Production deployment, horizontal scaling, backup/restore |
 

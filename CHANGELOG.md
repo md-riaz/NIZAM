@@ -47,7 +47,7 @@ This release establishes a frozen API contract, defined scope, and operational r
 ### Known Limitations
 See [docs/v1-scope.md](docs/v1-scope.md#known-limitations-v10) for the full list. Key limitations:
 - Single FreeSWITCH node only (no clustering)
-- No native WebRTC softphone
+- WebRTC requires external TLS certificates (WSS/DTLS supported)
 - No visual flow builder (API-first only)
 - Analytics is rule-based (no ML)
 

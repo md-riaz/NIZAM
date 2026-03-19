@@ -19,8 +19,12 @@ symmetric NAT, SIP ALG routers, or carrier-grade NAT may experience one-way
 audio or registration failures.
 
 **System behavior:**
-- FreeSWITCH `ext-rtp-ip` and `ext-sip-ip` must be configured manually in the
-  FreeSWITCH deployment (see `config/nizam.php` `media` section for guidance).
+- FreeSWITCH `ext-rtp-ip`, `ext-sip-ip`, `rtp-ip`, `sip-ip`, and
+  `aggressive-nat-detection` are configurable via environment variables
+  (`EXT_RTP_IP`, `EXT_SIP_IP`, `RTP_IP`, `SIP_IP`, `AGGRESSIVE_NAT_DETECTION`,
+  `LOCAL_NETWORK_ACL`) in the `config/nizam.php` `media` section.
+- FreeSWITCH dynamically loads SIP profile configuration from NIZAM via
+  `mod_xml_curl` (configuration section).
 - No automatic `rport` or `Contact` header rewriting is performed by NIZAM.
 - There is no health check that detects "registered but no audio" patterns.
 
@@ -56,20 +60,24 @@ not provide fax-to-email or fax storage.
 **Recommendation:** If fax traffic is expected, route fax DIDs to a dedicated
 fax server outside NIZAM, or configure FreeSWITCH directly for T.38 passthrough.
 
-### SRTP / TLS
+### SRTP / TLS / WebRTC
 
 SRTP and SIP-TLS are **optional and not enforced** in v1.0. WebRTC endpoints
-are not natively supported.
+are supported via a dedicated WSS profile with DTLS-SRTP.
 
 **System behavior:**
 - FreeSWITCH TLS and SRTP configuration is external to NIZAM's application
   layer.
 - Per-tenant TLS/SRTP enforcement is not available; all tenants share the same
   media security posture.
-- No certificate management or rotation is provided.
+- No certificate management or automatic rotation is provided by NIZAM.
+- WebRTC is available via the WSS SIP profile on port 7443 with DTLS-SRTP
+  and Opus codec support. See [WebRTC Setup](webrtc-setup.md) for details.
+- TLS certificates must be provisioned externally (e.g., Let's Encrypt).
 
-**Recommendation:** For security-conscious deployments, configure FreeSWITCH
-TLS profiles manually and use an SBC for WebRTC termination.
+**Recommendation:** For production WebRTC deployments, use valid TLS
+certificates from a trusted CA. Configure STUN and optionally TURN servers
+for NAT traversal.
 
 ---
 

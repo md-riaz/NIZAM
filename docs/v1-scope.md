@@ -66,6 +66,14 @@ Any capability not listed as Included is either a roadmap item or unsupported.
 - Cascading disable for dependent modules
 - Module SDK documented
 
+### WebRTC Support
+- Dedicated WSS (WebSocket Secure) SIP profile on port 7443
+- DTLS-SRTP for encrypted media transport
+- Opus codec prioritized for high-quality audio
+- ICE/STUN/TURN support for NAT traversal
+- Per-extension WebRTC configuration API endpoint
+- System-wide STUN/TURN server settings (configured at application level)
+
 ### Provisioning
 - Device profile templates (vendor-agnostic)
 - MAC-address-based provisioning endpoint
@@ -107,7 +115,6 @@ The following capabilities are **not** part of v1.0 and are documented here to s
 | Multi-node FreeSWITCH clustering | Single-node supported; clustering requires additional orchestration | v1.x |
 | Skill-based routing | Foundational agent state model in v1; skill matching not fully stable | v1.x |
 | External module marketplace | Requires signing, sandboxing, and trust infrastructure | v2.x |
-| WebRTC softphone (built-in) | Third-party sip.js integration possible; native WebRTC not production-hardened | v1.x |
 | Visual flow builder (UI) | API-first; no GUI in v1 scope | v2.x |
 | SIP trunk management (carrier-side) | Out of scope for v1; trunk provisioning is manual | v1.x |
 
@@ -116,7 +123,7 @@ The following capabilities are **not** part of v1.0 and are documented here to s
 ## Known Limitations (v1.0)
 
 1. **Single FreeSWITCH node**: The platform manages one FreeSWITCH instance. High-availability clustering is not supported.
-2. **No native WebRTC softphone**: Integrations via sip.js or similar are possible but unsupported.
+2. **WebRTC requires external TLS certificates**: WebRTC is supported via WSS but certificates must be provisioned externally (e.g., Let's Encrypt).
 3. **Non-ML analytics**: Anomaly detection is rule-based, not ML-powered.
 4. **No visual flow builder**: All configuration is via API; no GUI is included.
 5. **Provisioning is template-based**: Dynamic vendor firmware management is not included.

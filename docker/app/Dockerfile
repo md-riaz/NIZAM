@@ -9,7 +9,8 @@ RUN apk add --no-cache \
     oniguruma-dev \
     linux-headers \
     nodejs \
-    npm
+    npm \
+    supervisor
 
 # Install PHP extensions (including opcache for production performance)
 RUN docker-php-ext-install \
@@ -56,6 +57,9 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Copy and wire up entrypoint (fixes bind-mount permissions then execs php-fpm)
 COPY docker/app/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# COMMENTED OUT - Uncomment to enable FreeSWITCH ESL listener daemon
+# COPY docker/app/supervisord-freeswitch.conf /etc/supervisor/conf.d/freeswitch-listener.conf
 
 EXPOSE 9000
 

@@ -70,6 +70,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
         // Core resources
         Route::apiResource('extensions', ExtensionController::class);
+        Route::get('extensions/{extension}/webrtc-config', [ExtensionController::class, 'webRtcConfig'])->name('extensions.webrtc-config');
         Route::apiResource('holiday-calendars', HolidayCalendarController::class);
         Route::apiResource('schedules', ScheduleController::class);
         Route::apiResource('teams', TeamController::class);

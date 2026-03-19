@@ -113,6 +113,7 @@ RUN set -eux; \
     && sed -i 's|<!-- <load module="mod_xml_curl"/> -->|<load module="mod_xml_curl"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
     && sed -i 's|<!--<load module="mod_shout"/>-->|<load module="mod_shout"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
     && sed -i 's|<!-- <load module="mod_curl"/> -->|<load module="mod_curl"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
+    && sed -i 's|<!--<load module="mod_opus"/>-->|<load module="mod_opus"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
     && ldconfig
 
 # Copy custom configuration (overrides defaults)
@@ -130,7 +131,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Drop to unprivileged user
 USER freeswitch
 
-EXPOSE 5060/tcp 5060/udp 5080/tcp 5080/udp 8021/tcp 16384-16484/udp
+EXPOSE 5060/tcp 5060/udp 5080/tcp 5080/udp 7443/tcp 8021/tcp 16384-16484/udp
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["-nonat", "-nf"]
