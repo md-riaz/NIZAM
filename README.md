@@ -68,13 +68,15 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Caller ID control (effective and outbound)
 
 ### Inbound Routing (DIDs)
+- Layered DID precedence: generic, gateway-specific, and gateway-registration-specific routes for the same number
 - DID → Destination mapping
-- Destination types: Extension, Ring Group, IVR, Time Condition, Voicemail
+- Destination types: Extension, Ring Group, IVR, Time Condition, Voicemail, Call Routing Policy, Flow, Bridge
 - Fail-safe routing: unroutable destinations return `404` instead of empty dialplan
 
 ### Ring Groups
 - Simultaneous and sequential strategies
-- Configurable timeout with fallback routing
+- Cause-aware fallback routing on no-answer / unavailable style outcomes
+- Fallback destinations can route to extension, voicemail, IVR, flow, bridge, and other compiled destinations
 
 ### IVR Menus
 - Prompt upload support
@@ -84,6 +86,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 ### Time Conditions
 - Office hours logic with day/time rules
 - Match and no-match destination routing
+- Can target bridge and flow destinations in addition to local tenant objects
 
 ### CDR & Recording
 - Indexed call detail records
@@ -129,6 +132,13 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Module skeleton generator (`php artisan make:nizam-module {name}`)
 - Migration isolation per module via `migrationsPath()` hook
 - Error isolation per module
+
+### Bridges & Gateways
+- FusionPBX-style gateway provisioning with generated FreeSWITCH gateway XML
+- Shared generated gateway config mounted into FreeSWITCH external profile includes
+- Bridge objects for reusable outbound targets
+- Bridge destinations supported across DIDs, routing policies, time conditions, IVR timeout routing, and ring-group fallbacks
+- Built-in SIP mock registrar for repeatable local trunk-registration testing without real carrier credentials
 
 ### WebRTC Support
 - Dedicated WSS (WebSocket Secure) SIP profile on port 7443
@@ -213,12 +223,13 @@ curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8080/api/tenants
 | `PUT` | `/api/tenants/{id}/extensions/{id}` | Update extension |
 | `DELETE` | `/api/tenants/{id}/extensions/{id}` | Delete extension |
 
-#### DIDs, Ring Groups, IVRs, Time Conditions, CDRs, Device Profiles
+#### DIDs, Ring Groups, IVRs, Time Conditions, CDRs, Device Profiles, Bridges
 All follow the same CRUD pattern under `/api/tenants/{id}/...`:
-- `/dids` — Inbound number routing
-- `/ring-groups` — Ring group management
+- `/dids` — Inbound number routing with layered gateway-aware precedence
+- `/ring-groups` — Ring group management with cause-aware fallback routing
 - `/ivrs` — IVR menu management
 - `/time-conditions` — Time-based routing
+- `/bridges` — Reusable outbound bridge targets (`gateway` or `raw`)
 - `/cdrs` — Call detail records (read-only: index + show)
 - `/cdrs/export` — CDR CSV export with filters (max 10,000 records)
 - `/device-profiles` — Device provisioning profiles
@@ -235,7 +246,7 @@ All follow the same CRUD pattern under `/api/tenants/{id}/...`:
 #### Call Operations
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/tenants/{id}/calls/originate` | Originate a call |
+| `POST` | `/api/tenants/{id}/calls/originate` | Originate a call (internal or gateway-backed with `gateway_id`) |
 | `GET` | `/api/tenants/{id}/calls/status` | Get active call status |
 
 #### Call Events & Trace
@@ -405,6 +416,7 @@ The API will be available at `http://localhost:8091/api/v1` by default.
 | **queue** | `nizam-queue` | — | Queue worker (webhook delivery, async jobs) |
 | **scheduler** | `nizam-scheduler` | — | Periodic task runner |
 | **esl-listener** | `nizam-esl-listener` | — | FreeSWITCH event listener |
+| **sip-mock** | `nizam-sip-mock` | `5070/udp` (internal) | Local SIP registrar for repeatable gateway registration tests |
 
 #### Environment Variables
 
@@ -534,7 +546,8 @@ NIZAM/
 - [ ] AI Call Analysis
 - [ ] Contact Center Features
 - [ ] Visual Flow Builder UI
-- [ ] Policy Engine
+- [ ] Smarter hangup-cause / strategy-aware fallback behavior
+- [ ] Richer bridge types and carrier templates
 - [ ] External Module SDK
 - [ ] API Marketplace
 

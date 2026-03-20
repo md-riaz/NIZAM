@@ -405,7 +405,12 @@ DELETE /api/tenants/{tenant_id}/dids/{id}
 }
 ```
 
-**Destination types:** `extension`, `ring_group`, `ivr`, `voicemail`, `time_condition`, `call_routing_policy`, `flow`
+**Destination types:** `extension`, `ring_group`, `ivr`, `voicemail`, `time_condition`, `call_routing_policy`, `flow`, `bridge`
+
+**Routing precedence:** NIZAM can store and resolve layered DID routes for the same number in this order:
+1. gateway-registration-specific DID
+2. gateway-specific DID
+3. generic DID
 
 ---
 
@@ -454,6 +459,8 @@ DELETE /api/tenants/{tenant_id}/call-routing-policies/{id}
 
 Policies are returned ordered by `priority` (ascending). When a DID routes to a policy, conditions are evaluated top-down. If all conditions match, the call routes to `match_destination`. Otherwise, it routes to `no_match_destination`.
 
+**Supported destination types in policy routing:** `extension`, `ring_group`, `ivr`, `voicemail`, `flow`, `bridge`
+
 ---
 
 ## Call Flows
@@ -499,6 +506,8 @@ DELETE /api/tenants/{tenant_id}/call-flows/{id}
 | `play_prompt` | `file` | Play an audio file |
 | `collect_input` | `min_digits`, `max_digits`, `timeout`, `file` | Play prompt and collect DTMF digits |
 | `bridge` | `destination_type`, `destination_id` | Bridge call to a destination |
+
+> Compiled flows now execute in the tenant dialplan context instead of transferring through `XML default`.
 | `record` | `path` | Record the call |
 | `webhook` | `url` | Make an HTTP request to an external URL |
 | `api_call` | (varies) | Call an external API |
@@ -580,13 +589,17 @@ DELETE /api/tenants/{tenant_id}/ring-groups/{id}
   "strategy": "simultaneous",
   "members": ["ext-uuid-1", "ext-uuid-2"],
   "ring_timeout": 30,
-  "timeout_destination_type": "voicemail",
-  "timeout_destination_id": "ext-uuid-1",
+  "fallback_destination_type": "bridge",
+  "fallback_destination_id": "bridge-uuid",
   "is_active": true
 }
 ```
 
 **Strategies:** `simultaneous`, `sequential`
+
+**Fallback behavior:** ring groups now compile fallback routing into the dialplan. Fallback is executed directly when there are no active members, or after the member bridge fails on no-answer / unavailable style outcomes.
+
+**Supported fallback destination types:** `extension`, `ring_group`, `ivr`, `time_condition`, `voicemail`, `flow`, `bridge`
 
 ---
 
@@ -614,11 +627,13 @@ DELETE /api/tenants/{tenant_id}/ivrs/{id}
   },
   "timeout": 10,
   "max_failures": 3,
-  "timeout_destination_type": "extension",
-  "timeout_destination_id": "ext-uuid",
+  "timeout_destination_type": "bridge",
+  "timeout_destination_id": "bridge-uuid",
   "is_active": true
 }
 ```
+
+**Supported timeout destination types:** `extension`, `ring_group`, `ivr`, `voicemail`, `flow`, `bridge`
 
 ---
 
@@ -830,6 +845,83 @@ DELETE /api/tenants/{tenant_id}/device-profiles/{id}
 
 ---
 
+## Gateways
+
+Gateways support richer carrier registration and outbound routing fields.
+
+```http
+GET    /api/tenants/{tenant_id}/gateways
+POST   /api/tenants/{tenant_id}/gateways
+GET    /api/tenants/{tenant_id}/gateways/{id}
+PUT    /api/tenants/{tenant_id}/gateways/{id}
+DELETE /api/tenants/{tenant_id}/gateways/{id}
+```
+
+**Extended fields:** `register`, `proxy`, `register_proxy`, `from_domain`, `extension`, `expire_seconds`, `retry_seconds`, `caller_id_in_from`, `profile`
+
+**Example:**
+
+```json
+{
+  "name": "Carrier A",
+  "host": "sip.carrier.test",
+  "proxy": "proxy.carrier.test:5060",
+  "register_proxy": "reg.carrier.test:5060",
+  "port": 5060,
+  "username": "user1",
+  "password": "secret",
+  "realm": "carrier.test",
+  "from_domain": "from.carrier.test",
+  "extension": "8801555000000",
+  "transport": "udp",
+  "register": true,
+  "expire_seconds": 600,
+  "retry_seconds": 15,
+  "caller_id_in_from": true,
+  "profile": "external",
+  "is_active": true
+}
+```
+
+## Bridges
+
+```http
+GET    /api/tenants/{tenant_id}/bridges
+POST   /api/tenants/{tenant_id}/bridges
+GET    /api/tenants/{tenant_id}/bridges/{id}
+PUT    /api/tenants/{tenant_id}/bridges/{id}
+DELETE /api/tenants/{tenant_id}/bridges/{id}
+```
+
+Bridge objects provide reusable outbound targets for DIDs, routing policies, time conditions, IVR timeout routing, and ring-group fallbacks.
+
+**Bridge types:** `gateway`, `raw`
+
+**Gateway bridge example:**
+
+```json
+{
+  "name": "PSTN Out",
+  "bridge_type": "gateway",
+  "gateway_id": "gateway-uuid",
+  "destination_template": "+15551234567",
+  "is_active": true
+}
+```
+
+**Raw bridge example:**
+
+```json
+{
+  "name": "Direct Sofia",
+  "bridge_type": "raw",
+  "destination_template": "sofia/external/support@example.com",
+  "is_active": true
+}
+```
+
+---
+
 ## Webhooks
 
 ```http
@@ -909,6 +1001,18 @@ Content-Type: application/json
   "destination": "1002"
 }
 ```
+
+**Gateway-backed originate:**
+
+```json
+{
+  "extension": "1001",
+  "destination": "+15551234567",
+  "gateway_id": "gateway-uuid"
+}
+```
+
+When `gateway_id` is present, NIZAM originates the call locally from the extension and bridges through `sofia/gateway/v_<gateway_id>/<destination>`.
 
 ### Call Status
 
