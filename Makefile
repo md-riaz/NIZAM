@@ -6,6 +6,7 @@
 .PHONY: help setup up down restart build rebuild logs shell \
         migrate seed key-generate sync-permissions \
         test lint fix queue-restart esl-restart status health \
+        openapi-validate postman-generate api-docs \
         backup-db restore-db clean
 
 COMPOSE    := docker compose
@@ -69,6 +70,14 @@ status: ## Show running container status
 health: ## Hit the health endpoint and pretty-print JSON
 	@curl -s http://localhost:$${APP_PORT:-8091}/api/v1/health | python3 -m json.tool 2>/dev/null \
 	  || curl -s http://localhost:$${APP_PORT:-8091}/api/v1/health
+
+openapi-validate: ## Validate docs/openapi.yaml
+	python3 validate-openapi.js
+
+postman-generate: ## Regenerate docs/postman-collection.json from docs/openapi.yaml
+	python3 generate-postman.py
+
+api-docs: openapi-validate postman-generate ## Validate OpenAPI and regenerate Postman collection
 
 # ────────────────────────────────────────────────────────────────────
 # Application management
