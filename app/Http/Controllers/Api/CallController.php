@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Services\Call\OutboundOriginateService;
 use App\Services\EslConnectionManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,10 @@ use Illuminate\Support\Facades\Gate;
  */
 class CallController extends Controller
 {
+    public function __construct(
+        protected OutboundOriginateService $outboundOriginateService,
+    ) {}
+
     /**
      * Originate a call via FreeSWITCH.
      */
@@ -25,6 +30,15 @@ class CallController extends Controller
             'destination' => 'required|string',
             'caller_id_name' => 'nullable|string',
             'caller_id_number' => 'nullable|string',
+            'gateway_id' => [
+                'nullable',
+                'uuid',
+                function ($attribute, $value, $fail) use ($tenant) {
+                    if ($value && ! $tenant->gateways()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('The selected gateway is invalid for this tenant.');
+                    }
+                },
+            ],
         ]);
 
         $extension = $tenant->extensions()
@@ -42,17 +56,17 @@ class CallController extends Controller
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
         }
 
-        $callerIdName = $validated['caller_id_name'] ?? $extension->effective_caller_id_name ?? $extension->directory_first_name;
-        $callerIdNumber = $validated['caller_id_number'] ?? $extension->effective_caller_id_number ?? $extension->extension;
+        $gateway = ! empty($validated['gateway_id'])
+            ? $tenant->gateways()->find($validated['gateway_id'])
+            : null;
 
-        $originateString = sprintf(
-            'originate {origination_caller_id_name=%s,origination_caller_id_number=%s}user/%s@%s %s XML %s',
-            $callerIdName,
-            $callerIdNumber,
-            $extension->extension,
-            $tenant->domain,
-            $validated['destination'],
-            $tenant->domain
+        $originateString = $this->outboundOriginateService->buildCommand(
+            tenant: $tenant,
+            extension: $extension,
+            destination: $validated['destination'],
+            callerIdName: $validated['caller_id_name'] ?? null,
+            callerIdNumber: $validated['caller_id_number'] ?? null,
+            gateway: $gateway,
         );
 
         $response = $esl->bgapi($originateString);

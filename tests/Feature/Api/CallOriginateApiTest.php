@@ -1,0 +1,115 @@
+<?php
+
+namespace Tests\Feature\Api;
+
+use App\Models\Extension;
+use App\Models\Gateway;
+use App\Models\Tenant;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
+use Tests\TestCase;
+
+class CallOriginateApiTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+
+    public function test_originate_uses_internal_dialplan_when_gateway_is_not_supplied(): void
+    {
+        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
+        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'admin']);
+        Extension::factory()->create([
+            'tenant_id' => $tenant->id,
+            'extension' => '1001',
+            'directory_first_name' => 'John',
+            'effective_caller_id_name' => 'John Doe',
+            'effective_caller_id_number' => '8801555123456',
+            'is_active' => true,
+        ]);
+
+        $esl = Mockery::mock();
+        $esl->shouldReceive('connect')->once()->andReturnTrue();
+        $esl->shouldReceive('bgapi')->once()->with(
+            'originate {origination_caller_id_name=John Doe,origination_caller_id_number=8801555123456}user/1001@acme.test 2001 XML acme.test'
+        )->andReturn('+OK Job-UUID: test');
+        $esl->shouldReceive('disconnect')->once();
+
+        Mockery::mock('alias:App\\Services\\EslConnectionManager')
+            ->shouldReceive('fromConfig')
+            ->once()
+            ->andReturn($esl);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/tenants/{$tenant->id}/calls/originate", [
+            'extension' => '1001',
+            'destination' => '2001',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Call originated.');
+    }
+
+    public function test_originate_bridges_via_gateway_when_gateway_id_is_supplied(): void
+    {
+        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
+        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'admin']);
+        Extension::factory()->create([
+            'tenant_id' => $tenant->id,
+            'extension' => '1001',
+            'directory_first_name' => 'John',
+            'effective_caller_id_name' => 'John Doe',
+            'effective_caller_id_number' => '8801555123456',
+            'is_active' => true,
+        ]);
+        $gateway = Gateway::factory()->create(['tenant_id' => $tenant->id]);
+
+        $esl = Mockery::mock();
+        $esl->shouldReceive('connect')->once()->andReturnTrue();
+        $esl->shouldReceive('bgapi')->once()->with(sprintf(
+            'originate {origination_caller_id_name=John Doe,origination_caller_id_number=8801555123456}user/1001@acme.test &bridge(sofia/gateway/v_%s/+15551234567)',
+            $gateway->id,
+        ))->andReturn('+OK Job-UUID: test');
+        $esl->shouldReceive('disconnect')->once();
+
+        Mockery::mock('alias:App\\Services\\EslConnectionManager')
+            ->shouldReceive('fromConfig')
+            ->once()
+            ->andReturn($esl);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/tenants/{$tenant->id}/calls/originate", [
+            'extension' => '1001',
+            'destination' => '+15551234567',
+            'gateway_id' => $gateway->id,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Call originated.');
+    }
+
+    public function test_originate_rejects_gateway_from_another_tenant(): void
+    {
+        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
+        $otherTenant = Tenant::factory()->create(['domain' => 'other.test']);
+        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'admin']);
+        Extension::factory()->create([
+            'tenant_id' => $tenant->id,
+            'extension' => '1001',
+            'is_active' => true,
+        ]);
+        $gateway = Gateway::factory()->create(['tenant_id' => $otherTenant->id]);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/tenants/{$tenant->id}/calls/originate", [
+            'extension' => '1001',
+            'destination' => '+15551234567',
+            'gateway_id' => $gateway->id,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['gateway_id']);
+    }
+}
