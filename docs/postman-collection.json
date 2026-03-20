@@ -117,6 +117,10 @@
       "value": ""
     },
     {
+      "key": "bridge_id",
+      "value": ""
+    },
+    {
       "key": "agent_id",
       "value": ""
     },
@@ -3720,7 +3724,7 @@
             "description": "Create gateway",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Example Name\",\n  \"host\": \"string\",\n  \"port\": 1,\n  \"username\": \"string\",\n  \"password\": \"password123\",\n  \"transport\": \"string\",\n  \"register\": true,\n  \"is_active\": true\n}",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"host\": \"string\",\n  \"proxy\": \"string\",\n  \"register_proxy\": \"string\",\n  \"port\": 1,\n  \"username\": \"string\",\n  \"password\": \"password123\",\n  \"realm\": \"string\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3804,7 +3808,7 @@
             "description": "Update gateway",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Example Name\",\n  \"host\": \"string\",\n  \"port\": 1,\n  \"username\": \"string\",\n  \"password\": \"password123\",\n  \"transport\": \"string\",\n  \"register\": true,\n  \"is_active\": true\n}",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"host\": \"string\",\n  \"proxy\": \"string\",\n  \"register_proxy\": \"string\",\n  \"port\": 1,\n  \"username\": \"string\",\n  \"password\": \"password123\",\n  \"realm\": \"string\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3846,6 +3850,206 @@
               ]
             },
             "description": "Delete gateway"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bridges",
+      "item": [
+        {
+          "name": "List bridges",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "bridges"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List bridges"
+          },
+          "response": []
+        },
+        {
+          "name": "Create bridge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "bridges"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create bridge",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"bridge_type\": \"gateway\",\n  \"gateway_id\": \"{{gateway_id}}\",\n  \"destination_template\": \"string\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get bridge",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges/{{bridge_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "bridges",
+                "{{bridge_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "bridgeId"
+                }
+              ]
+            },
+            "description": "Get bridge"
+          },
+          "response": []
+        },
+        {
+          "name": "Update bridge",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges/{{bridge_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "bridges",
+                "{{bridge_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "bridgeId"
+                }
+              ]
+            },
+            "description": "Update bridge",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"bridge_type\": \"gateway\",\n  \"gateway_id\": \"{{gateway_id}}\",\n  \"destination_template\": \"string\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete bridge",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges/{{bridge_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "bridges",
+                "{{bridge_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "bridgeId"
+                }
+              ]
+            },
+            "description": "Delete bridge"
           },
           "response": []
         }

@@ -39,6 +39,7 @@ tags:
   - name: Call Events
   - name: Device Profiles
   - name: Gateways
+  - name: Bridges
   - name: Codec Metrics
   - name: Holiday Calendars
   - name: Schedules
@@ -1696,6 +1697,62 @@ paths:
         '204':
           description: Gateway deleted
 
+  /tenants/{tenantId}/bridges:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Bridges]
+      summary: List bridges
+      operationId: listBridges
+      responses:
+        '200':
+          description: Bridge list
+    post:
+      tags: [Bridges]
+      summary: Create bridge
+      operationId: createBridge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BridgeInput'
+      responses:
+        '201':
+          description: Bridge created
+
+  /tenants/{tenantId}/bridges/{bridgeId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/BridgeId'
+    get:
+      tags: [Bridges]
+      summary: Get bridge
+      operationId: getBridge
+      responses:
+        '200':
+          description: Bridge details
+    put:
+      tags: [Bridges]
+      summary: Update bridge
+      operationId: updateBridge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BridgeInput'
+      responses:
+        '200':
+          description: Bridge updated
+    delete:
+      tags: [Bridges]
+      summary: Delete bridge
+      operationId: deleteBridge
+      responses:
+        '204':
+          description: Bridge deleted
+
   /tenants/{tenantId}/codec-metrics:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -1985,6 +2042,7 @@ components:
     RecordingId: { name: recordingId, in: path, required: true, schema: { type: string, format: uuid } }
     DeviceProfileId: { name: deviceProfileId, in: path, required: true, schema: { type: string, format: uuid } }
     GatewayId: { name: gatewayId, in: path, required: true, schema: { type: string, format: uuid } }
+    BridgeId: { name: bridgeId, in: path, required: true, schema: { type: string, format: uuid } }
     AgentId: { name: agentId, in: path, required: true, schema: { type: string, format: uuid } }
     QueueId: { name: queueId, in: path, required: true, schema: { type: string, format: uuid } }
     AuditLogId: { name: auditLogId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -2343,11 +2401,31 @@ components:
       properties:
         name: { type: string }
         host: { type: string }
+        proxy: { type: string }
+        register_proxy: { type: string }
         port: { type: integer }
         username: { type: string }
         password: { type: string }
+        realm: { type: string }
+        from_domain: { type: string }
+        extension: { type: string }
         transport: { type: string }
         register: { type: boolean }
+        expire_seconds: { type: integer }
+        retry_seconds: { type: integer }
+        caller_id_in_from: { type: boolean }
+        profile: { type: string }
+        is_active: { type: boolean }
+
+    BridgeInput:
+      type: object
+      required: [name, bridge_type, destination_template]
+      properties:
+        name: { type: string }
+        bridge_type: { type: string, enum: [gateway, raw] }
+        gateway_id: { type: string, format: uuid }
+        destination_template: { type: string }
+        description: { type: string }
         is_active: { type: boolean }
 
     AgentInput:

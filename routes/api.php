@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BridgeController;
 use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\CallDetailRecordController;
 use App\Http\Controllers\Api\CallEventController;
@@ -113,6 +114,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('webhooks/{webhook}/delivery-stats', [WebhookController::class, 'deliveryStats'])->name('webhooks.delivery-stats');
         Route::apiResource('device-profiles', DeviceProfileController::class);
         Route::apiResource('gateways', GatewayController::class);
+        Route::apiResource('bridges', BridgeController::class);
         Route::apiResource('agents', AgentController::class);
         Route::post('agents/{agent}/state', [AgentController::class, 'changeState'])->name('agents.state');
         Route::apiResource('queues', QueueController::class);
