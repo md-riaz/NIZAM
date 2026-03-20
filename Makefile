@@ -72,7 +72,7 @@ health: ## Hit the health endpoint and pretty-print JSON
 	  || curl -s http://localhost:$${APP_PORT:-8091}/api/v1/health
 
 openapi-validate: ## Validate docs/openapi.yaml
-	python3 validate-openapi.js
+	node validate-openapi.js
 
 postman-generate: ## Regenerate docs/postman-collection.json from docs/openapi.yaml
 	python3 generate-postman.py
