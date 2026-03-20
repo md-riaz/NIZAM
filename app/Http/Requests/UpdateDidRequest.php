@@ -32,7 +32,7 @@ class UpdateDidRequest extends FormRequest
                 },
             ],
             'description' => 'nullable|string',
-            'destination_type' => 'required|in:extension,team,ivr,schedule,voicemail,call_routing_policy,flow',
+            'destination_type' => 'required|in:extension,ring_group,ivr,voicemail,time_condition,call_routing_policy,flow',
             'destination_id' => 'required|uuid',
             'is_active' => 'boolean',
         ];

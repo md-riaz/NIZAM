@@ -2212,7 +2212,9 @@ components:
       required: [number]
       properties:
         number: { type: string }
-        destination_type: { type: string }
+        destination_type:
+          type: string
+          enum: [extension, ring_group, ivr, voicemail, time_condition, call_routing_policy, flow]
         destination_id: { type: string, format: uuid }
         description: { type: string }
         is_active: { type: boolean }

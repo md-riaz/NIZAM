@@ -405,7 +405,7 @@ DELETE /api/tenants/{tenant_id}/dids/{id}
 }
 ```
 
-**Destination types:** `extension`, `ring_group`, `ivr`, `voicemail`, `time_condition`, `call_routing_policy`, `call_flow`
+**Destination types:** `extension`, `ring_group`, `ivr`, `voicemail`, `time_condition`, `call_routing_policy`, `flow`
 
 ---
 

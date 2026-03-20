@@ -957,7 +957,7 @@
             "description": "Create DID",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"number\": \"+15551234567\",\n  \"destination_type\": \"string\",\n  \"destination_id\": \"{{destination_id}}\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
+              "raw": "{\n  \"number\": \"+15551234567\",\n  \"destination_type\": \"extension\",\n  \"destination_id\": \"{{destination_id}}\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1041,7 +1041,7 @@
             "description": "Update DID",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"number\": \"+15551234567\",\n  \"destination_type\": \"string\",\n  \"destination_id\": \"{{destination_id}}\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
+              "raw": "{\n  \"number\": \"+15551234567\",\n  \"destination_type\": \"extension\",\n  \"destination_id\": \"{{destination_id}}\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
