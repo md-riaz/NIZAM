@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "NIZAM API",
-    "description": "NIZAM — Open Communications Control Platform API. Multi-tenant VoIP/PBX platform built on FreeSWITCH + Laravel.",
-    "version": "1.0.0",
+    "name": "NIZAM \u2014 Open Communications Control Platform API",
+    "description": "Current API specification generated from the active Laravel route tree.\nCovers core routes and module-provided routes under /api/v1.",
+    "version": "1.0.1",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -18,7 +18,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost/api"
+      "value": "http://localhost:8091/api/v1"
     },
     {
       "key": "api_token",
@@ -27,6 +27,106 @@
     {
       "key": "tenant_id",
       "value": ""
+    },
+    {
+      "key": "token_id",
+      "value": ""
+    },
+    {
+      "key": "sip_profile_id",
+      "value": ""
+    },
+    {
+      "key": "blocked_destination_id",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": ""
+    },
+    {
+      "key": "extension_id",
+      "value": ""
+    },
+    {
+      "key": "holiday_calendar_id",
+      "value": ""
+    },
+    {
+      "key": "schedule_id",
+      "value": ""
+    },
+    {
+      "key": "team_id",
+      "value": ""
+    },
+    {
+      "key": "flow_id",
+      "value": ""
+    },
+    {
+      "key": "call_session_id",
+      "value": ""
+    },
+    {
+      "key": "cdr_id",
+      "value": ""
+    },
+    {
+      "key": "policy_id",
+      "value": ""
+    },
+    {
+      "key": "did_id",
+      "value": ""
+    },
+    {
+      "key": "ring_group_id",
+      "value": ""
+    },
+    {
+      "key": "ivr_id",
+      "value": ""
+    },
+    {
+      "key": "time_condition_id",
+      "value": ""
+    },
+    {
+      "key": "webhook_id",
+      "value": ""
+    },
+    {
+      "key": "call_uuid",
+      "value": ""
+    },
+    {
+      "key": "event_id",
+      "value": ""
+    },
+    {
+      "key": "recording_id",
+      "value": ""
+    },
+    {
+      "key": "device_profile_id",
+      "value": ""
+    },
+    {
+      "key": "gateway_id",
+      "value": ""
+    },
+    {
+      "key": "agent_id",
+      "value": ""
+    },
+    {
+      "key": "queue_id",
+      "value": ""
+    },
+    {
+      "key": "audit_log_id",
+      "value": ""
     }
   ],
   "item": [
@@ -34,433 +134,5979 @@
       "name": "Authentication",
       "item": [
         {
-          "name": "Register",
+          "name": "Register a new user",
           "request": {
             "method": "POST",
-            "header": [],
-            "auth": { "type": "noauth" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
-          }
-        },
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.token) {",
-                  "  pm.collectionVariables.set('api_token', jsonData.token);",
-                  "}"
-                ]
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
               }
             }
-          ],
+          },
+          "response": []
+        },
+        {
+          "name": "Login and receive bearer token",
           "request": {
             "method": "POST",
-            "header": [],
-            "auth": { "type": "noauth" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login and receive bearer token",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
-          }
-        },
-        {
-          "name": "Get Current User",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] }
-          }
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }
-          }
-        },
-        {
-          "name": "List Tokens",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/auth/tokens", "host": ["{{base_url}}"], "path": ["auth", "tokens"] }
-          }
-        },
-        {
-          "name": "Create Token",
-          "request": {
-            "method": "POST",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"my-integration\",\n  \"abilities\": [\"*\"]\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/auth/tokens", "host": ["{{base_url}}"], "path": ["auth", "tokens"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Tenant Lifecycle",
-      "item": [
-        {
-          "name": "List Tenants",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants", "host": ["{{base_url}}"], "path": ["tenants"] }
-          }
-        },
-        {
-          "name": "Create Tenant",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.data && jsonData.data.id) {",
-                  "  pm.collectionVariables.set('tenant_id', jsonData.data.id);",
-                  "}"
-                ]
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
               }
             }
-          ],
+          },
+          "response": []
+        },
+        {
+          "name": "Logout current token",
           "request": {
             "method": "POST",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Acme Corp\",\n  \"domain\": \"acme.example.com\",\n  \"max_extensions\": 50,\n  \"settings\": {}\n}",
-              "options": { "raw": { "language": "json" } }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             },
-            "url": { "raw": "{{base_url}}/tenants", "host": ["{{base_url}}"], "path": ["tenants"] }
-          }
+            "description": "Logout current token"
+          },
+          "response": []
         },
         {
-          "name": "Get Tenant",
+          "name": "Get current authenticated user",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}"] }
-          }
-        },
-        {
-          "name": "Update Tenant",
-          "request": {
-            "method": "PUT",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Acme Corp Updated\",\n  \"max_extensions\": 100\n}",
-              "options": { "raw": { "language": "json" } }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
             },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}"] }
-          }
+            "description": "Get current authenticated user"
+          },
+          "response": []
         },
         {
-          "name": "Get Tenant Settings",
+          "name": "List API tokens",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/settings", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "settings"] }
-          }
-        },
-        {
-          "name": "Update Tenant Settings",
-          "request": {
-            "method": "PUT",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"recording_enabled\": true,\n  \"max_recording_days\": 90\n}",
-              "options": { "raw": { "language": "json" } }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/tokens",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "tokens"
+              ]
             },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/settings", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "settings"] }
-          }
+            "description": "List API tokens"
+          },
+          "response": []
         },
         {
-          "name": "Provision Tenant",
+          "name": "Create API token",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/tokens",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "tokens"
+              ]
+            },
+            "description": "Create API token",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"New Tenant\",\n  \"domain\": \"new-tenant.example.com\",\n  \"max_extensions\": 25\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/tenants/provision", "host": ["{{base_url}}"], "path": ["tenants", "provision"] }
-          }
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"abilities\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         },
         {
-          "name": "Get Tenant Stats",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/stats", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "stats"] }
-          }
-        },
-        {
-          "name": "Delete Tenant",
+          "name": "Revoke API token",
           "request": {
             "method": "DELETE",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/tokens/{{token_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "tokens",
+                "{{token_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tokenId"
+                }
+              ]
+            },
+            "description": "Revoke API token"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Provisioning",
+      "name": "Health",
       "item": [
         {
-          "name": "List Extensions",
+          "name": "Health check",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "extensions"] }
-          }
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Health check"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tenants",
+      "item": [
+        {
+          "name": "List tenants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants"
+              ]
+            },
+            "description": "List tenants"
+          },
+          "response": []
         },
         {
-          "name": "Create Extension",
+          "name": "Create tenant",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants"
+              ]
+            },
+            "description": "Create tenant",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"extension\": \"1001\",\n  \"password\": \"securePass123!\",\n  \"directory_first_name\": \"John\",\n  \"directory_last_name\": \"Doe\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "extensions"] }
-          }
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"domain\": \"acme.example.com\",\n  \"slug\": \"acme\",\n  \"max_extensions\": 1,\n  \"max_concurrent_calls\": 1,\n  \"max_dids\": 1,\n  \"max_ring_groups\": 1,\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         },
+        {
+          "name": "Provision tenant with automated setup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/provision",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "provision"
+              ]
+            },
+            "description": "Provision tenant with automated setup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"domain\": \"acme.example.com\",\n  \"slug\": \"acme\",\n  \"max_extensions\": 1,\n  \"max_concurrent_calls\": 1,\n  \"max_dids\": 1,\n  \"max_ring_groups\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get tenant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get tenant"
+          },
+          "response": []
+        },
+        {
+          "name": "Update tenant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Update tenant",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"domain\": \"acme.example.com\",\n  \"slug\": \"acme\",\n  \"max_extensions\": 1,\n  \"max_concurrent_calls\": 1,\n  \"max_dids\": 1,\n  \"max_ring_groups\": 1,\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete tenant",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Delete tenant"
+          },
+          "response": []
+        },
+        {
+          "name": "Get tenant settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/settings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "settings"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get tenant settings"
+          },
+          "response": []
+        },
+        {
+          "name": "Merge-update tenant settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/settings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "settings"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Merge-update tenant settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"settings\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get tenant stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "stats"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get tenant stats"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Extensions",
+      "item": [
+        {
+          "name": "List extensions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "extensions"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List extensions"
+          },
+          "response": []
+        },
+        {
+          "name": "Create extension",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "extensions"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create extension",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"extension\": \"1001\",\n  \"password\": \"password123\",\n  \"directory_first_name\": \"string\",\n  \"directory_last_name\": \"string\",\n  \"effective_caller_id_name\": \"string\",\n  \"effective_caller_id_number\": \"string\",\n  \"outbound_caller_id_name\": \"string\",\n  \"outbound_caller_id_number\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get extension",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions/{{extension_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "extensions",
+                "{{extension_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "extensionId"
+                }
+              ]
+            },
+            "description": "Get extension"
+          },
+          "response": []
+        },
+        {
+          "name": "Update extension",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions/{{extension_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "extensions",
+                "{{extension_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "extensionId"
+                }
+              ]
+            },
+            "description": "Update extension",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"extension\": \"1001\",\n  \"password\": \"password123\",\n  \"directory_first_name\": \"string\",\n  \"directory_last_name\": \"string\",\n  \"effective_caller_id_name\": \"string\",\n  \"effective_caller_id_number\": \"string\",\n  \"outbound_caller_id_name\": \"string\",\n  \"outbound_caller_id_number\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete extension",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions/{{extension_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "extensions",
+                "{{extension_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "extensionId"
+                }
+              ]
+            },
+            "description": "Delete extension"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "DIDs",
+      "item": [
         {
           "name": "List DIDs",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/dids", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "dids"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "dids"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List DIDs"
+          },
+          "response": []
         },
         {
           "name": "Create DID",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "dids"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create DID",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"number\": \"+15551234567\",\n  \"destination_type\": \"extension\",\n  \"destination_id\": \"<extension_uuid>\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/dids", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "dids"] }
-          }
+              "raw": "{\n  \"number\": \"+15551234567\",\n  \"destination_type\": \"string\",\n  \"destination_id\": \"{{destination_id}}\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         },
         {
-          "name": "List Device Profiles",
+          "name": "Get DID",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "device-profiles"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids/{{did_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "dids",
+                "{{did_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "didId"
+                }
+              ]
+            },
+            "description": "Get DID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update DID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids/{{did_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "dids",
+                "{{did_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "didId"
+                }
+              ]
+            },
+            "description": "Update DID",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"+15551234567\",\n  \"destination_type\": \"string\",\n  \"destination_id\": \"{{destination_id}}\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete DID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids/{{did_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "dids",
+                "{{did_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "didId"
+                }
+              ]
+            },
+            "description": "Delete DID"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Routing & Policy",
+      "name": "Ring Groups",
       "item": [
         {
-          "name": "List Ring Groups",
+          "name": "List ring groups",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "ring-groups"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ring-groups"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List ring groups"
+          },
+          "response": []
         },
+        {
+          "name": "Create ring group",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ring-groups"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create ring group",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"strategy\": \"simultaneous\",\n  \"members\": [\n    \"{{members}}\"\n  ],\n  \"ring_timeout\": 1,\n  \"timeout_destination_type\": \"string\",\n  \"timeout_destination_id\": \"{{timeout_destination_id}}\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get ring group",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups/{{ring_group_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ring-groups",
+                "{{ring_group_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "ringGroupId"
+                }
+              ]
+            },
+            "description": "Get ring group"
+          },
+          "response": []
+        },
+        {
+          "name": "Update ring group",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups/{{ring_group_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ring-groups",
+                "{{ring_group_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "ringGroupId"
+                }
+              ]
+            },
+            "description": "Update ring group",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"strategy\": \"simultaneous\",\n  \"members\": [\n    \"{{members}}\"\n  ],\n  \"ring_timeout\": 1,\n  \"timeout_destination_type\": \"string\",\n  \"timeout_destination_id\": \"{{timeout_destination_id}}\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete ring group",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups/{{ring_group_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ring-groups",
+                "{{ring_group_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "ringGroupId"
+                }
+              ]
+            },
+            "description": "Delete ring group"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "IVRs",
+      "item": [
         {
           "name": "List IVRs",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "ivrs"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ivrs"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List IVRs"
+          },
+          "response": []
         },
         {
-          "name": "List Time Conditions",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "time-conditions"] }
-          }
-        },
-        {
-          "name": "List Call Routing Policies",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-routing-policies"] }
-          }
-        },
-        {
-          "name": "Evaluate Policy",
+          "name": "Create IVR",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ivrs"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create IVR",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"caller_id_number\": \"+15559876543\",\n  \"destination_number\": \"1001\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/<policy_id>/evaluate", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-routing-policies", "<policy_id>", "evaluate"] }
-          }
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"greet_long\": \"string\",\n  \"greet_short\": \"string\",\n  \"options\": {},\n  \"timeout\": 1,\n  \"max_failures\": 1,\n  \"timeout_destination_type\": \"string\",\n  \"timeout_destination_id\": \"{{timeout_destination_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         },
         {
-          "name": "List Call Flows",
+          "name": "Get IVR",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-flows", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-flows"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs/{{ivr_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ivrs",
+                "{{ivr_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "ivrId"
+                }
+              ]
+            },
+            "description": "Get IVR"
+          },
+          "response": []
+        },
+        {
+          "name": "Update IVR",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs/{{ivr_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ivrs",
+                "{{ivr_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "ivrId"
+                }
+              ]
+            },
+            "description": "Update IVR",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"greet_long\": \"string\",\n  \"greet_short\": \"string\",\n  \"options\": {},\n  \"timeout\": 1,\n  \"max_failures\": 1,\n  \"timeout_destination_type\": \"string\",\n  \"timeout_destination_id\": \"{{timeout_destination_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete IVR",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs/{{ivr_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "ivrs",
+                "{{ivr_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "ivrId"
+                }
+              ]
+            },
+            "description": "Delete IVR"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Events & Webhooks",
+      "name": "Time Conditions",
       "item": [
         {
-          "name": "List Call Events",
+          "name": "List time conditions",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-events"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "time-conditions"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List time conditions"
+          },
+          "response": []
         },
         {
-          "name": "Trace Call Events",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/<call_uuid>/trace", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "call-events", "<call_uuid>", "trace"] }
-          }
-        },
-        {
-          "name": "List Webhooks",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "webhooks"] }
-          }
-        },
-        {
-          "name": "Create Webhook",
+          "name": "Create time condition",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "time-conditions"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create time condition",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"url\": \"https://hooks.example.com/nizam\",\n  \"events\": [\"call.created\", \"call.hangup\"],\n  \"secret\": \"my-webhook-secret\",\n  \"is_active\": true\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"rules\": [\n    {}\n  ],\n  \"match_destination_type\": \"string\",\n  \"match_destination_id\": \"{{match_destination_id}}\",\n  \"no_match_destination_type\": \"string\",\n  \"no_match_destination_id\": \"{{no_match_destination_id}}\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get time condition",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions/{{time_condition_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "time-conditions",
+                "{{time_condition_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "timeConditionId"
+                }
+              ]
             },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "webhooks"] }
-          }
+            "description": "Get time condition"
+          },
+          "response": []
+        },
+        {
+          "name": "Update time condition",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions/{{time_condition_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "time-conditions",
+                "{{time_condition_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "timeConditionId"
+                }
+              ]
+            },
+            "description": "Update time condition",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"rules\": [\n    {}\n  ],\n  \"match_destination_type\": \"string\",\n  \"match_destination_id\": \"{{match_destination_id}}\",\n  \"no_match_destination_type\": \"string\",\n  \"no_match_destination_id\": \"{{no_match_destination_id}}\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete time condition",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions/{{time_condition_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "time-conditions",
+                "{{time_condition_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "timeConditionId"
+                }
+              ]
+            },
+            "description": "Delete time condition"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Contact Center",
+      "name": "Call Routing Policies",
       "item": [
         {
-          "name": "List Agents",
+          "name": "List call routing policies",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/agents", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "agents"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-routing-policies"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List call routing policies"
+          },
+          "response": []
         },
         {
-          "name": "Create Agent",
+          "name": "Create call routing policy",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-routing-policies"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create call routing policy",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"extension_id\": \"<extension_uuid>\",\n  \"role\": \"agent\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/agents", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "agents"] }
-          }
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"conditions\": [\n    {}\n  ],\n  \"match_destination_type\": \"string\",\n  \"match_destination_id\": \"{{match_destination_id}}\",\n  \"no_match_destination_type\": \"string\",\n  \"no_match_destination_id\": \"{{no_match_destination_id}}\",\n  \"priority\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         },
         {
-          "name": "Change Agent State",
+          "name": "Get call routing policy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/{{policy_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-routing-policies",
+                "{{policy_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "policyId"
+                }
+              ]
+            },
+            "description": "Get call routing policy"
+          },
+          "response": []
+        },
+        {
+          "name": "Update call routing policy",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/{{policy_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-routing-policies",
+                "{{policy_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "policyId"
+                }
+              ]
+            },
+            "description": "Update call routing policy",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"conditions\": [\n    {}\n  ],\n  \"match_destination_type\": \"string\",\n  \"match_destination_id\": \"{{match_destination_id}}\",\n  \"no_match_destination_type\": \"string\",\n  \"no_match_destination_id\": \"{{no_match_destination_id}}\",\n  \"priority\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete call routing policy",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/{{policy_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-routing-policies",
+                "{{policy_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "policyId"
+                }
+              ]
+            },
+            "description": "Delete call routing policy"
+          },
+          "response": []
+        },
+        {
+          "name": "Evaluate call routing policy",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/{{policy_id}}/evaluate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-routing-policies",
+                "{{policy_id}}",
+                "evaluate"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "policyId"
+                }
+              ]
+            },
+            "description": "Evaluate call routing policy",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"state\": \"available\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/<agent_id>/state", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "agents", "<agent_id>", "state"] }
-          }
-        },
-        {
-          "name": "List Queues",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/queues", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "queues"] }
-          }
-        },
-        {
-          "name": "Create Queue",
-          "request": {
-            "method": "POST",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Support Queue\",\n  \"strategy\": \"round_robin\",\n  \"max_wait_time\": 300,\n  \"service_level_threshold\": 30\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/queues", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "queues"] }
-          }
-        },
-        {
-          "name": "Add Queue Member",
-          "request": {
-            "method": "POST",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"agent_id\": \"<agent_uuid>\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/<queue_id>/members", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "queues", "<queue_id>", "members"] }
-          }
-        },
-        {
-          "name": "Get Realtime Metrics",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/<queue_id>/metrics/realtime", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "queues", "<queue_id>", "metrics", "realtime"] }
-          }
-        },
-        {
-          "name": "Get Wallboard",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/wallboard", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "wallboard"] }
-          }
-        },
-        {
-          "name": "Get Agent States",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/agent-states", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "agent-states"] }
-          }
+              "raw": "{\n  \"did\": \"string\",\n  \"caller_id\": \"+15550001111\",\n  \"time\": \"2026-03-20T00:00:00Z\",\n  \"metadata\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Usage & Billing",
+      "name": "Flows",
       "item": [
         {
-          "name": "Get Usage Summary",
+          "name": "List flows",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/summary", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "usage", "summary"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "flows"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List flows"
+          },
+          "response": []
         },
         {
-          "name": "Collect Usage",
+          "name": "Create flow",
           "request": {
             "method": "POST",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/collect", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "usage", "collect"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "flows"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create flow",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"nodes\": [\n    {}\n  ],\n  \"edges\": [\n    {}\n  ],\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         },
         {
-          "name": "Reconcile Usage",
+          "name": "Get flow",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/reconcile", "host": ["{{base_url}}"], "path": ["tenants", "{{tenant_id}}", "usage", "reconcile"] }
-          }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows/{{flow_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "flows",
+                "{{flow_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "flowId"
+                }
+              ]
+            },
+            "description": "Get flow"
+          },
+          "response": []
+        },
+        {
+          "name": "Update flow",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows/{{flow_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "flows",
+                "{{flow_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "flowId"
+                }
+              ]
+            },
+            "description": "Update flow",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"nodes\": [\n    {}\n  ],\n  \"edges\": [\n    {}\n  ],\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete flow",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows/{{flow_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "flows",
+                "{{flow_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "flowId"
+                }
+              ]
+            },
+            "description": "Delete flow"
+          },
+          "response": []
+        },
+        {
+          "name": "Publish latest flow version",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows/{{flow_id}}/publish",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "flows",
+                "{{flow_id}}",
+                "publish"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "flowId"
+                }
+              ]
+            },
+            "description": "Publish latest flow version"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Call Sessions",
+      "item": [
+        {
+          "name": "List call sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "calls"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List call sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "Get call session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/{{call_session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "calls",
+                "{{call_session_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "callSessionId"
+                }
+              ]
+            },
+            "description": "Get call session"
+          },
+          "response": []
+        },
+        {
+          "name": "Analyze call session trace",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/{{call_session_id}}/analyze",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "calls",
+                "{{call_session_id}}",
+                "analyze"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "callSessionId"
+                }
+              ]
+            },
+            "description": "Analyze call session trace"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Calls",
+      "item": [
+        {
+          "name": "Originate a call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/originate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "calls",
+                "originate"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Originate a call",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"extension\": \"1001\",\n  \"destination\": \"1002\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get active call status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "calls",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get active call status"
+          },
+          "response": []
+        },
+        {
+          "name": "Hang up a call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/hangup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "calls",
+                "hangup"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Hang up a call",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uuid\": \"{{call_uuid}}\",\n  \"cause\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer a call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/transfer",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "calls",
+                "transfer"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Transfer a call",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uuid\": \"{{call_uuid}}\",\n  \"destination\": \"1002\",\n  \"leg\": \"aleg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start or stop call recording",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/recording",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "calls",
+                "recording"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Start or stop call recording",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uuid\": \"{{call_uuid}}\",\n  \"action\": \"start\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hold or unhold a call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/hold",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "calls",
+                "hold"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Hold or unhold a call",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uuid\": \"{{call_uuid}}\",\n  \"action\": \"hold\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CDRs",
+      "item": [
+        {
+          "name": "Export CDRs (Simple)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/export",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "cdrs",
+                "export"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Export CDRs (Simple)"
+          },
+          "response": []
+        },
+        {
+          "name": "Advanced CDR Export",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/export",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "cdrs",
+                "export"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Export filtered CDRs in CSV or JSON format.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"format\": \"csv\",\n  \"filters\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List CDRs with advanced filtering",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "cdrs"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "string",
+                  "description": "Full-text search on caller, destination, UUID"
+                },
+                {
+                  "key": "call_type",
+                  "value": "inbound",
+                  "description": ""
+                },
+                {
+                  "key": "quality_score_min",
+                  "value": "0",
+                  "description": ""
+                },
+                {
+                  "key": "direction",
+                  "value": "inbound",
+                  "description": ""
+                },
+                {
+                  "key": "start_date",
+                  "value": "2026-03-20T00:00:00Z",
+                  "description": ""
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-03-20T00:00:00Z",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "List CDRs with advanced filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get CDR summary analytics (ASR, ACD)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/analytics/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "cdrs",
+                "analytics",
+                "summary"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get CDR summary analytics (ASR, ACD)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get call volume trends",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/analytics/volume",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "cdrs",
+                "analytics",
+                "volume"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get call volume trends"
+          },
+          "response": []
+        },
+        {
+          "name": "Get quality trends (MOS, Packet Loss)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/analytics/quality",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "cdrs",
+                "analytics",
+                "quality"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get quality trends (MOS, Packet Loss)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get top call destinations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/analytics/destinations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "cdrs",
+                "analytics",
+                "destinations"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get top call destinations"
+          },
+          "response": []
+        },
+        {
+          "name": "Get detailed CDR with enrichment data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/{{cdr_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "cdrs",
+                "{{cdr_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "cdrId"
+                }
+              ]
+            },
+            "description": "Get detailed CDR with enrichment data"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Recordings",
+      "item": [
+        {
+          "name": "List recordings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/recordings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "recordings"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List recordings"
+          },
+          "response": []
+        },
+        {
+          "name": "Get recording metadata",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/recordings/{{recording_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "recordings",
+                "{{recording_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "recordingId"
+                }
+              ]
+            },
+            "description": "Get recording metadata"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete recording",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/recordings/{{recording_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "recordings",
+                "{{recording_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "recordingId"
+                }
+              ]
+            },
+            "description": "Delete recording"
+          },
+          "response": []
+        },
+        {
+          "name": "Download recording file",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/recordings/{{recording_id}}/download",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "recordings",
+                "{{recording_id}}",
+                "download"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "recordingId"
+                }
+              ]
+            },
+            "description": "Download recording file"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "List webhooks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "webhooks"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List webhooks"
+          },
+          "response": []
+        },
+        {
+          "name": "Create webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "webhooks"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create webhook",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"call.created\"\n  ],\n  \"secret\": \"change-me\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get webhook",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "webhooks",
+                "{{webhook_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "webhookId"
+                }
+              ]
+            },
+            "description": "Get webhook"
+          },
+          "response": []
+        },
+        {
+          "name": "Update webhook",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "webhooks",
+                "{{webhook_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "webhookId"
+                }
+              ]
+            },
+            "description": "Update webhook",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/webhook\",\n  \"events\": [\n    \"call.created\"\n  ],\n  \"secret\": \"change-me\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete webhook",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "webhooks",
+                "{{webhook_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "webhookId"
+                }
+              ]
+            },
+            "description": "Delete webhook"
+          },
+          "response": []
+        },
+        {
+          "name": "List webhook delivery attempts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}/delivery-attempts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "webhooks",
+                "{{webhook_id}}",
+                "delivery-attempts"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "webhookId"
+                }
+              ]
+            },
+            "description": "List webhook delivery attempts"
+          },
+          "response": []
+        },
+        {
+          "name": "Get webhook delivery stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}/delivery-stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "webhooks",
+                "{{webhook_id}}",
+                "delivery-stats"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "webhookId"
+                }
+              ]
+            },
+            "description": "Get webhook delivery stats"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Call Events",
+      "item": [
+        {
+          "name": "List call events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-events"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List call events"
+          },
+          "response": []
+        },
+        {
+          "name": "Stream call events via SSE",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/stream",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-events",
+                "stream"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Stream call events via SSE"
+          },
+          "response": []
+        },
+        {
+          "name": "Get trace for call UUID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/{{call_uuid}}/trace",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-events",
+                "{{call_uuid}}",
+                "trace"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "callUuid"
+                }
+              ]
+            },
+            "description": "Get trace for call UUID"
+          },
+          "response": []
+        },
+        {
+          "name": "Replay stored call event",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/replay/{{event_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-events",
+                "replay",
+                "{{event_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "eventId"
+                }
+              ]
+            },
+            "description": "Replay stored call event"
+          },
+          "response": []
+        },
+        {
+          "name": "Redispatch stored event to matching webhooks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/redispatch/{{event_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "call-events",
+                "redispatch",
+                "{{event_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "eventId"
+                }
+              ]
+            },
+            "description": "Redispatch stored event to matching webhooks"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Device Profiles",
+      "item": [
+        {
+          "name": "List device profiles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "device-profiles"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List device profiles"
+          },
+          "response": []
+        },
+        {
+          "name": "Create device profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "device-profiles"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create device profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"vendor\": \"string\",\n  \"model\": \"string\",\n  \"mac_address\": \"string\",\n  \"config\": {},\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get device profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles/{{device_profile_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "device-profiles",
+                "{{device_profile_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "deviceProfileId"
+                }
+              ]
+            },
+            "description": "Get device profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update device profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles/{{device_profile_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "device-profiles",
+                "{{device_profile_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "deviceProfileId"
+                }
+              ]
+            },
+            "description": "Update device profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"vendor\": \"string\",\n  \"model\": \"string\",\n  \"mac_address\": \"string\",\n  \"config\": {},\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete device profile",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles/{{device_profile_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "device-profiles",
+                "{{device_profile_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "deviceProfileId"
+                }
+              ]
+            },
+            "description": "Delete device profile"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gateways",
+      "item": [
+        {
+          "name": "List gateways",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "gateways"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List gateways"
+          },
+          "response": []
+        },
+        {
+          "name": "Create gateway",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "gateways"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create gateway",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"host\": \"string\",\n  \"port\": 1,\n  \"username\": \"string\",\n  \"password\": \"password123\",\n  \"transport\": \"string\",\n  \"register\": true,\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get gateway",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways/{{gateway_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "gateways",
+                "{{gateway_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "gatewayId"
+                }
+              ]
+            },
+            "description": "Get gateway"
+          },
+          "response": []
+        },
+        {
+          "name": "Update gateway",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways/{{gateway_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "gateways",
+                "{{gateway_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "gatewayId"
+                }
+              ]
+            },
+            "description": "Update gateway",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"host\": \"string\",\n  \"port\": 1,\n  \"username\": \"string\",\n  \"password\": \"password123\",\n  \"transport\": \"string\",\n  \"register\": true,\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete gateway",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways/{{gateway_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "gateways",
+                "{{gateway_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "gatewayId"
+                }
+              ]
+            },
+            "description": "Delete gateway"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Codec Metrics",
+      "item": [
+        {
+          "name": "Get codec metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/codec-metrics",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "codec-metrics"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get codec metrics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Holiday Calendars",
+      "item": [
+        {
+          "name": "List holiday calendars",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "holiday-calendars"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List holiday calendars"
+          },
+          "response": []
+        },
+        {
+          "name": "Create holiday calendar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "holiday-calendars"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create holiday calendar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get holiday calendar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars/{{holiday_calendar_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "holiday-calendars",
+                "{{holiday_calendar_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "holidayCalendarId"
+                }
+              ]
+            },
+            "description": "Get holiday calendar"
+          },
+          "response": []
+        },
+        {
+          "name": "Update holiday calendar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars/{{holiday_calendar_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "holiday-calendars",
+                "{{holiday_calendar_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "holidayCalendarId"
+                }
+              ]
+            },
+            "description": "Update holiday calendar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete holiday calendar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars/{{holiday_calendar_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "holiday-calendars",
+                "{{holiday_calendar_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "holidayCalendarId"
+                }
+              ]
+            },
+            "description": "Delete holiday calendar"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Schedules",
+      "item": [
+        {
+          "name": "List schedules",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "schedules"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List schedules"
+          },
+          "response": []
+        },
+        {
+          "name": "Create schedule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "schedules"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create schedule",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"timezone\": \"Asia/Dhaka\",\n  \"rules\": [\n    {}\n  ],\n  \"exceptions\": [\n    {}\n  ],\n  \"breaks\": [\n    {}\n  ],\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get schedule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules/{{schedule_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "schedules",
+                "{{schedule_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "scheduleId"
+                }
+              ]
+            },
+            "description": "Get schedule"
+          },
+          "response": []
+        },
+        {
+          "name": "Update schedule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules/{{schedule_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "schedules",
+                "{{schedule_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "scheduleId"
+                }
+              ]
+            },
+            "description": "Update schedule",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"timezone\": \"Asia/Dhaka\",\n  \"rules\": [\n    {}\n  ],\n  \"exceptions\": [\n    {}\n  ],\n  \"breaks\": [\n    {}\n  ],\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete schedule",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules/{{schedule_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "schedules",
+                "{{schedule_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "scheduleId"
+                }
+              ]
+            },
+            "description": "Delete schedule"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Teams",
+      "item": [
+        {
+          "name": "List teams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "teams"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List teams"
+          },
+          "response": []
+        },
+        {
+          "name": "Create team",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "teams"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create team",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"is_active\": true,\n  \"members\": [\n    {}\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get team",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams/{{team_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "teams",
+                "{{team_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "teamId"
+                }
+              ]
+            },
+            "description": "Get team"
+          },
+          "response": []
+        },
+        {
+          "name": "Update team",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams/{{team_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "teams",
+                "{{team_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "teamId"
+                }
+              ]
+            },
+            "description": "Update team",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"is_active\": true,\n  \"members\": [\n    {}\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete team",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams/{{team_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "teams",
+                "{{team_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "teamId"
+                }
+              ]
+            },
+            "description": "Delete team"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "List agents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "agents"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List agents"
+          },
+          "response": []
+        },
+        {
+          "name": "Create agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "agents"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create agent",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"extension_id\": \"{{extension_id}}\",\n  \"role\": \"string\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get agent",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/{{agent_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "agents",
+                "{{agent_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "agentId"
+                }
+              ]
+            },
+            "description": "Get agent"
+          },
+          "response": []
+        },
+        {
+          "name": "Update agent",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/{{agent_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "agents",
+                "{{agent_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "agentId"
+                }
+              ]
+            },
+            "description": "Update agent",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"extension_id\": \"{{extension_id}}\",\n  \"role\": \"string\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete agent",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/{{agent_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "agents",
+                "{{agent_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "agentId"
+                }
+              ]
+            },
+            "description": "Delete agent"
+          },
+          "response": []
+        },
+        {
+          "name": "Change agent state",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/{{agent_id}}/state",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "agents",
+                "{{agent_id}}",
+                "state"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "agentId"
+                }
+              ]
+            },
+            "description": "Change agent state",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"string\",\n  \"note\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Queues",
+      "item": [
+        {
+          "name": "List queues",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List queues"
+          },
+          "response": []
+        },
+        {
+          "name": "Create queue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Create queue",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"strategy\": \"string\",\n  \"max_wait_time\": 1,\n  \"service_level_threshold\": 1,\n  \"music_on_hold\": \"string\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get queue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues",
+                "{{queue_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "queueId"
+                }
+              ]
+            },
+            "description": "Get queue"
+          },
+          "response": []
+        },
+        {
+          "name": "Update queue",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues",
+                "{{queue_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "queueId"
+                }
+              ]
+            },
+            "description": "Update queue",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"strategy\": \"string\",\n  \"max_wait_time\": 1,\n  \"service_level_threshold\": 1,\n  \"music_on_hold\": \"string\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete queue",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues",
+                "{{queue_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "queueId"
+                }
+              ]
+            },
+            "description": "Delete queue"
+          },
+          "response": []
+        },
+        {
+          "name": "List queue members",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/members",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues",
+                "{{queue_id}}",
+                "members"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "queueId"
+                }
+              ]
+            },
+            "description": "List queue members"
+          },
+          "response": []
+        },
+        {
+          "name": "Add queue member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/members",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues",
+                "{{queue_id}}",
+                "members"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "queueId"
+                }
+              ]
+            },
+            "description": "Add queue member",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"{{agent_id}}\",\n  \"weight\": 1,\n  \"paused\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove queue member",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/members/{{agent_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues",
+                "{{queue_id}}",
+                "members",
+                "{{agent_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "queueId"
+                },
+                {
+                  "key": "agentId"
+                }
+              ]
+            },
+            "description": "Remove queue member"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Queue Metrics",
+      "item": [
+        {
+          "name": "Get real-time queue metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/metrics/realtime",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues",
+                "{{queue_id}}",
+                "metrics",
+                "realtime"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "queueId"
+                }
+              ]
+            },
+            "description": "Get real-time queue metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "Aggregate queue metrics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/metrics/aggregate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues",
+                "{{queue_id}}",
+                "metrics",
+                "aggregate"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "queueId"
+                }
+              ]
+            },
+            "description": "Aggregate queue metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "Queue metrics history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/metrics/history",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "queues",
+                "{{queue_id}}",
+                "metrics",
+                "history"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "queueId"
+                }
+              ]
+            },
+            "description": "Queue metrics history"
+          },
+          "response": []
+        },
+        {
+          "name": "Wallboard data for tenant queues",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/wallboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "wallboard"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Wallboard data for tenant queues"
+          },
+          "response": []
+        },
+        {
+          "name": "Agent state overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/agent-states",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "agent-states"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Agent state overview"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Usage",
+      "item": [
+        {
+          "name": "Get usage summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/summary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "usage",
+                "summary"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Get usage summary"
+          },
+          "response": []
+        },
+        {
+          "name": "Collect usage snapshot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/collect",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "usage",
+                "collect"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Collect usage snapshot"
+          },
+          "response": []
+        },
+        {
+          "name": "Reconcile usage against CDRs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/reconcile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "usage",
+                "reconcile"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "Reconcile usage against CDRs"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "System-wide admin dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": "System-wide admin dashboard"
+          },
+          "response": []
+        },
+        {
+          "name": "List SIP profiles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/sip-profiles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "sip-profiles"
+              ]
+            },
+            "description": "List SIP profiles"
+          },
+          "response": []
+        },
+        {
+          "name": "Create SIP profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/sip-profiles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "sip-profiles"
+              ]
+            },
+            "description": "Create SIP profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"settings\": {},\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get SIP profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/sip-profiles/{{sip_profile_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "sip-profiles",
+                "{{sip_profile_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "sipProfileId"
+                }
+              ]
+            },
+            "description": "Get SIP profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update SIP profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/sip-profiles/{{sip_profile_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "sip-profiles",
+                "{{sip_profile_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "sipProfileId"
+                }
+              ]
+            },
+            "description": "Update SIP profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"description\": \"Example description\",\n  \"settings\": {},\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete SIP profile",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/sip-profiles/{{sip_profile_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "sip-profiles",
+                "{{sip_profile_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "sipProfileId"
+                }
+              ]
+            },
+            "description": "Delete SIP profile"
+          },
+          "response": []
+        },
+        {
+          "name": "List blocked destinations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/blocked-destinations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "blocked-destinations"
+              ],
+              "query": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "List blocked destinations"
+          },
+          "response": []
+        },
+        {
+          "name": "Create blocked destination",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/blocked-destinations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "blocked-destinations"
+              ]
+            },
+            "description": "Create blocked destination",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"pattern\": \"string\",\n  \"description\": \"Example description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get blocked destination",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/blocked-destinations/{{blocked_destination_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "blocked-destinations",
+                "{{blocked_destination_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "blockedDestinationId"
+                }
+              ]
+            },
+            "description": "Get blocked destination"
+          },
+          "response": []
+        },
+        {
+          "name": "Update blocked destination",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/blocked-destinations/{{blocked_destination_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "blocked-destinations",
+                "{{blocked_destination_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "blockedDestinationId"
+                }
+              ]
+            },
+            "description": "Update blocked destination",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"pattern\": \"string\",\n  \"description\": \"Example description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete blocked destination",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/blocked-destinations/{{blocked_destination_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "blocked-destinations",
+                "{{blocked_destination_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "blockedDestinationId"
+                }
+              ]
+            },
+            "description": "Delete blocked destination"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "List users"
+          },
+          "response": []
+        },
+        {
+          "name": "Create user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Create user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"string\",\n  \"tenant_id\": \"{{tenant_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get user",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "userId"
+                }
+              ]
+            },
+            "description": "Get user"
+          },
+          "response": []
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "userId"
+                }
+              ]
+            },
+            "description": "Update user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"string\",\n  \"tenant_id\": \"{{tenant_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "userId"
+                }
+              ]
+            },
+            "description": "Delete user"
+          },
+          "response": []
+        },
+        {
+          "name": "List user permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/permissions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}",
+                "permissions"
+              ],
+              "variable": [
+                {
+                  "key": "userId"
+                }
+              ]
+            },
+            "description": "List user permissions"
+          },
+          "response": []
+        },
+        {
+          "name": "Grant permissions to user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/permissions/grant",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}",
+                "permissions",
+                "grant"
+              ],
+              "variable": [
+                {
+                  "key": "userId"
+                }
+              ]
+            },
+            "description": "Grant permissions to user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissions\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke permissions from user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/permissions/revoke",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}",
+                "permissions",
+                "revoke"
+              ],
+              "variable": [
+                {
+                  "key": "userId"
+                }
+              ]
+            },
+            "description": "Revoke permissions from user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissions\": [\n    \"string\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List available permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "permissions"
+              ]
+            },
+            "description": "List available permissions"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "item": [
+        {
+          "name": "List audit logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/audit-logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "audit-logs"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                }
+              ]
+            },
+            "description": "List audit logs"
+          },
+          "response": []
+        },
+        {
+          "name": "Get audit log",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}/audit-logs/{{audit_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}",
+                "audit-logs",
+                "{{audit_log_id}}"
+              ],
+              "variable": [
+                {
+                  "key": "tenantId"
+                },
+                {
+                  "key": "auditLogId"
+                }
+              ]
+            },
+            "description": "Get audit log"
+          },
+          "response": []
         }
       ]
     }
