@@ -424,23 +424,28 @@ class DialplanCompiler
     {
         $memberIds = $ringGroup->members ?? [];
         $extensions = $tenant->extensions()->whereIn('id', $memberIds)->where('is_active', true)->get();
+        $fallback = null;
+
+        if ($ringGroup->fallback_destination_type && $ringGroup->fallback_destination_id) {
+            $fallback = $this->compileDestinationAction($tenant, $ringGroup->fallback_destination_type, $ringGroup->fallback_destination_id);
+        }
 
         if ($extensions->isEmpty()) {
-            return '';
+            return $fallback ?? '';
         }
 
         $dialStrings = $extensions->map(function ($ext) use ($tenant) {
             return 'user/'.$ext->extension.'@'.$tenant->domain;
         });
 
-        if ($ringGroup->strategy === 'simultaneous') {
-            return '            <action application="set" data="call_timeout='.(int) $ringGroup->ring_timeout.'"/>'."\n"
-                 .'            <action application="bridge" data="'.htmlspecialchars($dialStrings->implode(','), ENT_QUOTES | ENT_XML1).'"/>'."\n";
-        }
-
-        // Sequential
         $xml = '            <action application="set" data="call_timeout='.(int) $ringGroup->ring_timeout.'"/>'."\n";
-        $xml .= '            <action application="bridge" data="'.htmlspecialchars($dialStrings->implode('|'), ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="set" data="continue_on_fail=true"/>'."\n";
+        $xml .= '            <action application="set" data="hangup_after_bridge=false"/>'."\n";
+        $xml .= '            <action application="bridge" data="'.htmlspecialchars($dialStrings->implode($ringGroup->strategy === 'simultaneous' ? ',' : '|'), ENT_QUOTES | ENT_XML1).'"/>'."\n";
+
+        if ($fallback) {
+            $xml .= $fallback;
+        }
 
         return $xml;
     }
