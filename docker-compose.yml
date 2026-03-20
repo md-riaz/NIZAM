@@ -238,6 +238,21 @@ services:
       - nizam
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
+  sip-mock:
+    build:
+      context: .
+      dockerfile: docker/sip-mock/Dockerfile
+    container_name: nizam-sip-mock
+    restart: unless-stopped
+    networks:
+      - nizam
+    environment:
+      - SIP_MOCK_HOST=0.0.0.0
+      - SIP_MOCK_PORT=5070
+      - SIP_MOCK_REALM=${SIP_MOCK_REALM:-sip-mock.local}
+      - SIP_MOCK_USERNAME=${SIP_MOCK_USERNAME:-mockuser}
+      - SIP_MOCK_PASSWORD=${SIP_MOCK_PASSWORD:-mockpass}
+
 volumes:
   postgres_data:
   redis_data:

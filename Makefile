@@ -6,7 +6,7 @@
 .PHONY: help setup up down restart build rebuild logs shell \
         migrate seed key-generate sync-permissions \
         test lint fix queue-restart esl-restart status health \
-        openapi-validate postman-generate api-docs \
+        openapi-validate postman-generate api-docs sip-mock-up sip-mock-logs \
         backup-db restore-db clean
 
 COMPOSE    := docker compose
@@ -78,6 +78,12 @@ postman-generate: ## Regenerate docs/postman-collection.json from docs/openapi.y
 	python3 generate-postman.py
 
 api-docs: openapi-validate postman-generate ## Validate OpenAPI and regenerate Postman collection
+
+sip-mock-up: ## Start local SIP mock registrar for gateway testing
+	docker compose up -d sip-mock
+
+sip-mock-logs: ## Tail SIP mock logs
+	docker compose logs -f --tail=100 sip-mock
 
 # ────────────────────────────────────────────────────────────────────
 # Application management
