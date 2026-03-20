@@ -455,7 +455,7 @@ DELETE /api/tenants/{tenant_id}/call-routing-policies/{id}
 | `blacklist` | `numbers` (array of E.164) | Reject if caller is in list |
 | `geo_prefix` | `prefixes` (array of dial prefixes) | Match caller by geographic prefix |
 
-**Match/No-Match Destination Types:** `extension`, `ring_group`, `ivr`, `voicemail`, `call_flow`
+**Match/No-Match Destination Types:** `extension`, `ring_group`, `ivr`, `voicemail`, `flow`, `bridge`
 
 Policies are returned ordered by `priority` (ascending). When a DID routes to a policy, conditions are evaluated top-down. If all conditions match, the call routes to `match_destination`. Otherwise, it routes to `no_match_destination`.
 

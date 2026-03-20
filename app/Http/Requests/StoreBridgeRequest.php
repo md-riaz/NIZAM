@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreBridgeRequest extends FormRequest
 {
@@ -21,5 +22,21 @@ class StoreBridgeRequest extends FormRequest
             'description' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $type = $this->input('bridge_type');
+            $gatewayId = $this->input('gateway_id');
+
+            if ($type === 'gateway' && ! $gatewayId) {
+                $validator->errors()->add('gateway_id', 'The gateway_id field is required when bridge_type is gateway.');
+            }
+
+            if ($type === 'raw' && $gatewayId) {
+                $validator->errors()->add('gateway_id', 'The gateway_id field must be empty when bridge_type is raw.');
+            }
+        });
     }
 }

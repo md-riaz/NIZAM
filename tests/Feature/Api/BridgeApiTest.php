@@ -95,4 +95,35 @@ class BridgeApiTest extends TestCase
 
         $response->assertStatus(404);
     }
+
+    public function test_gateway_bridge_requires_gateway_id(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/bridges", [
+                'name' => 'Broken Gateway Bridge',
+                'bridge_type' => 'gateway',
+                'destination_template' => '+15551234567',
+                'is_active' => true,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['gateway_id']);
+    }
+
+    public function test_raw_bridge_must_not_include_gateway_id(): void
+    {
+        $gateway = Gateway::factory()->create(['tenant_id' => $this->tenant->id]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/bridges", [
+                'name' => 'Broken Raw Bridge',
+                'bridge_type' => 'raw',
+                'gateway_id' => $gateway->id,
+                'destination_template' => 'sofia/external/support@example.com',
+                'is_active' => true,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['gateway_id']);
+    }
 }

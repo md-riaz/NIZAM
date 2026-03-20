@@ -66,7 +66,7 @@ NIZAM evolves routing from simple destination mapping to programmable policy eva
 DID → destination                     (basic)
 DID → time_condition → destination    (time-aware)
 DID → call_routing_policy → outcome   (policy-driven)
-DID → call_flow → graph execution     (programmable)
+DID → flow → graph execution          (programmable)
 ```
 
 ### Policy Engine
