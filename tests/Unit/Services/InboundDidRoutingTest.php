@@ -96,9 +96,83 @@ class InboundDidRoutingTest extends TestCase
         $this->assertTrue($resolved->is($registrationSpecific));
     }
 
-    public function test_same_did_number_cannot_currently_exist_as_generic_and_gateway_specific_route(): void
+    public function test_layered_precedence_generic_vs_gateway_specific(): void
     {
-        $this->markTestIncomplete('Current schema uses unique (tenant_id, number), so DID precedence across generic/gateway/registration variants cannot be fully represented yet. FusionPBX-style inbound route layering needs a schema change.');
+        $tenant = Tenant::factory()->create();
+        $gateway = Gateway::factory()->create(['tenant_id' => $tenant->id]);
+
+        $generic = Did::factory()->create([
+            'tenant_id' => $tenant->id,
+            'number' => '+15551234567',
+            'gateway_id' => null,
+            'gateway_registration_id' => null,
+            'is_active' => true,
+        ]);
+
+        $gatewaySpecific = Did::factory()->create([
+            'tenant_id' => $tenant->id,
+            'number' => '+15551234567',
+            'gateway_id' => $gateway->id,
+            'gateway_registration_id' => null,
+            'is_active' => true,
+        ]);
+
+        $service = app(NumberRoutingService::class);
+        $resolved = $service->resolveInboundDid($tenant, '+15551234567', $gateway);
+
+        $this->assertNotNull($resolved);
+        $this->assertTrue($resolved->is($gatewaySpecific));
+        $this->assertFalse($resolved->is($generic));
+    }
+
+    public function test_layered_precedence_generic_vs_gateway_vs_registration_specific(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $gateway = Gateway::factory()->create(['tenant_id' => $tenant->id]);
+        $registration = GatewayRegistration::create([
+            'gateway_id' => $gateway->id,
+            'registration_identifier' => 'reg-1',
+            'username' => 'mockuser',
+            'realm' => 'sip-mock.local',
+            'proxy' => 'sip-mock:5070',
+            'transport' => 'udp',
+            'status' => 'REGED',
+        ]);
+
+        $generic = Did::factory()->create([
+            'tenant_id' => $tenant->id,
+            'number' => '+15551234567',
+            'gateway_id' => null,
+            'gateway_registration_id' => null,
+            'is_active' => true,
+        ]);
+
+        $gatewaySpecific = Did::factory()->create([
+            'tenant_id' => $tenant->id,
+            'number' => '+15551234567',
+            'gateway_id' => $gateway->id,
+            'gateway_registration_id' => null,
+            'is_active' => true,
+        ]);
+
+        $registrationSpecific = Did::factory()->create([
+            'tenant_id' => $tenant->id,
+            'number' => '+15551234567',
+            'gateway_id' => $gateway->id,
+            'gateway_registration_id' => $registration->id,
+            'is_active' => true,
+        ]);
+
+        $service = app(NumberRoutingService::class);
+
+        $resolved = $service->resolveInboundDid($tenant, '+15551234567', $gateway, $registration);
+        $this->assertNotNull($resolved);
+        $this->assertTrue($resolved->is($registrationSpecific));
+
+        $resolved = $service->resolveInboundDid($tenant, '+15551234567', $gateway);
+        $this->assertNotNull($resolved);
+        $this->assertTrue($resolved->is($gatewaySpecific));
+        $this->assertFalse($resolved->is($generic));
     }
 
     public function test_flow_did_routes_to_compiled_local_transfer(): void

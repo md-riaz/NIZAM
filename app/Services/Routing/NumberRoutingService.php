@@ -39,6 +39,7 @@ class NumberRoutingService
         if ($gateway) {
             $gatewayMatch = (clone $query)
                 ->where('gateway_id', $gateway->id)
+                ->whereNull('gateway_registration_id')
                 ->first();
 
             if ($gatewayMatch) {
@@ -46,7 +47,10 @@ class NumberRoutingService
             }
         }
 
-        return $query->first();
+        return (clone $query)
+            ->whereNull('gateway_id')
+            ->whereNull('gateway_registration_id')
+            ->first();
     }
 
     protected function defaultCountryCode(Tenant $tenant): string
