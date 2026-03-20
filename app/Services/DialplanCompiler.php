@@ -3,13 +3,17 @@
 namespace App\Services;
 
 use App\Models\BlockedDestination;
+use App\Models\Bridge;
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
+use App\Models\Flow;
+use App\Models\Ivr;
 use App\Models\RingGroup;
 use App\Models\Tenant;
 use App\Models\TimeCondition;
 use App\Services\DidNormalizationService;
+use App\Services\Routing\BridgeCompiler;
 use App\Services\Routing\GatewayResolutionService;
 use App\Services\Routing\NumberRoutingService;
 
@@ -18,6 +22,7 @@ class DialplanCompiler
     public function __construct(
         protected NumberRoutingService $numberRoutingService,
         protected GatewayResolutionService $gatewayResolutionService,
+        protected BridgeCompiler $bridgeCompiler,
     ) {}
     /**
      * Compile the SIP directory XML for a given domain.
@@ -532,6 +537,18 @@ class DialplanCompiler
                     return '            <anti-action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
+            case 'flow':
+                $flow = $tenant->flows()->find($id);
+                if ($flow) {
+                    return '            <anti-action application="transfer" data="flow_'.htmlspecialchars($flow->id, ENT_QUOTES | ENT_XML1).' XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                }
+                break;
+            case 'bridge':
+                $bridge = $tenant->bridges()->where('is_active', true)->find($id);
+                if ($bridge) {
+                    return $this->bridgeCompiler->compileAction($tenant, $bridge, true);
+                }
+                break;
         }
 
         return '';
@@ -562,6 +579,18 @@ class DialplanCompiler
                 $ivr = $tenant->ivrs()->find($id);
                 if ($ivr) {
                     return '            <action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                }
+                break;
+            case 'flow':
+                $flow = $tenant->flows()->find($id);
+                if ($flow) {
+                    return '            <action application="transfer" data="flow_'.htmlspecialchars($flow->id, ENT_QUOTES | ENT_XML1).' XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                }
+                break;
+            case 'bridge':
+                $bridge = $tenant->bridges()->where('is_active', true)->find($id);
+                if ($bridge) {
+                    return $this->bridgeCompiler->compileAction($tenant, $bridge);
                 }
                 break;
         }

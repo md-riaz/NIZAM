@@ -14,6 +14,11 @@ use App\Models\Schedule;
  */
 class ScheduleCompiler
 {
+    protected function context(Schedule $schedule): string
+    {
+        return $schedule->tenant?->domain ?? 'default';
+    }
+
     /**
      * Compile a schedule into dialplan XML fragment.
      */
@@ -50,7 +55,7 @@ class ScheduleCompiler
 
         // Default to closed
         $xml[] = '    <action application="set" data="nizam_schedule_state=closed"/>';
-        $xml[] = '    <action application="transfer" data="schedule_'.$schedule->id.'_closed XML default"/>';
+        $xml[] = '    <action application="transfer" data="schedule_'.$schedule->id.'_closed XML '.$this->context($schedule).'"/>';
 
         $xml[] = '</extension>';
 
@@ -77,7 +82,7 @@ class ScheduleCompiler
 
         $xml[] = '        <condition field="strftime(%Y-%m-%d)" expression="'.$dateRegex.'">';
         $xml[] = '            <action application="set" data="nizam_schedule_state=holiday"/>';
-        $xml[] = '            <action application="transfer" data="schedule_'.$schedule->id.'_holiday XML default"/>';
+        $xml[] = '            <action application="transfer" data="schedule_'.$schedule->id.'_holiday XML '.$this->context($schedule).'"/>';
         $xml[] = '        </condition>';
 
         $xml[] = '    </condition>';
@@ -105,7 +110,7 @@ class ScheduleCompiler
 
             $xml[] = '        <condition field="strftime(%Y-%m-%d)" expression="^'.$date.'$">';
             $xml[] = '            <action application="set" data="nizam_schedule_state='.$state.'"/>';
-            $xml[] = '            <action application="transfer" data="schedule_'.$schedule->id.'_exception_'.$state.' XML default"/>';
+            $xml[] = '            <action application="transfer" data="schedule_'.$schedule->id.'_exception_'.$state.' XML '.$this->context($schedule).'"/>';
             $xml[] = '        </condition>';
         }
 
@@ -146,7 +151,7 @@ class ScheduleCompiler
             $xml[] = '        <condition field="wday" expression="^'.$tc['wday'].'$">';
             $xml[] = '            <condition field="strftime(%H:%M)" expression="^'.$tc['start'].'-'.$tc['end'].'$">';
             $xml[] = '                <action application="set" data="nizam_schedule_state=break"/>';
-            $xml[] = '                <action application="transfer" data="schedule_'.$schedule->id.'_break XML default"/>';
+            $xml[] = '                <action application="transfer" data="schedule_'.$schedule->id.'_break XML '.$this->context($schedule).'"/>';
             $xml[] = '            </condition>';
             $xml[] = '        </condition>';
         }
@@ -178,7 +183,7 @@ class ScheduleCompiler
             $xml[] = '        <condition field="wday" expression="^'.$wday.'$">';
             $xml[] = '            <condition field="strftime(%H:%M)" expression="^'.$start.'-'.$end.'$">';
             $xml[] = '                <action application="set" data="nizam_schedule_state=open"/>';
-            $xml[] = '                <action application="transfer" data="schedule_'.$schedule->id.'_open XML default"/>';
+            $xml[] = '                <action application="transfer" data="schedule_'.$schedule->id.'_open XML '.$this->context($schedule).'"/>';
             $xml[] = '            </condition>';
             $xml[] = '        </condition>';
         }

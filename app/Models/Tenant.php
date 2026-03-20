@@ -180,6 +180,11 @@ class Tenant extends Model
         return $this->hasMany(Gateway::class);
     }
 
+    public function bridges(): HasMany
+    {
+        return $this->hasMany(Bridge::class);
+    }
+
     public function callSessions(): HasMany
     {
         return $this->hasMany(CallSession::class);

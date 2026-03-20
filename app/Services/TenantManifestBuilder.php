@@ -61,7 +61,7 @@ class TenantManifestBuilder
         // Add schedule_return global interceptor
         $xml .= '      <extension name="schedule_return">'."\n";
         $xml .= '        <condition field="destination_number" expression="^schedule_\d+_(holiday|exception_.*|break|open|closed)$">'."\n";
-        $xml .= '          <action application="transfer" data="${nizam_schedule_return_node} XML default"/>'."\n";
+        $xml .= '          <action application="transfer" data="${nizam_schedule_return_node} XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         $xml .= '        </condition>'."\n";
         $xml .= '      </extension>'."\n";
 

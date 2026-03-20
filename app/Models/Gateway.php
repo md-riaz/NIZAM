@@ -27,9 +27,18 @@ class Gateway extends Model
         'password',
         'realm',
         'transport',
+        'register',
+        'proxy',
+        'register_proxy',
+        'from_domain',
+        'extension',
         'inbound_codecs',
         'outbound_codecs',
         'allow_transcoding',
+        'expire_seconds',
+        'retry_seconds',
+        'caller_id_in_from',
+        'profile',
         'is_active',
     ];
 
@@ -42,9 +51,13 @@ class Gateway extends Model
     {
         return [
             'port' => 'integer',
+            'register' => 'boolean',
             'inbound_codecs' => 'array',
             'outbound_codecs' => 'array',
             'allow_transcoding' => 'boolean',
+            'expire_seconds' => 'integer',
+            'retry_seconds' => 'integer',
+            'caller_id_in_from' => 'boolean',
             'is_active' => 'boolean',
         ];
     }
