@@ -33,25 +33,66 @@ class GatewayProvisioningService
             File::delete($filePath);
         }
 
-        $this->reloadProfile($gateway);
+        $this->freeSwitch->execute('sofia', ['profile', $this->profile(), 'killgw', $this->gatewayIdentifier($gateway)]);
+        $this->reloadProfile();
     }
 
     public function syncAll(iterable $gateways): void
     {
+        $this->reconcile($gateways);
+    }
+
+    public function plan(iterable $gateways): array
+    {
         File::ensureDirectoryExists($this->directory());
 
+        $expected = [];
+        $createOrUpdate = [];
         foreach ($gateways as $gateway) {
+            $filename = 'v_'.$gateway->id.'.xml';
+            $expected[] = $filename;
             if ($gateway->is_active) {
-                File::put($this->filePath($gateway), $this->render($gateway));
-            } else {
-                $filePath = $this->filePath($gateway);
-                if (File::exists($filePath)) {
-                    File::delete($filePath);
-                }
+                $createOrUpdate[] = $filename;
             }
         }
 
+        $removeOrphans = [];
+        foreach (File::files($this->directory()) as $file) {
+            if (! str_ends_with($file->getFilename(), '.xml')) {
+                continue;
+            }
+            if (! in_array($file->getFilename(), $expected, true)) {
+                $removeOrphans[] = $file->getFilename();
+            }
+        }
+
+        return [
+            'create_or_update' => $createOrUpdate,
+            'remove_orphans' => $removeOrphans,
+        ];
+    }
+
+    public function reconcile(iterable $gateways): array
+    {
+        File::ensureDirectoryExists($this->directory());
+        $summary = $this->plan($gateways);
+
+        foreach ($gateways as $gateway) {
+            $filePath = $this->filePath($gateway);
+            if ($gateway->is_active) {
+                File::put($filePath, $this->render($gateway));
+            } elseif (File::exists($filePath)) {
+                File::delete($filePath);
+            }
+        }
+
+        foreach ($summary['remove_orphans'] as $filename) {
+            File::delete($this->directory().'/'.$filename);
+        }
+
         $this->reloadProfile();
+
+        return $summary;
     }
 
     public function render(Gateway $gateway): string
