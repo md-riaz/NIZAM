@@ -50,8 +50,9 @@ class RingGroupFallbackCompilerTest extends TestCase
 
         $xml = app(DialplanCompiler::class)->compileDialplan($tenant->domain, '+15550003333');
 
-        $this->assertStringContainsString('continue_on_fail=true', $xml);
+        $this->assertStringContainsString('continue_on_fail=USER_BUSY,NO_ANSWER,NO_USER_RESPONSE,ALLOTTED_TIMEOUT,NO_ROUTE_DESTINATION,UNALLOCATED_NUMBER,SUBSCRIBER_ABSENT', $xml);
         $this->assertStringContainsString('hangup_after_bridge=false', $xml);
+        $this->assertStringContainsString('${originate_disposition}', $xml);
         $this->assertStringContainsString('sofia/gateway/v_'.$gateway->id.'/+15551234567', $xml);
     }
 

@@ -2424,7 +2424,10 @@ components:
         name: { type: string }
         bridge_type: { type: string, enum: [gateway, raw] }
         gateway_id: { type: string, format: uuid }
-        destination_template: { type: string }
+        destination_template:
+          type: string
+          description: Destination to bridge to. For gateway bridges this is the outbound target number, for raw bridges this can be a FreeSWITCH dial string.
+          examples: ['+15551234567', 'sofia/external/support@example.com']
         description: { type: string }
         is_active: { type: boolean }
 

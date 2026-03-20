@@ -1061,6 +1061,35 @@ DELETE /api/tenants/{tenant_id}/device-profiles/{id}
 ---
 
 ## Gateways
+## Bridges
+
+Manage reusable outbound bridge targets. Bridge objects let routing surfaces like policies, time conditions, IVRs, and DIDs send calls to a gateway-backed PSTN destination or a raw FreeSWITCH dial string.
+
+**Bridge types:** `gateway`, `raw`
+
+**Gateway bridge example:**
+
+```json
+{
+  "name": "PSTN Out",
+  "bridge_type": "gateway",
+  "gateway_id": "<gateway-uuid>",
+  "destination_template": "+15551234567",
+  "is_active": true
+}
+```
+
+**Raw bridge example:**
+
+```json
+{
+  "name": "Direct Sofia",
+  "bridge_type": "raw",
+  "destination_template": "sofia/external/support@example.com",
+  "is_active": true
+}
+```
+
 
 ```http
 GET    /api/tenants/{tenant_id}/gateways

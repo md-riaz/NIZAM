@@ -439,12 +439,14 @@ class DialplanCompiler
         });
 
         $xml = '            <action application="set" data="call_timeout='.(int) $ringGroup->ring_timeout.'"/>'."\n";
-        $xml .= '            <action application="set" data="continue_on_fail=true"/>'."\n";
+        $xml .= '            <action application="set" data="continue_on_fail=USER_BUSY,NO_ANSWER,NO_USER_RESPONSE,ALLOTTED_TIMEOUT,NO_ROUTE_DESTINATION,UNALLOCATED_NUMBER,SUBSCRIBER_ABSENT"/>'."\n";
         $xml .= '            <action application="set" data="hangup_after_bridge=false"/>'."\n";
         $xml .= '            <action application="bridge" data="'.htmlspecialchars($dialStrings->implode($ringGroup->strategy === 'simultaneous' ? ',' : '|'), ENT_QUOTES | ENT_XML1).'"/>'."\n";
 
         if ($fallback) {
+            $xml .= '            <condition field="${originate_disposition}" expression="^(USER_BUSY|NO_ANSWER|NO_USER_RESPONSE|ALLOTTED_TIMEOUT|NO_ROUTE_DESTINATION|UNALLOCATED_NUMBER|SUBSCRIBER_ABSENT)$">'."\n";
             $xml .= $fallback;
+            $xml .= '            </condition>'."\n";
         }
 
         return $xml;
