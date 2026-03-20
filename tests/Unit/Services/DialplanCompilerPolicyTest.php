@@ -80,7 +80,7 @@ class DialplanCompilerPolicyTest extends TestCase
         $xml = $this->compiler->compileDialplan($tenant->domain, '+15552000000');
 
         $this->assertStringContainsString('<action application="transfer"', $xml);
-        $this->assertStringContainsString('data="flow_' . $flow->id . ' XML default"', $xml);
+        $this->assertStringContainsString('data="flow_' . $flow->id . ' XML ' . $tenant->domain . '"', $xml);
     }
 
     public function test_policy_with_no_match_destination_generates_anti_action(): void

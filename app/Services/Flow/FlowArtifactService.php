@@ -70,10 +70,12 @@ class FlowArtifactService
      */
     protected function generateDialplanXml(FlowVersion $flowVersion, array $irInstructions): string
     {
+        $context = $flowVersion->flow->tenant->domain;
+
         $xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'."\n";
         $xml .= '<document type="freeswitch/xml">'."\n";
         $xml .= '  <section name="dialplan">'."\n";
-        $xml .= '    <context name="'.$flowVersion->flow->tenant->domain.'">'."\n";
+        $xml .= '    <context name="'.$context.'">'."\n";
 
         $startNodeId = null;
         foreach ($irInstructions as $instruction) {
@@ -87,7 +89,7 @@ class FlowArtifactService
         $xml .= '      <extension name="flow_'.$flowVersion->flow->id.'">'."\n";
         $xml .= '        <condition field="destination_number" expression="^flow_'.$flowVersion->flow->id.'$">'."\n";
         if ($startNodeId) {
-            $xml .= '          <action application="transfer" data="node_'.$startNodeId.' XML default"/>'."\n";
+            $xml .= '          <action application="transfer" data="node_'.$startNodeId.' XML '.$context.'"/>'."\n";
         } else {
             $xml .= '          <action application="hangup"/>'."\n";
         }
@@ -112,6 +114,7 @@ class FlowArtifactService
     protected function generateInstructionXml(FlowVersion $flowVersion, object $instruction): string
     {
         $nodeId = $instruction->params['node_id'] ?? 'unknown';
+        $context = $flowVersion->flow->tenant->domain;
         $xml = '      <extension name="node_'.$nodeId.'">'."\n";
         $xml .= '        <condition field="destination_number" expression="^node_'.$nodeId.'$">'."\n";
 
@@ -121,7 +124,7 @@ class FlowArtifactService
                 $xml .= '          <action application="answer"/>'."\n";
                 $nextNodeLabel = $instruction->transitions['next'] ?? null;
                 if ($nextNodeLabel) {
-                    $xml .= '          <action application="transfer" data="'.$nextNodeLabel.' XML default"/>'."\n";
+                    $xml .= '          <action application="transfer" data="'.$nextNodeLabel.' XML '.$context.'"/>'."\n";
                 } else {
                     $xml .= '          <action application="hangup"/>'."\n";
                 }
@@ -134,7 +137,7 @@ class FlowArtifactService
                     $xml .= '          <action application="set" data="nizam_schedule_state="/>'."\n";
                     $xml .= '          <action application="set" data="nizam_schedule_return_node=node_'.$nodeId.'_resume"/>'."\n";
                     // Transfer to schedule XML
-                    $xml .= '          <action application="transfer" data="schedule_'.$scheduleId.' XML default"/>'."\n";
+                    $xml .= '          <action application="transfer" data="schedule_'.$scheduleId.' XML '.$context.'"/>'."\n";
                     
                     // Resume extension
                     $xml .= '        </condition>'."\n";
@@ -149,7 +152,7 @@ class FlowArtifactService
                         $target = $instruction->transitions[$state] ?? ($instruction->transitions['closed'] ?? null);
                         if ($target) {
                             $xml .= '          <condition field="${nizam_schedule_state}" expression="^'.$state.'$">'."\n";
-                            $xml .= '            <action application="transfer" data="'.$target.' XML default"/>'."\n";
+                            $xml .= '            <action application="transfer" data="'.$target.' XML '.$context.'"/>'."\n";
                             $xml .= '          </condition>'."\n";
                         }
                     }
@@ -157,14 +160,14 @@ class FlowArtifactService
                     // Fallback
                     $fallback = $instruction->transitions['closed'] ?? null;
                     if ($fallback) {
-                        $xml .= '          <action application="transfer" data="'.$fallback.' XML default"/>'."\n";
+                        $xml .= '          <action application="transfer" data="'.$fallback.' XML '.$context.'"/>'."\n";
                     } else {
                         $xml .= '          <action application="hangup"/>'."\n";
                     }
                 } else {
                     $fallback = $instruction->transitions['open'] ?? null;
                     if ($fallback) {
-                        $xml .= '          <action application="transfer" data="'.$fallback.' XML default"/>'."\n";
+                        $xml .= '          <action application="transfer" data="'.$fallback.' XML '.$context.'"/>'."\n";
                     } else {
                         $xml .= '          <action application="hangup"/>'."\n";
                     }
@@ -187,7 +190,7 @@ class FlowArtifactService
                     if (str_starts_with($result, 'digit_')) {
                         $digit = str_replace('digit_', '', $result);
                         $xml .= '          <condition field="${nizam_menu_digits}" expression="^'.$digit.'$">'."\n";
-                        $xml .= '            <action application="transfer" data="'.$targetLabel.' XML default"/>'."\n";
+                        $xml .= '            <action application="transfer" data="'.$targetLabel.' XML '.$context.'"/>'."\n";
                         $xml .= '          </condition>'."\n";
                     }
                 }
@@ -195,15 +198,15 @@ class FlowArtifactService
                 $timeoutTarget = $instruction->transitions['timeout'] ?? null;
                 if ($timeoutTarget) {
                     $xml .= '          <condition field="${nizam_menu_digits}" expression="^$">'."\n";
-                    $xml .= '            <action application="transfer" data="'.$timeoutTarget.' XML default"/>'."\n";
+                    $xml .= '            <action application="transfer" data="'.$timeoutTarget.' XML '.$context.'"/>'."\n";
                     $xml .= '          </condition>'."\n";
                 }
                 
                 $invalidTarget = $instruction->transitions['invalid'] ?? null;
                 if ($invalidTarget) {
-                    $xml .= '          <action application="transfer" data="'.$invalidTarget.' XML default"/>'."\n";
+                    $xml .= '          <action application="transfer" data="'.$invalidTarget.' XML '.$context.'"/>'."\n";
                 } elseif ($timeoutTarget) {
-                    $xml .= '          <action application="transfer" data="'.$timeoutTarget.' XML default"/>'."\n";
+                    $xml .= '          <action application="transfer" data="'.$timeoutTarget.' XML '.$context.'"/>'."\n";
                 } else {
                     $xml .= '          <action application="hangup"/>'."\n";
                 }
@@ -233,7 +236,7 @@ class FlowArtifactService
                 
                 if (empty($dialString)) {
                     $xml .= '          <action application="log" data="WARNING BridgeTeam node_'.$nodeId.' resolved to empty dial string"/>'."\n";
-                    $xml .= '          <action application="transfer" data="'.$noAnswerTarget.' XML default"/>'."\n";
+                    $xml .= '          <action application="transfer" data="'.$noAnswerTarget.' XML '.$context.'"/>'."\n";
                 } else {
                     $xml .= '          <action application="set" data="team_id='.$teamId.'"/>'."\n";
                     $xml .= '          <action application="lua" data="/usr/local/freeswitch/scripts/nizam_ring_team.lua \''.$dialString.'\' '.$timeout.' '.$answeredTarget.' '.$noAnswerTarget.' '.$timeoutTarget.'"/>'."\n";
@@ -248,7 +251,7 @@ class FlowArtifactService
                 
                 $completedTarget = $instruction->transitions['completed'] ?? null;
                 if ($completedTarget) {
-                    $xml .= '          <action application="transfer" data="'.$completedTarget.' XML default"/>'."\n";
+                    $xml .= '          <action application="transfer" data="'.$completedTarget.' XML '.$context.'"/>'."\n";
                 } else {
                     $xml .= '          <action application="hangup"/>'."\n";
                 }

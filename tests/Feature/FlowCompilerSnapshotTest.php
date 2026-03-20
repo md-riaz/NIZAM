@@ -129,14 +129,14 @@ class FlowCompilerSnapshotTest extends TestCase
     <context name="snapshot.example.com">
       <extension name="flow_11111111-1111-1111-1111-111111111111">
         <condition field="destination_number" expression="^flow_11111111-1111-1111-1111-111111111111$">
-          <action application="transfer" data="node_10000000-0000-0000-0000-000000000001 XML default"/>
+          <action application="transfer" data="node_10000000-0000-0000-0000-000000000001 XML snapshot.example.com"/>
         </condition>
       </extension>
 
       <extension name="node_10000000-0000-0000-0000-000000000001">
         <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000001$">
           <action application="answer"/>
-          <action application="transfer" data="node_10000000-0000-0000-0000-000000000002 XML default"/>
+          <action application="transfer" data="node_10000000-0000-0000-0000-000000000002 XML snapshot.example.com"/>
         </condition>
       </extension>
 
@@ -144,7 +144,7 @@ class FlowCompilerSnapshotTest extends TestCase
         <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000002$">
           <action application="set" data="nizam_schedule_state="/>
           <action application="set" data="nizam_schedule_return_node=node_10000000-0000-0000-0000-000000000002_resume"/>
-          <action application="transfer" data="schedule_22222222-2222-2222-2222-222222222222 XML default"/>
+          <action application="transfer" data="schedule_22222222-2222-2222-2222-222222222222 XML snapshot.example.com"/>
         </condition>
       </extension>
 
@@ -152,12 +152,12 @@ class FlowCompilerSnapshotTest extends TestCase
         <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000002_resume$">
           <action application="log" data="INFO Schedule state is ${nizam_schedule_state}"/>
           <condition field="${nizam_schedule_state}" expression="^open$">
-            <action application="transfer" data="node_10000000-0000-0000-0000-000000000003 XML default"/>
+            <action application="transfer" data="node_10000000-0000-0000-0000-000000000003 XML snapshot.example.com"/>
           </condition>
           <condition field="${nizam_schedule_state}" expression="^closed$">
-            <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML default"/>
+            <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML snapshot.example.com"/>
           </condition>
-          <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML default"/>
+          <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML snapshot.example.com"/>
         </condition>
       </extension>
 
@@ -165,26 +165,26 @@ class FlowCompilerSnapshotTest extends TestCase
         <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000003$">
           <action application="play_and_get_digits" data="1 1 3 5000 # ivr/welcome.wav silence_stream://250 nizam_menu_digits \d+"/>
           <condition field="${nizam_menu_digits}" expression="^1$">
-            <action application="transfer" data="node_10000000-0000-0000-0000-000000000004 XML default"/>
+            <action application="transfer" data="node_10000000-0000-0000-0000-000000000004 XML snapshot.example.com"/>
           </condition>
           <condition field="${nizam_menu_digits}" expression="^$">
-            <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML default"/>
+            <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML snapshot.example.com"/>
           </condition>
-          <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML default"/>
+          <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML snapshot.example.com"/>
         </condition>
       </extension>
 
       <extension name="node_10000000-0000-0000-0000-000000000004">
         <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000004$">
           <action application="log" data="WARNING BridgeTeam node_10000000-0000-0000-0000-000000000004 resolved to empty dial string"/>
-          <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML default"/>
+          <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML snapshot.example.com"/>
         </condition>
       </extension>
 
       <extension name="node_10000000-0000-0000-0000-000000000005">
         <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000005$">
           <action application="voicemail" data="default ${domain_name} 100"/>
-          <action application="transfer" data="node_10000000-0000-0000-0000-000000000006 XML default"/>
+          <action application="transfer" data="node_10000000-0000-0000-0000-000000000006 XML snapshot.example.com"/>
         </condition>
       </extension>
 
@@ -204,19 +204,19 @@ XML;
         // Real snapshot testing would freeze DB ordering or sort nodes.
         
         $this->assertStringContainsString('<extension name="flow_11111111-1111-1111-1111-111111111111">', $artifact->content);
-        $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000001 XML default"/>', $artifact->content);
+        $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000001 XML snapshot.example.com"/>', $artifact->content);
         
         // Start node check
-        $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000002 XML default"/>', $artifact->content);
+        $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000002 XML snapshot.example.com"/>', $artifact->content);
 
         // Schedule check
         $this->assertStringContainsString('<action application="set" data="nizam_schedule_return_node=node_10000000-0000-0000-0000-000000000002_resume"/>', $artifact->content);
-        $this->assertStringContainsString('<action application="transfer" data="schedule_22222222-2222-2222-2222-222222222222 XML default"/>', $artifact->content);
+        $this->assertStringContainsString('<action application="transfer" data="schedule_22222222-2222-2222-2222-222222222222 XML snapshot.example.com"/>', $artifact->content);
 
         // Menu check
         $this->assertStringContainsString('<action application="play_and_get_digits" data="1 1 3 5000 # ivr/welcome.wav silence_stream://250 nizam_menu_digits \d+"/>', $artifact->content);
         $this->assertStringContainsString('<condition field="${nizam_menu_digits}" expression="^1$">', $artifact->content);
-        $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000004 XML default"/>', $artifact->content);
+        $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000004 XML snapshot.example.com"/>', $artifact->content);
 
         // Team check (empty because no extensions)
         $this->assertStringContainsString('<action application="log" data="WARNING BridgeTeam node_10000000-0000-0000-0000-000000000004 resolved to empty dial string"/>', $artifact->content);

@@ -195,7 +195,7 @@ class InboundDidRoutingTest extends TestCase
         $xml = $compiler->compileDialplan('test.example.com', '+15550001111');
 
         $this->assertStringContainsString('transfer', $xml);
-        $this->assertStringContainsString('flow_'.$flow->id.' XML default', $xml);
+        $this->assertStringContainsString('flow_'.$flow->id.' XML test.example.com', $xml);
         $this->assertStringNotContainsString('park', $xml);
     }
 
