@@ -1,61 +1,132 @@
-# NIZAM UI Design Spec
+# NIZAM UI Design System and Full Product Wireframe Spec
 
 ## Purpose
-This document is a **visual-wireframe-ready product design specification** for NIZAM.
-It is written so it can be pasted into **Google Stitch** or used by product/design/frontend teams to generate:
-- visual wireframes
-- high-fidelity admin screens
-- component inventory
-- page architecture
+This document is the **complete product design source of truth** for NIZAM.
+It covers:
+- full app architecture
+- full screen inventory
+- auth flows
+- admin/control-plane pages
+- routing and telephony workspaces
+- design tokens
+- semantic tokens
+- component tokens
 - layout rules
-- design token foundations
+- page shells
+- interaction patterns
+- state pages
+- accessibility rules
+- Google Stitch generation guidance
 
-The product is a **modern communications control platform**.
-It must **not** look like a legacy PBX panel.
-It should feel like a serious SaaS operations product with telephony depth.
+This is meant to be strong enough for:
+- product planning
+- visual wireframing
+- frontend implementation
+- design system setup
+- consistent screen generation in Google Stitch
 
 ---
 
-# 1. Product Design Direction
+# 1. Product Direction
 
-## Product personality
-NIZAM should feel:
-- modern
-- structured
-- operational
-- trustworthy
-- technical without being ugly
-- dense enough for operators, but not chaotic
+## Product identity
+NIZAM is a **modern communications control platform**.
+It should feel like:
+- a serious SaaS control plane
+- operationally trustworthy
+- routing-aware
+- telecom-capable without looking like telecom software from 2012
 
-## Visual reference direction
-Blend inspiration from:
-- Linear for clarity and restraint
+## What it should not feel like
+Do not design it like:
+- FusionPBX UI
+- old FreeSWITCH admin panels
+- dark neon NOC dashboards
+- generic bootstrap CRUD admin templates
+- card spam with weak hierarchy
+
+## Design references
+Take inspiration from:
+- Linear for restraint and hierarchy
 - Stripe Dashboard for admin confidence
-- Vercel for calm structure
-- modern observability dashboards for status surfaces
-
-Avoid:
-- legacy PBX styling
-- dark neon hacker dashboard aesthetics
-- overloaded table walls without hierarchy
-- three-level nested navigation
-- giant card-only layouts that waste space
+- Vercel for calm layout discipline
+- modern observability products for runtime and trace screens
+- modern data-heavy B2B SaaS tables and detail pages
 
 ## Core UX principles
-1. **Routing-first visibility**
-2. **Operational clarity**
-3. **Safe editing for complex telecom objects**
-4. **One-level submenu navigation only**
-5. **Detail pages use tabs, not deeper sidebar nesting**
-6. **Every routing object shows dependencies and effective route**
-7. **Runtime state must be visible, not hidden**
-8. **Advanced options progressive, not dumped up front**
+1. Routing visibility first
+2. Runtime visibility first
+3. Dependencies must be visible
+4. Safe editing over clever editing
+5. One level of sidebar submenu only
+6. Tabs for detail depth
+7. Progressive disclosure for advanced telecom settings
+8. Dense but readable information architecture
+9. Product language must stay human, not telecom-jargon-heavy
+10. The UI must answer: what happens to a call, why, and where
 
 ---
 
-# 2. Global Information Architecture
+# 2. Product Surface Map
 
-## Top-level navigation
+## Functional domains
+- Authentication
+- Dashboard and overviews
+- Phone System
+- Routing
+- Connectivity
+- Calls and records
+- Contact Center
+- Integrations
+- Administration
+- Utility/system state pages
+
+## Real backend-aligned product objects
+Based on the current backend surface, the UI must account for:
+- tenants
+- tenant settings
+- users
+- permissions
+- extensions
+- holiday calendars
+- schedules
+- teams
+- flows
+- DIDs
+- ring groups
+- IVRs
+- time conditions
+- webhooks
+- device profiles
+- gateways
+- bridges
+- agents
+- queues
+- queue members
+- queue metrics
+- wallboard
+- codec metrics
+- recordings
+- call events
+- call traces
+- live calls
+- call analysis
+- CDRs
+- CDR analytics
+- call routing policies
+- audit logs
+- SSL/admin platform controls
+- SIP profiles
+- blocked destinations
+- usage summaries
+- auth tokens
+
+---
+
+# 3. Navigation Architecture
+
+## Global sidebar
+Top-level sections:
 - Dashboard
 - Phone System
 - Routing
@@ -65,10 +136,11 @@ Avoid:
 - Integrations
 - Admin
 
-## Sidebar submenu structure
+## One-level submenu model
 
 ### Dashboard
 - Overview
+- Admin Overview (if privileged)
 
 ### Phone System
 - Extensions
@@ -79,6 +151,7 @@ Avoid:
 - Schedules
 - Holiday Calendars
 - Device Profiles
+- Teams
 
 ### Routing
 - Policies
@@ -93,6 +166,8 @@ Avoid:
 - Registrations
 - SIP Profiles
 - NAT / Media
+- Blocked Destinations
+- SSL / Certificates
 
 ### Calls
 - Live Calls
@@ -100,89 +175,99 @@ Avoid:
 - Recordings
 - Events
 - Trace
+- Call Analysis
+- Analytics
 
 ### Contact Center
 - Queues
 - Agents
 - Wallboard
-- Metrics
+- Queue Metrics
+- Codec Metrics
 
 ### Integrations
 - Webhooks
+- Webhook Deliveries
 - API Tokens
 - Event Streams
 
 ### Admin
 - Users
-- Roles
+- Roles & Permissions
+- Tenants
 - Tenant Settings
-- Audit Logs
 - Usage
+- Audit Logs
+- System Settings
 
-## Navigation behavior rules
-- Sidebar supports **one level of submenu only**.
-- Parent menu items are clickable and open overview pages.
-- Third-level hierarchy is forbidden in sidebar.
-- Deeper structure must be represented with page tabs.
-- On smaller screens, sidebar collapses to icon rail with flyout submenu.
+## Navigation rules
+- no third-level sidebar nesting
+- parent items are clickable overview pages
+- page-level depth uses tabs
+- hidden pages can still exist outside nav for create/edit or deep detail
+- privileged admin screens are permission-gated, not just visually hidden
 
 ---
 
-# 3. Global App Shell
+# 4. Global App Shell
 
-## Shell layout
-
-### Left sidebar
+## Left sidebar
 Contains:
-- logo/brand mark
-- product name
+- NIZAM logo
 - tenant switcher
-- top-level nav sections
+- collapsible top-level sections
 - submenu items
-- bottom utility area
-  - user avatar/menu
-  - notifications shortcut
-  - theme toggle
-  - quick system health chip
+- quick status at bottom
+- profile menu
 
-### Top header
+### Sidebar states
+- expanded: 272px
+- collapsed: 76px
+- mobile: hidden drawer/flyout
+
+## Top header
 Contains:
 - breadcrumb
 - page title context
 - global search
 - tenant context chip
-- environment chip (prod/staging/dev)
+- environment chip
 - quick actions button
 - alerts button
+- notifications drawer trigger
 - profile menu
 
-### Main content region
-Contains:
-- page title row
-- summary cards when relevant
-- primary CTA area
-- filter/search row
-- content layout
+## Main content region
+Page anatomy:
+1. title row
+2. summary strip if needed
+3. filter/action bar
+4. main content area
+5. optional right rail
 
-### Optional right rail
-Use on important detail pages for:
+## Right rail
+Use for:
 - runtime health
 - dependencies
 - warnings
 - recent activity
 - quick actions
+- side previews
+
+Avoid using right rail on simple auth or basic list screens.
 
 ---
 
-# 4. Design Tokens
+# 5. Full Design Token System
 
-## 4.1 Color tokens
+## 5.1 Foundations
 
-### Neutral palette
+### Color: neutral
 - `color.neutral.0 = #FFFFFF`
 - `color.neutral.25 = #FCFCFD`
 - `color.neutral.50 = #F8FAFC`
 - `color.neutral.100 = #F1F5F9`
+- `color.neutral.150 = #E9EEF5`
 - `color.neutral.200 = #E2E8F0`
 - `color.neutral.300 = #CBD5E1`
 - `color.neutral.400 = #94A3B8`
@@ -193,8 +278,7 @@ Use on important detail pages for:
 - `color.neutral.900 = #0F172A`
 - `color.neutral.950 = #020617`
 
-### Brand palette
-Use blue-indigo with restrained saturation.
+### Color: brand
 - `color.brand.50 = #EEF2FF`
 - `color.brand.100 = #E0E7FF`
 - `color.brand.200 = #C7D2FE`
@@ -206,83 +290,111 @@ Use blue-indigo with restrained saturation.
 - `color.brand.800 = #3730A3`
 - `color.brand.900 = #312E81`
 
-### Semantic palette
+### Color: semantic
 #### Success
 - `color.success.50 = #ECFDF3`
 - `color.success.100 = #D1FADF`
+- `color.success.200 = #A6F4C5`
 - `color.success.500 = #12B76A`
 - `color.success.700 = #027A48`
 
 #### Warning
 - `color.warning.50 = #FFFAEB`
 - `color.warning.100 = #FEF0C7`
+- `color.warning.200 = #FEDF89`
 - `color.warning.500 = #F79009`
 - `color.warning.700 = #B54708`
 
 #### Danger
 - `color.danger.50 = #FEF3F2`
 - `color.danger.100 = #FEE4E2`
+- `color.danger.200 = #FECDCA`
 - `color.danger.500 = #F04438`
 - `color.danger.700 = #B42318`
 
 #### Info
 - `color.info.50 = #EFF8FF`
 - `color.info.100 = #D1E9FF`
+- `color.info.200 = #B2DDFF`
 - `color.info.500 = #2E90FA`
 - `color.info.700 = #175CD3`
 
-### Routing-specific accents
-Use sparingly as categorical accents.
+### Routing accent colors
+- `color.routing.did = #9333EA`
 - `color.routing.flow = #7C3AED`
 - `color.routing.policy = #2563EB`
 - `color.routing.bridge = #0F766E`
 - `color.routing.gateway = #7C2D12`
-- `color.routing.did = #9333EA`
 - `color.routing.queue = #B45309`
+- `color.routing.time = #0E7490`
+- `color.routing.ivr = #6D28D9`
 
-## 4.2 Background tokens
+### Data visualization colors
+- `color.chart.blue = #3B82F6`
+- `color.chart.indigo = #6366F1`
+- `color.chart.purple = #8B5CF6`
+- `color.chart.teal = #14B8A6`
+- `color.chart.amber = #F59E0B`
+- `color.chart.red = #EF4444`
+- `color.chart.green = #22C55E`
+- `color.chart.slate = #64748B`
+
+## 5.2 Semantic tokens
+
+### Backgrounds
 - `bg.canvas = color.neutral.25`
 - `bg.surface = color.neutral.0`
 - `bg.surfaceMuted = color.neutral.50`
+- `bg.surfaceRaised = color.neutral.0`
 - `bg.sidebar = color.neutral.0`
-- `bg.header = rgba(255,255,255,0.85)`
-- `bg.overlay = rgba(15,23,42,0.48)`
+- `bg.header = rgba(255,255,255,0.88)`
 - `bg.code = #0B1220`
+- `bg.selected = color.brand.50`
+- `bg.hover = color.neutral.50`
+- `bg.disabled = color.neutral.100`
+- `bg.overlay = rgba(15,23,42,0.48)`
 
-## 4.3 Text tokens
+### Text
 - `text.primary = color.neutral.900`
 - `text.secondary = color.neutral.600`
 - `text.tertiary = color.neutral.500`
 - `text.inverse = color.neutral.0`
-- `text.brand = color.brand.700`
+- `text.link = color.brand.700`
+- `text.placeholder = color.neutral.400`
+- `text.disabled = color.neutral.400`
 - `text.success = color.success.700`
 - `text.warning = color.warning.700`
 - `text.danger = color.danger.700`
 - `text.info = color.info.700`
 
-## 4.4 Border tokens
+### Borders
 - `border.default = color.neutral.200`
+- `border.soft = color.neutral.150`
 - `border.strong = color.neutral.300`
-- `border.brand = color.brand.300`
-- `border.danger = color.danger.300`
-- `border.success = color.success.300`
+- `border.selected = color.brand.300`
+- `border.focus = color.brand.400`
+- `border.success = color.success.200`
+- `border.warning = color.warning.200`
+- `border.danger = color.danger.200`
 
-## 4.5 Shadow tokens
+## 5.3 Elevation tokens
 - `shadow.xs = 0 1px 2px rgba(16,24,40,0.05)`
 - `shadow.sm = 0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04)`
 - `shadow.md = 0 4px 8px rgba(16,24,40,0.08), 0 2px 4px rgba(16,24,40,0.04)`
 - `shadow.lg = 0 12px 24px rgba(16,24,40,0.12)`
+- `shadow.xl = 0 20px 32px rgba(16,24,40,0.14)`
 - `shadow.focus = 0 0 0 4px rgba(99,102,241,0.16)`
 
-## 4.6 Radius tokens
+## 5.4 Radius tokens
 - `radius.xs = 6px`
 - `radius.sm = 8px`
 - `radius.md = 12px`
 - `radius.lg = 16px`
 - `radius.xl = 20px`
+- `radius.2xl = 24px`
 - `radius.full = 999px`
 
-## 4.7 Spacing tokens
+## 5.5 Spacing tokens
 Use 4px base scale.
 - `space.1 = 4px`
 - `space.2 = 8px`
@@ -294,263 +406,605 @@ Use 4px base scale.
 - `space.10 = 40px`
 - `space.12 = 48px`
 - `space.16 = 64px`
+- `space.20 = 80px`
+- `space.24 = 96px`
 
-## 4.8 Typography tokens
+## 5.6 Typography tokens
 
 ### Font families
 - `font.sans = Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`
 - `font.mono = JetBrains Mono, SFMono-Regular, Menlo, monospace`
 
 ### Type scale
-- `text.xs = 12px / 16px / 500`
-- `text.sm = 14px / 20px / 500`
-- `text.md = 16px / 24px / 500`
-- `text.lg = 18px / 28px / 600`
-- `text.xl = 20px / 30px / 600`
-- `text.2xl = 24px / 32px / 700`
-- `text.3xl = 30px / 38px / 700`
+- `type.xs = 12px / 16px / 500`
+- `type.sm = 14px / 20px / 500`
+- `type.md = 16px / 24px / 500`
+- `type.lg = 18px / 28px / 600`
+- `type.xl = 20px / 30px / 600`
+- `type.2xl = 24px / 32px / 700`
+- `type.3xl = 30px / 38px / 700`
+- `type.4xl = 36px / 44px / 800`
 
-### Usage rules
-- page titles: `text.2xl`
-- section titles: `text.lg`
-- card titles: `text.md`
-- body text: `text.sm`
-- table text: `text.sm`
-- labels/helper text: `text.xs`
-- code/XML/JSON: `font.mono`, `text.sm`
+### Typography usage
+- app title: `type.2xl`
+- section title: `type.lg`
+- card title: `type.md`
+- body: `type.sm`
+- compact table: `type.sm`
+- helper/meta text: `type.xs`
+- code: mono + `type.sm`
 
-## 4.9 Sizing tokens
-- `sidebar.width.expanded = 272px`
-- `sidebar.width.collapsed = 76px`
-- `header.height = 64px`
-- `table.row.height = 48px`
-- `input.height.md = 40px`
-- `input.height.lg = 44px`
-- `button.height.sm = 32px`
-- `button.height.md = 40px`
-- `button.height.lg = 44px`
+## 5.7 Layout tokens
+- `layout.sidebar.expanded = 272px`
+- `layout.sidebar.collapsed = 76px`
+- `layout.header.height = 64px`
+- `layout.content.max = 1600px`
+- `layout.page.paddingX = 24px`
+- `layout.page.paddingY = 24px`
+- `layout.rightRail.width = 320px`
+- `layout.drawer.sm = 420px`
+- `layout.drawer.md = 520px`
+- `layout.drawer.lg = 640px`
+- `layout.modal.sm = 420px`
+- `layout.modal.md = 640px`
+- `layout.modal.lg = 840px`
 
-## 4.10 Motion tokens
+## 5.8 Grid and breakpoints
+- `breakpoint.xs = 480px`
+- `breakpoint.sm = 640px`
+- `breakpoint.md = 768px`
+- `breakpoint.lg = 1024px`
+- `breakpoint.xl = 1280px`
+- `breakpoint.2xl = 1536px`
+
+Grid rules:
+- overview cards: 4-5 across desktop, 2-3 tablet, 1 mobile
+- workspace screens: 3 columns desktop, 1+stack tablet, limited mobile support
+- detail + right rail: 2 columns desktop, stacked on smaller screens
+
+## 5.9 Motion tokens
 - `motion.fast = 120ms ease`
 - `motion.base = 180ms ease`
 - `motion.slow = 260ms ease`
+- `motion.enter = 180ms cubic-bezier(0.2,0.8,0.2,1)`
+- `motion.exit = 140ms ease-in`
 
-Use motion for:
-- sidebar expand/collapse
-- tabs
+Use for:
+- sidebar collapse
+- tab switching
 - drawers
-- subtle hover/focus states
+- modals
+- table row hover
+- subtle card hover
 
-Do not use flashy transitions.
+Avoid flashy motion.
+
+## 5.10 Z-index tokens
+- `z.base = 0`
+- `z.dropdown = 1000`
+- `z.sticky = 1100`
+- `z.drawer = 1200`
+- `z.modal = 1300`
+- `z.toast = 1400`
+- `z.tooltip = 1500`
+
+## 5.11 Icon tokens
+- `icon.xs = 12px`
+- `icon.sm = 16px`
+- `icon.md = 20px`
+- `icon.lg = 24px`
+- `icon.xl = 32px`
+
+## 5.12 Form tokens
+- `input.height.sm = 32px`
+- `input.height.md = 40px`
+- `input.height.lg = 44px`
+- `input.paddingX = 12px`
+- `input.border = border.default`
+- `input.focusRing = shadow.focus`
+- `input.errorBorder = color.danger.300`
+- `input.successBorder = color.success.300`
+
+## 5.13 Table tokens
+- `table.row.height = 48px`
+- `table.row.heightDense = 40px`
+- `table.header.height = 40px`
+- `table.cell.paddingX = 12px`
+- `table.cell.paddingY = 10px`
+- `table.hover = bg.hover`
+- `table.selected = bg.selected`
+
+## 5.14 Status token mapping
+### Health states
+- Healthy → green
+- Warning → amber
+- Error → red
+- Unknown → slate
+
+### Runtime states
+- Registered → green
+- Unregistered → gray/amber
+- Up → green
+- Down → red
+- Draft → amber
+- Published → blue/green
+- Active → green
+- Inactive → gray
 
 ---
 
-# 5. Component Style Rules
+# 6. Component Tokens and Usage Rules
 
 ## Buttons
-### Primary
-- solid brand background
-- white text
-- medium radius
-- subtle shadow
+### Variants
+- Primary
+- Secondary
+- Tertiary / Ghost
+- Danger
+- Success
+- Link
 
-### Secondary
-- neutral background
-- border default
-- dark text
+### Sizes
+- sm, md, lg
 
-### Danger
-- light red background or outlined red
-
-### Ghost
-- transparent background
-- used in table rows and icon actions
+### Rules
+- one primary action per section
+- danger reserved for destructive confirmation or emergency actions
+- ghost for inline tools and low-priority actions
 
 ## Inputs
-- white background
-- 1px neutral border
-- 40px height default
-- strong focus ring using brand focus shadow
-- helper text under input
-- validation text below helper text
+### Variants
+- text
+- password
+- number
+- textarea
+- select
+- combobox
+- token input
+- date/time picker
+- tag selector
+- code input
+- secret input with reveal/copy
 
-## Cards
-- white background
-- subtle border
-- subtle shadow
-- 16px to 24px padding
-- title row with action slot
+## Chips
+### Variants
+- status chip
+- route chip
+- metric chip
+- filter chip
+- environment chip
 
-## Tables
-- sticky header where useful
-- zebra not required
-- row hover subtle neutral background
-- status chips in cells
-- route chips for destinations
-- right-aligned action menu
+## Banners/callouts
+- info
+- warning
+- danger
+- success
+- draft notice
+- dependency notice
+- runtime drift notice
 
-## Tabs
-- underline or pill-light style
-- compact
-- strong active contrast
-- no giant segmented controls
+## Navigation components
+- sidebar item
+- sidebar section label
+- submenu row
+- breadcrumb item
+- topbar action
+- tenant switcher
 
-## Drawers
-- width 480px to 560px
-- header, body, sticky footer actions
-- used for simple CRUD only
+## Table patterns
+- entity list table
+- runtime table
+- event log table
+- metric table
+- audit table
 
-## Code panels
-- dark code background
-- mono font
-- line wrap toggle
-- copy button
-
----
-
-# 6. Core Reusable Components
-
-## Navigation
-- `AppSidebar`
-- `SidebarSection`
-- `SidebarItem`
-- `SidebarSubmenu`
-- `TenantSwitcher`
-- `TopHeader`
-- `Breadcrumbs`
-- `GlobalSearch`
-
-## Display
-- `StatusChip`
-- `RouteChip`
-- `RuntimeBadge`
-- `HealthBanner`
-- `SummaryCard`
-- `MetricCard`
-- `EmptyState`
-- `WarningCallout`
-
-## Data display
-- `DataTable`
-- `FilterBar`
-- `SearchInput`
-- `ColumnVisibilityMenu`
-- `Pagination`
-- `RowActionMenu`
-
-## Form/routing components
-- `DestinationPicker`
-- `ObjectReferenceSelect`
-- `GatewaySelect`
-- `ConditionBuilder`
-- `ScheduleEditor`
-- `FlowNodeInspector`
-- `SecretInput`
-
-## Runtime/debug components
-- `DependencyPanel`
-- `RecentActivityPanel`
-- `RoutePreviewCard`
-- `TraceTimeline`
-- `XmlPreviewPanel`
-- `JsonPreviewPanel`
-- `SimulationResultPanel`
+## Workspace components
+- timeline
+- inspector panel
+- route path card
+- graph node card
+- warning rail
+- simulation result card
 
 ---
 
-# 7. Screen Wireframes and Layout Architecture
+# 7. Full Screen Inventory
 
-Below is the full app wireframe architecture in text form.
-This is written so Google Stitch can generate visual screens from it.
+## 7.1 Authentication and onboarding
+- Login
+- Forgot Password
+- Reset Password
+- Register / First User
+- First Tenant Provisioning
+- Welcome / Getting Started
+- No Tenant Assigned
+- Session Expired
+- MFA placeholder design-ready page if added later
+
+## 7.2 Shared utility pages
+- Global Search Results
+- Notifications Center
+- User Profile
+- Preferences
+- Activity Feed
+- Command Palette / Quick Actions
+
+## 7.3 Dashboard and overviews
+- Dashboard Overview
+- Admin Overview
+- Phone System Overview
+- Routing Overview
+- Connectivity Overview
+- Calls Overview
+- Contact Center Overview
+- Integrations Overview
+- Admin Overview page
+
+## 7.4 Phone System
+- Extensions List
+- Extension Create
+- Extension Detail
+- Extension Edit
+- DIDs List
+- DID Create
+- DID Detail
+- DID Edit
+- Ring Groups List
+- Ring Group Create
+- Ring Group Detail
+- Ring Group Edit
+- IVRs List
+- IVR Create
+- IVR Detail
+- IVR Edit
+- Time Conditions List
+- Time Condition Create
+- Time Condition Detail
+- Time Condition Edit
+- Schedules List
+- Schedule Create
+- Schedule Detail
+- Schedule Edit
+- Holiday Calendars List
+- Holiday Calendar Create
+- Holiday Calendar Detail
+- Holiday Calendar Edit
+- Device Profiles List
+- Device Profile Create
+- Device Profile Detail
+- Device Profile Edit
+- Teams List
+- Team Create
+- Team Detail
+- Team Edit
+
+## 7.5 Routing
+- Policies List
+- Policy Create
+- Policy Detail
+- Policy Edit
+- Flow List
+- Flow Create
+- Flow Detail
+- Flow Editor
+- Flow Publish Review
+- Flow Versions
+- Bridges List
+- Bridge Create
+- Bridge Detail
+- Bridge Edit
+- Route Explorer
+- DID Simulation
+- Policy Simulation
+- Flow Simulation
+- Time Preview Simulation
+- Published Dialplan Viewer
+
+## 7.6 Connectivity
+- Gateways List
+- Gateway Create
+- Gateway Detail
+- Gateway Edit
+- Registration List
+- Registration Runtime Detail
+- SIP Profiles List
+- SIP Profile Detail
+- SIP Profile Edit if allowed
+- NAT / Media Settings
+- Blocked Destinations List
+- Blocked Destination Create
+- Blocked Destination Detail
+- SSL / Certificates Overview
+- SSL Request/Renew page
+
+## 7.7 Calls and records
+- Live Calls
+- Live Call Detail Drawer
+- Call Session Detail
+- Call Analysis Detail
+- CDR List
+- CDR Detail
+- Recordings List
+- Recording Detail
+- Event Log List
+- Event Detail
+- Trace Viewer
+- Trace Replay Viewer
+- Calls Analytics Overview
+- Destination Analytics
+- Volume Analytics
+- Quality Analytics
+
+## 7.8 Contact Center
+- Queues List
+- Queue Create
+- Queue Detail
+- Queue Edit
+- Queue Members Manager
+- Queue Realtime Metrics
+- Queue History Metrics
+- Agents List
+- Agent Create
+- Agent Detail
+- Agent Edit
+- Agent State Control
+- Wallboard
+- Agent States Overview
+- Codec Metrics
+
+## 7.9 Integrations
+- Webhooks List
+- Webhook Create
+- Webhook Detail
+- Webhook Edit
+- Webhook Delivery Attempts
+- Webhook Delivery Stats
+- API Tokens List
+- Token Create
+- Token Detail
+- Event Streams Overview
+
+## 7.10 Administration
+- Users List
+- User Create
+- User Detail
+- User Edit
+- User Permissions Detail
+- Roles & Permissions Matrix
+- Permissions Catalog
+- Tenants List
+- Tenant Create
+- Tenant Detail
+- Tenant Edit
+- Tenant Settings Detail
+- Tenant Usage Summary
+- Tenant Usage Reconcile View
+- Audit Log List
+- Audit Log Detail
+- Admin Dashboard
+- System Settings
+
+## 7.11 State pages
+- Empty state per section
+- No data
+- No results
+- 403 unauthorized
+- 404 not found
+- 429 rate limited
+- 500/unknown error
+- Maintenance mode
+- Offline/reconnect state for runtime/live pages
+- Unsaved changes warning state
+- Dependency conflict state
+- Publish conflict state
 
 ---
 
-# 8. Dashboard Wireframe
+# 8. Global Page Shells
 
-## Screen: Dashboard Overview
+## Auth shell
+Use for login/reset/register.
+Layout:
+- centered card or split-screen auth layout
+- concise branding
+- minimal distractions
+- optional illustration or product screenshot
 
-### Goal
-Show operator health at a glance.
+## Overview shell
+Use for dashboards and section overviews.
+Pattern:
+1. title row
+2. summary cards
+3. alert strip
+4. main grid with widgets/tables
 
-### Layout
-- top header with page title `Dashboard`
-- right side actions: `Create`, `Run Reconcile`, `Open Route Explorer`
-- first row: 5 summary cards
-- second row: two-column layout
-- third row: operations tables
+## List shell
+Pattern:
+1. page title + create action
+2. filter/search row
+3. bulk actions if needed
+4. table/grid
+5. pagination
+6. optional saved views later
 
-### Summary cards
-1. Active Calls
-2. Registered Gateways
-3. Queued Calls
-4. Failed Webhooks
-5. Routing Warnings
+## Detail shell
+Pattern:
+1. breadcrumb
+2. title + chips + actions
+3. summary strip
+4. tabs
+5. tab content
+6. optional right rail
 
-### Left column section
-#### System Health card
-- app API health
-- FreeSWITCH health
-- Redis health
-- DB health
-- event stream health
+## Workspace shell
+Use for:
+- Route Explorer
+- Flow Editor
+- Trace Viewer
+- Simulations
 
-#### Recent Routing Changes table
+Pattern:
+- left inputs/context
+- center workspace
+- right inspector/insight panel
+
+## Drawer shell
+Use for small/simple forms.
+Examples:
+- device profile create
+- holiday create
+- small edit actions
+
+## Modal shell
+Use for:
+- confirmations
+- publish confirm
+- delete confirm
+- permission grant/revoke confirm
+- regenerate/reconcile actions
+
+## Full-page form shell
+Use for complex objects.
+Examples:
+- DID
+- Gateway
+- Policy
+- Flow
+- Queue
+- IVR
+
+---
+
+# 9. Auth and Onboarding Wireframes
+
+## Login
+Layout:
+- centered auth card or split left/right
+- app logo
+- title: Sign in to NIZAM
+- email field
+- password field
+- remember me
+- forgot password
+- sign in button
+- optional environment badge
+
+## Forgot Password
+- email field
+- send reset link
+- support/help footer
+
+## Reset Password
+- email
+- new password
+- confirm password
+- reset CTA
+
+## First User / Bootstrap
+For new system setup:
+- admin name
+- admin email
+- password
+- tenant name
+- tenant domain/slug
+- submit and enter app
+
+## Welcome / Getting Started
+Cards:
+- create first extension
+- add first DID
+- add gateway
+- create bridge
+- create flow
+- open route explorer
+
+---
+
+# 10. Dashboard and Overview Wireframes
+
+## Dashboard Overview
+Summary cards:
+- active calls
+- registered gateways
+- queue load
+- failed webhooks
+- routing warnings
+
+Sections:
+- system health
+- recent routing changes
+- alerts and warnings
+- quick actions
+- recent calls
+- recent events
+
+## Phone System Overview
+Widgets:
+- total extensions
+- active DIDs
+- ring groups
+- IVRs
+- time conditions
+- schedules
+- unassigned DIDs
+- inactive/invalid objects
+
+## Routing Overview
+Widgets:
+- total flows
+- draft vs published
+- total policies
+- bridges in use
+- unresolved dependencies
+- recent route changes
+
+## Connectivity Overview
+Widgets:
+- gateways up/down
+- registration summary
+- XML drift state
+- NAT/media warnings
+- reconcile shortcut
+
+## Calls Overview
+Widgets:
+- active calls
+- answered/missed today
+- hangup cause distribution
+- recent traces
+- recordings created today
+
+## Contact Center Overview
+Widgets:
+- queues waiting
+- agents available
+- SLA
+- abandon rate
+- longest wait
+
+## Integrations Overview
+Widgets:
+- webhook success/fail rate
+- retry backlog
+- recent delivery failures
+- token activity summary
+
+## Admin Overview
+Widgets:
+- active users
+- tenant count
+- permission changes
+- audit volume
+- usage summary
+- system notices
+
+---
+
+# 11. Phone System Wireframes
+
+## Extensions
+### List
 Columns:
-- object
-- action
-- actor
-- time
-
-### Right column section
-#### Alerts and Warnings card
-- DID pointing to inactive target
-- gateway unregistered
-- flow draft not published
-- ring group empty members warning
-
-#### Quick Actions card
-- create DID
-- create Gateway
-- create Bridge
-- open simulation
-- reconcile gateway XML
-
-### Bottom section
-#### Recent Calls table
-Columns:
-- from
-- to
-- direction
-- state
-- duration
-- route
-
-#### Recent Events table
-Columns:
-- timestamp
-- event type
-- call UUID
-- payload preview
-
----
-
-# 9. Phone System Wireframes
-
-## Screen: Extensions List
-
-### Layout
-- title `Extensions`
-- create extension button
-- filter bar
-- table
-
-### Filter bar
-- search by extension/name
-- filter by status
-- filter by device profile
-- filter by active
-
-### Table columns
 - extension
 - display name
 - caller ID
@@ -559,49 +1013,16 @@ Columns:
 - last activity
 - actions
 
-## Screen: Extension Detail
-
-### Header summary strip
-- extension number
-- user/display name
-- active status chip
-- device profile chip
-- actions: edit, disable, delete
-
-### Tabs
+### Detail tabs
 - Overview
 - Devices
 - Routing
 - Activity
 - Dependencies
 
-### Overview tab layout
-Left main:
-- general info card
-- caller ID card
-- registration summary card
-
-Right rail:
-- dependencies panel
-- recent calls mini list
-
----
-
-## Screen: DID List
-
-### Layout
-- title `DIDs`
-- create DID button
-- filters
-- table
-
-### Filters
-- search by number or label
-- active/inactive
-- destination type
-- generic/gateway-specific/registration-specific
-
-### Table columns
+## DIDs
+### List
+Columns:
 - number
 - label
 - source scope
@@ -610,461 +1031,143 @@ Right rail:
 - last matched
 - actions
 
-## Screen: DID Detail
-
-### Header summary strip
-- DID number
-- label
-- active chip
-- precedence chip
-- effective route chip
-- actions: edit, disable, delete, simulate
-
-### Tabs
+### Detail tabs
 - Overview
 - Routing
 - Source Matching
 - Activity
 - Dependencies
 
-### Overview tab
-Left main column:
-- DID identity card
-- effective route card
-- last matched call summary
+Show clearly:
+- precedence layer
+- effective route
+- source-scoped match behavior
 
-Right rail:
-- runtime warnings
-- linked policy/flow/bridge summary
-
-### Routing tab
-- destination type selector
-- destination target selector
-- route preview card
-- validation/warning callouts
-
-### Source Matching tab
-- generic match
-- gateway-specific match
-- registration-specific match
-- precedence explanation panel
-
----
-
-## Screen: Ring Groups List
-
-### Table columns
-- name
-- strategy
-- members
-- timeout
-- fallback target
-- status
-
-## Screen: Ring Group Detail
-
-### Tabs
+## Ring Groups
+### Detail tabs
 - Overview
 - Members
 - Routing
 - Runtime
 - Dependencies
 
-### Routing tab
-- timeout seconds
-- member strategy
-- fallback destination picker
-- fallback behavior summary
-- warning if no active members
+Routing tab must show:
+- strategy
+- member behavior
+- timeout
+- cause-aware fallback destination
 
----
-
-## Screen: IVR List
-- name
-- extension
-- prompt status
-- timeout route
-- invalid route
-- active
-
-## Screen: IVR Detail
-
-### Tabs
+## IVRs
+### Detail tabs
 - Overview
 - Menu Options
 - Prompts
 - Routing
 - Dependencies
 
-### Menu Options tab
-- digits table
-- destination chips
-- add option button
-
-### Routing tab
-- timeout destination
-- invalid destination
-- route preview chips
-
----
-
-## Screen: Time Conditions List
-- name
-- timezone
-- schedule summary
-- match route
-- no-match route
-- status
-
-## Screen: Time Condition Detail
-
-### Tabs
+## Time Conditions
+### Detail tabs
 - Overview
 - Schedule
 - Routing
 - Preview
 - Dependencies
 
-### Preview tab
-- current time evaluation
-- next state change
-- test datetime picker
-- simulation result panel
-
----
-
-## Screen: Schedules List
-- name
-- timezone
-- business hours summary
-- holiday calendar
-- active
-
-## Screen: Schedule Detail
-
-### Tabs
+## Schedules
+### Detail tabs
 - Overview
 - Rules
 - Holidays
 - Preview
 - Dependencies
 
----
+## Holiday Calendars
+### Detail tabs
+- Overview
+- Dates
+- Linked Schedules
 
-## Screen: Holiday Calendars List
-- name
-- region
-- entry count
-- active
+## Device Profiles
+### Detail tabs
+- Overview
+- SIP Settings
+- Codec
+- Linked Devices
 
-## Screen: Device Profiles List
-- name
-- transport
-- codec set
-- security profile
-- active
-
----
-
-# 10. Routing Wireframes
-
-## Screen: Routing Overview
-
-### Summary cards
-- total flows
-- published flows
-- total policies
-- bridges in use
-- routing warnings
-
-### Main sections
-#### Draft vs Published card
-- count of draft-only flows
-- publish shortcuts
-
-#### Routing Warnings table
-- object
-- issue
-- severity
-- open action
-
-#### Recently Changed Routing Objects table
-- object type
-- name
-- updated by
-- time
+## Teams
+### Detail tabs
+- Overview
+- Members
+- Routing usage
+- Activity
 
 ---
 
-## Screen: Policies List
+# 12. Routing Wireframes
 
-### Table columns
-- name
-- type
-- match route
-- no-match route
-- active
-- updated at
-
-## Screen: Policy Detail
-
-### Tabs
+## Policies
+### Detail tabs
 - Overview
 - Conditions
 - Routing
 - Preview
 - Dependencies
 
-### Conditions tab
-Use builder UI:
-- add condition row
-- field selector
-- operator selector
-- value input
-- logical grouping support later
-
-### Routing tab
-- match destination picker
-- no-match destination picker
-- preview card
-
----
-
-## Screen: Flows List
-
-### Table columns
+## Flows
+### List columns
 - name
-- draft/published status
+- draft/published
 - node count
-- used by count
+- used by
 - last published
 - actions
 
-## Screen: Flow Detail
-
-### Header summary strip
-- name
-- draft/published chip
-- node count
-- compile status
-- publish button
-- actions
-
-### Tabs
+### Detail tabs
 - Overview
 - Editor
 - Publish
 - Dependencies
 - Versions
 
-### Editor tab wireframe
-Three-column workspace.
+### Editor workspace
+- left: node list
+- center: graph or block canvas
+- right: selected node inspector
 
-#### Left panel
-- node list
-- add node button
-- flow structure outline
-
-#### Center canvas
-- graph canvas or block editor
-- selected path highlight
-- zoom controls
-
-#### Right panel
-- selected node inspector
-- node fields
-- destination picker
-- validation messages
-
-### Publish tab
-- draft summary
-- compile preview panel
-- publish impact warnings
-- confirm publish action
-
----
-
-## Screen: Bridges List
-
-### Table columns
-- name
-- bridge type
-- gateway
-- destination template
-- used by count
-- active
-
-## Screen: Bridge Detail
-
-### Header summary strip
-- bridge name
-- type chip
-- gateway chip if gateway-type
-- active chip
-- used by count
-
-### Tabs
+## Bridges
+### Detail tabs
 - Overview
 - Target
 - Usage
 - Runtime
 
-### Overview tab
-- plain language description: reusable outbound destination
-- destination template preview
-- gateway link
+Bridge must be explained in plain language as reusable outbound destination.
 
-### Target tab
-- bridge type selector
-- gateway selector
-- destination template input
-- validation panel
+## Route Explorer
+Three columns:
+- input form
+- resolution timeline
+- warnings/dependency rail
 
-### Usage tab
-Table of linked objects:
-- object type
-- object name
-- route role
-- open link
+## Simulations
+Tabs:
+- DID simulation
+- policy simulation
+- flow simulation
+- time preview
 
-### Runtime tab
-- compiled bridge output preview
-- warnings if gateway inactive
-
----
-
-## Screen: Route Explorer
-
-### Goal
-This is a flagship diagnostic tool.
-
-### Layout
-Three-column analytical workspace.
-
-#### Left column: Inputs
-- tenant select
-- DID / dialed number input
-- caller ID input
-- gateway select
-- registration select
-- datetime picker
-- run simulation button
-
-#### Center column: Resolution path
-Visual vertical route timeline:
-1. DID matched
-2. source precedence selected
-3. policy matched or skipped
-4. flow entered
-5. nodes traversed
-6. bridge/gateway chosen
-7. final destination output
-
-#### Right column: Insights
-- warnings
-- inactive targets
-- unresolved references
-- route dependencies
-- linked objects
-
-### Result cards
-- effective route
-- confidence/valid state
-- final destination string
-- runtime notes
+## Published Dialplan
+- publish state
+- compiled XML
+- manifest tree
+- linked source objects
 
 ---
 
-## Screen: Simulations
+# 13. Connectivity Wireframes
 
-### Suggested tabbed layout
-- DID Simulation
-- Policy Simulation
-- Flow Simulation
-- Time Preview
-
-Each tab uses:
-- left input panel
-- center result
-- right notes/warnings
-
----
-
-## Screen: Published Dialplan
-
-### Layout
-- tenant selector
-- latest publish status card
-- generated at timestamp
-- warnings banner if stale
-- code preview panel
-- manifest tree sidebar
-
-### Main sections
-- manifest summary
-- compiled XML preview
-- source object references
-
----
-
-# 11. Connectivity Wireframes
-
-## Screen: Connectivity Overview
-
-### Summary cards
-- gateways up
-- gateways down
-- last reconcile status
-- profile health
-- NAT/media warnings
-
-### Main sections
-#### Gateway Runtime table
-Columns:
-- gateway
-- state
-- status
-- realm
-- proxy
-- last updated
-
-#### XML Drift / Runtime Hygiene card
-- db count
-- xml count
-- orphan xml count
-- reconcile action button
-
----
-
-## Screen: Gateways List
-
-### Filters
-- search
-- active/inactive
-- transport
-- registered/unregistered
-
-### Table columns
-- name
-- host
-- transport
-- profile
-- registration state
-- active
-- last sync
-- actions
-
-## Screen: Gateway Detail
-
-### Header summary strip
-- gateway name
-- active chip
-- registration state chip
-- transport chip
-- profile chip
-- actions: edit, disable, reconcile, delete
-
-### Tabs
+## Gateways
+### Detail tabs
 - Overview
 - Connection
 - Authentication
@@ -1072,126 +1175,66 @@ Columns:
 - Runtime
 - XML
 
-### Overview tab
-- summary card with host, realm, proxy, port
-- register yes/no
-- gateway identity
-- linked bridges count
-
-### Connection tab
-Fields:
-- host
-- port
-- transport
-- proxy
-- register proxy
-- realm
-- from domain
-
-### Authentication tab
-Fields:
-- username
-- password
-- extension
-- from-user
-- caller-id-in-from toggle
-
-### Codec & Media tab
-Fields:
-- inbound codecs
-- outbound codecs
-- allow transcoding
-- SIP/RTP notes
-
-### Runtime tab
-Panels:
-- current Sofia status
-- last command results
+Runtime tab shows:
+- Sofia status
+- command results
 - last reconcile result
-- registration history later
+- registration health
 
-### XML tab
-Panels:
-- generated XML code viewer
-- file path
+XML tab shows:
+- generated XML preview
+- path
 - last written timestamp
-- copy button
 
----
-
-## Screen: Registrations List
-
-### Table columns
+## Registrations
+List columns:
 - gateway
 - state
 - status
 - username
 - realm
 - proxy
-- uptime / last seen
+- uptime/last seen
 - actions
 
-### Actions
-- refresh
-- killgw
-- startgw
-- reconcile
-
----
-
-## Screen: SIP Profiles
-
-### Detail tabs
+## SIP Profiles
+Tabs:
 - Overview
 - Bindings
 - Codec Defaults
 - NAT
 - Runtime
 
-Make admin-only if necessary.
-
----
-
-## Screen: NAT / Media
-
-### Layout
-- key config summary cards
-- warning banners
-- environment variable mapping
-- docs/help side panel
-
-### Fields shown
+## NAT / Media
+Cards:
 - SIP IP
 - RTP IP
-- EXT_SIP_IP
-- EXT_RTP_IP
-- AGGRESSIVE_NAT_DETECTION
-- LOCAL_NETWORK_ACL
+- external SIP/RTP
+- ACL state
+- warnings
+
+## Blocked Destinations
+Columns:
+- pattern/destination
+- reason
+- active
+- last matched maybe later
+
+## SSL / Certificates
+Tabs:
+- Overview
+- Domains
+- Status
+- Request / Renew
+- History
 
 ---
 
-# 12. Calls Wireframes
+# 14. Calls and Records Wireframes
 
-## Screen: Calls Overview
-
-### Summary cards
-- active calls
-- answered today
-- missed today
-- failed calls
-- recordings today
-
-### Main sections
-- live calls table
-- hangup cause distribution
-- recent traces
-- recent recordings
-
----
-
-## Screen: Live Calls
-
-### Table columns
+## Live Calls
+Dense operations table with drawer detail.
+Columns:
 - call UUID
 - direction
 - from
@@ -1202,256 +1245,148 @@ Make admin-only if necessary.
 - route
 - actions
 
-### Row click opens detail drawer
-Drawer includes:
-- call header
-- event timeline
+## Call Session Detail
+Tabs:
+- Overview
+- Legs
+- Routing
+- Events
+- Analysis
+
+## Call Analysis
+Panels:
+- quality summary
 - route summary
-- call controls
+- hangup cause insight
+- suspicious events
 
-### Call control actions
-- transfer
-- hold
-- unhold
-- start recording
-- stop recording
-- hangup
-
----
-
-## Screen: CDRs
-
-### Filters
-- date range
-- direction
-- gateway
-- hangup cause
-- queue
-- search number/call UUID
-
-### Table columns
-- start time
-- from
-- to
-- direction
-- duration
-- billsec
-- hangup cause
-- gateway
-- recording
-
-## Screen: CDR Detail
-
-### Tabs
+## CDRs
+### Detail tabs
 - Overview
 - Legs
 - Routing
 - Recording
 - Events
 
-### Routing tab
-- route summary
-- gateway used
-- bridge used
-- flow path if available
-- hangup cause
-
----
-
-## Screen: Recordings
-
-### Table columns
-- date
-- from
-- to
-- duration
-- linked CDR
-- retention state
-- actions
-
-### Actions
-- play
-- download
-- delete
-
----
-
-## Screen: Events
-
-### Table columns
-- timestamp
-- event type
-- call UUID
-- tenant
-- payload excerpt
-- actions
-
-### Detail drawer
-- full JSON payload
+## Recordings
+### Detail
+- metadata
+- playback panel
+- download action
 - linked call/CDR
 
----
+## Events
+### Detail
+- raw JSON
+- structured summary
+- linked call
+- redispatch/replay actions if exposed
 
-## Screen: Trace Viewer
-
-### Goal
-One-call forensic timeline.
-
-### Layout
-- sticky call header
-- center timeline
-- right rail insights
-
-### Timeline steps
+## Trace Viewer
+Timeline:
 - call created
 - DID resolved
-- policy matched
-- flow node traversal
+- policy evaluated
+- flow traversed
 - bridge selected
-- queue/agent actions if any
+- queue/agent actions
 - hangup cause
 - recording link
 
-### Right rail
-- call summary
-- route graph mini panel
-- warnings
-- export trace
+## Analytics
+Subpages:
+- summary
+- volume
+- quality
+- destinations
 
 ---
 
-# 13. Contact Center Wireframes
+# 15. Contact Center Wireframes
 
-## Screen: Queues List
-- name
-- strategy
-- waiting
-- available agents
-- SLA
-- status
-
-## Screen: Queue Detail
-
-### Tabs
+## Queues
+### Detail tabs
 - Overview
-- Agents
+- Members
 - Routing
 - Metrics
 - Events
 
-### Overview tab
-- queue stats
-- longest wait
-- active calls
-- overflow/fallback route
-
----
-
-## Screen: Agents List
-- name
-- extension
-- queues
-- status
-- last seen
-
-## Screen: Agent Detail
-
-### Tabs
+## Agents
+### Detail tabs
 - Overview
 - Queues
 - Activity
 - Performance
 
----
+## Wallboard
+Full-screen dense operations board.
 
-## Screen: Wallboard
-Full-screen dense but clean operational dashboard.
+## Queue Metrics
+- realtime
+- aggregate
+- history
 
-Sections:
-- large queue KPI cards
-- queue list with waiting counts
-- agent status board
-- alert banners
-
----
-
-## Screen: Metrics
-Tabs:
-- Queue Metrics
-- Agent Metrics
-- Trends
+## Codec Metrics
+- codec usage table/chart
+- trend blocks
 
 ---
 
-# 14. Integrations Wireframes
+# 16. Integrations Wireframes
 
-## Screen: Webhooks List
-- name
-- event types
-- destination URL
-- status
-- last delivery
-- fail rate
-
-## Screen: Webhook Detail
-
-### Tabs
+## Webhooks
+### Detail tabs
 - Overview
 - Events
 - Deliveries
 - Retry History
+- Stats
 
----
-
-## Screen: API Tokens
-- token name
+## API Tokens
+### Detail
+- name
 - scopes
 - created by
 - last used
-- expires
-- actions
+- revoke action
 
----
-
-## Screen: Event Streams
-- client name
-- stream type
-- status
+## Event Streams
+Overview page:
+- stream types
+- auth model
+- consumer status
 - last activity
-- auth mode
 
 ---
 
-# 15. Admin Wireframes
+# 17. Administration Wireframes
 
-## Screen: Users List
-- name
-- email
-- role
-- tenant
-- status
-- last login
-
-## Screen: User Detail
-Tabs:
+## Users
+### Detail tabs
 - Overview
 - Access
+- Permissions
 - Activity
+- Tokens
 
----
-
-## Screen: Roles
-- role name
-- permissions count
-- assigned users
-
-## Screen: Role Detail
+## Roles & Permissions
+Pages:
+- role list
+- role detail
 - permission matrix
-- assigned users list
+- available permissions catalog
 
----
+## Tenants
+### Detail tabs
+- Overview
+- Settings
+- Usage
+- Users
+- Telephony
+- Audit
 
-## Screen: Tenant Settings
+## Tenant Settings
 Tabs:
 - General
 - Branding
@@ -1460,103 +1395,70 @@ Tabs:
 - Usage
 - Advanced
 
----
+## Usage
+Views:
+- summary
+- collect/reconcile controls
+- charts
+- storage/call/API breakdown
 
-## Screen: Audit Logs
+## Audit Logs
+### Detail
 - actor
+- object
 - action
-- object type
-- object name
-- timestamp
-- tenant
-- diff preview
-
-## Screen: Audit Detail
 - before/after JSON
-- actor info
-- linked objects
+- linked resources
+
+## System Settings
+Admin-level cards for:
+- SSL
+- SIP profiles
+- blocked destinations
+- system notices
 
 ---
 
-## Screen: Usage
-- API usage cards
-- call volume charts
-- recording storage usage
-- tenant consumption summaries
+# 18. State Pages and Empty States
+
+## Empty states required
+- no extensions
+- no DIDs
+- no flows
+- no bridges
+- no gateways
+- no queues
+- no recordings
+- no webhooks
+- no audit data
+
+## Error states required
+- 403 forbidden
+- 404 not found
+- 429 rate limited
+- 500 internal error
+- connection lost / retrying
+- data stale / runtime unavailable
+
+## Draft and publish states
+- draft warning banner
+- unsaved changes bar
+- publish confirm modal
+- conflict warning if source changed
 
 ---
 
-# 16. Page Shell Rules
+# 19. Interaction Rules
 
-## Overview page shell
-Use for:
-- section overview pages
-- dashboard
+## Destination picker
+All routing surfaces must use one shared component pattern:
+1. choose destination type
+2. choose target object
+3. preview chip
+4. validate target state
+5. show dependency warnings
 
-Pattern:
-1. title row
-2. summary cards row
-3. alerts/warnings strip
-4. primary content grid
-5. recent activity tables
-
-## List page shell
-Pattern:
-1. title + primary CTA
-2. filter/search row
-3. bulk actions if needed
-4. main data table
-5. pagination
-
-## Detail page shell
-Pattern:
-1. breadcrumb
-2. page title + status chips + actions
-3. summary strip
-4. tabs
-5. tab content
-6. optional right rail
-
-## Workspace shell
-Use for:
-- route explorer
-- flow editor
-- trace viewer
-- simulations
-
-Pattern:
-- left inputs/context
-- center workspace
-- right inspector/insights
-
-## Drawer shell
-Use only for simple create/edit.
-Not for complex routing workflows.
-
-## Full-page form shell
-Use for:
-- DID
-- Gateway
-- IVR
-- Policy
-- Flow
-- Queue
-
----
-
-# 17. Form Architecture Rules
-
-## Routing forms
-Any screen that routes somewhere must use a consistent destination selector.
-
-### Destination selector pattern
-1. destination type dropdown
-2. target object selector filtered by type
-3. route preview chip
-4. validation hints
-5. dependency warning if target inactive/missing
-
-### Supported destination types
+Supported destination types:
 - extension
 - ring_group
 - ivr
@@ -1566,162 +1468,128 @@ Any screen that routes somewhere must use a consistent destination selector.
 - flow
 - bridge
 
-## Gateway form grouping
-Sections:
-- General
-- Connection
-- Authentication
-- Codec & Media
-- Advanced
-- Runtime preview
+## Status language consistency
+Use exactly these families:
+- Active / Inactive
+- Healthy / Warning / Error
+- Registered / Unregistered
+- Up / Down
+- Draft / Published
+- Enabled / Disabled
 
-## DID form grouping
-Sections:
-- Identity
-- Matching scope
-- Routing
-- Status
-- Preview
+## Drawer vs modal vs page rules
+Use drawer for:
+- small object create/edit
+- lightweight inspection
 
-## Bridge form grouping
-Sections:
-- General
-- Type
-- Gateway target
-- Destination template
-- Runtime preview
+Use modal for:
+- confirm destructive action
+- publish action
+- regenerate/reconcile confirm
 
----
-
-# 18. Data Density and Responsiveness
-
-## Desktop
-- sidebar expanded by default
-- detail pages can use right rail
-- tables show full columns
-
-## Laptop
-- sidebar can collapse
-- summary cards wrap to 2 or 3 per row
-- right rail becomes inline card stack
-
-## Tablet
-- submenu becomes accordion/flyout
-- tables become narrower with fewer columns
-- detail tabs horizontally scroll
-
-## Mobile
-- not the primary target
-- support basic read/edit
-- heavy workspaces like flow editor and route explorer should not be prioritized for full mobile parity
+Use full page for:
+- complex routing objects
+- telecom config with multiple sections
+- workspace screens
 
 ---
 
-# 19. Accessibility Rules
+# 20. Table Pattern Rules
 
-- color must not be sole signal for status
-- all status chips include text labels
-- keyboard navigation across sidebar, tabs, tables, forms
-- focus states visible and consistent
-- code panels support copy and text selection
-- contrast ratio minimum WCAG AA
-- row actions accessible from keyboard
+## Compact list tables
+Use for entity lists.
 
----
+## Runtime tables
+Use sticky columns for name/state when useful.
 
-# 20. Empty State Copy Guidance
+## Event tables
+Use timestamp first, payload preview last.
 
-## Bridges empty state
-"No bridges yet. Create a reusable outbound destination for routes, policies, or fallbacks."
+## Audit tables
+Show actor, object, action, time, and diff preview.
 
-## Flows empty state
-"No flows yet. Build programmable routing logic and publish it when ready."
-
-## Gateways empty state
-"No gateways configured. Add a carrier or SIP trunk to enable outbound or inbound connectivity."
-
-## DIDs empty state
-"No DIDs configured. Add inbound numbers and connect them to routes."
-
-## Route Explorer empty state
-"Run a simulation to see how a call resolves across DID matching, policy logic, flows, and bridge selection."
+## Density modes
+- relaxed: dashboards/overview tables
+- compact: operations/admin lists
+- dense: logs/events/runtime only
 
 ---
 
-# 21. Recommended Visual Prompts for Google Stitch
+# 21. Accessibility Rules
 
-Use the prompts below when generating screens.
-
-## Prompt: overall style
-"Design a modern B2B SaaS admin interface for a communications control platform called NIZAM. Use a clean light theme, restrained blue-indigo brand accents, dense but readable layout, modern typography, subtle borders, low-noise cards, high information clarity, and a professional operations dashboard feel. Avoid legacy PBX aesthetics. Use one-level sidebar submenu navigation and tabbed detail pages."
-
-## Prompt: dashboard
-"Create a dashboard for a telecom operations admin product. Left sidebar with submenu sections, top header with search and alerts, summary KPI cards for active calls, registered gateways, queue health, webhook failures, and routing warnings. Below, a two-column operational layout with health status, recent routing changes, warnings, quick actions, and recent calls table. Modern SaaS style, light theme, dense and practical."
-
-## Prompt: DID detail
-"Design a DID detail screen for a communications platform. Show page header with DID number, active status, precedence level, effective route chip, and action buttons. Use tabs: Overview, Routing, Source Matching, Activity, Dependencies. Show route preview, source-specific matching, warnings for inactive dependencies, and a clean right-side runtime panel."
-
-## Prompt: gateway detail
-"Design a gateway detail page for a SIP trunk/carrier management interface. Show tabs: Overview, Connection, Authentication, Codec & Media, Runtime, XML. Include registration state, transport, realm, host, profile, runtime health badges, generated XML preview panel, and clean admin form sections. Modern SaaS style, light theme, high operational clarity."
-
-## Prompt: bridge detail
-"Design a bridge detail page for a telecom routing platform. Explain the bridge as a reusable outbound destination. Include tabs: Overview, Target, Usage, Runtime. Show bridge type, target gateway, destination template, linked objects table, and route/runtime preview."
-
-## Prompt: flow editor
-"Design a modern flow editor for programmable call routing. Three-column layout: left node list, center visual graph canvas, right node inspector. Include draft/published state, validation warnings, publish action, and a professional SaaS admin style."
-
-## Prompt: route explorer
-"Design a route explorer screen for a telecom platform. Three-column workspace: left inputs for number, caller ID, gateway, registration, and datetime; center vertical route-resolution timeline; right insights panel with warnings and dependencies. Modern observability-inspired SaaS design, light theme, information dense, clean and highly structured."
+- text labels always accompany status colors
+- focus visible on every interactive element
+- keyboard navigation across sidebar, tabs, tables, forms, drawers
+- proper heading hierarchy
+- sufficient contrast
+- code panels selectable and copyable
+- interactive chips must meet touch target minimums where used as controls
 
 ---
 
-# 22. Recommended Output Set for Visual Generation
+# 22. Stitch Generation Guidance
 
-Generate these screens first in Google Stitch:
-1. App Shell + Sidebar + Header
-2. Dashboard Overview
-3. DID List
-4. DID Detail
-5. Gateway List
-6. Gateway Detail
-7. Bridge List
-8. Bridge Detail
-9. Flows List
-10. Flow Editor
-11. Route Explorer
-12. Live Calls
-13. CDR Detail
-14. Routing Overview
-15. Connectivity Overview
+## Stitch generation strategy
+Do not ask Stitch for the whole app in one prompt.
+Generate in packs:
+1. auth pack
+2. shell + dashboard pack
+3. phone system pack
+4. routing pack
+5. connectivity pack
+6. calls pack
+7. contact center pack
+8. integrations/admin pack
+9. state pages pack
 
----
-
-# 23. Final Build Guidance
-
-## Priority order for frontend implementation
-1. app shell
-2. design system primitives
-3. list/detail framework
-4. DID screens
-5. Gateway screens
-6. Bridge screens
-7. Routing overview
-8. Flows basic editor
-9. Calls runtime screens
-10. Route explorer
-
-## Non-negotiable UX rules
-- no third-level sidebar nesting
-- every parent section has an overview page
-- all routing surfaces use one consistent destination picker
-- every important detail page shows dependencies and runtime state
-- routing logic must be visible, not hidden behind jargon
-- advanced controls should be progressive
+## Output quality rule
+Each Stitch prompt should specify:
+- page shell
+- layout density
+- exact sections
+- tab set
+- table columns
+- right rail behavior if any
+- visual tone
+- token guidance summary
 
 ---
 
-# 24. Stitch-ready compressed brief
+# 23. Final Implementation Priorities
 
-Use this exact brief when needed:
+## Phase 1
+- auth shell
+- app shell
+- design primitives
+- dashboard
+- DID list/detail
+- gateway list/detail
+- bridge list/detail
 
-"Design a modern light-theme SaaS admin UI for NIZAM, a communications control platform and programmable telephony management system. The app has a left sidebar with one-level submenus and top sections: Dashboard, Phone System, Routing, Connectivity, Calls, Contact Center, Integrations, Admin. Visual style should feel like Linear plus Stripe Dashboard, not a legacy PBX. Dense but readable layout, high operational clarity, subtle borders, white surfaces, blue-indigo accents, semantic status colors, professional typography, and clean tables. Key screens include dashboard overview, DID list/detail, gateway list/detail with runtime/XML tabs, bridge list/detail, routing overview, flow editor, route explorer, live calls, and CDR detail. Routing visibility, dependencies, runtime health, and simulation are the product’s signature UX strengths."
+## Phase 2
+- policies
+- flows
+- route explorer
+- live calls
+- CDRs
+
+## Phase 3
+- contact center
+- integrations
+- admin control pages
+- state pages
+- analytics
+
+---
+
+# 24. Deliverables this file should drive
+
+From this spec, the team should be able to produce:
+- visual wireframes
+- component library
+- token JSON/CSS vars
+- page templates
+- frontend route map
+- implementation plan
+
+This file is the full design source of truth.
