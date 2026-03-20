@@ -48,10 +48,10 @@ class Did extends Model
     {
         Relation::morphMap([
             'extension' => Extension::class,
-            'team' => Team::class,
+            'ring_group' => RingGroup::class,
             'ivr' => Ivr::class,
-            'schedule' => Schedule::class,
             'voicemail' => Extension::class,
+            'time_condition' => TimeCondition::class,
             'call_routing_policy' => CallRoutingPolicy::class,
             'flow' => Flow::class,
         ]);
