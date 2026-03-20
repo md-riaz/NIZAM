@@ -54,6 +54,7 @@ class Did extends Model
             'time_condition' => TimeCondition::class,
             'call_routing_policy' => CallRoutingPolicy::class,
             'flow' => Flow::class,
+            'bridge' => Bridge::class,
         ]);
 
         static::saving(function (Did $did): void {

@@ -375,6 +375,12 @@ class DialplanCompiler
                     $xml .= '            <action application="transfer" data="flow_'.$flow->id.' XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
+            case 'bridge':
+                $bridge = $tenant->bridges()->where('is_active', true)->find($did->destination_id);
+                if ($bridge) {
+                    $xml .= $this->bridgeCompiler->compileAction($tenant, $bridge);
+                }
+                break;
         }
 
         $xml .= '          </condition>'."\n";

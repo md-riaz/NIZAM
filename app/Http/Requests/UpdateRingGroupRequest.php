@@ -18,7 +18,7 @@ class UpdateRingGroupRequest extends FormRequest
             'strategy' => 'in:simultaneous,sequential',
             'ring_timeout' => 'integer|min:5|max:300',
             'members' => 'required|array',
-            'fallback_destination_type' => 'nullable|in:extension,ring_group,ivr,time_condition,voicemail|required_with:fallback_destination_id',
+            'fallback_destination_type' => 'nullable|in:extension,ring_group,ivr,time_condition,voicemail,flow,bridge|required_with:fallback_destination_id',
             'fallback_destination_id' => 'nullable|uuid|required_with:fallback_destination_type',
             'is_active' => 'boolean',
         ];
