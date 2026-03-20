@@ -116,4 +116,9 @@ return [
         'codec_prefs' => env('WEBRTC_CODEC_PREFS', 'OPUS,PCMU,PCMA,G722'),
         'dtls_cert_dir' => env('WEBRTC_DTLS_CERT_DIR', '/usr/local/freeswitch/certs'),
     ],
+
+    'gateway_provisioning' => [
+        'profile' => env('FREESWITCH_GATEWAY_PROFILE', 'external'),
+        'external_directory' => env('FREESWITCH_GATEWAY_DIRECTORY', storage_path('freeswitch/sip_profiles/external')),
+    ],
 ];

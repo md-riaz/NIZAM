@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Extension;
+use App\Models\Gateway;
 use App\Models\Holiday;
 use App\Models\HolidayCalendar;
 use App\Models\Schedule;
@@ -12,6 +13,7 @@ use App\Models\ScheduleRule;
 use App\Modules\Contracts\NizamModule as NizamModuleContract;
 use App\Modules\ModuleRegistry;
 use App\Observers\ExtensionObserver;
+use App\Observers\GatewayObserver;
 use App\Observers\HolidayCalendarObserver;
 use App\Observers\HolidayObserver;
 use App\Observers\ScheduleBreakObserver;
@@ -65,6 +67,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Extension::observe(ExtensionObserver::class);
+        Gateway::observe(GatewayObserver::class);
         Schedule::observe(ScheduleObserver::class);
         ScheduleRule::observe(ScheduleRuleObserver::class);
         ScheduleBreak::observe(ScheduleBreakObserver::class);

@@ -124,6 +124,7 @@ services:
     volumes:
       - freeswitch_data:/var/lib/freeswitch
       - certs_data:/usr/local/freeswitch/certs
+      - ./storage/freeswitch/sip_profiles/external:/usr/local/freeswitch/conf/sip_profiles/external
     networks:
       - nizam
     environment:
