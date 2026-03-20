@@ -1,25 +1,40 @@
 <?php
 
 use App\Http\Controllers\Api\AdminDashboardController;
+use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\CallDetailRecordController;
+use App\Http\Controllers\Api\CallEventController;
+use App\Http\Controllers\Api\CallEventStreamController;
 use App\Http\Controllers\Api\CallRoutingPolicyController;
 use App\Http\Controllers\Api\CallSessionController;
 use App\Http\Controllers\Api\CdrAnalyticsController;
 use App\Http\Controllers\Api\CdrExportController;
+use App\Http\Controllers\Api\CodecMetricsController;
+use App\Http\Controllers\Api\DeviceProfileController;
+use App\Http\Controllers\Api\DidController;
 use App\Http\Controllers\Api\ExtensionController;
+use App\Http\Controllers\Api\FlowController;
+use App\Http\Controllers\Api\GatewayController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HolidayCalendarController;
+use App\Http\Controllers\Api\IvrController;
+use App\Http\Controllers\Api\QueueController;
+use App\Http\Controllers\Api\QueueMetricsController;
+use App\Http\Controllers\Api\RecordingController;
+use App\Http\Controllers\Api\RingGroupController;
 use App\Http\Controllers\Api\ScheduleController;
-use App\Http\Controllers\Api\FlowController;
+use App\Http\Controllers\Api\SslController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TenantController;
-use App\Http\Controllers\Api\SslController;
 use App\Http\Controllers\Api\TenantStatsController;
+use App\Http\Controllers\Api\TimeConditionController;
 use App\Http\Controllers\Api\TokenController;
 use App\Http\Controllers\Api\UsageController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -89,10 +104,45 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::apiResource('flows', FlowController::class);
         Route::post('flows/{flow}/publish', [FlowController::class, 'publish'])->name('flows.publish');
 
+        Route::apiResource('dids', DidController::class);
+        Route::apiResource('ring-groups', RingGroupController::class);
+        Route::apiResource('ivrs', IvrController::class);
+        Route::apiResource('time-conditions', TimeConditionController::class);
+        Route::apiResource('webhooks', WebhookController::class);
+        Route::get('webhooks/{webhook}/delivery-attempts', [WebhookController::class, 'deliveryAttempts'])->name('webhooks.delivery-attempts');
+        Route::get('webhooks/{webhook}/delivery-stats', [WebhookController::class, 'deliveryStats'])->name('webhooks.delivery-stats');
+        Route::apiResource('device-profiles', DeviceProfileController::class);
+        Route::apiResource('gateways', GatewayController::class);
+        Route::apiResource('agents', AgentController::class);
+        Route::post('agents/{agent}/state', [AgentController::class, 'changeState'])->name('agents.state');
+        Route::apiResource('queues', QueueController::class);
+        Route::get('queues/{queue}/members', [QueueController::class, 'members'])->name('queues.members');
+        Route::post('queues/{queue}/members', [QueueController::class, 'addMember'])->name('queues.members.store');
+        Route::delete('queues/{queue}/members/{agent}', [QueueController::class, 'removeMember'])->name('queues.members.destroy');
+        Route::get('queues/{queue}/metrics/realtime', [QueueMetricsController::class, 'realtime'])->name('queues.metrics.realtime');
+        Route::post('queues/{queue}/metrics/aggregate', [QueueMetricsController::class, 'aggregate'])->name('queues.metrics.aggregate');
+        Route::get('queues/{queue}/metrics/history', [QueueMetricsController::class, 'history'])->name('queues.metrics.history');
+        Route::get('wallboard', [QueueMetricsController::class, 'wallboard'])->name('wallboard');
+        Route::get('agent-states', [QueueMetricsController::class, 'agentStates'])->name('agent-states');
+        Route::get('codec-metrics', [CodecMetricsController::class, 'index'])->name('codec-metrics.index');
+        Route::apiResource('recordings', RecordingController::class)->only(['index', 'show', 'destroy']);
+        Route::get('recordings/{recording}/download', [RecordingController::class, 'download'])->name('recordings.download');
+        Route::get('call-events', [CallEventController::class, 'index'])->name('call-events.index');
+        Route::get('call-events/stream', [CallEventStreamController::class, 'stream'])->name('call-events.stream');
+        Route::get('call-events/{callUuid}/trace', [CallEventController::class, 'trace'])->name('call-events.trace');
+        Route::get('call-events/replay/{eventId}', [CallEventController::class, 'replay'])->name('call-events.replay');
+        Route::post('call-events/redispatch/{eventId}', [CallEventController::class, 'redispatch'])->name('call-events.redispatch');
+
         // Call sessions & traces
         Route::get('calls', [CallSessionController::class, 'index'])->name('calls.index');
         Route::get('calls/{callSession}', [CallSessionController::class, 'show'])->name('calls.show');
         Route::get('calls/{callSession}/analyze', [CallSessionController::class, 'analyze'])->name('calls.analyze');
+        Route::post('calls/originate', [CallController::class, 'originate'])->name('calls.originate');
+        Route::get('calls/status', [CallController::class, 'status'])->name('calls.status');
+        Route::post('calls/hangup', [CallController::class, 'hangup'])->name('calls.hangup');
+        Route::post('calls/transfer', [CallController::class, 'transfer'])->name('calls.transfer');
+        Route::post('calls/recording', [CallController::class, 'toggleRecording'])->name('calls.recording');
+        Route::post('calls/hold', [CallController::class, 'hold'])->name('calls.hold');
 
         Route::get('cdrs/export', [CdrExportController::class, 'export'])->name('cdrs.export');
         Route::post('cdrs/export', [CdrExportController::class, 'export'])->name('cdrs.export.post');
