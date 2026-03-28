@@ -51,6 +51,8 @@ tags:
   - name: Admin
   - name: Users
   - name: Audit Logs
+  - name: System Media
+  - name: Registration Status
 
 paths:
   /health:
@@ -625,6 +627,37 @@ paths:
       responses:
         '200':
           description: Extension details
+
+  /tenants/{tenantId}/extensions/status/all:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Extensions]
+      summary: Get real-time SIP registration status for all extensions
+      operationId: getAllExtensionsStatus
+      responses:
+        '200':
+          description: Extensions status details
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /tenants/{tenantId}/extensions/{extensionId}/status:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/ExtensionId'
+    get:
+      tags: [Extensions]
+      summary: Get real-time SIP registration status for a single extension
+      operationId: getExtensionStatus
+      responses:
+        '200':
+          description: Extension status details
+          content:
+            application/json:
+              schema:
+                type: object
 
   /tenants/{tenantId}/extensions/{extensionId}/webrtc-config:
     parameters:
@@ -1761,6 +1794,22 @@ paths:
         '204':
           description: Gateway deleted
 
+  /tenants/{tenantId}/gateways/{gatewayId}/status:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/GatewayId'
+    get:
+      tags: [Registration Status]
+      summary: Get real-time SIP registration status for a single gateway
+      operationId: getGatewayStatus
+      responses:
+        '200':
+          description: Gateway status details
+          content:
+            application/json:
+              schema:
+                type: object
+
   /tenants/{tenantId}/bridges:
     parameters:
       - $ref: '#/components/parameters/TenantId'
@@ -1827,6 +1876,61 @@ paths:
       responses:
         '200':
           description: Codec metrics
+
+  /tenants/{tenantId}/system-media:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [System Media]
+      summary: List system media (audio prompts/MOH)
+      operationId: listSystemMedia
+      responses:
+        '200':
+          description: Media list
+    post:
+      tags: [System Media]
+      summary: Upload new system media
+      operationId: createSystemMedia
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, collection]
+              properties:
+                file: { type: string, format: binary }
+                name: { type: string }
+                collection: { type: string, enum: [prompts, moh] }
+      responses:
+        '201':
+          description: Media uploaded
+
+  /tenants/{tenantId}/system-media/{mediaId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/MediaId'
+    get:
+      tags: [System Media]
+      summary: Get details of a media item
+      operationId: getSystemMedia
+      responses:
+        '200':
+          description: Media details
+    put:
+      tags: [System Media]
+      summary: Update media metadata
+      operationId: updateSystemMedia
+      responses:
+        '200':
+          description: Media updated
+    delete:
+      tags: [System Media]
+      summary: Delete media item
+      operationId: deleteSystemMedia
+      responses:
+        '204':
+          description: Media deleted
 
   /tenants/{tenantId}/agents:
     parameters:

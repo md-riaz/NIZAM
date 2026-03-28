@@ -42,6 +42,8 @@
 30. [Rate Limiting](#rate-limiting)
 31. [SSL Management](#ssl-management)
 32. [WebRTC Configuration](#webrtc-configuration)
+33. [System Media](#system-media)
+34. [Registration Status](#registration-status)
 
 ---
 
@@ -378,6 +380,16 @@ Content-Type: application/json
 
 ```http
 DELETE /api/tenants/{tenant_id}/extensions/{id}
+Authorization: Bearer YOUR_TOKEN
+```
+
+### Registration Status
+
+Get real-time SIP registration status from FreeSWITCH for a single extension or all extensions in a tenant.
+
+```http
+GET /api/tenants/{tenant_id}/extensions/status/all
+GET /api/tenants/{tenant_id}/extensions/{id}/status
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -1127,7 +1139,45 @@ POST   /api/tenants/{tenant_id}/gateways
 GET    /api/tenants/{tenant_id}/gateways/{id}
 PUT    /api/tenants/{tenant_id}/gateways/{id}
 DELETE /api/tenants/{tenant_id}/gateways/{id}
+GET    /api/tenants/{tenant_id}/gateways/{id}/status
 ```
+
+### Gateway Registration Status
+
+Get real-time SIP registration status from FreeSWITCH for a given gateway.
+
+```http
+GET /api/tenants/{tenant_id}/gateways/{id}/status
+Authorization: Bearer YOUR_TOKEN
+```
+
+---
+
+## System Media
+
+Upload and manage system audio prompts (e.g., greetings) and Music on Hold (MOH). Backed by Spatie Media Library.
+
+```http
+GET    /api/tenants/{tenant_id}/system-media
+POST   /api/tenants/{tenant_id}/system-media
+GET    /api/tenants/{tenant_id}/system-media/{id}
+PUT    /api/tenants/{tenant_id}/system-media/{id}
+DELETE /api/tenants/{tenant_id}/system-media/{id}
+```
+
+### Upload Media
+
+```http
+POST /api/tenants/{tenant_id}/system-media
+Authorization: Bearer YOUR_TOKEN
+Content-Type: multipart/form-data
+
+file: <audio_file.wav>
+name: "Welcome Greeting"
+collection: "prompts"
+```
+
+**Collections:** `prompts`, `moh`
 
 ---
 

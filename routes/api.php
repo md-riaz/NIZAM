@@ -25,9 +25,11 @@ use App\Http\Controllers\Api\IvrController;
 use App\Http\Controllers\Api\QueueController;
 use App\Http\Controllers\Api\QueueMetricsController;
 use App\Http\Controllers\Api\RecordingController;
+use App\Http\Controllers\Api\RegistrationStatusController;
 use App\Http\Controllers\Api\RingGroupController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SslController;
+use App\Http\Controllers\Api\SystemMediaController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\TenantStatsController;
@@ -99,6 +101,14 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         // Core resources
         Route::apiResource('extensions', ExtensionController::class);
         Route::get('extensions/{extension}/webrtc-config', [ExtensionController::class, 'webRtcConfig'])->name('extensions.webrtc-config');
+
+        // System media (audio prompts, MOH)
+        Route::apiResource('system-media', SystemMediaController::class)->parameters(['system-media' => 'mediaId']);
+
+        // Real-time SIP registration status
+        Route::get('extensions/status/all', [RegistrationStatusController::class, 'bulkExtensionStatus'])->name('extensions.status.all');
+        Route::get('extensions/{extension}/status', [RegistrationStatusController::class, 'extensionStatus'])->name('extensions.status');
+        Route::get('gateways/{gateway}/status', [RegistrationStatusController::class, 'gatewayStatus'])->name('gateways.status');
         Route::apiResource('holiday-calendars', HolidayCalendarController::class);
         Route::apiResource('schedules', ScheduleController::class);
         Route::apiResource('teams', TeamController::class);

@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Tenant extends Model
+class Tenant extends Model implements HasMedia
 {
-    use Auditable, HasFactory, HasUuids;
+    use Auditable, HasFactory, HasUuids, InteractsWithMedia;
 
     /**
      * The attributes that are mass assignable.
@@ -213,5 +215,28 @@ class Tenant extends Model
     public function flows(): HasMany
     {
         return $this->hasMany(Flow::class);
+    }
+
+    /**
+     * Register Spatie media collections for system prompts.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('prompts')
+            ->acceptsMimeTypes([
+                'audio/wav',
+                'audio/x-wav',
+                'audio/mpeg',
+                'audio/mp3',
+                'audio/ogg',
+            ]);
+
+        $this->addMediaCollection('moh')
+            ->acceptsMimeTypes([
+                'audio/wav',
+                'audio/x-wav',
+                'audio/mpeg',
+                'audio/mp3',
+            ]);
     }
 }

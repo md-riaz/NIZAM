@@ -177,8 +177,15 @@ See [docs/v1-scope.md](docs/v1-scope.md#known-limitations-v10) for the full list
 - Queued delivery via `DeliverWebhook` job with retry logic
 - Events: call.started, call.answered, call.bridge, call.missed, call.hangup, voicemail.received, registration.registered, registration.unregistered
 
+#### API & Features
+- **System Media & Prompts API**: Integrated `spatie/laravel-medialibrary` for RESTful audio management (prompts, MOH).
+- **Registration Status API**: Real-time SIP registration queries for Extensions and Gateways via FreeSWITCH ESL.
+- Added `/api/v1/tenants/{id}/system-media` endpoints for media lifecycle management.
+- Added `/api/v1/tenants/{id}/extensions/status/all` and `/api/v1/tenants/{id}/gateways/{id}/status` for live monitoring.
+
 ### Tests
 - 330 tests with 641 assertions covering all features
 - Unit tests for models, services, policies, observers, modules
 - Feature tests for all API endpoints, middleware, provisioning
 - Permission-policy integration tests
+- **New**: Integration tests for SystemMedia and RegistrationStatus (pending execution)
