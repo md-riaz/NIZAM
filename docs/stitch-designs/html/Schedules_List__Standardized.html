@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - Schedules Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface-variant": "#464554",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#fffbff",
+                        "secondary-container": "#bdbefe",
+                        "on-background": "#131b2e",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#283044",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "secondary-fixed": "#e1e0ff",
+                        "on-surface": "#131b2e",
+                        "surface-dim": "#d2d9f4",
+                        "surface-bright": "#faf8ff",
+                        "error": "#ba1a1a",
+                        "secondary": "#575992",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-secondary-container": "#494b83",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "outline-variant": "#c7c4d7",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#eaedff",
+                        "primary": "#4648d4",
+                        "inverse-on-surface": "#eef0ff",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#07006c",
+                        "surface-variant": "#dae2fd",
+                        "surface-tint": "#494bd6",
+                        "outline": "#767586",
+                        "tertiary": "#904900",
+                        "surface-container-high": "#e2e7ff",
+                        "surface": "#faf8ff",
+                        "on-tertiary-fixed": "#301400",
+                        "tertiary-container": "#b55d00",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "primary-container": "#6063ee",
+                        "on-secondary-fixed": "#13144a",
+                        "inverse-primary": "#c0c1ff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#e1e0ff",
+                        "on-primary-container": "#fffbff",
+                        "on-secondary-fixed-variant": "#404178",
+                        "surface-container-highest": "#dae2fd",
+                        "background": "#faf8ff",
+                        "surface-container-low": "#f2f3ff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-header {
+            background: rgba(250, 248, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #4648d4 0%, #6063ee 100%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .data-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface flex min-h-screen">
+<!-- SideNavBar (Authority: JSON & Design System) -->
+<aside class="fixed left-0 top-0 h-full w-[272px] z-50 bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col p-4 space-y-1">
+<div class="mb-8 px-2 flex items-center space-x-3">
+<div class="w-10 h-10 primary-gradient rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h1 class="text-lg font-black text-indigo-600 dark:text-indigo-400 leading-none">NIZAM</h1>
+<p class="text-[11px] font-bold text-slate-400 tracking-widest uppercase">Communications</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 rounded-md" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 rounded-md" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">phone_in_talk</span>
+                Phone System
+            </a>
+<!-- Active State: Routing -->
+<a class="flex items-center px-3 py-2.5 text-[13px] font-semibold transition-all duration-200 ease-in-out bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-md" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]" style="font-variation-settings: 'FILL' 1;">alt_route</span>
+                Routing
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 rounded-md" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">router</span>
+                Connectivity
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 rounded-md" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">call</span>
+                Calls
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 rounded-md" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">support_agent</span>
+                Contact Center
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 rounded-md" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">extension</span>
+                Integrations
+            </a>
+<a class="flex items-center px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 rounded-md" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">admin_panel_settings</span>
+                Admin
+            </a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+<img class="w-8 h-8 rounded-full object-cover mr-3 border border-indigo-100" data-alt="Corporate headshot of executive user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKlwf2ngsl7Lt8-sQYbHjY4VTHJL9fEXrEPPB8EpsmUxATRijd5kYDaU4FYBkxsZYSZXfDVb--tC_FB3x1ONUV-zFfjSUHabgEuU11ESpN05lIm05xzkBd__2tKBC_edgCtzFRJIDaUYl2hTpeUgfq2mdnNBEYtCjcWxbzMY9M202EJBc2KH8JhbEeTaYe4CPtYJzZlpXEcUz-qqAduU-LTikX9mu-fY4kRt3MbKvaQOreArnIZPlplDw97C233X-WK2fqSx21OJs"/>
+<div class="overflow-hidden">
+<p class="text-[13px] font-bold text-slate-900 dark:text-slate-100 truncate">S. Nizamuddin</p>
+<p class="text-[11px] text-slate-500 truncate">System Architect</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-[272px] min-h-screen">
+<!-- TopAppBar (Authority: JSON) -->
+<header class="fixed top-0 right-0 left-[272px] h-16 glass-header z-40 px-6 flex items-center justify-between border-b border-slate-200/40 dark:border-slate-800/40">
+<div class="flex items-center flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 text-on-surface" placeholder="Search schedules, periods, or holidays..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg active:scale-95 duration-150">
+<span class="material-symbols-outlined">hub</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg active:scale-95 duration-150 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg active:scale-95 duration-150">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg active:scale-95 duration-150">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="mt-16 p-8">
+<!-- Breadcrumbs / Title Layer -->
+<div class="mb-8 flex items-end justify-between">
+<div>
+<nav class="flex items-center space-x-2 text-[11px] font-mono text-slate-500 uppercase tracking-tighter mb-2">
+<span>ROUTING</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-indigo-600">SCHEDULES_LIST</span>
+</nav>
+<h2 class="text-3xl font-extrabold text-on-surface tracking-tight">Telephony Schedules</h2>
+<p class="text-on-surface-variant text-sm mt-1">Configure time-based call routing and holiday exceptions.</p>
+</div>
+<div class="flex items-center space-x-3">
+<button class="px-4 py-2 text-sm font-semibold text-on-surface-variant border border-outline-variant/30 rounded-lg hover:bg-surface-container-high transition-colors flex items-center">
+<span class="material-symbols-outlined mr-2 text-lg">filter_list</span>
+                        Filter
+                    </button>
+<button class="px-5 py-2 text-sm font-bold text-white primary-gradient rounded-lg shadow-lg shadow-indigo-500/20 flex items-center active:scale-95 transition-transform">
+<span class="material-symbols-outlined mr-2 text-lg" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+                        Create Schedule
+                    </button>
+</div>
+</div>
+<!-- Summary Cards (Editorial Layout) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-indigo-100/50 flex items-center space-x-5">
+<div class="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+<span class="material-symbols-outlined text-3xl">calendar_today</span>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Schedules</p>
+<p class="text-3xl font-black text-on-surface">128</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-indigo-100/50 flex items-center space-x-5 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 rounded-full -mr-12 -mt-12"></div>
+<div class="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center text-teal-600">
+<span class="material-symbols-outlined text-3xl">task_alt</span>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Now</p>
+<p class="text-3xl font-black text-teal-600">42</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-indigo-100/50 flex items-center space-x-5 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full -mr-12 -mt-12"></div>
+<div class="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined text-3xl">event_upcoming</span>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Holiday Overrides</p>
+<p class="text-3xl font-black text-amber-600">03</p>
+</div>
+</div>
+</div>
+<!-- Management Table (Precision Architect Style) -->
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/60 overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200/40">Schedule Name</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200/40">Type</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200/40">Active Periods</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200/40">Linked Holidays</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200/40">Status</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200/40">Last Activity</th>
+<th class="px-6 py-4 border-b border-slate-200/40"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center">
+<div class="w-2 h-8 bg-indigo-500 rounded-full mr-3"></div>
+<div>
+<p class="text-sm font-bold text-on-surface">Main_IVR_Business_Hours</p>
+<p class="text-[10px] font-mono text-slate-400">UID: SCH-902-11A</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-tight bg-indigo-50 text-indigo-700">Weekly</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center text-xs text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-sm mr-1.5 text-indigo-400">schedule</span>
+                                    MON-FRI, 08:00 - 18:00
+                                </div>
+</td>
+<td class="px-6 py-5">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-high border-2 border-white flex items-center justify-center text-[9px] font-bold">US</div>
+<div class="w-6 h-6 rounded-full bg-surface-container-high border-2 border-white flex items-center justify-center text-[9px] font-bold">EU</div>
+<div class="w-6 h-6 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-[9px] font-bold text-indigo-700">+2</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-700">
+<span class="w-1 h-1 rounded-full bg-teal-600 mr-1.5"></span>
+                                    Enabled
+                                </div>
+</td>
+<td class="px-6 py-5">
+<p class="data-cell text-slate-500">2023-11-24 14:32</p>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center">
+<div class="w-2 h-8 bg-purple-500 rounded-full mr-3"></div>
+<div>
+<p class="text-sm font-bold text-on-surface">Tech_Support_Overnight</p>
+<p class="text-[10px] font-mono text-slate-400">UID: SCH-104-BB9</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-tight bg-purple-50 text-purple-700">Weekly</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center text-xs text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-sm mr-1.5 text-purple-400">nightlight</span>
+                                    DAILY, 22:00 - 06:00
+                                </div>
+</td>
+<td class="px-6 py-5">
+<span class="text-[11px] text-slate-400 italic">None</span>
+</td>
+<td class="px-6 py-5">
+<div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-700">
+<span class="w-1 h-1 rounded-full bg-teal-600 mr-1.5"></span>
+                                    Enabled
+                                </div>
+</td>
+<td class="px-6 py-5">
+<p class="data-cell text-slate-500">2023-11-22 09:15</p>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center">
+<div class="w-2 h-8 bg-amber-500 rounded-full mr-3"></div>
+<div>
+<p class="text-sm font-bold text-on-surface">Annual_Inventory_Day</p>
+<p class="text-[10px] font-mono text-slate-400">UID: SCH-005-XC3</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-tight bg-amber-50 text-amber-700">Specific Dates</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center text-xs text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-sm mr-1.5 text-amber-500">event</span>
+                                    Dec 15, 2023 (ALL DAY)
+                                </div>
+</td>
+<td class="px-6 py-5">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-amber-100 border-2 border-white flex items-center justify-center text-[9px] font-bold text-amber-700">1</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500">
+<span class="w-1 h-1 rounded-full bg-slate-400 mr-1.5"></span>
+                                    Disabled
+                                </div>
+</td>
+<td class="px-6 py-5">
+<p class="data-cell text-slate-500">2023-10-30 11:02</p>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center">
+<div class="w-2 h-8 bg-indigo-500 rounded-full mr-3"></div>
+<div>
+<p class="text-sm font-bold text-on-surface">Emergency_DR_Routing</p>
+<p class="text-[10px] font-mono text-slate-400">UID: SCH-441-Z01</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-tight bg-indigo-50 text-indigo-700">Weekly</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center text-xs text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-sm mr-1.5 text-indigo-400">warning</span>
+                                    AUTO-TRIGGER ONLY
+                                </div>
+</td>
+<td class="px-6 py-5">
+<span class="text-[11px] text-slate-400 italic">None</span>
+</td>
+<td class="px-6 py-5">
+<div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-700">
+<span class="w-1 h-1 rounded-full bg-teal-600 mr-1.5"></span>
+                                    Enabled
+                                </div>
+</td>
+<td class="px-6 py-5">
+<p class="data-cell text-slate-500">2023-11-20 16:45</p>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination / Footer Logic -->
+<div class="px-6 py-4 flex items-center justify-between border-t border-slate-200/40 bg-slate-50/30">
+<p class="text-xs text-slate-500">Showing 1 to 4 of 128 schedules</p>
+<div class="flex items-center space-x-2">
+<button class="p-1 rounded hover:bg-slate-200 text-slate-400 disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-indigo-600 text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-600 text-xs font-bold">2</button>
+<button class="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-600 text-xs font-bold">3</button>
+<button class="p-1 rounded hover:bg-slate-200 text-slate-400">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Contextual Help Card -->
+<div class="mt-10 bg-indigo-900 text-white rounded-xl p-8 flex items-center justify-between overflow-hidden relative">
+<div class="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+<div class="z-10 flex-1 pr-12">
+<h4 class="text-xl font-bold mb-2">Automate with Routing Groups</h4>
+<p class="text-indigo-200 text-sm max-w-xl">You can link multiple schedules to a single routing group to handle complex global timezone handovers automatically. Our system supports nested logic for holiday overlaps.</p>
+</div>
+<div class="z-10">
+<button class="px-6 py-3 bg-white text-indigo-900 font-bold rounded-lg text-sm hover:bg-indigo-50 transition-colors shadow-xl">
+                        View Documentation
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

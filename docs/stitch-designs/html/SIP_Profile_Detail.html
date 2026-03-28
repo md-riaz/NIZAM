@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - SIP Profile Detail</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-container": "#bdbefe",
+              "on-secondary-fixed": "#13144a",
+              "primary": "#4648d4",
+              "tertiary": "#904900",
+              "secondary": "#575992",
+              "inverse-surface": "#283044",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#464554",
+              "on-primary-container": "#fffbff",
+              "on-background": "#131b2e",
+              "error": "#ba1a1a",
+              "background": "#faf8ff",
+              "on-secondary-container": "#494b83",
+              "surface-container-highest": "#dae2fd",
+              "primary-fixed": "#e1e0ff",
+              "primary-container": "#6063ee",
+              "secondary-fixed-dim": "#c0c1ff",
+              "on-tertiary-container": "#fffbff",
+              "surface-container-lowest": "#ffffff",
+              "surface-tint": "#494bd6",
+              "on-primary-fixed": "#07006c",
+              "on-secondary-fixed-variant": "#404178",
+              "on-primary": "#ffffff",
+              "inverse-on-surface": "#eef0ff",
+              "surface-container-low": "#f2f3ff",
+              "on-tertiary-fixed": "#301400",
+              "on-error-container": "#93000a",
+              "secondary-fixed": "#e1e0ff",
+              "primary-fixed-dim": "#c0c1ff",
+              "on-surface": "#131b2e",
+              "surface-container": "#eaedff",
+              "on-error": "#ffffff",
+              "tertiary-container": "#b55d00",
+              "inverse-primary": "#c0c1ff",
+              "tertiary-fixed-dim": "#ffb783",
+              "outline-variant": "#c7c4d7",
+              "on-tertiary-fixed-variant": "#703700",
+              "tertiary-fixed": "#ffdcc5",
+              "surface-dim": "#d2d9f4",
+              "surface-container-high": "#e2e7ff",
+              "surface-bright": "#faf8ff",
+              "surface": "#faf8ff",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "outline": "#767586",
+              "on-secondary": "#ffffff",
+              "error-container": "#ffdad6",
+              "surface-variant": "#dae2fd"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"],
+              "mono": ["JetBrains Mono", "monospace"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-header {
+            background: rgba(250, 248, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #4648d4 0%, #6063ee 100%);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<div class="flex min-h-screen">
+<!-- SideNavBar - JSON Execution -->
+<aside class="w-68 h-screen sticky left-0 top-0 flex flex-col border-r border-slate-200/60 dark:border-slate-800 p-5 bg-slate-50 dark:bg-slate-900 font-sans text-sm font-medium Inter">
+<div class="flex items-center gap-3 mb-10">
+<div class="w-8 h-8 rounded-lg primary-gradient flex items-center justify-center text-white font-mono text-xl font-bold tracking-tight">N</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-mono leading-none">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">Communications Control</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Phone System - ACTIVE based on Page Intent (SIP Configuration) -->
+<a class="flex items-center gap-3 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-semibold rounded-lg scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined text-lg">phone_in_talk</span>
+<span>Phone System</span>
+</a>
+<!-- Routing -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">alt_route</span>
+<span>Routing</span>
+</a>
+<!-- Connectivity -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">hub</span>
+<span>Connectivity</span>
+</a>
+<!-- Calls -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">call</span>
+<span>Calls</span>
+</a>
+<!-- Admin -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span>Admin</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/60">
+<div class="flex items-center gap-3 px-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm">account_circle</span>
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate">SYS_ADMIN_01</p>
+<p class="text-[10px] text-slate-500 font-mono truncate">172.16.0.42</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-background">
+<!-- TopNavBar - JSON Execution -->
+<header class="h-16 sticky top-0 z-50 w-full flex justify-between items-center px-6 glass-header border-b border-slate-200/40 dark:border-slate-800/40 shadow-sm">
+<div class="flex items-center gap-4">
+<nav class="flex items-center gap-6">
+<a class="text-slate-500 dark:text-slate-400 font-mono text-xs uppercase tracking-wider hover:text-indigo-500 transition-opacity" href="#">Extensions</a>
+<a class="text-slate-500 dark:text-slate-400 font-mono text-xs uppercase tracking-wider hover:text-indigo-500 transition-opacity" href="#">DIDs</a>
+<a class="text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 font-mono text-xs uppercase tracking-wider h-16 flex items-center" href="#">Policies</a>
+<a class="text-slate-500 dark:text-slate-400 font-mono text-xs uppercase tracking-wider hover:text-indigo-500 transition-opacity" href="#">Gateways</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<input class="bg-surface-container-low border-none rounded-lg py-1.5 pl-9 pr-4 text-sm w-64 focus:ring-1 focus:ring-primary/30 transition-all" placeholder="Search parameters..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-2 text-slate-500 hover:bg-surface-container-high rounded-lg transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-surface-container-high rounded-lg transition-colors">
+<span class="material-symbols-outlined">apps</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-8 max-w-7xl mx-auto w-full">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-tighter">SIP Profile</span>
+<span class="text-slate-400 font-mono text-xs">ID: internal_sbc_01</span>
+</div>
+<h2 class="text-3xl font-extrabold text-on-surface tracking-tight">Internal Core SBC</h2>
+<p class="text-on-surface-variant text-sm mt-1">Primary signaling profile for internal extension bridging and media anchoring.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 text-sm font-semibold text-on-surface border border-outline-variant/40 rounded-xl hover:bg-surface-container-high transition-colors">
+                            Discard Changes
+                        </button>
+<button class="px-6 py-2 text-sm font-bold text-white primary-gradient rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all">
+                            Apply Config
+                        </button>
+</div>
+</div>
+<!-- Tabs Hierarchy -->
+<div class="flex border-b border-outline-variant/20 mb-8 overflow-x-auto no-scrollbar">
+<button class="px-6 py-3 text-sm font-semibold border-b-2 border-primary text-primary whitespace-nowrap">Overview</button>
+<button class="px-6 py-3 text-sm font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap">Bindings &amp; Transport</button>
+<button class="px-6 py-3 text-sm font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap">Codec Defaults</button>
+<button class="px-6 py-3 text-sm font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap">NAT &amp; Traversal</button>
+<button class="px-6 py-3 text-sm font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap">Runtime Controls</button>
+</div>
+<!-- Bento Grid for Profile Details -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Main Config Card -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm ring-1 ring-on-surface/[0.03]">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">router</span>
+<h3 class="font-bold text-lg">Binding Configuration</h3>
+</div>
+<div class="grid grid-cols-2 gap-8">
+<div class="space-y-4">
+<div class="group">
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">IPv4 Bind Address</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant/40 focus:border-primary focus:ring-0 transition-all font-mono py-2 px-1 text-sm" type="text" value="10.50.10.12"/>
+<span class="absolute right-2 top-2 text-[10px] font-bold text-teal-600 bg-teal-50 px-1.5 rounded">AUTO</span>
+</div>
+</div>
+<div class="group">
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">SIP Port (UDP/TCP)</label>
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant/40 focus:border-primary focus:ring-0 transition-all font-mono py-2 px-1 text-sm" type="text" value="5060"/>
+</div>
+<div class="group">
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">TLS Port</label>
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant/40 focus:border-primary focus:ring-0 transition-all font-mono py-2 px-1 text-sm" type="text" value="5061"/>
+</div>
+</div>
+<div class="space-y-4">
+<div class="group">
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">External RTP IP</label>
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant/40 focus:border-primary focus:ring-0 transition-all font-mono py-2 px-1 text-sm italic opacity-60" placeholder="Not defined (using internal)" type="text"/>
+</div>
+<div class="group">
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Contact Header IP</label>
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant/40 focus:border-primary focus:ring-0 transition-all font-mono py-2 px-1 text-sm" type="text" value="203.0.113.45"/>
+</div>
+<div class="flex items-center gap-4 h-full pt-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+<span class="ml-3 text-xs font-bold text-slate-600 uppercase">Enforce SRTP</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm ring-1 ring-on-surface/[0.03]">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-purple-600">settings_input_component</span>
+<h3 class="font-bold text-md">Media Flow Logic</h3>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-sm text-on-surface-variant">Late Negotiation</span>
+<span class="text-xs font-mono font-bold bg-purple-50 text-purple-700 px-2 py-1 rounded">ENABLED</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-sm text-on-surface-variant">Bypass Media</span>
+<span class="text-xs font-mono font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded">DISABLED</span>
+</div>
+<div class="flex justify-between items-center py-2">
+<span class="text-sm text-on-surface-variant">Inbound Proxy</span>
+<span class="text-xs font-mono font-bold bg-amber-50 text-amber-700 px-2 py-1 rounded">OPTIONAL</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm ring-1 ring-on-surface/[0.03]">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-cyan-600">security</span>
+<h3 class="font-bold text-md">ACL &amp; Security</h3>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-sm text-on-surface-variant">Apply Inbound ACL</span>
+<span class="text-xs font-mono font-bold text-primary underline">TRUSTED_IPS</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-slate-50">
+<span class="text-sm text-on-surface-variant">Auth Method</span>
+<span class="text-xs font-mono font-bold text-on-surface">DIGEST/TLS</span>
+</div>
+<div class="flex justify-between items-center py-2">
+<span class="text-sm text-on-surface-variant">Max Calls / Sec</span>
+<span class="text-xs font-mono font-bold text-on-surface">45.0</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Stats / Secondary Info -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="bg-surface-container-low rounded-xl p-6 border border-primary/10">
+<h4 class="text-xs font-bold text-primary uppercase tracking-widest mb-4">Real-time Runtime</h4>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="text-sm font-medium">Active Channels</span>
+<span class="text-2xl font-black font-mono">142</span>
+</div>
+<div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[71%] rounded-full"></div>
+</div>
+<p class="text-[10px] text-slate-500 mt-2 font-mono">Limit: 200 sessions</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-slate-200/50">
+<p class="text-[10px] text-slate-500 uppercase font-bold">CPS</p>
+<p class="text-lg font-bold font-mono">8.4</p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-slate-200/50">
+<p class="text-[10px] text-slate-500 uppercase font-bold">Regs</p>
+<p class="text-lg font-bold font-mono">2,104</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm ring-1 ring-on-surface/[0.03]">
+<h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Profile Metadata</h4>
+<div class="space-y-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-slate-400 text-sm mt-0.5">history</span>
+<div>
+<p class="text-[10px] text-slate-400 uppercase font-bold">Last Synchronized</p>
+<p class="text-xs font-mono">2023-11-24 14:32:01 UTC</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-slate-400 text-sm mt-0.5">verified_user</span>
+<div>
+<p class="text-[10px] text-slate-400 uppercase font-bold">Modified By</p>
+<p class="text-xs font-mono">nizam_dev_ops</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-slate-400 text-sm mt-0.5">cloud_done</span>
+<div>
+<p class="text-[10px] text-slate-400 uppercase font-bold">Storage State</p>
+<p class="text-xs font-bold text-teal-600">PERSISTENT_REDUN</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-indigo-900 rounded-xl p-6 text-white overflow-hidden relative">
+<div class="relative z-10">
+<h4 class="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Technical Warning</h4>
+<p class="text-xs leading-relaxed opacity-90">Changes to <span class="font-mono bg-white/10 px-1 rounded">bind-address</span> will require a profile restart, causing an immediate drop of all 142 active sessions.</p>
+<button class="mt-4 flex items-center gap-2 text-xs font-bold hover:underline">
+                                    Read safety protocol
+                                    <span class="material-symbols-outlined text-xs">arrow_forward</span>
+</button>
+</div>
+<!-- Abstract decoration -->
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'wght' 700;">warning</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Log / Events -->
+<div class="mt-8 bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm ring-1 ring-on-surface/[0.03]">
+<div class="px-6 py-4 border-b border-slate-50 flex justify-between items-center">
+<h3 class="font-bold text-sm">Recent Activity Log</h3>
+<button class="text-xs text-primary font-bold hover:underline">Clear Logs</button>
+</div>
+<div class="font-mono text-[11px] divide-y divide-slate-50">
+<div class="px-6 py-3 flex gap-4 hover:bg-slate-50 transition-colors">
+<span class="text-slate-400 w-32 shrink-0">14:50:22.102</span>
+<span class="text-teal-600 font-bold w-16 shrink-0">[INFO]</span>
+<span class="text-slate-600">Successfully re-negotiated TLS session for peer <span class="text-on-surface font-bold">192.168.1.104</span></span>
+</div>
+<div class="px-6 py-3 flex gap-4 hover:bg-slate-50 transition-colors">
+<span class="text-slate-400 w-32 shrink-0">14:49:58.441</span>
+<span class="text-amber-600 font-bold w-16 shrink-0">[WARN]</span>
+<span class="text-slate-600">Inbound REGISTER rejected: <span class="text-error font-bold">ACL Violation [source_ip: 45.10.11.22]</span></span>
+</div>
+<div class="px-6 py-3 flex gap-4 hover:bg-slate-50 transition-colors">
+<span class="text-slate-400 w-32 shrink-0">14:48:12.890</span>
+<span class="text-indigo-600 font-bold w-16 shrink-0">[SYS]</span>
+<span class="text-slate-600">Runtime heartbeat ACK received from primary kernel module.</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - Routing Flows</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-container": "#6063ee",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "primary": "#4648d4",
+              "secondary": "#575992",
+              "on-primary-fixed": "#07006c",
+              "outline-variant": "#c7c4d7",
+              "on-secondary-container": "#494b83",
+              "on-secondary": "#ffffff",
+              "secondary-fixed-dim": "#c0c1ff",
+              "tertiary-fixed-dim": "#ffb783",
+              "secondary-fixed": "#e1e0ff",
+              "primary-fixed": "#e1e0ff",
+              "on-error": "#ffffff",
+              "surface-container-low": "#f2f3ff",
+              "on-tertiary-fixed-variant": "#703700",
+              "on-surface-variant": "#464554",
+              "on-primary-container": "#fffbff",
+              "surface-tint": "#494bd6",
+              "surface-dim": "#d2d9f4",
+              "error-container": "#ffdad6",
+              "tertiary-fixed": "#ffdcc5",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#767586",
+              "error": "#ba1a1a",
+              "tertiary": "#904900",
+              "surface-container-high": "#e2e7ff",
+              "inverse-on-surface": "#eef0ff",
+              "surface-variant": "#dae2fd",
+              "surface-bright": "#faf8ff",
+              "background": "#faf8ff",
+              "on-tertiary-container": "#fffbff",
+              "on-secondary-fixed-variant": "#404178",
+              "inverse-surface": "#283044",
+              "on-background": "#131b2e",
+              "on-secondary-fixed": "#13144a",
+              "primary-fixed-dim": "#c0c1ff",
+              "secondary-container": "#bdbefe",
+              "on-tertiary-fixed": "#301400",
+              "tertiary-container": "#b55d00",
+              "inverse-primary": "#c0c1ff",
+              "surface-container": "#eaedff",
+              "surface": "#faf8ff",
+              "on-surface": "#131b2e",
+              "surface-container-highest": "#dae2fd",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"],
+              "mono": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #4648d4 0%, #6063ee 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        .glass-header {
+            background: rgba(250, 248, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface antialiased">
+<!-- SideNavBar -->
+<aside class="w-[272px] h-screen fixed left-0 top-0 border-r-0 bg-[#f2f3ff] flex flex-col p-5 gap-y-1 z-50">
+<div class="mb-8 px-2">
+<h1 class="text-xl font-bold tracking-tighter text-[#131b2e]">NIZAM</h1>
+<p class="text-[10px] font-mono tracking-widest uppercase opacity-50 text-[#131b2e]">Communications Control</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 font-['Inter'] text-sm font-medium tracking-tight hover:bg-[#dae2fd]/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 font-['Inter'] text-sm font-medium tracking-tight hover:bg-[#dae2fd]/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="phone_in_talk">phone_in_talk</span>
+                Phone System
+            </a>
+<!-- Active State: Routing -->
+<a class="flex items-center gap-3 px-3 py-2 bg-[#dae2fd] text-[#4648d4] font-semibold rounded-lg font-['Inter'] text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="alt_route">alt_route</span>
+                Routing
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 font-['Inter'] text-sm font-medium tracking-tight hover:bg-[#dae2fd]/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="hub">hub</span>
+                Connectivity
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 font-['Inter'] text-sm font-medium tracking-tight hover:bg-[#dae2fd]/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="call">call</span>
+                Calls
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 font-['Inter'] text-sm font-medium tracking-tight hover:bg-[#dae2fd]/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="support_agent">support_agent</span>
+                Contact Center
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 font-['Inter'] text-sm font-medium tracking-tight hover:bg-[#dae2fd]/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="extension">extension</span>
+                Integrations
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 font-['Inter'] text-sm font-medium tracking-tight hover:bg-[#dae2fd]/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
+                Admin
+            </a>
+</nav>
+<div class="mt-auto pt-6 border-t border-[#c7c4d7]/30">
+<div class="flex items-center gap-3 px-2">
+<img class="w-8 h-8 rounded-full bg-surface-container-highest" data-alt="Tenant Switcher Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzSEE3YwzBbmWp_IPMkLXm0ezOHJ7ttLh4I0J1MNJjXw2Z365PGEDUVKUm9MpbxwLYlX3Bjtx-cpa2TtjEZOp-3E_CaMhVmz4-0ROFUJy9eGeBRbjPI5eO1KGtt7HPXeA0zRFwciqFfz252NWe3WnjissxJzEJbfmarlmRN1ZGf4qUSKk1gzKX2BCxzRUnWWH2tMTGvUj3tyTSPIxlHyg_kW3jzdLhdFC9AnAncftj8RR0gey2EfpzrKbVXS9qry7dZanKvPP63qA"/>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-semibold truncate">Acme Global HQ</p>
+<p class="text-[10px] opacity-60 truncate">Tenant ID: 90210-FL</p>
+</div>
+<span class="material-symbols-outlined text-sm opacity-40" data-icon="unfold_more">unfold_more</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="ml-[272px] min-h-screen">
+<!-- TopNavBar -->
+<header class="h-16 w-[calc(100%-272px)] fixed top-0 right-0 z-40 glass-header border-b border-[#c7c4d7]/20 flex items-center justify-between px-8">
+<div class="flex items-center gap-3">
+<span class="text-slate-500 font-medium text-sm">Routing</span>
+<span class="material-symbols-outlined text-sm text-slate-400" data-icon="chevron_right">chevron_right</span>
+<span class="text-[#4648d4] font-medium text-sm">Flows</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-slate-400 text-lg" data-icon="search">search</span>
+<input class="bg-surface-container-lowest border-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/20 rounded-xl pl-10 pr-4 py-1.5 text-sm w-64 transition-all" placeholder="Search flows..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-slate-500">
+<button class="hover:text-[#4648d4] transition-colors"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="hover:text-[#4648d4] transition-colors"><span class="material-symbols-outlined" data-icon="help_outline">help_outline</span></button>
+<div class="w-px h-6 bg-outline-variant/30"></div>
+<img class="w-8 h-8 rounded-full border border-outline-variant/20" data-alt="User Profile Image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFNlaAQQmBOkDmu3bpbUcR_Xyllp9-APSUCDyU0QBvHG5ujowizA9W9WBcz69ix6USxOAZcG-NjHeZQe0CSEiAJo2RKgwUXaPhbalq9xnSQn_n4s-USlaiC2uJVKsa_uVMSOpvVtoOgDhpx5Mf5RCzPSGLsldTqGZZW3U8_l12ms7ZW9_m-5KXfUwhe24hW6Ce1tsmne1kilAElK0rE6GOj08lvDp_P39ivbQ-n58xR0sqxDGm9lxU2zZ2m2TICxmw6fyXhQV5_B0"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="pt-24 px-8 pb-12">
+<!-- Page Header Area -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="text-3xl font-bold tracking-tight text-on-surface mb-2">Routing Flows</h2>
+<p class="text-on-surface-variant text-sm max-w-lg">Manage complex call logic and automated distribution paths across your global communication infrastructure.</p>
+</div>
+<button class="btn-primary-gradient text-white px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+                    Create Flow
+                </button>
+</div>
+<!-- Bento Stats Grid (Precision Architect Style) -->
+<div class="grid grid-cols-4 gap-6 mb-8">
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-xs font-mono uppercase tracking-widest text-on-surface-variant mb-3">Total Flows</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold">24</span>
+<span class="text-xs text-primary font-medium">+2 this month</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-xs font-mono uppercase tracking-widest text-on-surface-variant mb-3">Active Routing</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold">18</span>
+<span class="text-xs text-emerald-600 font-medium">94% healthy</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-xs font-mono uppercase tracking-widest text-on-surface-variant mb-3">Avg Nodes / Flow</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold">12.4</span>
+<span class="text-xs text-on-surface-variant font-medium">Complex logic</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-xs font-mono uppercase tracking-widest text-on-surface-variant mb-3">System Load</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold">42%</span>
+<span class="text-xs text-amber-600 font-medium">Nominal</span>
+</div>
+</div>
+</div>
+<!-- High-Density Flows Table -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 border-b border-outline-variant/10">
+<th class="px-6 py-4 text-[11px] font-mono uppercase tracking-widest text-on-surface-variant">Flow Name</th>
+<th class="px-6 py-4 text-[11px] font-mono uppercase tracking-widest text-on-surface-variant">Status</th>
+<th class="px-6 py-4 text-[11px] font-mono uppercase tracking-widest text-on-surface-variant">Node Count</th>
+<th class="px-6 py-4 text-[11px] font-mono uppercase tracking-widest text-on-surface-variant">Used By</th>
+<th class="px-6 py-4 text-[11px] font-mono uppercase tracking-widest text-on-surface-variant">Last Published</th>
+<th class="px-6 py-4 text-[11px] font-mono uppercase tracking-widest text-on-surface-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Flow Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg" data-icon="account_tree">account_tree</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">North America Inbound</p>
+<p class="text-xs font-mono text-on-surface-variant opacity-60">ID: FLW-9281</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">Published</span>
+</td>
+<td class="px-6 py-4 text-sm font-mono text-on-surface">24 nodes</td>
+<td class="px-6 py-4">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" data-alt="Department Support Icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpYGijbqS_U46bo54dXjfUc0x-OfdEdf4-icgG8cHF9LjJ7vtVPhFbiDCyDGikJn1qLUGGc6VaaVHLJFaNQVlJHQF9B6w9q5yt8b_FFrnwn09RqYXTCwey5IVnugS8cgWFyLz9SzYogDZVAhbl4MgALoMeZXUoKX9CxPko7rZ6MJ43upT5i6-sXYLHXzMXWv1LYwVkl-vz6x-2RDxUYw6FqnV087SOw5mgY7Fm3kJk_8VUw9SuGxegJc8gmM3v943k_wphZr9Biz4"/>
+<img class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" data-alt="Department Sales Icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCO1q3pEwXlBycB85x_3vY-pT5CPnLuBCl5YYOxpQCPzMSXMTe__eO7CEmaaQ9Uqshr9A-SyEqb2PZPnQfTS8ubg70ryt63cNS7dVNtIpJzBYEuG4YByeVeXO2TwtHBVRsGJnh5lf6GPDGSjo0jl-tDNq1p-U_ixKdMVeZJQ7J9bm9eRUH0u89cFlKJZqJghds1Vvujq-YZvtKRLlJcdq20ZMjOjiGmL9VJrhmegVMfrXepmD_A4_mt1-bky2I8oTf-7uLvqkf3OKw"/>
+<div class="w-6 h-6 rounded-full bg-surface-container-high border-2 border-surface-container-lowest flex items-center justify-center text-[8px] font-bold">+2</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">
+                                    Oct 12, 2023 <span class="text-[10px] opacity-50 ml-1">14:22</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-white rounded-lg text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-lg" data-icon="edit">edit</span></button>
+<button class="p-1.5 hover:bg-white rounded-lg text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-lg" data-icon="more_vert">more_vert</span></button>
+</div>
+</td>
+</tr>
+<!-- Flow Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined text-lg" data-icon="schema">schema</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Weekend IVR Logic</p>
+<p class="text-xs font-mono text-on-surface-variant opacity-60">ID: FLW-4402</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500">Draft</span>
+</td>
+<td class="px-6 py-4 text-sm font-mono text-on-surface">8 nodes</td>
+<td class="px-6 py-4 text-xs italic text-on-surface-variant opacity-50">Unassigned</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">
+                                    --
+                                </td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-white rounded-lg text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-lg" data-icon="edit">edit</span></button>
+<button class="p-1.5 hover:bg-white rounded-lg text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-lg" data-icon="more_vert">more_vert</span></button>
+</div>
+</td>
+</tr>
+<!-- Flow Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+<span class="material-symbols-outlined text-lg" data-icon="auto_mode">auto_mode</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Emergency Failover A</p>
+<p class="text-xs font-mono text-on-surface-variant opacity-60">ID: FLW-1109</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">Published</span>
+</td>
+<td class="px-6 py-4 text-sm font-mono text-on-surface">3 nodes</td>
+<td class="px-6 py-4">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" data-alt="Department Engineering Icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6Ik63Lry4dSD1d1TS0fyEhH3X7Q4PYPkPrThicxmRCpQAAh3nzGPfiAy7toKPTzfTk2zSPH6WNHhb2gd-lS37pKNoEXeELYqjrZkA1Sjur5nTQwDm2WOldzZnhhpaKuQUKuNXo-Tfth4l-LtcdJwfswmOp2uGTqScdrrxBbmtKytAeuBW2na51xBPknVO2cjRQ_HCvfirelxNCS2gFZh99CI0Mo_dEzt35z7klgmn371AK8S_XuvD3Dd_5amg1KNjDKvhmpcNjx4"/>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">
+                                    Sep 28, 2023 <span class="text-[10px] opacity-50 ml-1">09:00</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-white rounded-lg text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-lg" data-icon="edit">edit</span></button>
+<button class="p-1.5 hover:bg-white rounded-lg text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-lg" data-icon="more_vert">more_vert</span></button>
+</div>
+</td>
+</tr>
+<!-- Flow Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center text-cyan-600">
+<span class="material-symbols-outlined text-lg" data-icon="route">route</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">VIP Client Routing</p>
+<p class="text-xs font-mono text-on-surface-variant opacity-60">ID: FLW-7732</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">Published</span>
+</td>
+<td class="px-6 py-4 text-sm font-mono text-on-surface">16 nodes</td>
+<td class="px-6 py-4">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" data-alt="Department Executive Icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGUCaWMklin5ZopoVM7mdGmEH4puoK5c33BS9G2kS2dsiGTcqu13g3Kw7PxrmWCrkKOJoaN5VKeyHJ-X5TjsNUY8vPpspQdE9R6WmXxo2YtIrS10sSCQW2WSBxg3JU4vgCzlZ2shR51nfgcsHuT0v12c3Yx2CNop0nYGf80-E6YC1W-kyxmZjE0BQpZxyl7G3e5NIroLoGoOpRcH-0xn2GSznURuvG0U-YsYXxwbvgCRccvHpYaXUgG51mcXJKcJz97R0sed8W2B8"/>
+<img class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" data-alt="Department Global Icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTrCw6dIwhw53uk4zhEiTxo-RoR_nlBr0cPAX8JJsElGloq-7ayJ-XZRwvCPeRlLh3XJmPMMWkYLm_h1RYBFMM6Ky48ICLrJT1rOt8jbLAAo_DcSAqBLPIQEhs08UnwSxIsoC7ddkzmu8Mm6MC1orKePV13T-m8az223FKxd-0SPksjrjXfHs3y-Mus-VlyUDNvvSga0I4PPVMhsuZkKf_qqtYP5sVtXi5_edk1EhYGWBp5Bj3hLBvUeYwEEfv0dt4mVwfYrkhYc8"/>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">
+                                    Oct 05, 2023 <span class="text-[10px] opacity-50 ml-1">11:45</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-white rounded-lg text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-lg" data-icon="edit">edit</span></button>
+<button class="p-1.5 hover:bg-white rounded-lg text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-lg" data-icon="more_vert">more_vert</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination / Table Footer -->
+<div class="px-6 py-4 bg-surface-container-low/30 flex items-center justify-between border-t border-outline-variant/10">
+<p class="text-[10px] font-mono text-on-surface-variant opacity-60 uppercase tracking-widest">Displaying 1-4 of 24 flows</p>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-lg" data-icon="chevron_left">chevron_left</span>
+</button>
+<div class="flex items-center gap-1">
+<span class="w-6 h-6 rounded bg-primary text-white text-[10px] flex items-center justify-center font-bold">1</span>
+<span class="w-6 h-6 rounded hover:bg-surface-container-high text-on-surface-variant text-[10px] flex items-center justify-center font-bold cursor-pointer">2</span>
+<span class="w-6 h-6 rounded hover:bg-surface-container-high text-on-surface-variant text-[10px] flex items-center justify-center font-bold cursor-pointer">3</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Contextual Help / Tips Area (Bento Component) -->
+<div class="mt-8 grid grid-cols-3 gap-6">
+<div class="col-span-2 bg-primary/5 p-6 rounded-xl border border-primary/10 flex items-start gap-4">
+<div class="bg-primary text-white p-2 rounded-lg">
+<span class="material-symbols-outlined" data-icon="lightbulb">lightbulb</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-primary mb-1">Architecture Tip</h4>
+<p class="text-xs text-on-surface-variant leading-relaxed">Consider using "Global Logic Anchors" for recurring IVR paths. This reduces flow complexity by over 40% and allows for centralized updates across multiple regional flows.</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 flex flex-col items-center justify-center text-center">
+<span class="material-symbols-outlined text-3xl text-on-surface-variant opacity-20 mb-2" data-icon="history">history</span>
+<p class="text-xs font-semibold text-on-surface">Version History</p>
+<p class="text-[10px] text-on-surface-variant mb-3">Recover deleted flow states</p>
+<button class="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline">View Logs</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

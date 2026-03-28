@@ -1,53 +1,60 @@
 @import 'tailwindcss';
+@import './nizam-tokens.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+@source '../**/*.jsx';
+@source '../**/*.tsx';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --muted: 210 40% 96.1%;
-    --destructive: 0 84.2% 60.2%;
-    --border: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --background: var(--nizam-background);
+    --foreground: var(--nizam-on-background);
+    --primary: var(--nizam-primary);
+    --muted: var(--nizam-surface-container);
+    --destructive: var(--nizam-error);
+    --border: var(--nizam-outline-variant);
+    --ring: var(--nizam-primary);
+    --radius: var(--nizam-radius-xl);
 }
 
 .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --muted: 217.2 32.6% 17.5%;
-    --destructive: 0 62.8% 30.6%;
-    --border: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    /* Dark mode fallbacks or specific overrides if needed */
+    --background: #0f172a;
+    --foreground: #f8fafc;
 }
 
 @theme inline {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --color-background: hsl(var(--background));
-    --color-foreground: hsl(var(--foreground));
-    --color-primary: hsl(var(--primary));
-    --color-muted: hsl(var(--muted));
-    --color-destructive: hsl(var(--destructive));
-    --color-border: hsl(var(--border));
-    --color-ring: hsl(var(--ring));
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --text-xs: 0.75rem;
-    --text-sm: 0.875rem;
-    --text-base: 1rem;
-    --text-lg: 1.125rem;
-    --text-xl: 1.25rem;
-    --text-2xl: 1.5rem;
-    --text-3xl: 1.875rem;
+    --font-sans: var(--nizam-font-sans);
+    --font-mono: var(--nizam-font-mono);
+    
+    --color-background: var(--nizam-background);
+    --color-foreground: var(--nizam-on-background);
+    --color-primary: var(--nizam-primary);
+    --color-primary-container: var(--nizam-primary-container);
+    
+    --color-surface-lowest: var(--nizam-surface-container-lowest);
+    --color-surface-low: var(--nizam-surface-container-low);
+    --color-surface: var(--nizam-surface-container);
+    --color-surface-high: var(--nizam-surface-container-high);
+    --color-surface-highest: var(--nizam-surface-container-highest);
+
+    --color-accent-teal: var(--nizam-accent-teal);
+    --color-accent-purple: var(--nizam-accent-purple);
+    --color-accent-amber: var(--nizam-accent-amber);
+
+    --color-border: var(--nizam-outline-variant);
+    --color-error: var(--nizam-error);
+    
+    --radius-md: var(--nizam-radius-md);
+    --radius-xl: var(--nizam-radius-xl);
+    
+    --shadow-precision: var(--nizam-shadow-ambient);
 }
+
 
 @layer base {
     * {

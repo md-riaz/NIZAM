@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - IVR Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "secondary-fixed": "#e1e0ff",
+                "primary-fixed": "#e1e0ff",
+                "on-error": "#ffffff",
+                "surface-container-low": "#f2f3ff",
+                "on-tertiary-fixed-variant": "#703700",
+                "tertiary-fixed-dim": "#ffb783",
+                "secondary-fixed-dim": "#c0c1ff",
+                "outline-variant": "#c7c4d7",
+                "on-secondary-container": "#494b83",
+                "on-secondary": "#ffffff",
+                "on-primary-fixed": "#07006c",
+                "primary": "#4648d4",
+                "secondary": "#575992",
+                "primary-container": "#6063ee",
+                "on-primary-fixed-variant": "#2f2ebe",
+                "error": "#ba1a1a",
+                "outline": "#767586",
+                "surface-container-lowest": "#ffffff",
+                "tertiary-fixed": "#ffdcc5",
+                "error-container": "#ffdad6",
+                "surface-tint": "#494bd6",
+                "surface-dim": "#d2d9f4",
+                "on-surface-variant": "#464554",
+                "on-primary-container": "#fffbff",
+                "on-background": "#131b2e",
+                "inverse-surface": "#283044",
+                "on-tertiary-container": "#fffbff",
+                "on-secondary-fixed-variant": "#404178",
+                "inverse-on-surface": "#eef0ff",
+                "surface-variant": "#dae2fd",
+                "surface-bright": "#faf8ff",
+                "background": "#faf8ff",
+                "tertiary": "#904900",
+                "surface-container-high": "#e2e7ff",
+                "on-tertiary": "#ffffff",
+                "on-primary": "#ffffff",
+                "on-error-container": "#93000a",
+                "surface-container-highest": "#dae2fd",
+                "surface-container": "#eaedff",
+                "surface": "#faf8ff",
+                "on-surface": "#131b2e",
+                "inverse-primary": "#c0c1ff",
+                "tertiary-container": "#b55d00",
+                "primary-fixed-dim": "#c0c1ff",
+                "secondary-container": "#bdbefe",
+                "on-tertiary-fixed": "#301400",
+                "on-secondary-fixed": "#13144a"
+              },
+              fontFamily: {
+                "headline": ["Inter"],
+                "body": ["Inter"],
+                "label": ["Inter"],
+                "mono": ["JetBrains Mono"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-header {
+            background-color: rgba(250, 248, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar Component -->
+<aside class="w-[272px] h-screen fixed left-0 top-0 bg-surface-container-low flex flex-col p-5 gap-1 z-50">
+<div class="mb-8 px-2">
+<h1 class="text-xl font-bold tracking-tighter text-on-surface">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">Communications Control</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-variant/50 transition-colors duration-200 rounded-md scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-surface-variant text-primary rounded-md scale-[0.98] active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">phone_in_talk</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Phone System</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-variant/50 transition-colors duration-200 rounded-md scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined">alt_route</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Routing</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-variant/50 transition-colors duration-200 rounded-md scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined">settings_input_component</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Connectivity</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-variant/50 transition-colors duration-200 rounded-md scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined">call</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Calls</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-variant/50 transition-colors duration-200 rounded-md scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Contact Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-variant/50 transition-colors duration-200 rounded-md scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined">extension</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Integrations</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-variant/50 transition-colors duration-200 rounded-md scale-[0.98] active:scale-95" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Admin</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-1 border-t border-outline-variant/20 pt-4">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-variant/50 transition-colors duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface/70 hover:bg-surface-variant/50 transition-colors duration-200 rounded-md" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-['Inter'] font-medium text-sm tracking-tight">Support</span>
+</a>
+</div>
+</aside>
+<!-- TopAppBar Component -->
+<header class="h-16 fixed top-0 right-0 left-[272px] z-40 glass-header border-b border-outline-variant/20 flex justify-between items-center px-8">
+<div class="flex items-center gap-4">
+<nav class="flex items-center gap-2 text-sm text-on-surface/60 font-['Inter']">
+<span>Phone System</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span>IVRs</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-primary font-semibold">Main Menu</span>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-[12px] font-mono bg-surface-container-high px-2 py-1 rounded-md text-on-secondary-container">Tenant: Global Operations</span>
+<div class="flex items-center gap-3">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">apps</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User Profile" data-alt="User avatar profile picture circular icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLHwo56M882tIhBgJVKQknoo4oR_ZsvCxSIUu0ek7DhmglCG8oK8Lg-WCpcSdLX4HOwuW6jwDZUqzD6Basu16mCcZMcwaVQCn9UNlF7sZTYQclcmTiqwYs5WsLc07tV0gDIBV76ydRryhZ4QH_-OdfSPUFZkH6jRFb2A8oDQIuI70RZUSvXzGFwuZ6lC7ff-O2vtegNzHW3oBeTcERkNVDnpW4kSCgsBj_L8oO62BOU7yh8zdhglYSNbneRwVqRBC5Zp169_PNbJc"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[272px] pt-16 min-h-screen bg-background p-8">
+<!-- Detail Header -->
+<div class="flex justify-between items-start mb-8">
+<div class="space-y-1">
+<div class="flex items-center gap-3">
+<h2 class="text-3xl font-bold tracking-tight text-on-surface">Main Menu</h2>
+<span class="bg-cyan-100 text-cyan-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-cyan-200">ACTIVE</span>
+</div>
+<p class="text-on-surface-variant font-mono text-xs">ID: IVR-7729-ALPHA-X</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant/40 rounded-xl font-medium text-sm hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+                    Test IVR
+                </button>
+<button class="flex items-center gap-2 px-6 py-2 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-xl font-medium text-sm shadow-md hover:shadow-lg transition-all active:scale-95">
+                    Save Changes
+                </button>
+</div>
+</div>
+<!-- Detail Navigation Tabs -->
+<div class="flex border-b border-outline-variant/20 mb-8 gap-8">
+<button class="pb-4 text-sm font-medium text-on-surface/60 hover:text-on-surface transition-colors relative">
+                Overview
+            </button>
+<button class="pb-4 text-sm font-bold text-primary transition-colors relative">
+                Menu Options
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full"></div>
+</button>
+<button class="pb-4 text-sm font-medium text-on-surface/60 hover:text-on-surface transition-colors relative">
+                Prompts
+            </button>
+<button class="pb-4 text-sm font-medium text-on-surface/60 hover:text-on-surface transition-colors relative">
+                Routing
+            </button>
+<button class="pb-4 text-sm font-medium text-on-surface/60 hover:text-on-surface transition-colors relative">
+                Dependencies
+            </button>
+</div>
+<!-- Content Section: Menu Options -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Table Container -->
+<div class="col-span-12 lg:col-span-9">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider w-24">Digit</th>
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Target Destination</th>
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Type</th>
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Digit 1 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<span class="w-10 h-10 flex items-center justify-center bg-surface-container-high rounded-lg font-mono text-lg font-bold text-primary">1</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700">
+<span class="material-symbols-outlined text-[20px]">group</span>
+</div>
+<div>
+<p class="font-semibold text-sm">Sales Ring Group</p>
+<p class="text-xs text-on-surface-variant font-mono">ID: RG-1004</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 bg-purple-50 text-purple-700 text-[10px] font-bold rounded border border-purple-100">RING GROUP</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit_note</span>
+</button>
+</td>
+</tr>
+<!-- Digit 2 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<span class="w-10 h-10 flex items-center justify-center bg-surface-container-high rounded-lg font-mono text-lg font-bold text-primary">2</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</div>
+<div>
+<p class="font-semibold text-sm">Extension 1001</p>
+<p class="text-xs text-on-surface-variant font-mono">John Doe (Technical)</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded border border-indigo-100">EXTENSION</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit_note</span>
+</button>
+</td>
+</tr>
+<!-- Digit 3 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<span class="w-10 h-10 flex items-center justify-center bg-surface-container-high rounded-lg font-mono text-lg font-bold text-primary">3</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700">
+<span class="material-symbols-outlined text-[20px]">record_voice_over</span>
+</div>
+<div>
+<p class="font-semibold text-sm">Support Queue</p>
+<p class="text-xs text-on-surface-variant font-mono">24/7 Global</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 bg-amber-50 text-amber-700 text-[10px] font-bold rounded border border-amber-100">QUEUE</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit_note</span>
+</button>
+</td>
+</tr>
+<!-- Digit 0 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<span class="w-10 h-10 flex items-center justify-center bg-surface-container-high rounded-lg font-mono text-lg font-bold text-primary">0</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700">
+<span class="material-symbols-outlined text-[20px]">support_agent</span>
+</div>
+<div>
+<p class="font-semibold text-sm">Operator</p>
+<p class="text-xs text-on-surface-variant font-mono">Live Reception</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 bg-teal-50 text-teal-700 text-[10px] font-bold rounded border border-teal-100">EXTERNAL</span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit_note</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 bg-surface-container-low/20 flex justify-center">
+<button class="text-primary text-xs font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                            ADD NEW DIGIT MAPPING
+                        </button>
+</div>
+</div>
+</div>
+<!-- Sidebar Editor / Inspector -->
+<div class="col-span-12 lg:col-span-3 space-y-6">
+<!-- Quick Destination Picker (The Requested Component Style) -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/20 shadow-sm">
+<h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Destination Picker</h3>
+<div class="space-y-4">
+<div>
+<label class="block text-[10px] font-bold text-on-surface-variant mb-1 uppercase tracking-tight">Search Components</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20" placeholder="Extension, Queue, IVR..." type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<button class="w-full p-3 rounded-lg border border-outline-variant/20 hover:border-primary/40 hover:bg-primary/5 transition-all text-left group">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-on-surface">Extension</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary">arrow_forward_ios</span>
+</div>
+</button>
+<button class="w-full p-3 rounded-lg border border-outline-variant/20 hover:border-primary/40 hover:bg-primary/5 transition-all text-left group">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-on-surface">Ring Group</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary">arrow_forward_ios</span>
+</div>
+</button>
+<button class="w-full p-3 rounded-lg border border-outline-variant/20 hover:border-primary/40 hover:bg-primary/5 transition-all text-left group">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-on-surface">Voice Mail</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary">arrow_forward_ios</span>
+</div>
+</button>
+<button class="w-full p-3 rounded-lg border border-outline-variant/20 hover:border-primary/40 hover:bg-primary/5 transition-all text-left group">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-on-surface">External Number</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary">arrow_forward_ios</span>
+</div>
+</button>
+</div>
+</div>
+</div>
+<!-- Summary Info Card -->
+<div class="bg-primary/5 p-6 rounded-xl border border-primary/10">
+<h3 class="text-xs font-bold text-primary uppercase tracking-widest mb-4">IVR Logic Status</h3>
+<div class="space-y-3">
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">Active Options</span>
+<span class="font-mono font-bold">4 / 12</span>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">Timeout Action</span>
+<span class="font-bold">Hang up</span>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">Max Attempts</span>
+<span class="font-mono font-bold">3</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- System Intelligence Card (Bento Style) -->
+<div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-highest p-6 rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary" data-weight="fill">analytics</span>
+<h4 class="font-bold text-sm">Peak Usage</h4>
+</div>
+<p class="text-2xl font-bold text-on-surface">11:00 AM</p>
+<p class="text-xs text-on-surface-variant mt-1">Daily average peak hit time</p>
+</div>
+<div class="bg-surface-container-highest p-6 rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary" data-weight="fill">call_missed</span>
+<h4 class="font-bold text-sm">Abandonment</h4>
+</div>
+<p class="text-2xl font-bold text-on-surface">2.4%</p>
+<p class="text-xs text-on-surface-variant mt-1">Users exiting before selection</p>
+</div>
+<div class="bg-surface-container-highest p-6 rounded-xl border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary" data-weight="fill">bolt</span>
+<h4 class="font-bold text-sm">Popular Path</h4>
+</div>
+<p class="text-2xl font-bold text-on-surface">Digit 1</p>
+<p class="text-xs text-on-surface-variant mt-1">62% of all inbound selections</p>
+</div>
+</div>
+</main>
+</body></html>

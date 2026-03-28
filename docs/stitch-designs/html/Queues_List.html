@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - Queues Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "primary": "#4648d4",
+                        "surface-container-high": "#e2e7ff",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "tertiary-fixed": "#ffdcc5",
+                        "outline": "#767586",
+                        "surface-variant": "#dae2fd",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#dae2fd",
+                        "secondary-container": "#bdbefe",
+                        "on-tertiary-fixed": "#301400",
+                        "on-surface-variant": "#464554",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "secondary-fixed": "#e1e0ff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f3ff",
+                        "inverse-surface": "#283044",
+                        "on-primary-container": "#fffbff",
+                        "on-background": "#131b2e",
+                        "background": "#faf8ff",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#494bd6",
+                        "surface": "#faf8ff",
+                        "surface-bright": "#faf8ff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#404178",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#13144a",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "on-error": "#ffffff",
+                        "on-surface": "#131b2e",
+                        "outline-variant": "#c7c4d7",
+                        "tertiary": "#904900",
+                        "surface-container": "#eaedff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-primary-fixed": "#07006c",
+                        "tertiary-container": "#b55d00",
+                        "on-secondary-container": "#494b83",
+                        "on-tertiary-container": "#fffbff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#e1e0ff",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary": "#575992",
+                        "inverse-primary": "#c0c1ff",
+                        "surface-dim": "#d2d9f4",
+                        "primary-container": "#6063ee",
+                        "on-secondary": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #4648d4 0%, #6063ee 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body flex min-h-screen">
+<!-- SideNavBar Shell -->
+<aside class="w-[272px] h-screen sticky left-0 top-0 bg-surface-container-low flex flex-col p-5 gap-2 z-40">
+<div class="mb-8 px-2">
+<h1 class="text-2xl font-black tracking-tighter text-on-surface">NIZAM</h1>
+<p class="text-xs font-medium text-on-surface/50 tracking-wide">Contact Center &amp; Ops</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Wallboard -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface/70 hover:bg-surface-container-highest/50 transition-colors duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-lg">monitoring</span>
+<span class="font-medium text-sm">Wallboard</span>
+</a>
+<!-- Queues - ACTIVE -->
+<a class="flex items-center gap-3 px-3 py-2.5 bg-surface-container-highest text-primary font-semibold rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">group_work</span>
+<span class="font-medium text-sm">Queues</span>
+</a>
+<!-- Agents -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface/70 hover:bg-surface-container-highest/50 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">support_agent</span>
+<span class="font-medium text-sm">Agents</span>
+</a>
+<!-- Webhooks -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface/70 hover:bg-surface-container-highest/50 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">webhook</span>
+<span class="font-medium text-sm">Webhooks</span>
+</a>
+<!-- API Tokens -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface/70 hover:bg-surface-container-highest/50 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">key</span>
+<span class="font-medium text-sm">API Tokens</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant/20 pt-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface/70 hover:bg-surface-container-highest/50 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span class="font-medium text-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface/70 hover:bg-surface-container-highest/50 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined text-lg">help_outline</span>
+<span class="font-medium text-sm">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopAppBar -->
+<header class="h-16 w-full sticky top-0 z-50 glass border-b border-outline-variant/20 flex items-center justify-between px-8 shadow-[0_8px_32px_rgba(19,27,46,0.06)]">
+<div class="flex items-center gap-4">
+<nav class="flex items-center gap-6">
+<a class="text-on-surface/60 hover:text-on-surface font-medium text-sm transition-all duration-300" href="#">Dashboard</a>
+<a class="text-primary border-b-2 border-primary pb-5 font-medium text-sm translate-y-2.5 transition-all duration-300" href="#">Analytics</a>
+<a class="text-on-surface/60 hover:text-on-surface font-medium text-sm transition-all duration-300" href="#">Logs</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface/40 group-focus-within:text-primary transition-colors">search</span>
+<input class="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface/30" placeholder="Search queues..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-highest transition-colors text-on-surface/70">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-px bg-outline-variant/20"></div>
+<button class="flex items-center gap-2 pl-2">
+<img alt="User Profile" class="w-8 h-8 rounded-full bg-surface-container-high" data-alt="Corporate professional user profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFePo9qwDwArIy2o56E87peCRMLmKCXzdvQ8UMowa54nR8z6NtHfL_LRwrV_lsZGzsBJL8AC4vhPKjdY2WXYY7rEDyET60opuR2x2-z_zLzWVUDDngYi8XP3vSUGh1R2QXpNUyIrd6ZHlvNjD07cRqlxHt34gFGdIz6BQ52IqSYo4pZe0Zh1t-QTaafh-6D1DYG9YN5203Hc8F007U4-EjwLMolW71r5rnLY9jnrgOy-wGOYnavwOY2uGhg7aeezdKf9bFG202fY0"/>
+<span class="material-symbols-outlined text-on-surface/40">expand_more</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-8 space-y-6">
+<!-- Header Section -->
+<div class="flex items-end justify-between">
+<div>
+<div class="flex items-center gap-2 text-on-surface/50 text-xs font-semibold tracking-widest uppercase mb-1">
+<span>Contact Center</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span class="text-on-surface">Queues</span>
+</div>
+<h2 class="text-3xl font-extrabold text-on-surface tracking-tight">Active Queues</h2>
+</div>
+<button class="primary-gradient text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-lg shadow-primary/20 flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-lg">add</span>
+                    Create Queue
+                </button>
+</div>
+<!-- Stats Overview - Bento Style -->
+<div class="grid grid-cols-4 gap-4">
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-xs font-medium text-on-surface/50 uppercase tracking-wider mb-2">Total Waiting</p>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-black text-on-surface">42</span>
+<span class="text-xs font-bold text-error flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs">trending_up</span> 12%
+                        </span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-xs font-medium text-on-surface/50 uppercase tracking-wider mb-2">Avg. Wait Time</p>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-black text-on-surface">02:45</span>
+<span class="text-xs font-bold text-primary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs">trending_down</span> 4s
+                        </span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-xs font-medium text-on-surface/50 uppercase tracking-wider mb-2">Service Level</p>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-black text-on-surface">94.2%</span>
+<span class="text-xs font-bold text-on-surface/30">Target 90%</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-xs font-medium text-on-surface/50 uppercase tracking-wider mb-2">Active Agents</p>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-black text-on-surface">128</span>
+<div class="flex -space-x-2 ml-4">
+<img alt="Agent" class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" data-alt="Agent profile thumbnail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7u8lDcYT4m_14SzzeCJ5GRAOgQCGnnwYzhNq2yrmKiW_R83bpXK7LK9KphA4MwmR02mOOhkIJ7xWIOBGSXZDnV3dXrzDccA7DqtWbEsUumXBV_fGq2WKiapXLMjaG8h9B4CfsJsveu7JCdRVHhYhKyUhj_vPesUIOtcC3h4tg7X7RWkm_w6WBksFEo3K68v9HHAKiAEdojbdxhgwDR0SqEH4pXXJnCuuBl9wsCdU8kxBj31ql7ngwz9I0GA83VmUy1QgQcWwFxJk"/>
+<img alt="Agent" class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" data-alt="Agent profile thumbnail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA4wGTAT-gMFJhbR1I4keq6OeSS7CCc9W8KUr0BQ04MlNeQgYgsN9lvDEWHfFHJ1hAqr74YwrEHNqdT_MC4d2K-tqaDgke2akkPmirmeGmn1IzmGNOdEadLa9gCaS2xkmp9XqFIL6fw1L9wq23RvzuEMpmJGLUWJy-TqpmmmRCwXjbSA-HMDQufLP4jVG4ULl8_x-idztvNWXHTvTOBdyyGla99mQGJ1AnEhURADLwjbNloaGnN_5cnskUqp97TSuSip1v2NbAZUo"/>
+<img alt="Agent" class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" data-alt="Agent profile thumbnail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2McpVVM6OwUhdMZwR1M6GguhryFMuvHS0xkY_FmO33amvfBwALcH52ovwM4MQR7vZvBLAIVFk7Rs9ZfCuLGeWngRK9J398EIHp7GTO0Ui68EgNl9neHz8zdnjYLMz8M_afXVfrVdLIzQ8sP7b8BtNZcYaP19eLuxRkltdg-6qKTDOscSQw7p-CzxgB0uCz7-5z9NCkvpEvfEHVMd8hjqAYzISn39LJ2nc7EXsDG_iI_-z0V1XoeR14t3frk-srHhu30e1Lf2yKjs"/>
+<div class="w-6 h-6 rounded-full border-2 border-surface-container-lowest bg-surface-container-high flex items-center justify-center text-[8px] font-bold text-on-surface/60">+125</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Table Controls -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm font-medium text-on-surface/70 hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                        Filters
+                    </button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm font-medium text-on-surface/70 hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">export_notes</span>
+                        Export
+                    </button>
+</div>
+<div class="text-xs text-on-surface/40 font-medium">
+                    Last updated: <span class="font-mono">14:22:01</span>
+</div>
+</div>
+<!-- High-Density Table -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 border-b border-outline-variant/10">
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface/50">Queue Name</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface/50">Strategy</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface/50">Active Agents</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface/50">Waiting</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface/50">SLA %</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface/50">Status</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface/50 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg">support</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">General Support</p>
+<p class="text-[10px] font-mono text-on-surface/40 uppercase tracking-tighter">ID: GS-8821</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded text-[10px] font-bold bg-secondary-container/30 text-secondary uppercase tracking-wider">Round Robin</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="text-sm font-mono font-medium">24</span>
+<div class="w-24 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[80%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-mono font-bold text-error">14</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5">
+<span class="text-sm font-bold text-on-surface">98.5%</span>
+<div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Operational
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface/30 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-tertiary-container/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-lg">workspace_premium</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">VIP Priority</p>
+<p class="text-[10px] font-mono text-on-surface/40 uppercase tracking-tighter">ID: VIP-0012</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded text-[10px] font-bold bg-secondary-container/30 text-secondary uppercase tracking-wider">Most Idle</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="text-sm font-mono font-medium">12</span>
+<div class="w-24 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[100%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-mono font-bold text-on-surface/40">0</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5">
+<span class="text-sm font-bold text-on-surface">100%</span>
+<div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Operational
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface/30 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-error-container/20 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-lg">account_balance_wallet</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Billing &amp; Payments</p>
+<p class="text-[10px] font-mono text-on-surface/40 uppercase tracking-tighter">ID: PAY-4411</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded text-[10px] font-bold bg-secondary-container/30 text-secondary uppercase tracking-wider">Skill-Based</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="text-sm font-mono font-medium">08</span>
+<div class="w-24 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-amber-500 h-full w-[40%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-mono font-bold text-error">28</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5">
+<span class="text-sm font-bold text-error">82.1%</span>
+<div class="w-2 h-2 rounded-full bg-error"></div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    Critical Load
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface/30 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg">language</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">International</p>
+<p class="text-[10px] font-mono text-on-surface/40 uppercase tracking-tighter">ID: INT-9022</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded text-[10px] font-bold bg-secondary-container/30 text-secondary uppercase tracking-wider">Circular</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="text-sm font-mono font-medium">42</span>
+<div class="w-24 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[65%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-mono font-bold text-on-surface">02</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5">
+<span class="text-sm font-bold text-on-surface">91.4%</span>
+<div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Operational
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface/30 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination -->
+<div class="px-6 py-4 bg-surface-container-low/30 flex items-center justify-between border-t border-outline-variant/10">
+<span class="text-xs text-on-surface/40 font-medium tracking-tight">Showing <span class="text-on-surface">4</span> of <span class="text-on-surface">18</span> queues</span>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/20 text-on-surface/30 cursor-not-allowed">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container-high text-xs font-bold text-on-surface/60">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container-high text-xs font-bold text-on-surface/60">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/20 text-on-surface/60 hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Contextual Insights Section (Asymmetric) -->
+<div class="grid grid-cols-3 gap-6">
+<div class="col-span-2 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-base font-bold text-on-surface">Volume Trends (24h)</h3>
+<div class="flex items-center gap-2">
+<span class="flex items-center gap-1 text-[10px] font-bold text-on-surface/40">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Current
+                            </span>
+<span class="flex items-center gap-1 text-[10px] font-bold text-on-surface/40">
+<span class="w-2 h-2 rounded-full bg-surface-container-high"></span> Avg.
+                            </span>
+</div>
+</div>
+<div class="h-32 flex items-end justify-between px-2 gap-2">
+<!-- Abstract Volume Chart -->
+<div class="w-full bg-surface-container-low rounded-t-sm h-[40%]"></div>
+<div class="w-full bg-surface-container-low rounded-t-sm h-[55%]"></div>
+<div class="w-full bg-surface-container-low rounded-t-sm h-[45%]"></div>
+<div class="w-full bg-surface-container-low rounded-t-sm h-[70%]"></div>
+<div class="w-full bg-primary/80 rounded-t-sm h-[85%]"></div>
+<div class="w-full bg-primary/80 rounded-t-sm h-[95%]"></div>
+<div class="w-full bg-primary/80 rounded-t-sm h-[80%]"></div>
+<div class="w-full bg-surface-container-low rounded-t-sm h-[60%]"></div>
+<div class="w-full bg-surface-container-low rounded-t-sm h-[50%]"></div>
+<div class="w-full bg-surface-container-low rounded-t-sm h-[40%]"></div>
+</div>
+<div class="flex justify-between mt-4 text-[10px] font-mono text-on-surface/30">
+<span>08:00</span>
+<span>12:00</span>
+<span>16:00</span>
+<span>20:00</span>
+<span>00:00</span>
+</div>
+</div>
+<div class="bg-primary-container text-white p-6 rounded-xl relative overflow-hidden flex flex-col justify-between">
+<div class="relative z-10">
+<h3 class="text-base font-bold mb-1">Queue Automation</h3>
+<p class="text-xs text-white/70 leading-relaxed">System has detected high load on Billing. Automatic scale-up triggered for 4 additional agents.</p>
+</div>
+<button class="relative z-10 w-full py-2 bg-white/20 hover:bg-white/30 transition-colors rounded-lg text-xs font-bold mt-4 uppercase tracking-wider">
+                        View Logic
+                    </button>
+<!-- Abstract Background Pattern -->
+<div class="absolute -right-8 -bottom-8 opacity-20">
+<span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

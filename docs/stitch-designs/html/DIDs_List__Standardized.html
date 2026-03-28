@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - DIDs Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed-dim": "#ffb783",
+                        "surface-bright": "#faf8ff",
+                        "primary": "#4648d4",
+                        "on-primary-container": "#fffbff",
+                        "on-secondary-fixed": "#13144a",
+                        "surface-container-low": "#f2f3ff",
+                        "on-primary": "#ffffff",
+                        "background": "#faf8ff",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffdcc5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#301400",
+                        "on-secondary-container": "#494b83",
+                        "on-primary-fixed": "#07006c",
+                        "surface-tint": "#494bd6",
+                        "primary-container": "#6063ee",
+                        "inverse-surface": "#283044",
+                        "surface": "#faf8ff",
+                        "surface-variant": "#dae2fd",
+                        "secondary-fixed": "#e1e0ff",
+                        "inverse-primary": "#c0c1ff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "tertiary-container": "#b55d00",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary-container": "#bdbefe",
+                        "secondary": "#575992",
+                        "primary-fixed": "#e1e0ff",
+                        "outline-variant": "#c7c4d7",
+                        "surface-container-highest": "#dae2fd",
+                        "on-tertiary-container": "#fffbff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#464554",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#d2d9f4",
+                        "on-secondary-fixed-variant": "#404178",
+                        "outline": "#767586",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#131b2e",
+                        "tertiary": "#904900",
+                        "surface-container-high": "#e2e7ff",
+                        "on-background": "#131b2e",
+                        "surface-container": "#eaedff",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#703700"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 1.25rem;
+        }
+        .glass-header {
+            background: rgba(250, 248, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #4648d4 0%, #6063ee 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body antialiased flex min-h-screen">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="w-68 h-screen sticky top-0 left-0 border-r border-outline-variant/20 bg-slate-50 flex flex-col p-4 z-40">
+<div class="mb-8 px-2">
+<h1 class="text-xl font-bold tracking-tighter text-slate-900">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Enterprise Voice</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-200/50 transition-colors duration-150 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+            </a>
+<!-- Active Navigation Logic: Phone System -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 font-semibold transition-transform active:scale-[0.98] text-sm" href="#">
+<span class="material-symbols-outlined">phone_in_talk</span> Phone System
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-200/50 transition-colors duration-150 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">alt_route</span> Routing
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-200/50 transition-colors duration-150 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">hub</span> Connectivity
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-200/50 transition-colors duration-150 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">call</span> Calls
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-200/50 transition-colors duration-150 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">support_agent</span> Contact Center
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-200/50 transition-colors duration-150 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">extension</span> Integrations
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-200/50 transition-colors duration-150 font-medium text-sm" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span> Admin
+            </a>
+</nav>
+<div class="mt-auto pt-4 border-t border-outline-variant/10">
+<div class="flex items-center gap-3 px-3 py-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="User profile photo in sidebar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDj4KFnS5Q7Q1-Q3oUqUOAqftsffRWMVHDiuO2k5ltZCdmCvgA2kFlGCqi59MjAqJkfQm0HdbPqaT_a5cXmEeDxKXmiv0_08wvYKk6F5v40mDRlYth9iSA5MIbls8Yx-Nvvc2Xax9lokiWG_FTlS_ccXRBGetykATbfERm4rPt5WChch_r31pYLS8ow334rDQKF4YuK9CPyE5D4D2bUiN-ATzlC2P6L-4Ju_P8v6Yq5bk1knMkoJSLG5cTw8oKU03bK2P6Wpukx8hs"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold truncate">Alex Rivera</p>
+<p class="text-[10px] text-slate-500 truncate">System Architect</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar (Authority: JSON + Design System) -->
+<header class="h-16 w-full sticky top-0 z-50 border-b border-slate-200/60 glass-header flex justify-between items-center px-6">
+<div class="flex items-center gap-4">
+<nav class="flex items-center gap-2 text-sm">
+<span class="text-slate-500">Phone System</span>
+<span class="material-symbols-outlined text-slate-400 text-xs">chevron_right</span>
+<span class="text-slate-900 font-medium">DIDs</span>
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative group hidden md:block">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">search</span>
+<input class="bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-1.5 text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all outline-none" placeholder="Search resources..." type="text"/>
+</div>
+<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<button class="p-2 text-slate-500 hover:text-primary transition-colors focus:ring-2 focus:ring-indigo-500/20 rounded-lg">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:text-primary transition-colors focus:ring-2 focus:ring-indigo-500/20 rounded-lg">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="p-2 text-slate-500 hover:text-primary transition-colors focus:ring-2 focus:ring-indigo-500/20 rounded-lg">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="flex items-center gap-2 ml-2 px-3 py-1.5 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="text-xs font-semibold text-slate-700">Global Tenant</span>
+<span class="material-symbols-outlined text-sm">unfold_more</span>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-8 space-y-6">
+<!-- Header Section -->
+<div class="flex items-end justify-between">
+<div>
+<h2 class="text-3xl font-bold tracking-tight text-on-surface">Direct Inward Dialing</h2>
+<p class="text-on-surface-variant mt-1">Manage and route your enterprise virtual phone numbers.</p>
+</div>
+<button class="primary-gradient text-white px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm hover:shadow-md transition-all active:scale-95">
+<span class="material-symbols-outlined text-lg">add</span>
+                    Create DID
+                </button>
+</div>
+<!-- Stats Overview (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-lowest p-5 rounded-xl border-none shadow-[0_4px_20px_rgba(19,27,46,0.03)] flex flex-col gap-1">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Numbers</span>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-bold text-on-surface">1,284</span>
+<span class="text-[10px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded">+12%</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border-none shadow-[0_4px_20px_rgba(19,27,46,0.03)] flex flex-col gap-1">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Routes</span>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-bold text-on-surface">1,102</span>
+<span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">Steady</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border-none shadow-[0_4px_20px_rgba(19,27,46,0.03)] flex flex-col gap-1">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Avg. Match Rate</span>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-bold text-on-surface">94.2%</span>
+<span class="text-[10px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">+2.4%</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border-none shadow-[0_4px_20px_rgba(19,27,46,0.03)] flex flex-col gap-1">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Unassigned</span>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-bold text-on-surface">182</span>
+<span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Alert</span>
+</div>
+</div>
+</div>
+<!-- Filter & Table Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_8px_32px_rgba(19,27,46,0.06)] overflow-hidden">
+<!-- Filter Bar -->
+<div class="px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant/10">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative flex-1 max-w-sm">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">filter_list</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Filter by number or label..." type="text"/>
+</div>
+<select class="bg-surface-container-low border-none rounded-xl px-4 py-2 text-sm font-medium text-slate-600 focus:ring-2 focus:ring-primary/20 outline-none">
+<option>All Statuses</option>
+<option>Active</option>
+<option>Inactive</option>
+</select>
+<select class="bg-surface-container-low border-none rounded-xl px-4 py-2 text-sm font-medium text-slate-600 focus:ring-2 focus:ring-primary/20 outline-none">
+<option>All Scopes</option>
+<option>Global</option>
+<option>Regional</option>
+</select>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined">file_download</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</div>
+</div>
+<!-- Dense Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 border-b border-outline-variant/10">
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Number</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Label</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Source Scope</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Destination</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Last Matched</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<span class="font-mono text-sm text-indigo-600 font-medium">+1 (555) 012-3456</span>
+</td>
+<td class="px-6 py-4 text-sm font-medium text-slate-900">Main HQ Reception</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 uppercase tracking-tight">Global_Tier_1</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-purple-500 text-sm">hub</span>
+<span class="text-sm text-slate-600">IVR_Main_01</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-green-50 text-green-700 uppercase tracking-tighter">Active</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs text-slate-500 font-mono">2 mins ago</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<span class="font-mono text-sm text-indigo-600 font-medium">+1 (555) 019-8877</span>
+</td>
+<td class="px-6 py-4 text-sm font-medium text-slate-900">Support Line - EMEA</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 uppercase tracking-tight">Europe_Cluster</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-purple-500 text-sm">support_agent</span>
+<span class="text-sm text-slate-600">CC_Queue_Primary</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-green-50 text-green-700 uppercase tracking-tighter">Active</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs text-slate-500 font-mono">14 mins ago</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<span class="font-mono text-sm text-indigo-600 font-medium">+1 (555) 044-2211</span>
+</td>
+<td class="px-6 py-4 text-sm font-medium text-slate-900">Testing Sandbox</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 uppercase tracking-tight">Dev_Environment</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-sm">link_off</span>
+<span class="text-sm text-slate-400 italic">Unassigned</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-tighter">Inactive</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs text-slate-400 font-mono">8 days ago</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<span class="font-mono text-sm text-indigo-600 font-medium">+1 (555) 099-0012</span>
+</td>
+<td class="px-6 py-4 text-sm font-medium text-slate-900">Sales Hotline - West</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 uppercase tracking-tight">Regional_US_W</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-purple-500 text-sm">alt_route</span>
+<span class="text-sm text-slate-600">LB_Sales_Cluster</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-green-50 text-green-700 uppercase tracking-tighter">Active</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs text-slate-500 font-mono">Just now</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-outline-variant/10 flex items-center justify-between bg-surface-container-low/20">
+<span class="text-xs font-medium text-slate-500">Showing 1-4 of 1,284 numbers</span>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-outline-variant/30 text-slate-400 hover:bg-white transition-all disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-outline-variant/30 text-primary font-bold text-xs shadow-sm">1</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-outline-variant/30 text-slate-600 hover:bg-white transition-all text-xs">2</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-outline-variant/30 text-slate-600 hover:bg-white transition-all text-xs">3</button>
+<span class="text-slate-300 mx-1">...</span>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-outline-variant/30 text-slate-600 hover:bg-white transition-all text-xs">321</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-outline-variant/30 text-slate-400 hover:bg-white transition-all">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

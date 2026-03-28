@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed-dim": "#ffb783",
+                        "surface-bright": "#faf8ff",
+                        "primary": "#4648d4",
+                        "on-primary-container": "#fffbff",
+                        "on-secondary-fixed": "#13144a",
+                        "surface-container-low": "#f2f3ff",
+                        "on-primary": "#ffffff",
+                        "background": "#faf8ff",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffdcc5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#301400",
+                        "on-secondary-container": "#494b83",
+                        "on-primary-fixed": "#07006c",
+                        "surface-tint": "#494bd6",
+                        "primary-container": "#6063ee",
+                        "inverse-surface": "#283044",
+                        "surface": "#faf8ff",
+                        "surface-variant": "#dae2fd",
+                        "secondary-fixed": "#e1e0ff",
+                        "inverse-primary": "#c0c1ff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "tertiary-container": "#b55d00",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary-container": "#bdbefe",
+                        "secondary": "#575992",
+                        "primary-fixed": "#e1e0ff",
+                        "outline-variant": "#c7c4d7",
+                        "surface-container-highest": "#dae2fd",
+                        "on-tertiary-container": "#fffbff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#464554",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#d2d9f4",
+                        "on-secondary-fixed-variant": "#404178",
+                        "outline": "#767586",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#131b2e",
+                        "tertiary": "#904900",
+                        "surface-container-high": "#e2e7ff",
+                        "on-background": "#131b2e",
+                        "surface-container": "#eaedff",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#703700"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .mono-text { font-family: 'JetBrains Mono', monospace; }
+        .glass-header {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex">
+<!-- SideNavBar Shell -->
+<aside class="w-68 h-screen sticky top-0 left-0 border-r bg-slate-50 dark:bg-slate-950 flex flex-col h-full p-4 font-sans text-sm font-medium tracking-tight Inter">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-lg" data-weight="fill" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-slate-900 dark:text-slate-100">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500">Enterprise Voice</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-semibold transition-transform duration-150 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-[20px]">phone_in_talk</span>
+                Phone System
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">alt_route</span>
+                Routing
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+                Connectivity
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">call</span>
+                Calls
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">support_agent</span>
+                Contact Center
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">extension</span>
+                Integrations
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                Admin
+            </a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 px-2 py-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="User Avatar" data-alt="User profile placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA61JNwNk-RO2vNqHr_xAT35IQJnzpmqFcZt87xpBCIhL6UxbYNaQqBv5ZvVYHTWC3dB5ZduBoyzzqlFzVYplehZyyfPsso_WeFCORIR23sObRViyLgWFRc5TJH92wuphl4w5eyoqVMDwc8lHOysof8m-qNITWf29UftUrjKpkEGtqW-2H8rUgZiht0Y_JX0aNmFbj8r0PuieVozguXcsTzTFqlIEFAu-ghsBmlyKNYhar47U-6IEKWYziEy-TEqkkDUUWkH3ba1Pc"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-semibold truncate text-on-surface">Alex Chen</p>
+<p class="text-[10px] text-slate-500 truncate">System Architect</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar Shell -->
+<header class="h-16 w-full sticky top-0 z-50 border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none flex justify-between items-center px-6 w-full">
+<div class="flex items-center gap-4">
+<nav class="flex items-center text-sm font-sans Inter">
+<span class="text-slate-500 dark:text-slate-400">Phone System</span>
+<span class="material-symbols-outlined text-slate-400 mx-2 text-sm">chevron_right</span>
+<span class="text-slate-900 dark:text-slate-100 font-medium">IVRs</span>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-low border border-outline-variant/20 hover:bg-surface-container transition-colors">
+<span class="text-xs font-medium text-on-surface">Main Office Tenant</span>
+<span class="material-symbols-outlined text-sm">unfold_more</span>
+</button>
+</div>
+<div class="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1"></div>
+<div class="flex items-center gap-1">
+<button class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:ring-2 focus:ring-indigo-500/20 rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:ring-2 focus:ring-indigo-500/20 rounded-full">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:ring-2 focus:ring-indigo-500/20 rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-8 max-w-[1400px] mx-auto w-full space-y-8">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-1">
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface">Interactive Voice Response</h2>
+<p class="text-on-surface-variant max-w-2xl">Configure multi-level automated greeting menus, keypress routing logic, and schedule-based call handling for your organization.</p>
+</div>
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold shadow-md hover:shadow-lg transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>Create IVR</span>
+</button>
+</div>
+<!-- Dashboard Stats / Highlights -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="p-6 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Total Menus</p>
+<p class="text-2xl font-bold text-on-surface">24</p>
+</div>
+<div class="p-6 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Active Routes</p>
+<div class="flex items-end gap-2">
+<p class="text-2xl font-bold text-on-surface">18</p>
+<span class="text-xs text-emerald-600 font-medium mb-1 flex items-center"><span class="material-symbols-outlined text-sm">arrow_upward</span> 4%</span>
+</div>
+</div>
+<div class="p-6 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Avg. Menu Depth</p>
+<p class="text-2xl font-bold text-on-surface">2.4</p>
+</div>
+<div class="p-6 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Peak Concurrent</p>
+<p class="text-2xl font-bold text-on-surface">142</p>
+</div>
+</div>
+<!-- Filters Bar -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-6 bg-surface-container-low rounded-xl">
+<div class="flex items-center gap-4 w-full sm:w-auto">
+<div class="relative w-full sm:w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border-none focus:ring-2 focus:ring-primary/20 rounded-lg text-sm transition-all shadow-sm" placeholder="Search IVR menus by name..." type="text"/>
+</div>
+<div class="h-8 w-[1px] bg-slate-300 dark:bg-slate-700"></div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant/10 text-xs font-medium text-on-surface-variant hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                            Status: All
+                        </button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<p class="text-xs text-on-surface-variant">Displaying 24 results</p>
+<button class="p-2 hover:bg-surface-container-high rounded-lg transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</div>
+<!-- Dense Data Table Container -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Options</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Modified</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+<span class="material-symbols-outlined text-lg">call_split</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Main_Welcome_Menu</p>
+<p class="mono-text text-[10px] text-slate-400">IVR-7729-X</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<p class="text-sm text-on-surface-variant truncate max-w-[240px]">Primary customer service greeting with dynamic holiday scheduling.</p>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700">9 Options</span>
+<span class="text-[11px] text-slate-400">Level 2 Depth</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 flex items-center gap-1.5 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Published
+                                </span>
+</td>
+<td class="px-6 py-4">
+<p class="text-[13px] text-on-surface-variant">Oct 24, 2023</p>
+<p class="text-[10px] text-slate-400">by a.chen</p>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+<span class="material-symbols-outlined text-lg">support</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Tech_Support_Queue</p>
+<p class="mono-text text-[10px] text-slate-400">IVR-8812-B</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<p class="text-sm text-on-surface-variant truncate max-w-[240px]">Automated triage for level 1 and 2 technical issues.</p>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700">5 Options</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 flex items-center gap-1.5 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Published
+                                </span>
+</td>
+<td class="px-6 py-4">
+<p class="text-[13px] text-on-surface-variant">Nov 02, 2023</p>
+<p class="text-[10px] text-slate-400">by m.roberts</p>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined text-lg">construction</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Billing_Redesign_V2</p>
+<p class="mono-text text-[10px] text-slate-400">IVR-9001-A</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<p class="text-sm text-on-surface-variant truncate max-w-[240px]">Drafting new billing menu for international customers.</p>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700">3 Options</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 flex items-center gap-1.5 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    Draft
+                                </span>
+</td>
+<td class="px-6 py-4">
+<p class="text-[13px] text-on-surface-variant">Just now</p>
+<p class="text-[10px] text-slate-400">by a.chen</p>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-lg">archive</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Holiday_Promo_2022</p>
+<p class="mono-text text-[10px] text-slate-400">IVR-5541-D</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<p class="text-sm text-on-surface-variant truncate max-w-[240px]">Seasonal promo menu (archived). Keep for reference.</p>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600">4 Options</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 flex items-center gap-1.5 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                    Archived
+                                </span>
+</td>
+<td class="px-6 py-4">
+<p class="text-[13px] text-on-surface-variant">Dec 28, 2022</p>
+<p class="text-[10px] text-slate-400">by s.vane</p>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">unarchive</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination -->
+<div class="px-6 py-4 bg-surface-container-low/30 border-t border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<select class="bg-surface-container-lowest border-none text-[11px] font-medium rounded-lg px-2 py-1 focus:ring-1 focus:ring-primary/20">
+<option>10 per page</option>
+<option selected="">20 per page</option>
+<option>50 per page</option>
+</select>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 text-slate-400 hover:text-on-surface disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-lg">chevron_left</span>
+</button>
+<div class="flex items-center gap-1 px-2">
+<button class="w-7 h-7 flex items-center justify-center rounded-lg bg-primary text-on-primary text-xs font-semibold">1</button>
+<button class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface-variant text-xs font-medium">2</button>
+</div>
+<button class="p-1 text-slate-400 hover:text-on-surface">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Contextual Help / Bento Promo -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="col-span-1 md:col-span-2 p-6 rounded-2xl bg-gradient-to-r from-surface-container-highest to-surface-container-low border border-indigo-200/20 relative overflow-hidden group">
+<div class="relative z-10 space-y-3">
+<div class="flex items-center gap-2 text-indigo-600">
+<span class="material-symbols-outlined text-lg">auto_awesome</span>
+<span class="text-xs font-bold uppercase tracking-widest">Power Feature</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface">Visual IVR Architect</h3>
+<p class="text-sm text-on-surface-variant max-w-lg leading-relaxed">Design complex call flows with our drag-and-drop canvas. Real-time validation ensures no caller ever hits a dead end.</p>
+<button class="mt-2 text-sm font-semibold text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
+                            Open Visual Editor
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="absolute -right-4 -bottom-4 w-48 h-48 opacity-10 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[12rem]">account_tree</span>
+</div>
+</div>
+<div class="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/10 shadow-sm flex flex-col justify-between">
+<div class="space-y-2">
+<span class="material-symbols-outlined text-amber-500">lightbulb</span>
+<h4 class="font-bold text-on-surface">Best Practice</h4>
+<p class="text-xs text-on-surface-variant leading-relaxed">Limit top-level menus to 5 options for better accessibility and caller retention. Use sub-menus for deep categorization.</p>
+</div>
+<a class="text-xs font-medium text-slate-500 underline underline-offset-4 decoration-slate-200" href="#">Read the Guide</a>
+</div>
+</div>
+</div>
+</main>
+</body></html>

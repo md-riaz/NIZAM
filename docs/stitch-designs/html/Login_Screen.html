@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sign in to NIZAM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#dae2fd",
+              "tertiary-fixed": "#ffdcc5",
+              "outline": "#767586",
+              "surface-container-high": "#e2e7ff",
+              "tertiary-fixed-dim": "#ffb783",
+              "secondary-fixed-dim": "#c0c1ff",
+              "primary": "#4648d4",
+              "on-tertiary-fixed": "#301400",
+              "on-surface-variant": "#464554",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "secondary-fixed": "#e1e0ff",
+              "surface-container-highest": "#dae2fd",
+              "secondary-container": "#bdbefe",
+              "error-container": "#ffdad6",
+              "error": "#ba1a1a",
+              "background": "#faf8ff",
+              "on-primary-container": "#fffbff",
+              "on-background": "#131b2e",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f2f3ff",
+              "inverse-surface": "#283044",
+              "on-tertiary-fixed-variant": "#703700",
+              "on-secondary-fixed": "#13144a",
+              "surface-bright": "#faf8ff",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed-variant": "#404178",
+              "on-error-container": "#93000a",
+              "surface-tint": "#494bd6",
+              "surface": "#faf8ff",
+              "tertiary": "#904900",
+              "outline-variant": "#c7c4d7",
+              "on-error": "#ffffff",
+              "on-surface": "#131b2e",
+              "tertiary-container": "#b55d00",
+              "on-secondary-container": "#494b83",
+              "surface-container": "#eaedff",
+              "primary-fixed-dim": "#c0c1ff",
+              "on-primary-fixed": "#07006c",
+              "primary-fixed": "#e1e0ff",
+              "inverse-on-surface": "#eef0ff",
+              "on-tertiary-container": "#fffbff",
+              "on-primary": "#ffffff",
+              "on-secondary": "#ffffff",
+              "secondary": "#575992",
+              "inverse-primary": "#c0c1ff",
+              "surface-dim": "#d2d9f4",
+              "primary-container": "#6063ee"
+            },
+            fontFamily: {
+              "headline": ["Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"],
+              "mono": ["JetBrains Mono", "monospace"]
+            },
+            borderRadius: {
+              "DEFAULT": "0.125rem",
+              "lg": "0.25rem",
+              "xl": "0.5rem",
+              "full": "0.75rem"
+            },
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #4648d4 0%, #6063ee 100%);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+        }
+        .glass-header {
+            background: rgba(250, 248, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background antialiased min-h-screen flex flex-col items-center justify-center p-6">
+<div class="w-full max-w-md">
+<!-- Logo Section -->
+<div class="flex flex-col items-center mb-8">
+<div class="mb-4 flex items-center justify-center w-12 h-12 rounded-xl btn-primary-gradient">
+<span class="material-symbols-outlined text-white text-2xl" data-icon="hub">hub</span>
+</div>
+<h1 class="text-2xl font-extrabold tracking-tighter text-on-background">NIZAM</h1>
+</div>
+<!-- Auth Card -->
+<div class="bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/20 shadow-[0_8px_32px_rgba(19,27,46,0.04)]">
+<div class="mb-8">
+<h2 class="text-xl font-semibold text-on-background tracking-tight">Sign in to NIZAM</h2>
+<p class="text-sm text-on-surface-variant mt-1">Enter your credentials to access your control plane.</p>
+</div>
+<form class="space-y-6">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex items-center gap-2" for="email">
+<span class="material-symbols-outlined text-sm" data-icon="alternate_email">alternate_email</span>
+                        Email Address
+                    </label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-0 border-b border-outline-variant/40 py-3 px-0 focus:ring-0 focus:border-primary transition-colors placeholder:text-outline/50 text-on-background" id="email" placeholder="name@company.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<label class="text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex items-center gap-2" for="password">
+<span class="material-symbols-outlined text-sm" data-icon="lock">lock</span>
+                            Password
+                        </label>
+<a class="text-[11px] font-bold text-primary hover:text-primary-container transition-colors uppercase tracking-wider" href="#">Forgot password?</a>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-0 border-b border-outline-variant/40 py-3 px-0 focus:ring-0 focus:border-primary transition-colors placeholder:text-outline/50 text-on-background" id="password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- Remember Me & Options -->
+<div class="flex items-center">
+<label class="flex items-center group cursor-pointer">
+<input class="w-4 h-4 rounded-lg border-outline-variant/40 text-primary focus:ring-primary/20 bg-surface-container-low transition-all" type="checkbox"/>
+<span class="ml-2 text-sm text-on-surface-variant group-hover:text-on-background transition-colors">Remember this device</span>
+</label>
+</div>
+<!-- Primary Action -->
+<button class="w-full btn-primary-gradient text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:opacity-95 transition-all active:scale-[0.98]" type="submit">
+<span>Sign In</span>
+<span class="material-symbols-outlined text-lg" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</form>
+<!-- Status Indicator (Subtle Data Layer) -->
+<div class="mt-8 pt-6 border-t border-outline-variant/10 flex items-center justify-center gap-4">
+<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container-high/30">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="font-mono text-[10px] text-on-surface-variant">API: v2.4.0-stable</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container-high/30">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="font-mono text-[10px] text-on-surface-variant">Cloud: Operational</span>
+</div>
+</div>
+</div>
+<!-- Footer Links -->
+<div class="mt-8 flex items-center justify-center gap-6 text-[11px] font-semibold text-on-surface-variant uppercase tracking-widest">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="help_outline">help_outline</span>
+                Support
+            </a>
+<span class="w-1 h-1 rounded-full bg-outline-variant/40"></span>
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="description">description</span>
+                Docs
+            </a>
+<span class="w-1 h-1 rounded-full bg-outline-variant/40"></span>
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+                Security
+            </a>
+</div>
+</div>
+<!-- Background Decoration -->
+<div class="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+<div class="absolute -top-[10%] -left-[5%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full"></div>
+<div class="absolute -bottom-[10%] -right-[5%] w-[40%] h-[40%] bg-secondary/5 blur-[120px] rounded-full"></div>
+</div>
+</body></html>

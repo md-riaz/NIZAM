@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#dae2fd",
+              "tertiary-fixed": "#ffdcc5",
+              "outline": "#767586",
+              "surface-container-high": "#e2e7ff",
+              "tertiary-fixed-dim": "#ffb783",
+              "secondary-fixed-dim": "#c0c1ff",
+              "primary": "#4648d4",
+              "on-tertiary-fixed": "#301400",
+              "on-surface-variant": "#464554",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "secondary-fixed": "#e1e0ff",
+              "surface-container-highest": "#dae2fd",
+              "secondary-container": "#bdbefe",
+              "error-container": "#ffdad6",
+              "error": "#ba1a1a",
+              "background": "#faf8ff",
+              "on-primary-container": "#fffbff",
+              "on-background": "#131b2e",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f2f3ff",
+              "inverse-surface": "#283044",
+              "on-tertiary-fixed-variant": "#703700",
+              "on-secondary-fixed": "#13144a",
+              "surface-bright": "#faf8ff",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed-variant": "#404178",
+              "on-error-container": "#93000a",
+              "surface-tint": "#494bd6",
+              "surface": "#faf8ff",
+              "tertiary": "#904900",
+              "outline-variant": "#c7c4d7",
+              "on-error": "#ffffff",
+              "on-surface": "#131b2e",
+              "tertiary-container": "#b55d00",
+              "on-secondary-container": "#494b83",
+              "surface-container": "#eaedff",
+              "primary-fixed-dim": "#c0c1ff",
+              "on-primary-fixed": "#07006c",
+              "primary-fixed": "#e1e0ff",
+              "inverse-on-surface": "#eef0ff",
+              "on-tertiary-container": "#fffbff",
+              "on-primary": "#ffffff",
+              "on-secondary": "#ffffff",
+              "secondary": "#575992",
+              "inverse-primary": "#c0c1ff",
+              "surface-dim": "#d2d9f4",
+              "primary-container": "#6063ee"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"],
+              "mono": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .mono-data { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased selection:bg-primary/20">
+<!-- SideNavBar Integration -->
+<aside class="fixed left-0 top-0 h-full w-68 flex flex-col z-40 bg-slate-50 border-r border-slate-200/50 font-sans text-sm font-medium tracking-tight">
+<div class="p-6 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-sm">settings_input_antenna</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-indigo-600">NIZAM</h1>
+<p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold -mt-1">Enterprise Control</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+<div class="mb-4">
+<p class="px-2 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">General</p>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-semibold border-r-2 border-indigo-600" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">phone_in_talk</span>
+<span>Phone System</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">alt_route</span>
+<span>Routing</span>
+</a>
+</div>
+<div class="mb-4">
+<p class="px-2 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Core Services</p>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">settings_input_antenna</span>
+<span>Connectivity</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">call</span>
+<span>Calls</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">support_agent</span>
+<span>Contact Center</span>
+</a>
+</div>
+<div class="mt-auto pt-4 border-t border-slate-200/50">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">extension</span>
+<span>Integrations</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+<span>Admin</span>
+</a>
+</div>
+</nav>
+<div class="p-4 mt-4 bg-slate-100/50 border-t border-slate-200/50">
+<div class="flex items-center gap-3">
+<img alt="Tenant Switcher" class="w-8 h-8 rounded-md" data-alt="Corporate logo for tenant selector" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2a_FJf6W0Vy39Cp3HKoj_F5rwIRCgOB2g9shcBh0ZO19JvxALulvVAwaOBUWyg1l4Q7WiMtP23lDyVruC4iZ0l97wWj2bakkEB8dZV-WNKrzv0-AxnaQ2R_UzsrH0pP_0HrCxxlSxT73YbevlYNRjUiDHA_UNjpt6Q8hgIqry2tdxROccem7px6mEvFLO-oWhjfiB7guJjZL96_QnjTjr30C7622h8gswGIQbpusEQIwJKNujRQtVnJ3Ijhe9iSSYG1IIlaUmIFg"/>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate">Global HQ-East</p>
+<p class="text-[10px] text-slate-500 truncate">Tier 4 Production</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">unfold_more</span>
+</div>
+</div>
+</aside>
+<main class="ml-68 min-h-screen flex flex-col">
+<!-- TopNavBar Integration -->
+<header class="sticky top-0 right-0 w-full h-16 flex items-center justify-between px-8 z-30 bg-white/80 backdrop-blur-md shadow-sm shadow-slate-200/50 border-b border-indigo-500/10">
+<div class="flex items-center gap-6 w-1/2">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+<input class="w-full bg-slate-50 border-none rounded-lg pl-10 pr-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600 focus:ring-1 focus:ring-indigo-500/30" placeholder="SEARCH SYSTEM, CALLS, OR LOGS..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-6 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+<a class="hover:text-slate-800 transition-colors" href="#">Docs</a>
+<a class="hover:text-slate-800 transition-colors" href="#">Support</a>
+<a class="text-indigo-600 border-b-2 border-indigo-600 pb-1" href="#">Status</a>
+</nav>
+<div class="h-4 w-px bg-slate-200"></div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:bg-slate-50 rounded-lg transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                        Create New
+                    </button>
+<img alt="User Profile" class="w-8 h-8 rounded-full border-2 border-slate-100" data-alt="User avatar for admin profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtpRImkozdRxfqmcBa6xJXcOVvs_-47w0Q5c3VlITTExKBNKK7PrhU5SIH1rpMg8-KVouAU87kdPKMBQMRRYc6xRmN1F1Odlnj6031Vw540RpQe2RsHHcAV6XGsAWCpOPy_40PXRCQARNh069AgLK_zOy9s5K5r-5pwkqYMA_eUDyuf4F2EpPy0bBQxMHRRGYVjAFfgMepY5ckyJmeXLroJjP-J2GGj-IZsI2ur2E_RK_RjHycdSZdMuB2J7lKUqKioAdCucWQ0fI"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-8 space-y-8 bg-background">
+<!-- Breadcrumbs & Heading -->
+<div class="flex items-end justify-between">
+<div>
+<div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+<span>Console</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-indigo-600">Dashboard Overview</span>
+</div>
+<h2 class="text-3xl font-bold tracking-tight text-on-background">System Health &amp; Traffic</h2>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-low p-1 rounded-lg">
+<button class="px-3 py-1.5 text-[10px] font-bold bg-white shadow-sm rounded-md uppercase tracking-wider">Real-time</button>
+<button class="px-3 py-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-800 uppercase tracking-wider">Last 24h</button>
+</div>
+</div>
+<!-- High Impact Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+<!-- Active Calls (Primary Contrast) -->
+<div class="bg-gradient-to-br from-primary to-primary-container p-5 rounded-xl text-white shadow-xl shadow-primary/20">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined opacity-80">call</span>
+<span class="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded uppercase tracking-widest">+12%</span>
+</div>
+<p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Active Calls</p>
+<p class="text-4xl font-bold tracking-tighter mono-data">1,284</p>
+</div>
+<!-- Registered Gateways -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-slate-200/50">
+<div class="flex justify-between items-start mb-4 text-indigo-600">
+<span class="material-symbols-outlined">dns</span>
+<span class="text-[10px] font-bold bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-widest text-indigo-600">Stable</span>
+</div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gateways</p>
+<p class="text-4xl font-bold tracking-tighter text-on-background mono-data">42/42</p>
+</div>
+<!-- Queue Load -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-slate-200/50">
+<div class="flex justify-between items-start mb-4 text-tertiary">
+<span class="material-symbols-outlined">hourglass_empty</span>
+<span class="text-[10px] font-bold bg-tertiary-fixed px-2 py-0.5 rounded uppercase tracking-widest text-on-tertiary-fixed">Medium</span>
+</div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Queue Load</p>
+<p class="text-4xl font-bold tracking-tighter text-on-background mono-data">68%</p>
+</div>
+<!-- Failed Webhooks (Danger) -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-slate-200/50">
+<div class="flex justify-between items-start mb-4 text-error">
+<span class="material-symbols-outlined">webhook</span>
+<span class="text-[10px] font-bold bg-error-container px-2 py-0.5 rounded uppercase tracking-widest text-on-error-container">Critical</span>
+</div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Failed Webhooks</p>
+<p class="text-4xl font-bold tracking-tighter text-error mono-data">14</p>
+</div>
+<!-- Routing Warnings -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-slate-200/50">
+<div class="flex justify-between items-start mb-4 text-amber-500">
+<span class="material-symbols-outlined">warning</span>
+<span class="text-[10px] font-bold bg-amber-100 px-2 py-0.5 rounded uppercase tracking-widest text-amber-800">Pending</span>
+</div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Routing Warnings</p>
+<p class="text-4xl font-bold tracking-tighter text-on-background mono-data">03</p>
+</div>
+</div>
+<!-- Main Grid Sections -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- System Health (2/3 width) -->
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/50 overflow-hidden">
+<div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-background">System Health &amp; Metrics</h3>
+<button class="text-primary text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                                Full Diagnostics <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="p-6">
+<div class="grid grid-cols-2 gap-8">
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<p class="text-xs font-medium text-slate-500">Uptime (Core Cluster)</p>
+<p class="text-xs font-bold text-teal-600 mono-data">99.998%</p>
+</div>
+<div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-teal-500 h-full w-[99.998%]"></div>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-4">
+<div class="p-3 bg-slate-50 rounded-lg">
+<p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">SIP Profile A</p>
+<p class="text-sm font-bold mono-data text-on-background">RUNNING</p>
+</div>
+<div class="p-3 bg-slate-50 rounded-lg">
+<p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">SIP Profile B</p>
+<p class="text-sm font-bold mono-data text-on-background">RUNNING</p>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<p class="text-xs font-medium text-slate-500">Latency (Avg Roundtrip)</p>
+<p class="text-xs font-bold text-indigo-600 mono-data">24ms</p>
+</div>
+<div class="flex items-end gap-1 h-12">
+<div class="flex-1 bg-indigo-100 h-[40%] rounded-t-sm"></div>
+<div class="flex-1 bg-indigo-100 h-[60%] rounded-t-sm"></div>
+<div class="flex-1 bg-indigo-200 h-[55%] rounded-t-sm"></div>
+<div class="flex-1 bg-indigo-300 h-[80%] rounded-t-sm"></div>
+<div class="flex-1 bg-indigo-400 h-[90%] rounded-t-sm"></div>
+<div class="flex-1 bg-indigo-500 h-[70%] rounded-t-sm"></div>
+<div class="flex-1 bg-indigo-200 h-[50%] rounded-t-sm"></div>
+<div class="flex-1 bg-indigo-100 h-[45%] rounded-t-sm"></div>
+<div class="flex-1 bg-indigo-600 h-[95%] rounded-t-sm"></div>
+<div class="flex-1 bg-indigo-200 h-[40%] rounded-t-sm"></div>
+</div>
+<p class="text-[10px] text-slate-400 text-center italic">Live jitter compensation active</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/50">
+<div class="px-6 py-4 border-b border-slate-100">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-background">Recent Routing Changes</h3>
+</div>
+<div class="divide-y divide-slate-50">
+<div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded bg-purple-50 flex items-center justify-center text-purple-600">
+<span class="material-symbols-outlined text-sm">alt_route</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-background">Failover Route: US-EAST-1</p>
+<p class="text-[10px] text-slate-500 mono-data uppercase">Modified by System Automation</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-on-background mono-data">14:22:05</p>
+<p class="text-[10px] text-slate-400 uppercase">Today</p>
+</div>
+</div>
+<div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600">
+<span class="material-symbols-outlined text-sm">settings</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-background">Update SIP Auth Method</p>
+<p class="text-[10px] text-slate-500 mono-data uppercase">Modified by Admin_J_Doe</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-on-background mono-data">12:10:44</p>
+<p class="text-[10px] text-slate-400 uppercase">Today</p>
+</div>
+</div>
+<div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded bg-cyan-50 flex items-center justify-center text-cyan-600">
+<span class="material-symbols-outlined text-sm">lan</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-background">New Carrier Node Linked</p>
+<p class="text-[10px] text-slate-500 mono-data uppercase">External Integration</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-on-background mono-data">09:55:12</p>
+<p class="text-[10px] text-slate-400 uppercase">Today</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Alerts and Warnings (1/3 width) -->
+<div class="space-y-6">
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/50 h-full flex flex-col">
+<div class="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-background">Critical Alerts</h3>
+</div>
+<div class="flex-1 p-6 space-y-4">
+<!-- Alert Item -->
+<div class="p-4 bg-error-container/20 rounded-lg border-l-4 border-error">
+<div class="flex justify-between items-start mb-1">
+<p class="text-xs font-bold text-on-error-container uppercase tracking-tight">Webhook Endpoint Timeout</p>
+<span class="text-[10px] font-bold text-error mono-data">2m ago</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                                    Endpoint <span class="mono-data font-medium">/api/v1/billing</span> returned 504 Gateway Timeout for 8 consecutive attempts.
+                                </p>
+</div>
+<!-- Warning Item -->
+<div class="p-4 bg-amber-50 rounded-lg border-l-4 border-amber-400">
+<div class="flex justify-between items-start mb-1">
+<p class="text-xs font-bold text-amber-900 uppercase tracking-tight">Low Balance Warning</p>
+<span class="text-[10px] font-bold text-amber-700 mono-data">45m ago</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                                    Main carrier balance for <span class="mono-data font-medium">TRUNK_B</span> is below threshold ($100.00).
+                                </p>
+</div>
+<!-- Info Item -->
+<div class="p-4 bg-indigo-50 rounded-lg border-l-4 border-indigo-400">
+<div class="flex justify-between items-start mb-1">
+<p class="text-xs font-bold text-indigo-900 uppercase tracking-tight">Certificate Renewal</p>
+<span class="text-[10px] font-bold text-indigo-700 mono-data">4h ago</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                                    SSL certificate for <span class="mono-data font-medium">sip.nizam-east.com</span> was successfully renewed.
+                                </p>
+</div>
+<div class="mt-4 p-4 border border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center text-center space-y-2">
+<span class="material-symbols-outlined text-slate-300">verified_user</span>
+<p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">No other issues detected</p>
+</div>
+</div>
+<div class="p-4 border-t border-slate-100">
+<button class="w-full py-2 bg-slate-50 hover:bg-slate-100 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">
+                                View Alert History
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Data Table Section (High Density) -->
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/50">
+<div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-background">Live Call Log</h3>
+<div class="flex gap-2">
+<div class="px-3 py-1 bg-slate-100 rounded text-[10px] font-bold mono-data text-slate-600">FILTER: ACTIVE ONLY</div>
+<div class="px-3 py-1 bg-slate-100 rounded text-[10px] font-bold mono-data text-slate-600">CSV EXPORT</div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-50">
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Call ID</th>
+<th class="px-6 py-4">Source</th>
+<th class="px-6 py-4">Destination</th>
+<th class="px-6 py-4">Duration</th>
+<th class="px-6 py-4">Trunk</th>
+<th class="px-6 py-4 text-right">Cost</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-[10px] font-bold text-teal-600">
+<span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span> CONNECTED
+                                    </span>
+</td>
+<td class="px-6 py-4 mono-data text-xs text-on-surface">5f3a...b12c</td>
+<td class="px-6 py-4 mono-data text-xs text-slate-600">+1 (555) 012-3456</td>
+<td class="px-6 py-4 mono-data text-xs text-slate-600">+44 20 7123 4567</td>
+<td class="px-6 py-4 mono-data text-xs text-slate-600">04:12</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded">US-TRNK-01</span></td>
+<td class="px-6 py-4 text-right mono-data text-xs font-bold">$0.084</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-[10px] font-bold text-teal-600">
+<span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span> CONNECTED
+                                    </span>
+</td>
+<td class="px-6 py-4 mono-data text-xs text-on-surface">8a1b...f92d</td>
+<td class="px-6 py-4 mono-data text-xs text-slate-600">+1 (555) 987-6543</td>
+<td class="px-6 py-4 mono-data text-xs text-slate-600">+1 (555) 111-2222</td>
+<td class="px-6 py-4 mono-data text-xs text-slate-600">01:58</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded">US-TRNK-01</span></td>
+<td class="px-6 py-4 text-right mono-data text-xs font-bold">$0.022</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-[10px] font-bold text-amber-500">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> RINGING
+                                    </span>
+</td>
+<td class="px-6 py-4 mono-data text-xs text-on-surface">c4d2...e44b</td>
+<td class="px-6 py-4 mono-data text-xs text-slate-600">+49 30 123456</td>
+<td class="px-6 py-4 mono-data text-xs text-slate-600">+1 (555) 000-9999</td>
+<td class="px-6 py-4 mono-data text-xs text-slate-600">--:--</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded">EU-NODE-X</span></td>
+<td class="px-6 py-4 text-right mono-data text-xs font-bold">$0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body></html>

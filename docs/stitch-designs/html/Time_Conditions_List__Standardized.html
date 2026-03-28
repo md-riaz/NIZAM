@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - Time Conditions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface-variant": "#464554",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#fffbff",
+                        "secondary-container": "#bdbefe",
+                        "on-background": "#131b2e",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#283044",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "secondary-fixed": "#e1e0ff",
+                        "on-surface": "#131b2e",
+                        "surface-dim": "#d2d9f4",
+                        "surface-bright": "#faf8ff",
+                        "error": "#ba1a1a",
+                        "secondary": "#575992",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-secondary-container": "#494b83",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "outline-variant": "#c7c4d7",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#eaedff",
+                        "primary": "#4648d4",
+                        "inverse-on-surface": "#eef0ff",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#07006c",
+                        "surface-variant": "#dae2fd",
+                        "surface-tint": "#494bd6",
+                        "outline": "#767586",
+                        "tertiary": "#904900",
+                        "surface-container-high": "#e2e7ff",
+                        "surface": "#faf8ff",
+                        "on-tertiary-fixed": "#301400",
+                        "tertiary-container": "#b55d00",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "primary-container": "#6063ee",
+                        "on-secondary-fixed": "#13144a",
+                        "inverse-primary": "#c0c1ff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#e1e0ff",
+                        "on-primary-container": "#fffbff",
+                        "on-secondary-fixed-variant": "#404178",
+                        "surface-container-highest": "#dae2fd",
+                        "background": "#faf8ff",
+                        "surface-container-low": "#f2f3ff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full w-[272px] z-50 bg-slate-50 dark:bg-slate-950 flex flex-col p-4 space-y-1 bg-slate-200 dark:bg-slate-800 w-[1px] right-0 flat no-shadow font-sans text-[13px] Inter font-medium">
+<div class="flex items-center gap-3 px-3 py-6 mb-4">
+<div class="w-10 h-10 bg-gradient-to-tr from-primary to-primary-container rounded-xl flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h1 class="text-lg font-black text-indigo-600 dark:text-indigo-400 tracking-tight leading-none">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold opacity-60">Communications</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">phone_in_talk</span>
+<span>Phone System</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-md transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">alt_route</span>
+<span class="font-semibold">Routing</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">router</span>
+<span>Connectivity</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">call</span>
+<span>Calls</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span>Contact Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">extension</span>
+<span>Integrations</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span>Admin</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-container-low">
+<img alt="User Profile" class="w-8 h-8 rounded-full bg-slate-200" data-alt="Minimalist user avatar icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBns2a0yugMX-aB2JbXwQbsbTqG6IM27W5gPZNOpSIlLHyYiG76e4l6mAQCkXiiqnPOVs4CZE7S7uQZwCrGE4ZD-A5to5a-iARJg_FDbDj5VABi6bPPufOIyCR3rWm1bLBhTSWrLMoCrADqoea73RPwhnY9Pg98iWIfpE1WBC3AKYfwgkbJYVThPVWkBuKJSwBPmnS6d2X-17Hamh41ddlyyJt5NO8pFHtgxjLkVIrPHD6qfbTFZkAlijPxpSFyzPVtsdvzwmy2O1c"/>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold truncate text-on-surface">Alex Thompson</p>
+<p class="text-[10px] text-on-surface-variant truncate opacity-70">Administrator</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-[272px] min-h-screen bg-background relative pb-12">
+<!-- Top App Bar -->
+<header class="fixed top-0 right-0 left-[272px] h-16 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-8 w-auto shadow-sm dark:shadow-none border-b border-slate-200/40 dark:bg-slate-800/40">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant opacity-40">chevron_right</span>
+<nav class="flex items-center gap-2 text-sm font-medium">
+<span class="text-on-surface-variant opacity-60">Routing</span>
+<span class="material-symbols-outlined text-xs opacity-40">chevron_right</span>
+<span class="text-indigo-600 dark:text-indigo-400 font-bold">Time Conditions</span>
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-500">notifications</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-500">help</span>
+</button>
+</div>
+</header>
+<!-- Content Body -->
+<div class="pt-24 px-8 max-w-7xl mx-auto">
+<!-- Page Header Actions -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div>
+<h2 class="text-3xl font-black text-on-surface tracking-tight mb-1">Time Conditions</h2>
+<p class="text-on-surface-variant max-w-2xl text-sm leading-relaxed">Define sophisticated routing rules based on temporal logic, holiday schedules, and office hours across your network.</p>
+</div>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span>Create Time Condition</span>
+</button>
+</div>
+<!-- Dashboard Logic Bento Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/20 shadow-sm flex flex-col gap-3">
+<span class="material-symbols-outlined text-primary">schedule</span>
+<div>
+<p class="text-xs font-bold text-on-surface-variant/60 uppercase tracking-widest">Active Routes</p>
+<p class="text-2xl font-black text-on-surface">24 / 30</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/20 shadow-sm flex flex-col gap-3">
+<span class="material-symbols-outlined text-tertiary">warning</span>
+<div>
+<p class="text-xs font-bold text-on-surface-variant/60 uppercase tracking-widest">Conflicts Detected</p>
+<p class="text-2xl font-black text-on-surface">0</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/20 shadow-sm flex flex-col gap-3">
+<span class="material-symbols-outlined text-secondary">alt_route</span>
+<div>
+<p class="text-xs font-bold text-on-surface-variant/60 uppercase tracking-widest">Logic Nodes</p>
+<p class="text-2xl font-black text-on-surface">142</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/20 shadow-sm flex flex-col gap-3">
+<span class="material-symbols-outlined text-teal-600">event_available</span>
+<div>
+<p class="text-xs font-bold text-on-surface-variant/60 uppercase tracking-widest">System Health</p>
+<p class="text-2xl font-black text-on-surface">99.9%</p>
+</div>
+</div>
+</div>
+<!-- Table Container Section -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col">
+<!-- Table Controls -->
+<div class="p-4 bg-surface-container-low/50 flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant/10">
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-lg">search</span>
+<input class="w-full bg-white border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/40 shadow-sm" placeholder="Search conditions, schedules, or logic..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-on-surface-variant bg-white rounded-lg border border-outline-variant/20 hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+<span>Filter</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-on-surface-variant bg-white rounded-lg border border-outline-variant/20 hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-lg">file_download</span>
+<span>Export</span>
+</button>
+</div>
+</div>
+<!-- Actual Data Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/30 border-b border-outline-variant/20">
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-[0.1em] text-on-surface-variant/60">Name</th>
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-[0.1em] text-on-surface-variant/60">Condition Type</th>
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-[0.1em] text-on-surface-variant/60">Logic Tree</th>
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-[0.1em] text-on-surface-variant/60 text-center">Status</th>
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-[0.1em] text-on-surface-variant/60">Linked Schedule</th>
+<th class="px-6 py-4 text-[11px] font-black uppercase tracking-[0.1em] text-on-surface-variant/60">Last Modified</th>
+<th class="px-6 py-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Row 1 -->
+<tr class="group hover:bg-surface-container-low/40 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Office_Main_Hours</span>
+<span class="text-xs font-mono text-on-surface-variant/50">ID: TC-8842-X</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-sm font-medium">Standard Weekly</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5 font-mono text-xs text-on-surface-variant">
+<span class="text-primary font-bold">IF TRUE</span>
+<span class="material-symbols-outlined text-xs opacity-40">arrow_forward</span>
+<span class="bg-slate-100 px-1.5 py-0.5 rounded">Ext 1001</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200/50">Active</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span>Corporate_HQ_V2</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-mono text-on-surface-variant">
+                                    2023-11-24 14:32
+                                </td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-surface-container-low/40 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Holiday_Override_US</span>
+<span class="text-xs font-mono text-on-surface-variant/50">ID: TC-4112-Q</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-purple-500"></span>
+<span class="text-sm font-medium">Holiday Table</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5 font-mono text-xs text-on-surface-variant">
+<span class="text-primary font-bold">IF TRUE</span>
+<span class="material-symbols-outlined text-xs opacity-40">arrow_forward</span>
+<span class="bg-slate-100 px-1.5 py-0.5 rounded">Voicemail (Gen)</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">Inactive</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-sm text-tertiary">warning</span>
+<span class="text-tertiary">No Schedule Linked</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-mono text-on-surface-variant">
+                                    2023-12-01 09:12
+                                </td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-surface-container-low/40 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Emergency_Night_Reroute</span>
+<span class="text-xs font-mono text-on-surface-variant/50">ID: TC-9001-A</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span class="text-sm font-medium">After Hours</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1.5 font-mono text-xs text-on-surface-variant">
+<span class="text-primary font-bold">IF FALSE</span>
+<span class="material-symbols-outlined text-xs opacity-40">arrow_forward</span>
+<span class="bg-slate-100 px-1.5 py-0.5 rounded">Cell: +1 555-0122</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200/50">Active</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span>On_Call_Rotation</span>
+</div>
+</td>
+<td class="px-6 py-4 text-xs font-mono text-on-surface-variant">
+                                    2024-01-15 18:45
+                                </td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-4 border-t border-outline-variant/10 bg-surface-container-low/20 flex items-center justify-between">
+<p class="text-[11px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest">Showing 3 of 12 Conditions</p>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/20 bg-white text-on-surface-variant disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-lg">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/20 bg-white text-on-surface-variant text-xs font-bold hover:bg-slate-50">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/20 bg-white text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Contextual Help / Bento Tip -->
+<div class="mt-8 p-6 bg-gradient-to-r from-indigo-600/5 to-transparent rounded-2xl border-l-4 border-indigo-600 flex items-start gap-4">
+<span class="material-symbols-outlined text-indigo-600 text-2xl" style="font-variation-settings: 'FILL' 1;">info</span>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-on-surface mb-1">Architect's Tip: Nested Logic</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed opacity-80">You can nest Time Conditions by directing an "If True" or "If False" action to another Time Condition node. This allows for complex hierarchical routing based on multiple time zones or cascading priority schedules.</p>
+</div>
+<button class="text-xs font-bold text-indigo-600 hover:underline uppercase tracking-widest">Learn More</button>
+</div>
+</div>
+</main>
+</body></html>

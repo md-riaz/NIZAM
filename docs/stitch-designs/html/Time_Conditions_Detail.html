@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - Time Conditions Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-container": "#bdbefe",
+                        "on-secondary-fixed": "#13144a",
+                        "primary": "#4648d4",
+                        "tertiary": "#904900",
+                        "secondary": "#575992",
+                        "inverse-surface": "#283044",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#464554",
+                        "on-primary-container": "#fffbff",
+                        "on-background": "#131b2e",
+                        "error": "#ba1a1a",
+                        "background": "#faf8ff",
+                        "on-secondary-container": "#494b83",
+                        "surface-container-highest": "#dae2fd",
+                        "primary-fixed": "#e1e0ff",
+                        "primary-container": "#6063ee",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#fffbff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#494bd6",
+                        "on-primary-fixed": "#07006c",
+                        "on-secondary-fixed-variant": "#404178",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eef0ff",
+                        "surface-container-low": "#f2f3ff",
+                        "on-tertiary-fixed": "#301400",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#e1e0ff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-surface": "#131b2e",
+                        "surface-container": "#eaedff",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#b55d00",
+                        "inverse-primary": "#c0c1ff",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "outline-variant": "#c7c4d7",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "tertiary-fixed": "#ffdcc5",
+                        "surface-dim": "#d2d9f4",
+                        "surface-container-high": "#e2e7ff",
+                        "surface-bright": "#faf8ff",
+                        "surface": "#faf8ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "outline": "#767586",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#dae2fd"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="w-68 h-screen sticky left-0 top-0 flex flex-col border-r border-slate-200/60 bg-slate-50 p-5">
+<div class="mb-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight text-slate-900 font-mono">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Communications Control</p>
+</div>
+</div>
+<nav class="space-y-1 flex-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-colors duration-200 font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-colors duration-200 font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="phone_in_talk">phone_in_talk</span>
+                Phone System
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="alt_route">alt_route</span>
+                Routing
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-colors duration-200 font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+                Connectivity
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-colors duration-200 font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="call">call</span>
+                Calls
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-colors duration-200 font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Admin
+            </a>
+</nav>
+<div class="mt-auto pt-5 border-t border-slate-200/60">
+<div class="flex items-center gap-3 px-2">
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
+<img alt="User" data-alt="User profile avatar circle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOlgv7WUG2BYS6FrLAFmzUn4-n6qb1drpE_zqq5IyjjsCEAdKSbpr-DZ31RpqgClrB4VT6oQpFjAcWIgtn92-cV4iEH2rbA90-BLsPUylsX0VVErHe0mmrxxO23OBeD0s4Q-72Ck2lJxnAwh4rJWdzJEioDhbYZCO0VDap4HEat6MzNfTaU9GmLikDIYUqbKNJPqWbhP294l-2XEeYZgJoylR9arIkMScfF4A7pwVZJKHQUJqNYyHpRz6E6I-UigxtSvZdgZX7W8I"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-semibold truncate text-slate-900">System Architect</p>
+<p class="text-[10px] text-slate-500 truncate mono">ID: 8829-QX</p>
+</div>
+</div>
+</div>
+</aside>
+<div class="flex-1 flex flex-col">
+<!-- TopNavBar -->
+<header class="h-16 sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200/40 flex justify-between items-center px-8">
+<div class="flex items-center gap-8">
+<nav class="flex items-center gap-6">
+<a class="text-slate-500 hover:text-indigo-500 transition-opacity font-mono text-xs uppercase tracking-wider" href="#">Extensions</a>
+<a class="text-slate-500 hover:text-indigo-500 transition-opacity font-mono text-xs uppercase tracking-wider" href="#">DIDs</a>
+<a class="text-indigo-600 border-b-2 border-indigo-600 py-5 font-mono text-xs uppercase tracking-wider" href="#">Policies</a>
+<a class="text-slate-500 hover:text-indigo-500 transition-opacity font-mono text-xs uppercase tracking-wider" href="#">Gateways</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" data-icon="search">search</span>
+<input class="pl-9 pr-4 py-1.5 bg-surface-container-low border-none rounded-full text-sm focus:ring-1 focus:ring-primary w-64" placeholder="Search conditions..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full">
+<span class="material-symbols-outlined" data-icon="apps">apps</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="p-8 max-w-7xl w-full mx-auto space-y-8">
+<!-- Breadcrumbs & Header -->
+<div class="flex justify-between items-end">
+<div class="space-y-1">
+<nav class="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase tracking-tighter mb-2">
+<span>Routing</span>
+<span class="material-symbols-outlined text-[10px]" data-icon="chevron_right">chevron_right</span>
+<span>Conditions</span>
+<span class="material-symbols-outlined text-[10px]" data-icon="chevron_right">chevron_right</span>
+<span class="text-primary font-bold">TC_HQ_MAIN</span>
+</nav>
+<h2 class="text-3xl font-extrabold text-on-surface tracking-tight">Time Conditions Detail</h2>
+<p class="text-on-surface-variant text-sm max-w-lg">Manage logic-based routing rules for the Primary HQ trunk. Rules are evaluated sequentially from top to bottom.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 text-sm font-semibold text-primary border border-primary/20 rounded-md hover:bg-primary/5 transition-colors">
+                        Discard Changes
+                    </button>
+<button class="px-6 py-2 text-sm font-semibold text-white bg-gradient-to-br from-primary to-primary-container rounded-md shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="save">save</span>
+                        Save Condition
+                    </button>
+</div>
+</div>
+<!-- Tab Navigation -->
+<div class="border-b border-outline-variant/20 flex gap-8">
+<button class="pb-3 text-sm font-semibold border-b-2 border-primary text-primary px-1">Overview</button>
+<button class="pb-3 text-sm font-medium text-slate-500 hover:text-on-surface px-1">Schedule</button>
+<button class="pb-3 text-sm font-medium text-slate-500 hover:text-on-surface px-1">Routing</button>
+<button class="pb-3 text-sm font-medium text-slate-500 hover:text-on-surface px-1">Preview</button>
+<button class="pb-3 text-sm font-medium text-slate-500 hover:text-on-surface px-1">Dependencies</button>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Main Rule List (Col 1-8) -->
+<div class="col-span-8 space-y-4">
+<div class="flex items-center justify-between mb-2">
+<h3 class="text-sm font-bold uppercase tracking-widest text-slate-400">Time-Based Rules</h3>
+<button class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm" data-icon="add_circle">add_circle</span>
+                            Add New Rule
+                        </button>
+</div>
+<!-- Rule Card 1: Active -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-transparent hover:border-indigo-100 transition-all group">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="mt-1 w-8 h-8 bg-indigo-50 rounded flex items-center justify-center text-indigo-500">
+<span class="material-symbols-outlined text-lg" data-icon="schedule">schedule</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-3">
+<h4 class="font-bold text-on-surface">Standard Business Hours</h4>
+<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded uppercase tracking-tighter">Active Now</span>
+</div>
+<p class="text-xs text-on-surface-variant mono bg-surface-container-low px-2 py-1 rounded inline-block">Mon-Fri | 09:00 - 17:00 | TZ: UTC-05</p>
+</div>
+</div>
+<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-slate-100 rounded text-slate-400"><span class="material-symbols-outlined text-sm" data-icon="edit">edit</span></button>
+<button class="p-1.5 hover:bg-slate-100 rounded text-slate-400"><span class="material-symbols-outlined text-sm" data-icon="drag_indicator">drag_indicator</span></button>
+</div>
+</div>
+<div class="mt-6 flex items-center gap-4">
+<div class="flex-1 h-[1px] bg-slate-100"></div>
+<span class="material-symbols-outlined text-slate-300 text-sm" data-icon="trending_flat">trending_flat</span>
+<div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
+<span class="material-symbols-outlined text-indigo-500" data-icon="support_agent">support_agent</span>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase leading-none">Destination</p>
+<p class="text-sm font-semibold">Queue: HQ_SUPPORT_L1</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Rule Card 2: Passive -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-transparent hover:border-indigo-100 transition-all group">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="mt-1 w-8 h-8 bg-slate-50 rounded flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined text-lg" data-icon="nightlight">nightlight</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-3">
+<h4 class="font-bold text-on-surface">After Hours Support</h4>
+<span class="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase tracking-tighter">Standby</span>
+</div>
+<p class="text-xs text-on-surface-variant mono bg-surface-container-low px-2 py-1 rounded inline-block">Mon-Fri | 17:01 - 08:59 | TZ: UTC-05</p>
+</div>
+</div>
+<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-slate-100 rounded text-slate-400"><span class="material-symbols-outlined text-sm" data-icon="edit">edit</span></button>
+<button class="p-1.5 hover:bg-slate-100 rounded text-slate-400"><span class="material-symbols-outlined text-sm" data-icon="drag_indicator">drag_indicator</span></button>
+</div>
+</div>
+<div class="mt-6 flex items-center gap-4">
+<div class="flex-1 h-[1px] bg-slate-100"></div>
+<span class="material-symbols-outlined text-slate-300 text-sm" data-icon="trending_flat">trending_flat</span>
+<div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
+<span class="material-symbols-outlined text-purple-500" data-icon="voicemail">voicemail</span>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase leading-none">Destination</p>
+<p class="text-sm font-semibold">VM: HQ_AFTER_HOURS</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Rule Card 3: Weekend -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-transparent hover:border-indigo-100 transition-all group">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="mt-1 w-8 h-8 bg-amber-50 rounded flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined text-lg" data-icon="event_busy">event_busy</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-3">
+<h4 class="font-bold text-on-surface">Weekend Overflow</h4>
+<span class="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase tracking-tighter">Standby</span>
+</div>
+<p class="text-xs text-on-surface-variant mono bg-surface-container-low px-2 py-1 rounded inline-block">Sat-Sun | All Day | TZ: UTC-05</p>
+</div>
+</div>
+<div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-slate-100 rounded text-slate-400"><span class="material-symbols-outlined text-sm" data-icon="edit">edit</span></button>
+<button class="p-1.5 hover:bg-slate-100 rounded text-slate-400"><span class="material-symbols-outlined text-sm" data-icon="drag_indicator">drag_indicator</span></button>
+</div>
+</div>
+<div class="mt-6 flex items-center gap-4">
+<div class="flex-1 h-[1px] bg-slate-100"></div>
+<span class="material-symbols-outlined text-slate-300 text-sm" data-icon="trending_flat">trending_flat</span>
+<div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
+<span class="material-symbols-outlined text-amber-500" data-icon="forward_to_inbox">forward_to_inbox</span>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase leading-none">Destination</p>
+<p class="text-sm font-semibold">IVR: WEEKEND_GREETING</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary Info (Col 9-12) -->
+<div class="col-span-4 space-y-6">
+<!-- Quick Stats Card -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Live Preview</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-sm font-medium">Current Status:</span>
+<span class="flex items-center gap-1.5 text-emerald-600 font-bold text-sm">
+<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    ONLINE
+                                </span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-sm font-medium">System Time:</span>
+<span class="text-sm font-mono font-medium">14:22:10 UTC-05</span>
+</div>
+<div class="pt-4 border-t border-slate-200">
+<p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Active Destination Path</p>
+<div class="bg-white rounded-lg p-3 border border-slate-100 flex items-center gap-3">
+<div class="w-2 h-10 bg-indigo-500 rounded-full"></div>
+<div>
+<p class="text-xs font-bold">Standard Business Hours</p>
+<p class="text-xs text-indigo-600 mono">→ Queue: HQ_SUPPORT_L1</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Details Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-slate-100">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Metadata</h3>
+<div class="space-y-3">
+<div class="flex flex-col gap-1">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Internal ID</span>
+<span class="text-sm font-mono text-slate-700">TC-882-HQ-01</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Last Modified</span>
+<span class="text-sm text-slate-700">Oct 12, 2023 09:15 AM</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] font-bold text-slate-400 uppercase">By User</span>
+<span class="text-sm text-slate-700">admin_root</span>
+</div>
+</div>
+<div class="mt-6">
+<button class="w-full py-2 bg-surface-container-high rounded-md text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors">
+                                View Audit Log
+                            </button>
+</div>
+</div>
+<!-- Graph Hint (Abstract Pattern) -->
+<div class="h-48 rounded-xl bg-indigo-600 relative overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+<img alt="Data visualization" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-50" data-alt="Abstract blue data wave pattern background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY-2YKuU5fhQOQEGt_VK0Epktu5Yq0oo7qDW5rzyX3eQe5TklwUZJ32iiLJOWXZzzHrhkknH2B4WdfDvgp2j0BWDfQ5IKBqJ1YuK-tWxIa388PS5GZhe46WWIXzazXfactYUT5QBdzEIf1qKKGFoCOMQNXKKQLM61cWbdKAkisYY91Qkb4bF4X6vRTYbNIetdkX6KvoV5HmYh4h5yUP2pfXy0UNRbchxR9FoxHHU1yLyMnSWNxR2LONVjLLwoyBEqyb6nlaw6LVzs"/>
+<div class="relative z-10 text-center text-white px-6">
+<p class="text-xs font-bold uppercase tracking-widest opacity-80 mb-2">Weekly Load Heatmap</p>
+<span class="material-symbols-outlined text-4xl" data-icon="query_stats">query_stats</span>
+<p class="text-[10px] mt-2 font-medium opacity-70">Simulation of call volume based on current routing rules.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

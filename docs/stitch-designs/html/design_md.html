@@ -1,0 +1,1595 @@
+# NIZAM UI Design System and Full Product Wireframe Spec
+
+## Purpose
+This document is the **complete product design source of truth** for NIZAM.
+It covers:
+- full app architecture
+- full screen inventory
+- auth flows
+- admin/control-plane pages
+- routing and telephony workspaces
+- design tokens
+- semantic tokens
+- component tokens
+- layout rules
+- page shells
+- interaction patterns
+- state pages
+- accessibility rules
+- Google Stitch generation guidance
+
+This is meant to be strong enough for:
+- product planning
+- visual wireframing
+- frontend implementation
+- design system setup
+- consistent screen generation in Google Stitch
+
+---
+
+# 1. Product Direction
+
+## Product identity
+NIZAM is a **modern communications control platform**.
+It should feel like:
+- a serious SaaS control plane
+- operationally trustworthy
+- routing-aware
+- telecom-capable without looking like telecom software from 2012
+
+## What it should not feel like
+Do not design it like:
+- FusionPBX UI
+- old FreeSWITCH admin panels
+- dark neon NOC dashboards
+- generic bootstrap CRUD admin templates
+- card spam with weak hierarchy
+
+## Design references
+Take inspiration from:
+- Linear for restraint and hierarchy
+- Stripe Dashboard for admin confidence
+- Vercel for calm layout discipline
+- modern observability products for runtime and trace screens
+- modern data-heavy B2B SaaS tables and detail pages
+
+## Core UX principles
+1. Routing visibility first
+2. Runtime visibility first
+3. Dependencies must be visible
+4. Safe editing over clever editing
+5. One level of sidebar submenu only
+6. Tabs for detail depth
+7. Progressive disclosure for advanced telecom settings
+8. Dense but readable information architecture
+9. Product language must stay human, not telecom-jargon-heavy
+10. The UI must answer: what happens to a call, why, and where
+
+---
+
+# 2. Product Surface Map
+
+## Functional domains
+- Authentication
+- Dashboard and overviews
+- Phone System
+- Routing
+- Connectivity
+- Calls and records
+- Contact Center
+- Integrations
+- Administration
+- Utility/system state pages
+
+## Real backend-aligned product objects
+Based on the current backend surface, the UI must account for:
+- tenants
+- tenant settings
+- users
+- permissions
+- extensions
+- holiday calendars
+- schedules
+- teams
+- flows
+- DIDs
+- ring groups
+- IVRs
+- time conditions
+- webhooks
+- device profiles
+- gateways
+- bridges
+- agents
+- queues
+- queue members
+- queue metrics
+- wallboard
+- codec metrics
+- recordings
+- call events
+- call traces
+- live calls
+- call analysis
+- CDRs
+- CDR analytics
+- call routing policies
+- audit logs
+- SSL/admin platform controls
+- SIP profiles
+- blocked destinations
+- usage summaries
+- auth tokens
+
+---
+
+# 3. Navigation Architecture
+
+## Global sidebar
+Top-level sections:
+- Dashboard
+- Phone System
+- Routing
+- Connectivity
+- Calls
+- Contact Center
+- Integrations
+- Admin
+
+## One-level submenu model
+
+### Dashboard
+- Overview
+- Admin Overview (if privileged)
+
+### Phone System
+- Extensions
+- DIDs
+- Ring Groups
+- IVRs
+- Time Conditions
+- Schedules
+- Holiday Calendars
+- Device Profiles
+- Teams
+
+### Routing
+- Policies
+- Flows
+- Bridges
+- Route Explorer
+- Simulations
+- Published Dialplan
+
+### Connectivity
+- Gateways
+- Registrations
+- SIP Profiles
+- NAT / Media
+- Blocked Destinations
+- SSL / Certificates
+
+### Calls
+- Live Calls
+- CDRs
+- Recordings
+- Events
+- Trace
+- Call Analysis
+- Analytics
+
+### Contact Center
+- Queues
+- Agents
+- Wallboard
+- Queue Metrics
+- Codec Metrics
+
+### Integrations
+- Webhooks
+- Webhook Deliveries
+- API Tokens
+- Event Streams
+
+### Admin
+- Users
+- Roles & Permissions
+- Tenants
+- Tenant Settings
+- Usage
+- Audit Logs
+- System Settings
+
+## Navigation rules
+- no third-level sidebar nesting
+- parent items are clickable overview pages
+- page-level depth uses tabs
+- hidden pages can still exist outside nav for create/edit or deep detail
+- privileged admin screens are permission-gated, not just visually hidden
+
+---
+
+# 4. Global App Shell
+
+## Left sidebar
+Contains:
+- NIZAM logo
+- tenant switcher
+- collapsible top-level sections
+- submenu items
+- quick status at bottom
+- profile menu
+
+### Sidebar states
+- expanded: 272px
+- collapsed: 76px
+- mobile: hidden drawer/flyout
+
+## Top header
+Contains:
+- breadcrumb
+- page title context
+- global search
+- tenant context chip
+- environment chip
+- quick actions button
+- alerts button
+- notifications drawer trigger
+- profile menu
+
+## Main content region
+Page anatomy:
+1. title row
+2. summary strip if needed
+3. filter/action bar
+4. main content area
+5. optional right rail
+
+## Right rail
+Use for:
+- runtime health
+- dependencies
+- warnings
+- recent activity
+- quick actions
+- side previews
+
+Avoid using right rail on simple auth or basic list screens.
+
+---
+
+# 5. Full Design Token System
+
+## 5.1 Foundations
+
+### Color: neutral
+- `color.neutral.0 = #FFFFFF`
+- `color.neutral.25 = #FCFCFD`
+- `color.neutral.50 = #F8FAFC`
+- `color.neutral.100 = #F1F5F9`
+- `color.neutral.150 = #E9EEF5`
+- `color.neutral.200 = #E2E8F0`
+- `color.neutral.300 = #CBD5E1`
+- `color.neutral.400 = #94A3B8`
+- `color.neutral.500 = #64748B`
+- `color.neutral.600 = #475569`
+- `color.neutral.700 = #334155`
+- `color.neutral.800 = #1E293B`
+- `color.neutral.900 = #0F172A`
+- `color.neutral.950 = #020617`
+
+### Color: brand
+- `color.brand.50 = #EEF2FF`
+- `color.brand.100 = #E0E7FF`
+- `color.brand.200 = #C7D2FE`
+- `color.brand.300 = #A5B4FC`
+- `color.brand.400 = #818CF8`
+- `color.brand.500 = #6366F1`
+- `color.brand.600 = #4F46E5`
+- `color.brand.700 = #4338CA`
+- `color.brand.800 = #3730A3`
+- `color.brand.900 = #312E81`
+
+### Color: semantic
+#### Success
+- `color.success.50 = #ECFDF3`
+- `color.success.100 = #D1FADF`
+- `color.success.200 = #A6F4C5`
+- `color.success.500 = #12B76A`
+- `color.success.700 = #027A48`
+
+#### Warning
+- `color.warning.50 = #FFFAEB`
+- `color.warning.100 = #FEF0C7`
+- `color.warning.200 = #FEDF89`
+- `color.warning.500 = #F79009`
+- `color.warning.700 = #B54708`
+
+#### Danger
+- `color.danger.50 = #FEF3F2`
+- `color.danger.100 = #FEE4E2`
+- `color.danger.200 = #FECDCA`
+- `color.danger.500 = #F04438`
+- `color.danger.700 = #B42318`
+
+#### Info
+- `color.info.50 = #EFF8FF`
+- `color.info.100 = #D1E9FF`
+- `color.info.200 = #B2DDFF`
+- `color.info.500 = #2E90FA`
+- `color.info.700 = #175CD3`
+
+### Routing accent colors
+- `color.routing.did = #9333EA`
+- `color.routing.flow = #7C3AED`
+- `color.routing.policy = #2563EB`
+- `color.routing.bridge = #0F766E`
+- `color.routing.gateway = #7C2D12`
+- `color.routing.queue = #B45309`
+- `color.routing.time = #0E7490`
+- `color.routing.ivr = #6D28D9`
+
+### Data visualization colors
+- `color.chart.blue = #3B82F6`
+- `color.chart.indigo = #6366F1`
+- `color.chart.purple = #8B5CF6`
+- `color.chart.teal = #14B8A6`
+- `color.chart.amber = #F59E0B`
+- `color.chart.red = #EF4444`
+- `color.chart.green = #22C55E`
+- `color.chart.slate = #64748B`
+
+## 5.2 Semantic tokens
+
+### Backgrounds
+- `bg.canvas = color.neutral.25`
+- `bg.surface = color.neutral.0`
+- `bg.surfaceMuted = color.neutral.50`
+- `bg.surfaceRaised = color.neutral.0`
+- `bg.sidebar = color.neutral.0`
+- `bg.header = rgba(255,255,255,0.88)`
+- `bg.code = #0B1220`
+- `bg.selected = color.brand.50`
+- `bg.hover = color.neutral.50`
+- `bg.disabled = color.neutral.100`
+- `bg.overlay = rgba(15,23,42,0.48)`
+
+### Text
+- `text.primary = color.neutral.900`
+- `text.secondary = color.neutral.600`
+- `text.tertiary = color.neutral.500`
+- `text.inverse = color.neutral.0`
+- `text.link = color.brand.700`
+- `text.placeholder = color.neutral.400`
+- `text.disabled = color.neutral.400`
+- `text.success = color.success.700`
+- `text.warning = color.warning.700`
+- `text.danger = color.danger.700`
+- `text.info = color.info.700`
+
+### Borders
+- `border.default = color.neutral.200`
+- `border.soft = color.neutral.150`
+- `border.strong = color.neutral.300`
+- `border.selected = color.brand.300`
+- `border.focus = color.brand.400`
+- `border.success = color.success.200`
+- `border.warning = color.warning.200`
+- `border.danger = color.danger.200`
+
+## 5.3 Elevation tokens
+- `shadow.xs = 0 1px 2px rgba(16,24,40,0.05)`
+- `shadow.sm = 0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04)`
+- `shadow.md = 0 4px 8px rgba(16,24,40,0.08), 0 2px 4px rgba(16,24,40,0.04)`
+- `shadow.lg = 0 12px 24px rgba(16,24,40,0.12)`
+- `shadow.xl = 0 20px 32px rgba(16,24,40,0.14)`
+- `shadow.focus = 0 0 0 4px rgba(99,102,241,0.16)`
+
+## 5.4 Radius tokens
+- `radius.xs = 6px`
+- `radius.sm = 8px`
+- `radius.md = 12px`
+- `radius.lg = 16px`
+- `radius.xl = 20px`
+- `radius.2xl = 24px`
+- `radius.full = 999px`
+
+## 5.5 Spacing tokens
+Use 4px base scale.
+- `space.1 = 4px`
+- `space.2 = 8px`
+- `space.3 = 12px`
+- `space.4 = 16px`
+- `space.5 = 20px`
+- `space.6 = 24px`
+- `space.8 = 32px`
+- `space.10 = 40px`
+- `space.12 = 48px`
+- `space.16 = 64px`
+- `space.20 = 80px`
+- `space.24 = 96px`
+
+## 5.6 Typography tokens
+
+### Font families
+- `font.sans = Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`
+- `font.mono = JetBrains Mono, SFMono-Regular, Menlo, monospace`
+
+### Type scale
+- `type.xs = 12px / 16px / 500`
+- `type.sm = 14px / 20px / 500`
+- `type.md = 16px / 24px / 500`
+- `type.lg = 18px / 28px / 600`
+- `type.xl = 20px / 30px / 600`
+- `type.2xl = 24px / 32px / 700`
+- `type.3xl = 30px / 38px / 700`
+- `type.4xl = 36px / 44px / 800`
+
+### Typography usage
+- app title: `type.2xl`
+- section title: `type.lg`
+- card title: `type.md`
+- body: `type.sm`
+- compact table: `type.sm`
+- helper/meta text: `type.xs`
+- code: mono + `type.sm`
+
+## 5.7 Layout tokens
+- `layout.sidebar.expanded = 272px`
+- `layout.sidebar.collapsed = 76px`
+- `layout.header.height = 64px`
+- `layout.content.max = 1600px`
+- `layout.page.paddingX = 24px`
+- `layout.page.paddingY = 24px`
+- `layout.rightRail.width = 320px`
+- `layout.drawer.sm = 420px`
+- `layout.drawer.md = 520px`
+- `layout.drawer.lg = 640px`
+- `layout.modal.sm = 420px`
+- `layout.modal.md = 640px`
+- `layout.modal.lg = 840px`
+
+## 5.8 Grid and breakpoints
+- `breakpoint.xs = 480px`
+- `breakpoint.sm = 640px`
+- `breakpoint.md = 768px`
+- `breakpoint.lg = 1024px`
+- `breakpoint.xl = 1280px`
+- `breakpoint.2xl = 1536px`
+
+Grid rules:
+- overview cards: 4-5 across desktop, 2-3 tablet, 1 mobile
+- workspace screens: 3 columns desktop, 1+stack tablet, limited mobile support
+- detail + right rail: 2 columns desktop, stacked on smaller screens
+
+## 5.9 Motion tokens
+- `motion.fast = 120ms ease`
+- `motion.base = 180ms ease`
+- `motion.slow = 260ms ease`
+- `motion.enter = 180ms cubic-bezier(0.2,0.8,0.2,1)`
+- `motion.exit = 140ms ease-in`
+
+Use for:
+- sidebar collapse
+- tab switching
+- drawers
+- modals
+- table row hover
+- subtle card hover
+
+Avoid flashy motion.
+
+## 5.10 Z-index tokens
+- `z.base = 0`
+- `z.dropdown = 1000`
+- `z.sticky = 1100`
+- `z.drawer = 1200`
+- `z.modal = 1300`
+- `z.toast = 1400`
+- `z.tooltip = 1500`
+
+## 5.11 Icon tokens
+- `icon.xs = 12px`
+- `icon.sm = 16px`
+- `icon.md = 20px`
+- `icon.lg = 24px`
+- `icon.xl = 32px`
+
+## 5.12 Form tokens
+- `input.height.sm = 32px`
+- `input.height.md = 40px`
+- `input.height.lg = 44px`
+- `input.paddingX = 12px`
+- `input.border = border.default`
+- `input.focusRing = shadow.focus`
+- `input.errorBorder = color.danger.300`
+- `input.successBorder = color.success.300`
+
+## 5.13 Table tokens
+- `table.row.height = 48px`
+- `table.row.heightDense = 40px`
+- `table.header.height = 40px`
+- `table.cell.paddingX = 12px`
+- `table.cell.paddingY = 10px`
+- `table.hover = bg.hover`
+- `table.selected = bg.selected`
+
+## 5.14 Status token mapping
+### Health states
+- Healthy → green
+- Warning → amber
+- Error → red
+- Unknown → slate
+
+### Runtime states
+- Registered → green
+- Unregistered → gray/amber
+- Up → green
+- Down → red
+- Draft → amber
+- Published → blue/green
+- Active → green
+- Inactive → gray
+
+---
+
+# 6. Component Tokens and Usage Rules
+
+## Buttons
+### Variants
+- Primary
+- Secondary
+- Tertiary / Ghost
+- Danger
+- Success
+- Link
+
+### Sizes
+- sm, md, lg
+
+### Rules
+- one primary action per section
+- danger reserved for destructive confirmation or emergency actions
+- ghost for inline tools and low-priority actions
+
+## Inputs
+### Variants
+- text
+- password
+- number
+- textarea
+- select
+- combobox
+- token input
+- date/time picker
+- tag selector
+- code input
+- secret input with reveal/copy
+
+## Chips
+### Variants
+- status chip
+- route chip
+- metric chip
+- filter chip
+- environment chip
+
+## Banners/callouts
+- info
+- warning
+- danger
+- success
+- draft notice
+- dependency notice
+- runtime drift notice
+
+## Navigation components
+- sidebar item
+- sidebar section label
+- submenu row
+- breadcrumb item
+- topbar action
+- tenant switcher
+
+## Table patterns
+- entity list table
+- runtime table
+- event log table
+- metric table
+- audit table
+
+## Workspace components
+- timeline
+- inspector panel
+- route path card
+- graph node card
+- warning rail
+- simulation result card
+
+---
+
+# 7. Full Screen Inventory
+
+## 7.1 Authentication and onboarding
+- Login
+- Forgot Password
+- Reset Password
+- Register / First User
+- First Tenant Provisioning
+- Welcome / Getting Started
+- No Tenant Assigned
+- Session Expired
+- MFA placeholder design-ready page if added later
+
+## 7.2 Shared utility pages
+- Global Search Results
+- Notifications Center
+- User Profile
+- Preferences
+- Activity Feed
+- Command Palette / Quick Actions
+
+## 7.3 Dashboard and overviews
+- Dashboard Overview
+- Admin Overview
+- Phone System Overview
+- Routing Overview
+- Connectivity Overview
+- Calls Overview
+- Contact Center Overview
+- Integrations Overview
+- Admin Overview page
+
+## 7.4 Phone System
+- Extensions List
+- Extension Create
+- Extension Detail
+- Extension Edit
+- DIDs List
+- DID Create
+- DID Detail
+- DID Edit
+- Ring Groups List
+- Ring Group Create
+- Ring Group Detail
+- Ring Group Edit
+- IVRs List
+- IVR Create
+- IVR Detail
+- IVR Edit
+- Time Conditions List
+- Time Condition Create
+- Time Condition Detail
+- Time Condition Edit
+- Schedules List
+- Schedule Create
+- Schedule Detail
+- Schedule Edit
+- Holiday Calendars List
+- Holiday Calendar Create
+- Holiday Calendar Detail
+- Holiday Calendar Edit
+- Device Profiles List
+- Device Profile Create
+- Device Profile Detail
+- Device Profile Edit
+- Teams List
+- Team Create
+- Team Detail
+- Team Edit
+
+## 7.5 Routing
+- Policies List
+- Policy Create
+- Policy Detail
+- Policy Edit
+- Flow List
+- Flow Create
+- Flow Detail
+- Flow Editor
+- Flow Publish Review
+- Flow Versions
+- Bridges List
+- Bridge Create
+- Bridge Detail
+- Bridge Edit
+- Route Explorer
+- DID Simulation
+- Policy Simulation
+- Flow Simulation
+- Time Preview Simulation
+- Published Dialplan Viewer
+
+## 7.6 Connectivity
+- Gateways List
+- Gateway Create
+- Gateway Detail
+- Gateway Edit
+- Registration List
+- Registration Runtime Detail
+- SIP Profiles List
+- SIP Profile Detail
+- SIP Profile Edit if allowed
+- NAT / Media Settings
+- Blocked Destinations List
+- Blocked Destination Create
+- Blocked Destination Detail
+- SSL / Certificates Overview
+- SSL Request/Renew page
+
+## 7.7 Calls and records
+- Live Calls
+- Live Call Detail Drawer
+- Call Session Detail
+- Call Analysis Detail
+- CDR List
+- CDR Detail
+- Recordings List
+- Recording Detail
+- Event Log List
+- Event Detail
+- Trace Viewer
+- Trace Replay Viewer
+- Calls Analytics Overview
+- Destination Analytics
+- Volume Analytics
+- Quality Analytics
+
+## 7.8 Contact Center
+- Queues List
+- Queue Create
+- Queue Detail
+- Queue Edit
+- Queue Members Manager
+- Queue Realtime Metrics
+- Queue History Metrics
+- Agents List
+- Agent Create
+- Agent Detail
+- Agent Edit
+- Agent State Control
+- Wallboard
+- Agent States Overview
+- Codec Metrics
+
+## 7.9 Integrations
+- Webhooks List
+- Webhook Create
+- Webhook Detail
+- Webhook Edit
+- Webhook Delivery Attempts
+- Webhook Delivery Stats
+- API Tokens List
+- Token Create
+- Token Detail
+- Event Streams Overview
+
+## 7.10 Administration
+- Users List
+- User Create
+- User Detail
+- User Edit
+- User Permissions Detail
+- Roles & Permissions Matrix
+- Permissions Catalog
+- Tenants List
+- Tenant Create
+- Tenant Detail
+- Tenant Edit
+- Tenant Settings Detail
+- Tenant Usage Summary
+- Tenant Usage Reconcile View
+- Audit Log List
+- Audit Log Detail
+- Admin Dashboard
+- System Settings
+
+## 7.11 State pages
+- Empty state per section
+- No data
+- No results
+- 403 unauthorized
+- 404 not found
+- 429 rate limited
+- 500/unknown error
+- Maintenance mode
+- Offline/reconnect state for runtime/live pages
+- Unsaved changes warning state
+- Dependency conflict state
+- Publish conflict state
+
+---
+
+# 8. Global Page Shells
+
+## Auth shell
+Use for login/reset/register.
+Layout:
+- centered card or split-screen auth layout
+- concise branding
+- minimal distractions
+- optional illustration or product screenshot
+
+## Overview shell
+Use for dashboards and section overviews.
+Pattern:
+1. title row
+2. summary cards
+3. alert strip
+4. main grid with widgets/tables
+
+## List shell
+Pattern:
+1. page title + create action
+2. filter/search row
+3. bulk actions if needed
+4. table/grid
+5. pagination
+6. optional saved views later
+
+## Detail shell
+Pattern:
+1. breadcrumb
+2. title + chips + actions
+3. summary strip
+4. tabs
+5. tab content
+6. optional right rail
+
+## Workspace shell
+Use for:
+- Route Explorer
+- Flow Editor
+- Trace Viewer
+- Simulations
+
+Pattern:
+- left inputs/context
+- center workspace
+- right inspector/insight panel
+
+## Drawer shell
+Use for small/simple forms.
+Examples:
+- device profile create
+- holiday create
+- small edit actions
+
+## Modal shell
+Use for:
+- confirmations
+- publish confirm
+- delete confirm
+- permission grant/revoke confirm
+- regenerate/reconcile actions
+
+## Full-page form shell
+Use for complex objects.
+Examples:
+- DID
+- Gateway
+- Policy
+- Flow
+- Queue
+- IVR
+
+---
+
+# 9. Auth and Onboarding Wireframes
+
+## Login
+Layout:
+- centered auth card or split left/right
+- app logo
+- title: Sign in to NIZAM
+- email field
+- password field
+- remember me
+- forgot password
+- sign in button
+- optional environment badge
+
+## Forgot Password
+- email field
+- send reset link
+- support/help footer
+
+## Reset Password
+- email
+- new password
+- confirm password
+- reset CTA
+
+## First User / Bootstrap
+For new system setup:
+- admin name
+- admin email
+- password
+- tenant name
+- tenant domain/slug
+- submit and enter app
+
+## Welcome / Getting Started
+Cards:
+- create first extension
+- add first DID
+- add gateway
+- create bridge
+- create flow
+- open route explorer
+
+---
+
+# 10. Dashboard and Overview Wireframes
+
+## Dashboard Overview
+Summary cards:
+- active calls
+- registered gateways
+- queue load
+- failed webhooks
+- routing warnings
+
+Sections:
+- system health
+- recent routing changes
+- alerts and warnings
+- quick actions
+- recent calls
+- recent events
+
+## Phone System Overview
+Widgets:
+- total extensions
+- active DIDs
+- ring groups
+- IVRs
+- time conditions
+- schedules
+- unassigned DIDs
+- inactive/invalid objects
+
+## Routing Overview
+Widgets:
+- total flows
+- draft vs published
+- total policies
+- bridges in use
+- unresolved dependencies
+- recent route changes
+
+## Connectivity Overview
+Widgets:
+- gateways up/down
+- registration summary
+- XML drift state
+- NAT/media warnings
+- reconcile shortcut
+
+## Calls Overview
+Widgets:
+- active calls
+- answered/missed today
+- hangup cause distribution
+- recent traces
+- recordings created today
+
+## Contact Center Overview
+Widgets:
+- queues waiting
+- agents available
+- SLA
+- abandon rate
+- longest wait
+
+## Integrations Overview
+Widgets:
+- webhook success/fail rate
+- retry backlog
+- recent delivery failures
+- token activity summary
+
+## Admin Overview
+Widgets:
+- active users
+- tenant count
+- permission changes
+- audit volume
+- usage summary
+- system notices
+
+---
+
+# 11. Phone System Wireframes
+
+## Extensions
+### List
+Columns:
+- extension
+- display name
+- caller ID
+- device profile
+- status
+- last activity
+- actions
+
+### Detail tabs
+- Overview
+- Devices
+- Routing
+- Activity
+- Dependencies
+
+## DIDs
+### List
+Columns:
+- number
+- label
+- source scope
+- destination
+- status
+- last matched
+- actions
+
+### Detail tabs
+- Overview
+- Routing
+- Source Matching
+- Activity
+- Dependencies
+
+Show clearly:
+- precedence layer
+- effective route
+- source-scoped match behavior
+
+## Ring Groups
+### Detail tabs
+- Overview
+- Members
+- Routing
+- Runtime
+- Dependencies
+
+Routing tab must show:
+- strategy
+- member behavior
+- timeout
+- cause-aware fallback destination
+
+## IVRs
+### Detail tabs
+- Overview
+- Menu Options
+- Prompts
+- Routing
+- Dependencies
+
+## Time Conditions
+### Detail tabs
+- Overview
+- Schedule
+- Routing
+- Preview
+- Dependencies
+
+## Schedules
+### Detail tabs
+- Overview
+- Rules
+- Holidays
+- Preview
+- Dependencies
+
+## Holiday Calendars
+### Detail tabs
+- Overview
+- Dates
+- Linked Schedules
+
+## Device Profiles
+### Detail tabs
+- Overview
+- SIP Settings
+- Codec
+- Linked Devices
+
+## Teams
+### Detail tabs
+- Overview
+- Members
+- Routing usage
+- Activity
+
+---
+
+# 12. Routing Wireframes
+
+## Policies
+### Detail tabs
+- Overview
+- Conditions
+- Routing
+- Preview
+- Dependencies
+
+## Flows
+### List columns
+- name
+- draft/published
+- node count
+- used by
+- last published
+- actions
+
+### Detail tabs
+- Overview
+- Editor
+- Publish
+- Dependencies
+- Versions
+
+### Editor workspace
+- left: node list
+- center: graph or block canvas
+- right: selected node inspector
+
+## Bridges
+### Detail tabs
+- Overview
+- Target
+- Usage
+- Runtime
+
+Bridge must be explained in plain language as reusable outbound destination.
+
+## Route Explorer
+Three columns:
+- input form
+- resolution timeline
+- warnings/dependency rail
+
+## Simulations
+Tabs:
+- DID simulation
+- policy simulation
+- flow simulation
+- time preview
+
+## Published Dialplan
+- publish state
+- compiled XML
+- manifest tree
+- linked source objects
+
+---
+
+# 13. Connectivity Wireframes
+
+## Gateways
+### Detail tabs
+- Overview
+- Connection
+- Authentication
+- Codec & Media
+- Runtime
+- XML
+
+Runtime tab shows:
+- Sofia status
+- command results
+- last reconcile result
+- registration health
+
+XML tab shows:
+- generated XML preview
+- path
+- last written timestamp
+
+## Registrations
+List columns:
+- gateway
+- state
+- status
+- username
+- realm
+- proxy
+- uptime/last seen
+- actions
+
+## SIP Profiles
+Tabs:
+- Overview
+- Bindings
+- Codec Defaults
+- NAT
+- Runtime
+
+## NAT / Media
+Cards:
+- SIP IP
+- RTP IP
+- external SIP/RTP
+- ACL state
+- warnings
+
+## Blocked Destinations
+Columns:
+- pattern/destination
+- reason
+- active
+- last matched maybe later
+
+## SSL / Certificates
+Tabs:
+- Overview
+- Domains
+- Status
+- Request / Renew
+- History
+
+---
+
+# 14. Calls and Records Wireframes
+
+## Live Calls
+Dense operations table with drawer detail.
+Columns:
+- call UUID
+- direction
+- from
+- to
+- state
+- duration
+- gateway
+- route
+- actions
+
+## Call Session Detail
+Tabs:
+- Overview
+- Legs
+- Routing
+- Events
+- Analysis
+
+## Call Analysis
+Panels:
+- quality summary
+- route summary
+- hangup cause insight
+- suspicious events
+
+## CDRs
+### Detail tabs
+- Overview
+- Legs
+- Routing
+- Recording
+- Events
+
+## Recordings
+### Detail
+- metadata
+- playback panel
+- download action
+- linked call/CDR
+
+## Events
+### Detail
+- raw JSON
+- structured summary
+- linked call
+- redispatch/replay actions if exposed
+
+## Trace Viewer
+Timeline:
+- call created
+- DID resolved
+- policy evaluated
+- flow traversed
+- bridge selected
+- queue/agent actions
+- hangup cause
+- recording link
+
+## Analytics
+Subpages:
+- summary
+- volume
+- quality
+- destinations
+
+---
+
+# 15. Contact Center Wireframes
+
+## Queues
+### Detail tabs
+- Overview
+- Members
+- Routing
+- Metrics
+- Events
+
+## Agents
+### Detail tabs
+- Overview
+- Queues
+- Activity
+- Performance
+
+## Wallboard
+Full-screen dense operations board.
+
+## Queue Metrics
+- realtime
+- aggregate
+- history
+
+## Codec Metrics
+- codec usage table/chart
+- trend blocks
+
+---
+
+# 16. Integrations Wireframes
+
+## Webhooks
+### Detail tabs
+- Overview
+- Events
+- Deliveries
+- Retry History
+- Stats
+
+## API Tokens
+### Detail
+- name
+- scopes
+- created by
+- last used
+- revoke action
+
+## Event Streams
+Overview page:
+- stream types
+- auth model
+- consumer status
+- last activity
+
+---
+
+# 17. Administration Wireframes
+
+## Users
+### Detail tabs
+- Overview
+- Access
+- Permissions
+- Activity
+- Tokens
+
+## Roles & Permissions
+Pages:
+- role list
+- role detail
+- permission matrix
+- available permissions catalog
+
+## Tenants
+### Detail tabs
+- Overview
+- Settings
+- Usage
+- Users
+- Telephony
+- Audit
+
+## Tenant Settings
+Tabs:
+- General
+- Branding
+- Telephony Defaults
+- Security
+- Usage
+- Advanced
+
+## Usage
+Views:
+- summary
+- collect/reconcile controls
+- charts
+- storage/call/API breakdown
+
+## Audit Logs
+### Detail
+- actor
+- object
+- action
+- before/after JSON
+- linked resources
+
+## System Settings
+Admin-level cards for:
+- SSL
+- SIP profiles
+- blocked destinations
+- system notices
+
+---
+
+# 18. State Pages and Empty States
+
+## Empty states required
+- no extensions
+- no DIDs
+- no flows
+- no bridges
+- no gateways
+- no queues
+- no recordings
+- no webhooks
+- no audit data
+
+## Error states required
+- 403 forbidden
+- 404 not found
+- 429 rate limited
+- 500 internal error
+- connection lost / retrying
+- data stale / runtime unavailable
+
+## Draft and publish states
+- draft warning banner
+- unsaved changes bar
+- publish confirm modal
+- conflict warning if source changed
+
+---
+
+# 19. Interaction Rules
+
+## Destination picker
+All routing surfaces must use one shared component pattern:
+1. choose destination type
+2. choose target object
+3. preview chip
+4. validate target state
+5. show dependency warnings
+
+Supported destination types:
+- extension
+- ring_group
+- ivr
+- voicemail
+- time_condition
+- call_routing_policy
+- flow
+- bridge
+
+## Status language consistency
+Use exactly these families:
+- Active / Inactive
+- Healthy / Warning / Error
+- Registered / Unregistered
+- Up / Down
+- Draft / Published
+- Enabled / Disabled
+
+## Drawer vs modal vs page rules
+Use drawer for:
+- small object create/edit
+- lightweight inspection
+
+Use modal for:
+- confirm destructive action
+- publish action
+- regenerate/reconcile confirm
+
+Use full page for:
+- complex routing objects
+- telecom config with multiple sections
+- workspace screens
+
+---
+
+# 20. Table Pattern Rules
+
+## Compact list tables
+Use for entity lists.
+
+## Runtime tables
+Use sticky columns for name/state when useful.
+
+## Event tables
+Use timestamp first, payload preview last.
+
+## Audit tables
+Show actor, object, action, time, and diff preview.
+
+## Density modes
+- relaxed: dashboards/overview tables
+- compact: operations/admin lists
+- dense: logs/events/runtime only
+
+---
+
+# 21. Accessibility Rules
+
+- text labels always accompany status colors
+- focus visible on every interactive element
+- keyboard navigation across sidebar, tabs, tables, forms, drawers
+- proper heading hierarchy
+- sufficient contrast
+- code panels selectable and copyable
+- interactive chips must meet touch target minimums where used as controls
+
+---
+
+# 22. Stitch Generation Guidance
+
+## Stitch generation strategy
+Do not ask Stitch for the whole app in one prompt.
+Generate in packs:
+1. auth pack
+2. shell + dashboard pack
+3. phone system pack
+4. routing pack
+5. connectivity pack
+6. calls pack
+7. contact center pack
+8. integrations/admin pack
+9. state pages pack
+
+## Output quality rule
+Each Stitch prompt should specify:
+- page shell
+- layout density
+- exact sections
+- tab set
+- table columns
+- right rail behavior if any
+- visual tone
+- token guidance summary
+
+---
+
+# 23. Final Implementation Priorities
+
+## Phase 1
+- auth shell
+- app shell
+- design primitives
+- dashboard
+- DID list/detail
+- gateway list/detail
+- bridge list/detail
+
+## Phase 2
+- policies
+- flows
+- route explorer
+- live calls
+- CDRs
+
+## Phase 3
+- contact center
+- integrations
+- admin control pages
+- state pages
+- analytics
+
+---
+
+# 24. Deliverables this file should drive
+
+From this spec, the team should be able to produce:
+- visual wireframes
+- component library
+- token JSON/CSS vars
+- page templates
+- frontend route map
+- implementation plan
+
+This file is the full design source of truth.

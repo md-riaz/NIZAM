@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-variant": "#dae2fd",
+                        "tertiary-fixed": "#ffdcc5",
+                        "outline": "#767586",
+                        "surface-container-high": "#e2e7ff",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "primary": "#4648d4",
+                        "on-tertiary-fixed": "#301400",
+                        "on-surface-variant": "#464554",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "secondary-fixed": "#e1e0ff",
+                        "surface-container-highest": "#dae2fd",
+                        "secondary-container": "#bdbefe",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "background": "#faf8ff",
+                        "on-primary-container": "#fffbff",
+                        "on-background": "#131b2e",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f3ff",
+                        "inverse-surface": "#283044",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "on-secondary-fixed": "#13144a",
+                        "surface-bright": "#faf8ff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#404178",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#494bd6",
+                        "surface": "#faf8ff",
+                        "tertiary": "#904900",
+                        "outline-variant": "#c7c4d7",
+                        "on-error": "#ffffff",
+                        "on-surface": "#131b2e",
+                        "tertiary-container": "#b55d00",
+                        "on-secondary-container": "#494b83",
+                        "surface-container": "#eaedff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-primary-fixed": "#07006c",
+                        "primary-fixed": "#e1e0ff",
+                        "inverse-on-surface": "#eef0ff",
+                        "on-tertiary-container": "#fffbff",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#575992",
+                        "inverse-primary": "#c0c1ff",
+                        "surface-dim": "#d2d9f4",
+                        "primary-container": "#6063ee"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .mono-data { font-family: 'JetBrains Mono', monospace; }
+        .glass-header {
+            background: rgba(250, 248, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<aside class="fixed left-0 top-0 h-full flex flex-col z-40 w-68 h-screen border-r border-slate-200/50 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-950 font-sans text-sm font-medium tracking-tight overflow-y-auto">
+<div class="p-6 flex items-center gap-3">
+<div class="w-8 h-8 bg-gradient-to-br from-primary to-primary-container rounded-lg flex items-center justify-center text-white shadow-sm">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">deployed_code</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-indigo-600 dark:text-indigo-400">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-400">Enterprise Control</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<div class="px-2 py-3 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Main Console</div>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-lg">phone_in_talk</span>
+<span>Phone System</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-lg">alt_route</span>
+<span>Routing</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-lg">settings_input_antenna</span>
+<span>Connectivity</span>
+</a>
+<div class="px-2 py-3 mt-4 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Operations</div>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-lg">call</span>
+<span>Calls</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-lg">support_agent</span>
+<span>Contact Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-lg">extension</span>
+<span>Integrations</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-semibold border-r-2 border-indigo-600" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+<span>Admin</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200/50">
+<div class="flex items-center gap-3 p-2 rounded-xl bg-slate-100/50 dark:bg-slate-900/50">
+<img class="w-8 h-8 rounded-full border-2 border-white shadow-sm" data-alt="User portrait for profile switcher" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTcTv4P1AjbWsXrFssaZkiag9mAN-22H7R8JmXQO7nY3uYa-EtaFsi5mo55LbY_wBAOGRLQrzTbN5M1fjB5W9dzXQlGRVi7LemcHvtboK8PmJE19zW7fsrgWFYPcv-FhtepcaFU_iJzO6XT-OsAdHDbLWvfnbeFJdKw0mGmBldnvKzEMZ7DlWrZ8yb9frXq2ZOh80ripWLWehFxDyL1gfXNkVwrJimfy7j5IbgLWEndYIgy7O77fT7SLBqp0Ydg7ukv_H3RJdUPYg"/>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold truncate">Nizam Global</p>
+<p class="text-[10px] text-slate-500">Tenant Switcher</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">unfold_more</span>
+</div>
+</div>
+</aside>
+<div class="ml-68 min-h-screen flex flex-col">
+<header class="sticky top-0 right-0 w-full flex items-center justify-between px-8 h-16 z-30 glass-header border-b border-indigo-500/10 shadow-sm shadow-slate-200/50">
+<div class="flex items-center gap-8 flex-1">
+<div class="relative w-full max-w-md">
+<span class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 text-lg">search</span>
+</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-xs focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400" placeholder="Global search for users, logs, or tenants..." type="text"/>
+<div class="absolute inset-y-0 right-3 flex items-center">
+<span class="px-1.5 py-0.5 rounded border border-outline-variant/30 text-[10px] text-slate-400 mono-data">⌘K</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<a class="text-xs font-semibold uppercase tracking-widest text-slate-500 hover:text-slate-800 transition-colors" href="#">Docs</a>
+<a class="text-xs font-semibold uppercase tracking-widest text-slate-500 hover:text-slate-800 transition-colors" href="#">Support</a>
+<a class="text-xs font-semibold uppercase tracking-widest text-slate-500 hover:text-slate-800 transition-colors" href="#">Status</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-lg hover:bg-slate-50 transition-colors relative">
+<span class="material-symbols-outlined text-slate-600">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-error rounded-full ring-2 ring-white"></span>
+</button>
+<button class="p-2 rounded-lg hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-slate-600">help_outline</span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+<button class="px-4 py-2 bg-gradient-to-br from-primary to-primary-container text-white text-xs font-semibold rounded-lg shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
+                    Create New
+                </button>
+</div>
+</header>
+<main class="flex-1 p-8 space-y-8 bg-background">
+<div class="flex items-end justify-between">
+<div class="space-y-1">
+<nav class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+<span>Admin</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span class="text-primary">Overview</span>
+</nav>
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface">System Control Plane</h2>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-outline-variant/20 rounded-lg hover:bg-slate-50 transition-all shadow-sm">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                        Filter Views
+                    </button>
+<button class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-outline-variant/20 rounded-lg hover:bg-slate-50 transition-all shadow-sm">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+                        Past 30 Days
+                    </button>
+</div>
+</div>
+<div class="bg-primary/5 border border-primary/10 rounded-xl p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">info</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-primary">Scheduled Maintenance Notification</p>
+<p class="text-xs text-slate-600">The US-EAST region will undergo connectivity upgrades on Friday, 02:00 AM UTC. No downtime expected.</p>
+</div>
+</div>
+<button class="text-xs font-bold text-primary hover:underline px-4">Review Schedule</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-transparent shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Active Users</span>
+<span class="material-symbols-outlined text-indigo-400 text-lg">group</span>
+</div>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-bold tracking-tight">12,842</h3>
+<span class="text-[10px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded flex items-center">
+<span class="material-symbols-outlined text-[10px]">arrow_upward</span>
+                            12%
+                        </span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1">Real-time concurrent sessions</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-transparent shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Tenant Count</span>
+<span class="material-symbols-outlined text-indigo-400 text-lg">domain</span>
+</div>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-bold tracking-tight">418</h3>
+<span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded flex items-center">
+                            +4 this week
+                        </span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1">Enterprise organizations active</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-transparent shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Usage Summary</span>
+<span class="material-symbols-outlined text-indigo-400 text-lg">database</span>
+</div>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-bold tracking-tight">84.2<span class="text-sm font-medium text-slate-400">TB</span></h3>
+<span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded flex items-center">
+<span class="material-symbols-outlined text-[10px]">warning</span>
+                            High Load
+                        </span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1">Object storage capacity used</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-transparent shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Uptime</span>
+<span class="material-symbols-outlined text-teal-500 text-lg">check_circle</span>
+</div>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-bold tracking-tight">99.998<span class="text-sm font-medium text-slate-400">%</span></h3>
+</div>
+<p class="text-[10px] text-slate-400 mt-1">Last incident 14 days ago</p>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-xl shadow-sm border border-transparent overflow-hidden">
+<div class="px-6 py-5 border-b border-slate-50 flex items-center justify-between">
+<h4 class="text-sm font-bold text-on-surface">Audit Volume &amp; Telemetry</h4>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-[10px] font-bold text-slate-500 uppercase">Requests</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-indigo-200"></span>
+<span class="text-[10px] font-bold text-slate-500 uppercase">Errors</span>
+</div>
+</div>
+</div>
+<div class="p-6 h-[300px] relative flex items-end gap-1">
+<div class="absolute inset-0 p-6 flex flex-col justify-between pointer-events-none">
+<div class="border-b border-slate-50 w-full h-0"></div>
+<div class="border-b border-slate-50 w-full h-0"></div>
+<div class="border-b border-slate-50 w-full h-0"></div>
+<div class="border-b border-slate-50 w-full h-0"></div>
+</div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[40%] rounded-t-sm relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-800 text-white text-[10px] px-2 py-1 rounded pointer-events-none">12k</div>
+</div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[55%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[45%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[70%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[85%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[65%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[50%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[40%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[35%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[60%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[75%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[90%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-primary h-[95%] rounded-t-sm relative group shadow-[0_0_15px_rgba(70,72,212,0.3)]"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[80%] rounded-t-sm relative group"></div>
+<div class="flex-1 bg-indigo-50/50 hover:bg-primary transition-colors h-[70%] rounded-t-sm relative group"></div>
+</div>
+<div class="px-6 pb-6 flex items-center justify-between text-[10px] font-mono text-slate-400">
+<span>00:00 UTC</span>
+<span>06:00 UTC</span>
+<span>12:00 UTC</span>
+<span>18:00 UTC</span>
+<span>NOW</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-transparent flex flex-col">
+<div class="px-6 py-5 border-b border-slate-50 flex items-center justify-between">
+<h4 class="text-sm font-bold text-on-surface">Permission Changes</h4>
+<span class="px-2 py-0.5 rounded-full bg-indigo-50 text-[10px] font-bold text-indigo-600">LIVE</span>
+</div>
+<div class="flex-1 overflow-y-auto p-2 space-y-1">
+<div class="p-3 rounded-lg hover:bg-slate-50 transition-colors flex items-start gap-3">
+<div class="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 flex-shrink-0">
+<span class="material-symbols-outlined text-sm">shield_person</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between">
+<p class="text-xs font-bold truncate">admin_global_escalate</p>
+<span class="text-[9px] font-mono text-slate-400">2m ago</span>
+</div>
+<p class="text-[11px] text-slate-500 leading-tight mt-1">User <span class="mono-data text-on-surface">j.doe@nizam.io</span> was granted SuperAdmin role.</p>
+</div>
+</div>
+<div class="p-3 rounded-lg hover:bg-slate-50 transition-colors flex items-start gap-3">
+<div class="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 flex-shrink-0">
+<span class="material-symbols-outlined text-sm">lock_open</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between">
+<p class="text-xs font-bold truncate">api_key_revoked</p>
+<span class="text-[9px] font-mono text-slate-400">14m ago</span>
+</div>
+<p class="text-[11px] text-slate-500 leading-tight mt-1">Tenant ID <span class="mono-data text-on-surface">T-8921</span> API credentials expired.</p>
+</div>
+</div>
+<div class="p-3 rounded-lg hover:bg-slate-50 transition-colors flex items-start gap-3">
+<div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0">
+<span class="material-symbols-outlined text-sm">assignment_ind</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between">
+<p class="text-xs font-bold truncate">policy_update</p>
+<span class="text-[9px] font-mono text-slate-400">1h ago</span>
+</div>
+<p class="text-[11px] text-slate-500 leading-tight mt-1">Global IP Whitelist updated for <span class="mono-data text-on-surface">EU-WEST-1</span>.</p>
+</div>
+</div>
+<div class="p-3 rounded-lg hover:bg-slate-50 transition-colors flex items-start gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 flex-shrink-0">
+<span class="material-symbols-outlined text-sm">group_add</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between">
+<p class="text-xs font-bold truncate">new_user_invite</p>
+<span class="text-[9px] font-mono text-slate-400">2h ago</span>
+</div>
+<p class="text-[11px] text-slate-500 leading-tight mt-1">Batch invitation sent to 4 nodes in <span class="mono-data text-on-surface">Dept-UX</span>.</p>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-slate-50">
+<button class="w-full py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-primary transition-colors">View Audit Log</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-transparent overflow-hidden">
+<div class="px-6 py-5 border-b border-slate-50 flex items-center justify-between">
+<div>
+<h4 class="text-sm font-bold text-on-surface">Tenant Performance Matrices</h4>
+<p class="text-[10px] text-slate-400">Operational health check for active enterprise instances</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="flex h-2 w-2 rounded-full bg-teal-500"></span>
+<span class="text-[10px] font-bold text-slate-500 uppercase">All Systems Nominal</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+<th class="px-6 py-3 font-semibold">Tenant Identifier</th>
+<th class="px-6 py-3 font-semibold">Status</th>
+<th class="px-6 py-3 font-semibold">Region</th>
+<th class="px-6 py-3 font-semibold">Throughput</th>
+<th class="px-6 py-3 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface">Stripe International</span>
+<span class="text-[10px] font-mono text-slate-400">STR-7729-OP</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-bold">ACTIVE</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-mono text-slate-500 uppercase tracking-tighter">US-EAST-1</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-indigo-500 w-[78%]"></div>
+</div>
+<span class="text-[10px] font-mono font-bold">1.2GB/s</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-200 rounded text-slate-400"><span class="material-symbols-outlined text-lg">more_horiz</span></button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface">Vercel Edge</span>
+<span class="text-[10px] font-mono text-slate-400">VRC-0012-LX</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-bold">ACTIVE</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-mono text-slate-500 uppercase tracking-tighter">EU-CENTRAL-1</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-indigo-500 w-[42%]"></div>
+</div>
+<span class="text-[10px] font-mono font-bold">0.6GB/s</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-200 rounded text-slate-400"><span class="material-symbols-outlined text-lg">more_horiz</span></button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface">Linear Labs</span>
+<span class="text-[10px] font-mono text-slate-400">LIN-4402-QW</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold">PENDING</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-[10px] font-mono text-slate-500 uppercase tracking-tighter">US-WEST-2</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-slate-300 w-[5%]"></div>
+</div>
+<span class="text-[10px] font-mono font-bold">--</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 hover:bg-slate-200 rounded text-slate-400"><span class="material-symbols-outlined text-lg">more_horiz</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<footer class="p-8 flex items-center justify-between border-t border-slate-200/30">
+<div class="flex items-center gap-6 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
+<span>© 2024 Nizam Systems Inc.</span>
+<a class="hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="hover:text-primary transition-colors" href="#">Security</a>
+<a class="hover:text-primary transition-colors" href="#">GDPR</a>
+</div>
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+</span>
+<span class="text-[10px] font-mono text-slate-500 font-bold uppercase tracking-tight">System status: operational</span>
+</div>
+</footer>
+</div>
+</body></html>

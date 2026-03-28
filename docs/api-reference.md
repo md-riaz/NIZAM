@@ -318,6 +318,36 @@ Authorization: Bearer YOUR_TOKEN
 
 Returns total tenants by status, per-tenant resource counts, and aggregate system metrics.
 
+### SSL Management
+
+Manage system-wide SSL certificates via Certbot / Let's Encrypt (admin-only):
+
+#### Get SSL Settings
+```http
+GET /api/admin/ssl
+Authorization: Bearer YOUR_TOKEN
+```
+
+#### Update SSL Settings
+```http
+PUT /api/admin/ssl
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "is_enabled": true,
+  "domains": ["nizam.example.com", "api.nizam.example.com"]
+}
+```
+
+#### Request Certificate
+```http
+POST /api/admin/ssl/request
+Authorization: Bearer YOUR_TOKEN
+```
+Triggers a manual Let's Encrypt certificate request/renewal.
+
 ### External Number Lookup
 
 Tenants can configure an external number lookup URL in their settings for CNAM/caller-ID enrichment:
@@ -379,6 +409,34 @@ Content-Type: application/json
 GET    /api/tenants/{tenant_id}/extensions/{id}
 PUT    /api/tenants/{tenant_id}/extensions/{id}
 DELETE /api/tenants/{tenant_id}/extensions/{id}
+```
+
+### WebRTC Configuration
+
+Get the complete connection suite for WebRTC clients (SIP.js, etc.):
+
+```http
+GET /api/tenants/{tenant_id}/extensions/{id}/webrtc-config
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": {
+    "enabled": true,
+    "websocket_url": "wss://nizam.example.com:7443",
+    "sip_uri": "sip:1001@acme.example.com",
+    "sip_username": "1001",
+    "sip_password": "encrypted-password",
+    "sip_domain": "acme.example.com",
+    "display_name": "John Doe",
+    "ice_servers": [
+      { "urls": "stun:stun.l.google.com:19302" }
+    ],
+    "codec_prefs": ["OPUS", "PCMU", "PCMA", "G722"]
+  }
+}
 ```
 
 ---

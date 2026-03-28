@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - Flow Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-container": "#bdbefe",
+              "on-secondary-fixed": "#13144a",
+              "primary": "#4648d4",
+              "tertiary": "#904900",
+              "secondary": "#575992",
+              "inverse-surface": "#283044",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#464554",
+              "on-primary-container": "#fffbff",
+              "on-background": "#131b2e",
+              "error": "#ba1a1a",
+              "background": "#faf8ff",
+              "on-secondary-container": "#494b83",
+              "surface-container-highest": "#dae2fd",
+              "primary-fixed": "#e1e0ff",
+              "primary-container": "#6063ee",
+              "secondary-fixed-dim": "#c0c1ff",
+              "on-tertiary-container": "#fffbff",
+              "surface-container-lowest": "#ffffff",
+              "surface-tint": "#494bd6",
+              "on-primary-fixed": "#07006c",
+              "on-secondary-fixed-variant": "#404178",
+              "on-primary": "#ffffff",
+              "inverse-on-surface": "#eef0ff",
+              "surface-container-low": "#f2f3ff",
+              "on-tertiary-fixed": "#301400",
+              "on-error-container": "#93000a",
+              "secondary-fixed": "#e1e0ff",
+              "primary-fixed-dim": "#c0c1ff",
+              "on-surface": "#131b2e",
+              "surface-container": "#eaedff",
+              "on-error": "#ffffff",
+              "tertiary-container": "#b55d00",
+              "inverse-primary": "#c0c1ff",
+              "tertiary-fixed-dim": "#ffb783",
+              "outline-variant": "#c7c4d7",
+              "on-tertiary-fixed-variant": "#703700",
+              "tertiary-fixed": "#ffdcc5",
+              "surface-dim": "#d2d9f4",
+              "surface-container-high": "#e2e7ff",
+              "surface-bright": "#faf8ff",
+              "surface": "#faf8ff",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "outline": "#767586",
+              "on-secondary": "#ffffff",
+              "error-container": "#ffdad6",
+              "surface-variant": "#dae2fd"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"],
+              "mono": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .canvas-grid {
+            background-image: radial-gradient(#c7c4d7 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .node-connector::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #4648d4;
+            border-radius: 50%;
+            right: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 2px solid #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- SideNavBar Shared Component -->
+<aside class="w-68 h-screen sticky left-0 top-0 flex flex-col border-r border-slate-200/60 dark:border-slate-800 p-5 bg-slate-50 dark:bg-slate-900 font-sans text-sm font-medium Inter">
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-mono">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500">Communications Control</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="phone_in_talk">phone_in_talk</span>
+<span>Phone System</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-semibold rounded-lg transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="alt_route">alt_route</span>
+<span>Routing</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+<span>Connectivity</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="call">call</span>
+<span>Calls</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Admin</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-200/60">
+<div class="flex items-center gap-3 px-2">
+<div class="w-9 h-9 rounded-full bg-slate-200 overflow-hidden">
+<img alt="User Avatar" data-alt="Professional user profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9kXNgalCfGd9XHWX3BlTdIYKE7YtJKc0MY7ZzGwoxro4KZgD2LqC2eg-7h8W3mEoWgJLgQuSBwcSw1YyLfGUYpfVJFls2DoUn41Uzy6FrhtXvPZzmKFpkEOXEizdFz2AQ_yzO0dOiiHyCd3qyPVHYI2m7eFSytPF8acgMAcb0hy91YBA0bfEhdYkc3CstKot_Novc_WzE1H1A5pQP3y2WRfa5imLsmEpaWM8x8DAasa4c9RowyAIhGzP5GUp-3qZLKuTXqB4crqo"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold truncate text-slate-900">Alex Nizam</p>
+<p class="text-xs text-slate-500 truncate">System Architect</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<!-- TopNavBar Shared Component -->
+<header class="h-16 sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/40 dark:border-slate-800/40 flex justify-between items-center px-6 shadow-sm dark:shadow-none font-sans text-sm Inter">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="text-slate-400 font-mono text-xs">FLOW /</span>
+<span class="font-bold text-on-surface">Customer_Support_IVR_v2</span>
+</div>
+<nav class="hidden md:flex gap-6">
+<a class="text-slate-500 hover:text-indigo-500 transition-opacity font-mono text-xs" href="#">Extensions</a>
+<a class="text-slate-500 hover:text-indigo-500 transition-opacity font-mono text-xs" href="#">DIDs</a>
+<a class="text-indigo-600 border-b-2 border-indigo-600 pb-1 font-mono text-xs" href="#">Policies</a>
+<a class="text-slate-500 hover:text-indigo-500 transition-opacity font-mono text-xs" href="#">Gateways</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-xl text-xs w-64 focus:ring-2 focus:ring-primary/20" placeholder="Search parameters..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="apps">apps</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Flow Editor Workspace (3-Column Layout) -->
+<main class="flex-1 flex overflow-hidden">
+<!-- Left: Node Library (Palette) -->
+<section class="w-64 bg-surface-container-low flex flex-col border-r border-outline-variant/20">
+<div class="p-4 border-b border-outline-variant/20 bg-surface-container-lowest">
+<h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Node Library</h2>
+<div class="grid grid-cols-2 gap-2">
+<div class="p-3 bg-surface-container-lowest border border-outline-variant/20 rounded-lg flex flex-col items-center gap-2 cursor-grab hover:border-primary/40 transition-all group">
+<span class="material-symbols-outlined text-indigo-600 group-hover:scale-110 transition-transform">phone_callback</span>
+<span class="text-[10px] font-mono text-on-surface">DID</span>
+</div>
+<div class="p-3 bg-surface-container-lowest border border-outline-variant/20 rounded-lg flex flex-col items-center gap-2 cursor-grab hover:border-primary/40 transition-all group">
+<span class="material-symbols-outlined text-indigo-600 group-hover:scale-110 transition-transform">interactive_space</span>
+<span class="text-[10px] font-mono text-on-surface">IVR</span>
+</div>
+<div class="p-3 bg-surface-container-lowest border border-outline-variant/20 rounded-lg flex flex-col items-center gap-2 cursor-grab hover:border-primary/40 transition-all group">
+<span class="material-symbols-outlined text-indigo-600 group-hover:scale-110 transition-transform">conversion_path</span>
+<span class="text-[10px] font-mono text-on-surface">Bridge</span>
+</div>
+<div class="p-3 bg-surface-container-lowest border border-outline-variant/20 rounded-lg flex flex-col items-center gap-2 cursor-grab hover:border-primary/40 transition-all group">
+<span class="material-symbols-outlined text-indigo-600 group-hover:scale-110 transition-transform">call_merge</span>
+<span class="text-[10px] font-mono text-on-surface">Route</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex-1 overflow-y-auto space-y-4">
+<div>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Voice Logic</span>
+<div class="mt-2 space-y-2">
+<button class="w-full flex items-center gap-3 px-3 py-2 bg-surface-container-lowest rounded-lg border border-outline-variant/10 text-xs text-on-surface-variant hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-sm">record_voice_over</span>
+                                    Record Call
+                                </button>
+<button class="w-full flex items-center gap-3 px-3 py-2 bg-surface-container-lowest rounded-lg border border-outline-variant/10 text-xs text-on-surface-variant hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-sm">text_to_speech</span>
+                                    TTS Prompt
+                                </button>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Data Hooks</span>
+<div class="mt-2 space-y-2">
+<button class="w-full flex items-center gap-3 px-3 py-2 bg-surface-container-lowest rounded-lg border border-outline-variant/10 text-xs text-on-surface-variant hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-sm">webhook</span>
+                                    HTTP Request
+                                </button>
+<button class="w-full flex items-center gap-3 px-3 py-2 bg-surface-container-lowest rounded-lg border border-outline-variant/10 text-xs text-on-surface-variant hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-sm">database</span>
+                                    CRM Lookup
+                                </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Center: Graph Canvas -->
+<section class="flex-1 relative canvas-grid overflow-hidden bg-background">
+<!-- Zoom/Pan Controls -->
+<div class="absolute bottom-6 left-6 flex bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/20 p-1 z-10">
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">add</span></button>
+<div class="w-px bg-outline-variant/20 my-2 mx-1"></div>
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">remove</span></button>
+<div class="w-px bg-outline-variant/20 my-2 mx-1"></div>
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">center_focus_weak</span></button>
+</div>
+<!-- Flow Nodes Representation -->
+<div class="absolute inset-0 p-12">
+<!-- Node 1: Entry -->
+<div class="absolute top-20 left-20 w-56 bg-surface-container-lowest rounded-xl shadow-xl border-l-4 border-l-primary p-4 node-connector">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-600 text-sm">phone_callback</span>
+<span class="text-[10px] font-mono font-bold text-slate-400">ENTRY</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 text-sm">more_vert</span>
+</div>
+<h3 class="text-sm font-bold text-on-surface">Main Office DID</h3>
+<p class="text-[10px] font-mono text-indigo-500 mt-1">+1 (555) 012-3456</p>
+</div>
+<!-- Connector Line (SVG Simulation) -->
+<svg class="absolute inset-0 pointer-events-none w-full h-full">
+<path d="M 304 116 L 420 116 C 480 116 480 220 540 220" fill="none" stroke="#6063ee" stroke-dasharray="4" stroke-width="2"></path>
+</svg>
+<!-- Node 2: IVR Menu (Selected) -->
+<div class="absolute top-48 left-[540px] w-64 bg-surface-container-lowest rounded-xl shadow-[0_8px_32px_rgba(70,72,212,0.15)] ring-2 ring-primary p-4 z-20">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-600 text-sm">interactive_space</span>
+<span class="text-[10px] font-mono font-bold text-slate-400">IVR_MENU</span>
+</div>
+<div class="flex gap-1">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="material-symbols-outlined text-slate-300 text-sm">settings</span>
+</div>
+</div>
+<h3 class="text-sm font-bold text-on-surface">Welcome Greeting</h3>
+<div class="mt-4 space-y-2">
+<div class="flex items-center justify-between p-2 bg-surface-container-low rounded-lg text-[10px] font-mono group cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="text-slate-600">Press 1: Sales</span>
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<div class="flex items-center justify-between p-2 bg-surface-container-low rounded-lg text-[10px] font-mono group cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="text-slate-600">Press 2: Support</span>
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<div class="flex items-center justify-between p-2 bg-surface-container-low rounded-lg text-[10px] font-mono group cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="text-slate-600">Press 0: Operator</span>
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+</div>
+</div>
+<!-- Secondary Connector Line -->
+<svg class="absolute inset-0 pointer-events-none w-full h-full">
+<path d="M 796 244 L 900 244" fill="none" opacity="0.3" stroke="#6063ee" stroke-width="2"></path>
+</svg>
+<!-- Node 3: Target -->
+<div class="absolute top-52 left-[900px] w-56 bg-surface-container-lowest rounded-xl shadow-lg border-l-4 border-l-amber-500 p-4 opacity-60">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500 text-sm">call_merge</span>
+<span class="text-[10px] font-mono font-bold text-slate-400">QUEUE</span>
+</div>
+</div>
+<h3 class="text-sm font-bold text-on-surface">Sales Queue</h3>
+<p class="text-[10px] font-mono text-slate-500 mt-1">Priority: High</p>
+</div>
+</div>
+</section>
+<!-- Right: Inspector Panel -->
+<section class="w-80 bg-surface-container-lowest border-l border-outline-variant/20 flex flex-col shadow-2xl z-30">
+<div class="p-5 border-b border-outline-variant/20">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-sm font-bold text-on-surface">Node Inspector</h2>
+<button class="p-1 hover:bg-slate-100 rounded text-slate-400"><span class="material-symbols-outlined text-sm">close</span></button>
+</div>
+<div class="flex items-center gap-2 px-2 py-1 bg-indigo-50 rounded text-indigo-600 font-mono text-[10px]">
+<span class="material-symbols-outlined text-xs">fingerprint</span>
+                            NODE_ID: 982-IVR-A
+                        </div>
+</div>
+<div class="flex-1 overflow-y-auto p-5 space-y-6">
+<!-- Configuration Section -->
+<div class="space-y-4">
+<div>
+<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-2">Display Name</label>
+<input class="w-full bg-surface-container-low border-none rounded-lg text-sm px-3 py-2 focus:ring-1 focus:ring-primary/40" type="text" value="Welcome Greeting"/>
+</div>
+<div>
+<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-2">Voice Prompt</label>
+<div class="p-3 bg-surface-container-low rounded-xl border border-dashed border-outline-variant/40 text-center cursor-pointer hover:border-primary/40 transition-all">
+<span class="material-symbols-outlined text-slate-400">cloud_upload</span>
+<p class="text-[10px] text-slate-500 mt-1">Upload .wav or .mp3</p>
+</div>
+<div class="mt-2 p-2 bg-indigo-50/50 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-500 text-sm">play_circle</span>
+<span class="text-[10px] font-mono text-indigo-700">welcome_02.wav</span>
+</div>
+<span class="text-[10px] text-slate-400">0:14s</span>
+</div>
+</div>
+<div>
+<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-2">Max Retries</label>
+<div class="flex items-center gap-3">
+<input class="flex-1 accent-primary" max="5" min="1" type="range" value="3"/>
+<span class="text-xs font-mono font-bold text-on-surface">3</span>
+</div>
+</div>
+</div>
+<div class="h-px bg-outline-variant/20"></div>
+<!-- Advanced Routing -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Timeout Action</label>
+<div class="w-8 h-4 bg-primary/20 rounded-full relative cursor-pointer">
+<div class="absolute right-0 top-0 w-4 h-4 bg-primary rounded-full shadow-sm"></div>
+</div>
+</div>
+<select class="w-full bg-surface-container-low border-none rounded-lg text-xs px-3 py-2">
+<option>Hangup Call</option>
+<option selected="">Transfer to Operator</option>
+<option>Loop Menu</option>
+</select>
+</div>
+</div>
+<div class="p-5 bg-surface-container-low border-t border-outline-variant/20 space-y-3">
+<button class="w-full py-2.5 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl text-sm font-semibold shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">save</span>
+                            Save Node
+                        </button>
+<button class="w-full py-2.5 bg-transparent border border-outline-variant/40 text-on-surface-variant rounded-xl text-sm font-medium hover:bg-surface-container-high transition-colors">
+                            Duplicate
+                        </button>
+</div>
+</section>
+</main>
+</div>
+</div>
+<!-- Floating Action Action (Contextual) -->
+<div class="fixed bottom-8 right-[340px] flex gap-3">
+<button class="flex items-center gap-2 px-5 py-3 bg-inverse-surface text-inverse-on-surface rounded-full shadow-xl hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span class="font-bold text-sm">Test Flow</span>
+</button>
+<button class="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-full shadow-xl hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="publish">publish</span>
+<span class="font-bold text-sm">Publish Changes</span>
+</button>
+</div>
+</body></html>

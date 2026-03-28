@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - Agents Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "primary": "#4648d4",
+                        "surface-container-high": "#e2e7ff",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "tertiary-fixed": "#ffdcc5",
+                        "outline": "#767586",
+                        "surface-variant": "#dae2fd",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#dae2fd",
+                        "secondary-container": "#bdbefe",
+                        "on-tertiary-fixed": "#301400",
+                        "on-surface-variant": "#464554",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "secondary-fixed": "#e1e0ff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f3ff",
+                        "inverse-surface": "#283044",
+                        "on-primary-container": "#fffbff",
+                        "on-background": "#131b2e",
+                        "background": "#faf8ff",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#494bd6",
+                        "surface": "#faf8ff",
+                        "surface-bright": "#faf8ff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#404178",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#13144a",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "on-error": "#ffffff",
+                        "on-surface": "#131b2e",
+                        "outline-variant": "#c7c4d7",
+                        "tertiary": "#904900",
+                        "surface-container": "#eaedff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-primary-fixed": "#07006c",
+                        "tertiary-container": "#b55d00",
+                        "on-secondary-container": "#494b83",
+                        "on-tertiary-container": "#fffbff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#e1e0ff",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary": "#575992",
+                        "inverse-primary": "#c0c1ff",
+                        "surface-dim": "#d2d9f4",
+                        "primary-container": "#6063ee",
+                        "on-secondary": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+<!-- SideNavBar Component -->
+<aside class="w-[272px] h-screen sticky left-0 top-0 bg-[#f2f3ff] flex flex-col p-5 gap-2 z-40">
+<div class="mb-8 px-2">
+<h1 class="text-2xl font-black tracking-tighter text-[#131b2e]">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-[#131b2e]/40 font-bold">Contact Center &amp; Ops</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 hover:bg-[#dae2fd]/50 transition-colors duration-200 ease-in-out font-['Inter'] text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined text-lg">monitoring</span>
+                Wallboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 hover:bg-[#dae2fd]/50 transition-colors duration-200 ease-in-out font-['Inter'] text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined text-lg">group_work</span>
+                Queues
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 bg-[#dae2fd] text-[#4648d4] font-semibold rounded-lg font-['Inter'] text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined text-lg">support_agent</span>
+                Agents
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 hover:bg-[#dae2fd]/50 transition-colors duration-200 ease-in-out font-['Inter'] text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined text-lg">webhook</span>
+                Webhooks
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 hover:bg-[#dae2fd]/50 transition-colors duration-200 ease-in-out font-['Inter'] text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined text-lg">key</span>
+                API Tokens
+            </a>
+</nav>
+<div class="pt-4 mt-auto border-t border-outline-variant/20 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 hover:bg-[#dae2fd]/50 transition-colors duration-200 ease-in-out font-['Inter'] text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#131b2e]/70 hover:bg-[#dae2fd]/50 transition-colors duration-200 ease-in-out font-['Inter'] text-sm tracking-tight" href="#">
+<span class="material-symbols-outlined text-lg">help_outline</span>
+                Support
+            </a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0">
+<!-- TopAppBar Component -->
+<header class="h-16 w-full sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#c7c4d7]/20 shadow-[0_8px_32px_rgba(19,27,46,0.06)] flex items-center justify-between px-8">
+<div class="flex items-center gap-6">
+<span class="text-sm font-medium text-on-surface/40">Contact Center / Agents</span>
+<nav class="flex items-center gap-8 ml-4">
+<a class="text-[#131b2e]/60 hover:text-[#131b2e] transition-all duration-300 font-['Inter'] text-sm font-medium" href="#">Dashboard</a>
+<a class="text-[#4648d4] border-b-2 border-[#4648d4] pb-5 font-['Inter'] text-sm font-medium mt-5" href="#">Analytics</a>
+<a class="text-[#131b2e]/60 hover:text-[#131b2e] transition-all duration-300 font-['Inter'] text-sm font-medium" href="#">Logs</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 w-64 transition-all" placeholder="Search agents..." type="text"/>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Headshot of a professional male manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpvevcWf5CRhpkc7WXe8cdzrgUdK_O_3g-RTDXv_1yF5Vl6SXOoDHhrugL0UAi7O9kBuNiWTJsottXRflgQQjE3LJUVXkYhMglNT4RRX0ERjWjde7o6PK-HnMeJeood3GWXW6dOs9oDPayjx30B7pOmhfk5oqmrLMiB3YU8XsIsUldCl5O4jvihtOzzioQBMvXNUrHkcN30vtFGgUoU3yKwpSGp8j2miAVZo9DeC35kAynIK8noLgUr-nwaKHXB5OHflDymtHA7Qw"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="p-8 space-y-8 max-w-[1400px] mx-auto w-full">
+<!-- Page Header / Actions -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface">Agent Directory</h2>
+<p class="text-on-surface-variant mt-1">Manage and monitor 128 active contact center professionals.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest text-on-surface border border-outline-variant/20 rounded-xl hover:bg-surface-container-low transition-all text-sm font-semibold shadow-sm">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                        Filters
+                    </button>
+<button class="flex items-center gap-2 px-5 py-2 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl hover:opacity-90 transition-all text-sm font-semibold shadow-md shadow-primary/20">
+<span class="material-symbols-outlined text-lg">add</span>
+                        Create Agent
+                    </button>
+</div>
+</div>
+<!-- Dashboard Summary Widgets (Asymmetric Layout) -->
+<div class="grid grid-cols-12 gap-6">
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest p-6 rounded-xl border-l-4 border-primary shadow-sm flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Available Capacity</span>
+<span class="material-symbols-outlined text-primary">sensors</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-black text-on-surface">84.2%</span>
+<span class="text-xs font-medium text-cyan-600 bg-cyan-100 px-1.5 py-0.5 rounded">+2.4%</span>
+</div>
+</div>
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest p-6 rounded-xl border-l-4 border-amber-400 shadow-sm flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Active on Break</span>
+<span class="material-symbols-outlined text-amber-500">coffee</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-black text-on-surface">12</span>
+<span class="text-xs font-medium text-on-surface-variant/40">of 128 agents</span>
+</div>
+</div>
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest p-6 rounded-xl border-l-4 border-purple-500 shadow-sm flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Avg. CSAT Rating</span>
+<span class="material-symbols-outlined text-purple-500">grade</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-black text-on-surface">4.82</span>
+<span class="text-xs font-medium text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded">High Performance</span>
+</div>
+</div>
+</div>
+<!-- Agents List Table -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-outline-variant/10">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 border-b border-outline-variant/10">Agent Name</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 border-b border-outline-variant/10">Status</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 border-b border-outline-variant/10">Active Queue</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 border-b border-outline-variant/10">Handled Today</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 border-b border-outline-variant/10">Rating</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70 border-b border-outline-variant/10 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Agent Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+<img alt="Sarah J" class="w-full h-full object-cover" data-alt="Portrait of a smiling female agent" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAAChCHGBSpUIA225nsKpNreKpkpagMUy9oLN5EA7e7-AEES-uaXHU1CXG7n0Vq8AXpQlSDQaVPDzJDaZ_sLPlUcRIdzIvt6rwFkrVL2_Hj3hV1IHny4ORq7pIIvnzSEGds2FSaeayQEfrE91JyLcZEup_MSRCRe2L2PNS83JX5CweVmwDjHmvqGNtiq84n0z-uVKri9aQI51Ut4MNTSn-X-4HbozfOK9pxneu_DCUZPlD-ZIcjDhaE7JLsbWkBU3E6BQTAdAbUiw"/>
+</div>
+<div>
+<p class="font-semibold text-on-surface">Sarah Jenkins</p>
+<p class="text-[10px] font-mono text-on-surface-variant/60">ID: AGT-8829</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-100 text-cyan-700">
+<span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
+                                    Available
+                                </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-on-surface">Premium Support</span>
+<p class="text-[10px] text-on-surface-variant/60">Priority: High</p>
+</td>
+<td class="px-6 py-4 font-mono text-sm text-on-surface">42</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1">
+<span class="text-sm font-bold text-on-surface">4.9</span>
+<span class="material-symbols-outlined text-[16px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Agent Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+<img alt="Michael R" class="w-full h-full object-cover" data-alt="Portrait of a focused male agent" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBj46yY1LqwwdDCzIXKwAGdyDPgl6yUoB19Kh4aaor5Oa-GobZXo3NYURaxmICLZ29_dXlu0uKJl3cqYx0qIN3v2OZCNQmtCTZTz5vzQ3vVF6wXMVSsCRKoc1gV5eidkpIVGdNSkTbxO-Wnpha6rSAiM7_LLiV_f5YZT6JhHdaHFTs3gVnsxbZp0WtTYTtcpHtRurmgxJ4VlA05Rap8VdUTq3qmhTb548ZNcJh0xXdcuh81CVY5Sl8Z6INut_gxlknXkPcWF246KqI"/>
+</div>
+<div>
+<p class="font-semibold text-on-surface">Michael Rodriguez</p>
+<p class="text-[10px] font-mono text-on-surface-variant/60">ID: AGT-4412</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    Busy
+                                </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-on-surface">Technical Billing</span>
+<p class="text-[10px] text-on-surface-variant/60">Priority: Normal</p>
+</td>
+<td class="px-6 py-4 font-mono text-sm text-on-surface">28</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1">
+<span class="text-sm font-bold text-on-surface">4.2</span>
+<span class="material-symbols-outlined text-[16px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Agent Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+<img alt="Emily C" class="w-full h-full object-cover" data-alt="Portrait of a young female agent" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_TdzrJmlFsvBK8pgVvZaWY4rzX-6BwUeZJKWHMcm8XUoGJpB9Vpqzbb_5DEnlP_q880_StLIaVxHXr5NMlTgnU32Cl19UonecnLuTer27q6cXZHhV_fuQAtf35vGTXsjd93SJISsyslk3Fn5SHdihwp_IP_bd7wJxPDAEwvT9EaSc1cOITxaxhRyzQGKv9NRRYiwT6lekctiXZqN9f74Emuu1fIIZK-z-Nk0u-PIFa4XytZuY_4sh66DR596l7-1HFA9Ivj1Tla4"/>
+</div>
+<div>
+<p class="font-semibold text-on-surface">Emily Chen</p>
+<p class="text-[10px] font-mono text-on-surface-variant/60">ID: AGT-9901</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
+<span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                    Break
+                                </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-on-surface">General Inquiries</span>
+<p class="text-[10px] text-on-surface-variant/60">Priority: Low</p>
+</td>
+<td class="px-6 py-4 font-mono text-sm text-on-surface">19</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1">
+<span class="text-sm font-bold text-on-surface">4.7</span>
+<span class="material-symbols-outlined text-[16px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Agent Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 grayscale opacity-60">
+<img alt="David L" class="w-full h-full object-cover" data-alt="Portrait of a male agent offline" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDw9ubL5fOeGfB52bv_GXTn5ZrTg5PjJPkbZOA0vzXzr6JtOgx5O3fT2qiDWD3uIJUl2cLTPeeouUKqWOX8EekGl7SpSmN-VXD-WqSjUzMTedv8VCaOxOWDL3bxoHYL3ZnzxiieclAvTfsjWxPAkxJlt_V7RPxeoE_Myb3IoyDqHMF-UIyQ5UzJWrixp31p4rYLcXJGjY-0cXZbTkTDbEBr9P_3Nc92rWq-dUMIObAD8E6Dy5sflhDzVBw2Mw4wtglsmV_IpDu9opU"/>
+</div>
+<div>
+<p class="font-semibold text-on-surface-variant">David Laine</p>
+<p class="text-[10px] font-mono text-on-surface-variant/40">ID: AGT-7721</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-surface-container text-on-surface-variant/60">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                    Offline
+                                </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-on-surface-variant/50">Tier 2 Technical</span>
+<p class="text-[10px] text-on-surface-variant/40">Inactive</p>
+</td>
+<td class="px-6 py-4 font-mono text-sm text-on-surface-variant/50">0</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-1 opacity-50">
+<span class="text-sm font-bold text-on-surface-variant">4.5</span>
+<span class="material-symbols-outlined text-[16px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination / Footer -->
+<div class="px-6 py-4 bg-surface-container-low/30 border-t border-outline-variant/10 flex justify-between items-center">
+<span class="text-xs text-on-surface-variant font-medium">Showing 4 of 128 Agents</span>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/20 hover:bg-surface-container-low text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-lg">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/20 hover:bg-surface-container-low text-on-surface-variant transition-colors text-xs font-bold">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/20 hover:bg-surface-container-low text-on-surface-variant transition-colors text-xs font-bold">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/20 hover:bg-surface-container-low text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bento Card for Queue Insights -->
+<div class="grid grid-cols-12 gap-6">
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-bold text-on-surface tracking-tight">Agent Availability Trend</h3>
+<div class="flex gap-2">
+<span class="px-2 py-1 text-[10px] bg-cyan-100 text-cyan-700 rounded font-bold uppercase tracking-widest">Live Updates</span>
+</div>
+</div>
+<div class="h-48 flex items-end gap-2 px-2">
+<!-- Mockup Chart Bars -->
+<div class="flex-1 bg-primary/10 rounded-t-lg h-[40%] hover:bg-primary/20 transition-all cursor-pointer relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">08:00 - 82%</div>
+</div>
+<div class="flex-1 bg-primary/15 rounded-t-lg h-[55%] hover:bg-primary/20 transition-all cursor-pointer group relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">10:00 - 88%</div>
+</div>
+<div class="flex-1 bg-primary/30 rounded-t-lg h-[85%] hover:bg-primary/40 transition-all cursor-pointer group relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">12:00 - 94%</div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t-lg h-[65%] hover:bg-primary/30 transition-all cursor-pointer group relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">14:00 - 72%</div>
+</div>
+<div class="flex-1 bg-primary/50 rounded-t-lg h-[95%] hover:bg-primary/60 transition-all cursor-pointer group relative border-t-2 border-primary">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Current - 98%</div>
+</div>
+<div class="flex-1 bg-surface-container-high rounded-t-lg h-[70%]"></div>
+<div class="flex-1 bg-surface-container-high rounded-t-lg h-[60%]"></div>
+</div>
+<div class="flex justify-between mt-4 px-2">
+<span class="text-[10px] font-mono text-on-surface-variant/40">08:00</span>
+<span class="text-[10px] font-mono text-on-surface-variant/40">12:00</span>
+<span class="text-[10px] font-mono text-on-surface-variant/40">16:00</span>
+<span class="text-[10px] font-mono text-on-surface-variant/40">20:00</span>
+</div>
+</div>
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col">
+<h3 class="text-lg font-bold text-on-surface tracking-tight mb-4">Top Performers</h3>
+<div class="space-y-4 flex-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 flex items-center justify-center rounded bg-amber-100 text-amber-700 text-[10px] font-black">1</span>
+<span class="text-sm font-semibold text-on-surface">Sarah Jenkins</span>
+</div>
+<span class="text-xs font-mono font-bold text-primary">98.2 pts</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 flex items-center justify-center rounded bg-slate-100 text-slate-700 text-[10px] font-black">2</span>
+<span class="text-sm font-semibold text-on-surface">Emily Chen</span>
+</div>
+<span class="text-xs font-mono font-bold text-primary">95.4 pts</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 flex items-center justify-center rounded bg-orange-100 text-orange-700 text-[10px] font-black">3</span>
+<span class="text-sm font-semibold text-on-surface">Leo Valery</span>
+</div>
+<span class="text-xs font-mono font-bold text-primary">94.1 pts</span>
+</div>
+</div>
+<button class="w-full mt-6 py-2 border border-outline-variant/20 rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">View All Leaderboards</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

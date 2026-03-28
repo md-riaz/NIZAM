@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM CDR Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#4648d4",
+              "on-error-container": "#93000a",
+              "secondary-fixed-dim": "#c0c1ff",
+              "primary-fixed": "#e1e0ff",
+              "outline-variant": "#c7c4d7",
+              "surface-container": "#eaedff",
+              "primary-container": "#6063ee",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-fixed": "#13144a",
+              "on-secondary-fixed-variant": "#404178",
+              "outline": "#767586",
+              "on-secondary-container": "#494b83",
+              "surface-bright": "#faf8ff",
+              "inverse-primary": "#c0c1ff",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "surface-container-low": "#f2f3ff",
+              "primary-fixed-dim": "#c0c1ff",
+              "surface-container-high": "#e2e7ff",
+              "on-tertiary-fixed": "#301400",
+              "on-primary": "#ffffff",
+              "surface-variant": "#dae2fd",
+              "on-surface": "#131b2e",
+              "secondary-fixed": "#e1e0ff",
+              "secondary": "#575992",
+              "inverse-surface": "#283044",
+              "on-background": "#131b2e",
+              "surface-tint": "#494bd6",
+              "surface": "#faf8ff",
+              "error-container": "#ffdad6",
+              "on-error": "#ffffff",
+              "surface-dim": "#d2d9f4",
+              "tertiary-container": "#b55d00",
+              "on-tertiary-container": "#fffbff",
+              "error": "#ba1a1a",
+              "on-tertiary-fixed-variant": "#703700",
+              "on-tertiary": "#ffffff",
+              "on-primary-fixed": "#07006c",
+              "on-surface-variant": "#464554",
+              "background": "#faf8ff",
+              "secondary-container": "#bdbefe",
+              "inverse-on-surface": "#eef0ff",
+              "tertiary-fixed": "#ffdcc5",
+              "tertiary-fixed-dim": "#ffb783",
+              "surface-container-highest": "#dae2fd",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#fffbff",
+              "tertiary": "#904900"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"],
+              "mono": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .technical-data { font-family: 'JetBrains Mono', monospace; }
+        .glass-header {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-0 z-50 flex items-center justify-between px-6 pl-72 h-16 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans text-sm Inter border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-8">
+<span class="text-lg font-bold text-slate-900 dark:text-white">NIZAM Admin</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all" href="#">Live Calls</a>
+<a class="text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 pb-4 h-16 flex items-center mt-4" href="#">CDRs</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all" href="#">Recordings</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all" href="#">Analytics</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
+<input class="bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-1.5 text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="Search analytics..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center ml-2 overflow-hidden">
+<img alt="Administrator Profile" data-alt="User avatar profile picture for administrator" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWwjqlalAfB5TbVxa5YHRpbQsD_JlkSjd4ZEbAyvvKBOXp930xVzzyZPL_wx-B7Xjw214VBSykgz19uDgJQAT18TYhXaznbC1sdFIVMY7I1nZpXa2TbH7NKxwvNAkGRM2fhiaZ5msZp50VyrKbjU1bZNSIBXdbD0mmMfOaaZDrjRbNQdK14qH4GdDC8c_3x2PJJHlJMiYMAUiavLs09KQ54mmOHZwWktSiw1JWI_MsNjtLnCFphLs6qaWMN4hwsdhQEQbWPEyCsX0"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 bottom-0 z-40 flex flex-col pt-16 w-68 h-screen border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 font-sans text-sm font-medium Inter">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">NIZAM</h2>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">Admin Portal</p>
+</div>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">phone_in_talk</span>
+                Phone System
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">alt_route</span>
+                Routing
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">hub</span>
+                Connectivity
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-semibold border-r-2 border-indigo-600" href="#">
+<span class="material-symbols-outlined">call</span>
+                Calls
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+                Contact Center
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">extension</span>
+                Integrations
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+                Admin
+            </a>
+</nav>
+<div class="p-4 bg-slate-100 dark:bg-slate-800/50 m-4 rounded-xl">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-slate-500">SYSTEM STATUS</span>
+<span class="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+</div>
+<p class="text-[11px] text-slate-600 leading-tight">All clusters operational. CDR lag &lt; 200ms.</p>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pl-72 pt-20 pr-8 pb-12 min-h-screen bg-background">
+<div class="max-w-7xl mx-auto">
+<!-- Page Header -->
+<div class="flex items-center justify-between mb-8">
+<div>
+<h1 class="text-3xl font-black tracking-tight text-on-surface mb-1">CDR Analytics</h1>
+<p class="text-on-surface-variant text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                        Real-time call data record processing
+                    </p>
+</div>
+<div class="flex items-center gap-3">
+<button class="bg-surface-container-lowest px-4 py-2 rounded-xl text-sm font-semibold text-on-surface-variant flex items-center gap-2 shadow-sm border border-outline-variant/20 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+                        Last 24 Hours
+                    </button>
+<button class="bg-gradient-to-br from-primary to-primary-container px-6 py-2 rounded-xl text-sm font-bold text-white shadow-lg shadow-primary/20 flex items-center gap-2 hover:opacity-90 transition-all">
+<span class="material-symbols-outlined text-lg">download</span>
+                        Export Report
+                    </button>
+</div>
+</div>
+<!-- Bento Grid - Key Metrics -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<!-- Total Calls -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10 relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<div class="bg-indigo-50 p-2 rounded-lg text-indigo-600">
+<span class="material-symbols-outlined">call</span>
+</div>
+<span class="text-emerald-600 text-[10px] font-bold px-2 py-0.5 bg-emerald-50 rounded-full flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">trending_up</span> 12.5%
+                        </span>
+</div>
+<div class="text-on-surface-variant text-xs font-semibold mb-1">Total Calls</div>
+<div class="text-3xl font-black technical-data tracking-tighter">1,248,302</div>
+<div class="absolute -right-4 -bottom-4 opacity-[0.03] scale-150">
+<span class="material-symbols-outlined text-[120px]">call</span>
+</div>
+</div>
+<!-- Answered Rate -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10">
+<div class="flex justify-between items-start mb-4">
+<div class="bg-emerald-50 p-2 rounded-lg text-emerald-600">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<span class="text-on-surface-variant text-[10px] font-bold">TARGET: 95%</span>
+</div>
+<div class="text-on-surface-variant text-xs font-semibold mb-1">Answered Rate</div>
+<div class="text-3xl font-black technical-data tracking-tighter">98.2<span class="text-xl">%</span></div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full mt-4 overflow-hidden">
+<div class="bg-emerald-500 h-full w-[98.2%]"></div>
+</div>
+</div>
+<!-- Avg Duration -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10">
+<div class="flex justify-between items-start mb-4">
+<div class="bg-purple-50 p-2 rounded-lg text-purple-600">
+<span class="material-symbols-outlined">timer</span>
+</div>
+<span class="text-amber-600 text-[10px] font-bold px-2 py-0.5 bg-amber-50 rounded-full flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">trending_down</span> 0.8%
+                        </span>
+</div>
+<div class="text-on-surface-variant text-xs font-semibold mb-1">Average Duration</div>
+<div class="text-3xl font-black technical-data tracking-tighter">04:22<span class="text-sm font-normal ml-1">min</span></div>
+</div>
+<!-- PDD -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10">
+<div class="flex justify-between items-start mb-4">
+<div class="bg-amber-50 p-2 rounded-lg text-amber-600">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<span class="text-emerald-600 text-[10px] font-bold">EXCELLENT</span>
+</div>
+<div class="text-on-surface-variant text-xs font-semibold mb-1">Post Dial Delay (PDD)</div>
+<div class="text-3xl font-black technical-data tracking-tighter">142<span class="text-sm font-normal ml-1">ms</span></div>
+</div>
+</div>
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+<!-- Call Volume Line Chart -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10 min-h-[400px]">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="font-bold text-on-surface">Call Volume Over Time</h3>
+<p class="text-xs text-on-surface-variant">24-hour traffic distribution</p>
+</div>
+<div class="flex gap-2">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Inbound</span>
+</div>
+<div class="flex items-center gap-1.5 ml-3">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary-container"></span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Outbound</span>
+</div>
+</div>
+</div>
+<div class="relative h-64 w-full flex items-end gap-1">
+<!-- Simplified Visualization of a Line Chart using a background pattern & overlay -->
+<div class="absolute inset-0 flex flex-col justify-between py-2 border-l border-b border-outline-variant/20">
+<div class="border-t border-outline-variant/10 w-full"></div>
+<div class="border-t border-outline-variant/10 w-full"></div>
+<div class="border-t border-outline-variant/10 w-full"></div>
+<div class="border-t border-outline-variant/10 w-full"></div>
+</div>
+<!-- Chart Area Placeholder -->
+<div class="flex-1 flex items-end justify-between px-4 h-full">
+<div class="w-2 bg-primary/20 h-[30%] rounded-t-sm"></div>
+<div class="w-2 bg-primary/20 h-[45%] rounded-t-sm"></div>
+<div class="w-2 bg-primary/20 h-[70%] rounded-t-sm"></div>
+<div class="w-2 bg-primary h-[85%] rounded-t-sm relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-2 py-1 rounded shadow-lg technical-data">48.2k</div>
+</div>
+<div class="w-2 bg-primary/20 h-[60%] rounded-t-sm"></div>
+<div class="w-2 bg-primary/20 h-[40%] rounded-t-sm"></div>
+<div class="w-2 bg-primary/20 h-[25%] rounded-t-sm"></div>
+<div class="w-2 bg-primary/20 h-[35%] rounded-t-sm"></div>
+<div class="w-2 bg-primary/20 h-[55%] rounded-t-sm"></div>
+<div class="w-2 bg-primary/20 h-[75%] rounded-t-sm"></div>
+<div class="w-2 bg-primary/20 h-[90%] rounded-t-sm"></div>
+<div class="w-2 bg-primary/20 h-[65%] rounded-t-sm"></div>
+</div>
+</div>
+<div class="flex justify-between mt-4 px-4 text-[10px] font-bold text-on-surface-variant technical-data">
+<span>00:00</span>
+<span>06:00</span>
+<span>12:00</span>
+<span>18:00</span>
+<span>23:59</span>
+</div>
+</div>
+<!-- Destination Analysis Bar Chart -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10">
+<div class="mb-8">
+<h3 class="font-bold text-on-surface">Destination Type</h3>
+<p class="text-xs text-on-surface-variant">Volume share by route type</p>
+</div>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="font-medium">International Mobile</span>
+<span class="technical-data">42%</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[42%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="font-medium">Domestic Fixed</span>
+<span class="technical-data">31%</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-tertiary-container h-full w-[31%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="font-medium">Premium Service</span>
+<span class="technical-data">18%</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[18%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="font-medium">Satellite/Others</span>
+<span class="technical-data">9%</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-outline h-full w-[9%]"></div>
+</div>
+</div>
+</div>
+<div class="mt-10 p-4 bg-surface-container rounded-xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">info</span>
+<p class="text-[11px] leading-tight text-on-surface-variant">International mobile traffic has increased by <span class="text-primary font-bold">14%</span> compared to the previous week.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Table Section -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+<div class="p-6 border-b border-outline-variant/10 flex items-center justify-between">
+<div>
+<h3 class="font-bold text-on-surface">Top Destinations by Volume</h3>
+<p class="text-xs text-on-surface-variant">Summary of high-traffic country codes</p>
+</div>
+<button class="text-primary text-xs font-bold hover:underline">View All Destinations</button>
+</div>
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low/50 text-on-surface-variant text-[10px] font-black tracking-widest uppercase">
+<th class="px-6 py-4">Destination</th>
+<th class="px-6 py-4">Prefix</th>
+<th class="px-6 py-4">Total Calls</th>
+<th class="px-6 py-4">ASR %</th>
+<th class="px-6 py-4">ACD</th>
+<th class="px-6 py-4 text-right">Trend</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-4 bg-surface-dim rounded-sm overflow-hidden flex items-center justify-center">
+<img alt="USA Flag" data-alt="US flag icon for destination" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9E6e0kXmfsKyEHN5dV45J5RG3RK3_CMKfcAxwS8woInMvyLWdGCAtBMXhpnpjakNV0TWi89dDP27h86ij9T9lDlij_P_5nOq4aRVSZQFVoqVXZUEEQuzVUYksOuVPvr4miW8ugLg_B_3AE2ejyjTVVAV7pYHi5nY7z9baQw0uscdQjeKn9A0L4PUSmMoxUod6jqHnPSGCqyBYfyGUZfQBOpO7trap21I-dm6Pqv_D4xTFwMo3po9UJB0S1IkC3Nop0H8iC2R5HPU"/>
+</div>
+<span class="font-semibold text-sm">United States</span>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs text-on-surface-variant">+1</td>
+<td class="px-6 py-4 technical-data text-sm font-medium">342,109</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="technical-data text-xs">96.4%</span>
+<div class="w-12 h-1 bg-surface-container-high rounded-full">
+<div class="bg-emerald-500 h-full w-[96.4%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs">05:12</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-emerald-500 text-lg">trending_up</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-4 bg-surface-dim rounded-sm overflow-hidden flex items-center justify-center">
+<img alt="UK Flag" data-alt="UK flag icon for destination" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATJsMEJZR9jVcbG3F13kOLrqMpDVKetZZ9pls5j_Pu1n7Ck9mj2RMrck8cY0rtRnLHFKr-GPoF_kNCDUEHQsb_31xIA5wrxATu5PRptxIkGOJLOaON93TuVRMk7_3rA8P298Je3ea2QraYz2D3LQm4AZDRGJxbdTzxPY8FtqpQLdQnHvACwu-ONZ-pzB4DDfjU5QVWJx90TnKPBIDLrgl_-GPFsd9zfkZkO471ojoI1saEKiGDm_dwtcCVtOctlxPOlCg9a-E0fNM"/>
+</div>
+<span class="font-semibold text-sm">United Kingdom</span>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs text-on-surface-variant">+44</td>
+<td class="px-6 py-4 technical-data text-sm font-medium">215,842</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="technical-data text-xs">92.1%</span>
+<div class="w-12 h-1 bg-surface-container-high rounded-full">
+<div class="bg-emerald-500 h-full w-[92.1%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs">03:45</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-emerald-500 text-lg">trending_up</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-4 bg-surface-dim rounded-sm overflow-hidden flex items-center justify-center">
+<img alt="India Flag" data-alt="India flag icon for destination" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0jDvQGL4XEnlwNU3m0II_lRBxlYrIlYMcB1vWykQSHL9AywJetsLwklixqxlz-UPlhXE570uAAW-6--54YQj0uSmdSsFuK-Fs63lLb25ubyrHH5_HIpqY843fC2yKxidZXOgPcOPXFIhSNlYwTBL-4q3-vzuokbh363WQ_qK-150dUNjQr1USb3xLEBmafDhdo4g7CnQcjpa8a4JzH8rW3y6I-lGqpYGVKdobDPmTB00zfPFUxEfHK2dQatcdbHH2ELL7UiOYKOI"/>
+</div>
+<span class="font-semibold text-sm">India</span>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs text-on-surface-variant">+91</td>
+<td class="px-6 py-4 technical-data text-sm font-medium">198,332</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="technical-data text-xs">88.7%</span>
+<div class="w-12 h-1 bg-surface-container-high rounded-full">
+<div class="bg-amber-500 h-full w-[88.7%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs">06:20</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-amber-500 text-lg">trending_flat</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-4 bg-surface-dim rounded-sm overflow-hidden flex items-center justify-center">
+<img alt="Germany Flag" data-alt="Germany flag icon for destination" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkngsKNQg5c2B4a9h1CbhzWW5ZeoyzkZ3aTQSHvZHz61LmB5cyhsSyQuTV18EWz5lTOBwOaMPApTpoOzvXQDz9GG13vgBVP0eANfHZiQZb1sQx6192OFzbN7sAa8cijKuZ3-BOsFSpCzJtnf_dCaG7itw0FQeE5fwE5t4ODchoI-ORicYtwX8lLkBG6VUFfI4R5Xm3yYDU_GMO4iFQBbWn6nDudDWLbyPgfmBJetXK29Meb4JzCxxpu8zBXgI9ZGl4CPVtRVtS5ek"/>
+</div>
+<span class="font-semibold text-sm">Germany</span>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs text-on-surface-variant">+49</td>
+<td class="px-6 py-4 technical-data text-sm font-medium">156,012</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="technical-data text-xs">97.8%</span>
+<div class="w-12 h-1 bg-surface-container-high rounded-full">
+<div class="bg-emerald-500 h-full w-[97.8%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs">04:10</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-primary text-lg">trending_up</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-4 bg-surface-dim rounded-sm overflow-hidden flex items-center justify-center">
+<img alt="Brazil Flag" data-alt="Brazil flag icon for destination" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCW9o0Fv0YMgQd1ZwdHZ0j15c89aiwhxscQqZbHY0hV2tSZm3c5enblpIAhGcvhLkQzawhkJv9B5Jw5Uk8C8lJbzqtfwqnIrdvEXhOz0kREXggj7NGQ7wZshMiVStztSEsU_8-827dOngU-qC0EeCTPQciqrHrF4C8AqIwTV0DKVRyeqUqYVhsYiRyZW7HwoY03aB8T3OHp0tpNOVaR80KfOvMnzFDQ7DoposjBJiWKKHa3GU8_DQbHPqa4l39skDXQXqUkDvV2qEQ"/>
+</div>
+<span class="font-semibold text-sm">Brazil</span>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs text-on-surface-variant">+55</td>
+<td class="px-6 py-4 technical-data text-sm font-medium">89,451</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="technical-data text-xs">74.2%</span>
+<div class="w-12 h-1 bg-surface-container-high rounded-full">
+<div class="bg-error h-full w-[74.2%] rounded-full"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 technical-data text-xs">02:55</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-error text-lg">trending_down</span>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 bg-surface-container-low border-t border-outline-variant/10 flex justify-between items-center px-8">
+<p class="text-xs text-on-surface-variant">Showing 5 of 184 active destinations</p>
+<div class="flex gap-2">
+<button class="p-1 rounded bg-surface-container-lowest border border-outline-variant/20"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="p-1 rounded bg-surface-container-lowest border border-outline-variant/20"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB Suppression Rule Active - No FAB on Analytics details -->
+</body></html>

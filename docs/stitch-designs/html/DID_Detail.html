@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - DID Detail View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f2f3ff",
+                        "surface-dim": "#d2d9f4",
+                        "tertiary-container": "#b55d00",
+                        "on-surface-variant": "#464554",
+                        "on-primary-container": "#fffbff",
+                        "surface-tint": "#494bd6",
+                        "on-tertiary-fixed": "#301400",
+                        "secondary-fixed": "#e1e0ff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "on-secondary-container": "#494b83",
+                        "primary-container": "#6063ee",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#283044",
+                        "secondary": "#575992",
+                        "outline-variant": "#c7c4d7",
+                        "on-error": "#ffffff",
+                        "on-background": "#131b2e",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#e1e0ff",
+                        "on-secondary-fixed": "#13144a",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary-container": "#bdbefe",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#904900",
+                        "on-secondary-fixed-variant": "#404178",
+                        "surface-bright": "#faf8ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "outline": "#767586",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e2e7ff",
+                        "background": "#faf8ff",
+                        "surface-variant": "#dae2fd",
+                        "on-surface": "#131b2e",
+                        "tertiary-fixed": "#ffdcc5",
+                        "primary": "#4648d4",
+                        "inverse-primary": "#c0c1ff",
+                        "surface-container": "#eaedff",
+                        "surface": "#faf8ff",
+                        "on-primary-fixed": "#07006c",
+                        "surface-container-highest": "#dae2fd",
+                        "on-tertiary-container": "#fffbff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body antialiased">
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 w-full z-50 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/40 dark:border-slate-800/40 shadow-sm dark:shadow-none flex justify-between items-center px-6">
+<div class="flex items-center gap-4">
+<span class="text-xl font-bold tracking-tighter text-slate-900 dark:text-slate-50">NIZAM</span>
+<div class="h-4 w-[1px] bg-outline-variant/30 mx-2"></div>
+<nav class="flex items-center gap-2 text-sm font-medium">
+<span class="text-slate-500">DIDs</span>
+<span class="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
+<span class="text-indigo-600 font-semibold tracking-tight">+15550123456</span>
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-lg hover:bg-slate-50 transition-colors text-slate-500">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-slate-50 transition-colors text-slate-500">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white text-xs font-bold ring-2 ring-white shadow-sm">
+                JD
+            </div>
+</div>
+</header>
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-40 bg-slate-50 dark:bg-slate-950 flex flex-col py-6 px-4 gap-2 pt-20">
+<div class="mb-6 px-2">
+<h2 class="text-lg font-black text-indigo-600 dark:text-indigo-400">NIZAM</h2>
+<p class="text-xs font-medium text-slate-500">Phone System</p>
+</div>
+<nav class="flex flex-col gap-1 flex-grow">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">phone_in_talk</span>
+<span class="text-sm font-medium">Extensions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">dialpad</span>
+<span class="text-sm font-semibold">DIDs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">group_work</span>
+<span class="text-sm font-medium">Ring Groups</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">settings_input_component</span>
+<span class="text-sm font-medium">IVRs</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-1 border-t border-slate-200 pt-4">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-slate-200/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="text-sm">Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-slate-200/50 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="text-sm">Logs</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 min-h-screen bg-background p-8">
+<div class="max-w-6xl mx-auto space-y-8">
+<!-- Summary Strip (High Precision) -->
+<section class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex items-center justify-between border border-outline-variant/10">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">call</span>
+</div>
+<div>
+<h1 class="text-2xl font-bold tracking-tight text-on-surface mono">+1 555 012 3456</h1>
+<p class="text-sm text-on-surface-variant">North America • Active • <span class="text-indigo-600 font-medium">HQ Main Line</span></p>
+</div>
+</div>
+<div class="flex gap-8 items-center pr-4">
+<div class="text-right">
+<p class="text-[0.6875rem] uppercase tracking-wider text-outline font-bold">Today's Traffic</p>
+<p class="text-xl font-bold mono">1,242 <span class="text-sm font-normal text-slate-400">calls</span></p>
+</div>
+<div class="h-10 w-[1px] bg-outline-variant/20"></div>
+<div class="text-right">
+<p class="text-[0.6875rem] uppercase tracking-wider text-outline font-bold">Effective Route</p>
+<div class="flex items-center gap-2 justify-end">
+<span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+<p class="text-sm font-semibold">IVR: Main_Entry_V2</p>
+</div>
+</div>
+<button class="ml-4 bg-gradient-to-br from-primary to-primary-container text-white px-5 py-2 rounded-md font-medium text-sm shadow-sm hover:opacity-90 transition-opacity">
+                        Edit DID
+                    </button>
+</div>
+</section>
+<!-- Tabs Navigation -->
+<nav class="flex border-b border-outline-variant/20 gap-8">
+<button class="pb-4 text-sm font-bold border-b-2 border-primary text-primary transition-all">Overview</button>
+<button class="pb-4 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all">Routing</button>
+<button class="pb-4 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all">Source Matching</button>
+<button class="pb-4 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all">Activity</button>
+<button class="pb-4 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all">Dependencies</button>
+</nav>
+<!-- Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Main Configuration Panel -->
+<div class="col-span-8 space-y-6">
+<!-- Precedence Layer Section -->
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/10">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Routing Precedence</h3>
+<span class="text-[0.6875rem] mono bg-slate-100 px-2 py-0.5 rounded text-slate-600">ID: PREC_99218</span>
+</div>
+<div class="relative pl-8 space-y-4">
+<!-- Visual Timeline Line -->
+<div class="absolute left-3 top-2 bottom-2 w-0.5 bg-slate-100"></div>
+<!-- Level 1: VIP Bypass -->
+<div class="relative group">
+<div class="absolute -left-8 top-2 w-4 h-4 rounded-full border-2 border-white bg-amber-400 z-10"></div>
+<div class="p-4 rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors flex justify-between items-center cursor-help">
+<div>
+<p class="text-xs font-bold text-amber-700">Level 1: Caller ID Match</p>
+<p class="text-sm font-semibold">VIP Clients Group</p>
+</div>
+<div class="text-right">
+<span class="text-xs font-mono bg-amber-100 text-amber-800 px-2 py-1 rounded">Priority 100</span>
+<p class="text-xs text-slate-500 mt-1">Route to: <span class="font-bold">Ext. 5001</span></p>
+</div>
+</div>
+</div>
+<!-- Level 2: Time Schedule -->
+<div class="relative group">
+<div class="absolute -left-8 top-2 w-4 h-4 rounded-full border-2 border-white bg-indigo-400 z-10"></div>
+<div class="p-4 rounded-lg bg-surface-container-low/50 hover:bg-surface-container-low transition-colors flex justify-between items-center">
+<div>
+<p class="text-xs font-bold text-indigo-700">Level 2: Time Conditions</p>
+<p class="text-sm font-semibold">After Hours (18:00 - 08:00)</p>
+</div>
+<div class="text-right">
+<span class="text-xs font-mono bg-indigo-100 text-indigo-800 px-2 py-1 rounded">Priority 200</span>
+<p class="text-xs text-slate-500 mt-1">Route to: <span class="font-bold">Voicemail</span></p>
+</div>
+</div>
+</div>
+<!-- Level 3: Default (Active) -->
+<div class="relative">
+<div class="absolute -left-8 top-2 w-4 h-4 rounded-full border-2 border-white bg-primary z-10 ring-4 ring-primary/10"></div>
+<div class="p-4 rounded-lg bg-primary/5 border border-primary/20 flex justify-between items-center">
+<div>
+<div class="flex items-center gap-2">
+<p class="text-xs font-bold text-primary">Level 3: Default Destination</p>
+<span class="bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">Effective</span>
+</div>
+<p class="text-sm font-bold">Standard Business Logic</p>
+</div>
+<div class="text-right">
+<span class="text-xs font-mono bg-primary/10 text-primary px-2 py-1 rounded">Priority 500</span>
+<p class="text-xs text-slate-500 mt-1">Route to: <span class="font-bold text-primary">IVR_MAIN_SALES</span></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Source Matching Logic Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/10">
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant mb-6">Inbound Source Rules</h3>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 border-b border-outline-variant/10">
+<span class="text-sm font-medium text-slate-600">Carrier Trunk</span>
+<span class="text-sm mono text-indigo-600">TATA_SIP_GW_02</span>
+</div>
+<div class="flex items-center justify-between p-3 border-b border-outline-variant/10">
+<span class="text-sm font-medium text-slate-600">Match Field</span>
+<span class="text-sm font-medium">To: Header</span>
+</div>
+<div class="flex items-center justify-between p-3 border-b border-outline-variant/10">
+<span class="text-sm font-medium text-slate-600">Normalization</span>
+<span class="text-sm px-2 py-1 bg-slate-100 rounded text-slate-700">E.164 (Global)</span>
+</div>
+<div class="flex items-center justify-between p-3">
+<span class="text-sm font-medium text-slate-600">Privacy Handling</span>
+<span class="text-sm flex items-center gap-1 text-emerald-600"><span class="material-symbols-outlined text-sm">check_circle</span> Pass Through</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column Sidebar Info -->
+<div class="col-span-4 space-y-6">
+<!-- Status & Health -->
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/10">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">Service Health</h3>
+<div class="flex items-center gap-4 mb-6">
+<div class="flex-1">
+<div class="flex justify-between items-end mb-1">
+<span class="text-xs text-slate-500">Call Success Rate</span>
+<span class="text-sm font-bold mono">99.8%</span>
+</div>
+<div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-[99.8%]"></div>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex gap-3 items-start">
+<span class="material-symbols-outlined text-emerald-500 mt-0.5">check_circle</span>
+<div>
+<p class="text-sm font-semibold">Active Registration</p>
+<p class="text-xs text-slate-500">Checked 4 mins ago</p>
+</div>
+</div>
+<div class="flex gap-3 items-start">
+<span class="material-symbols-outlined text-indigo-500 mt-0.5">router</span>
+<div>
+<p class="text-sm font-semibold">Primary Gateway</p>
+<p class="text-xs text-slate-500">US-EAST-01-A (Balanced)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Map Location -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/10">
+<div class="h-32 bg-slate-200 relative">
+<img alt="New York Map" class="w-full h-full object-cover" data-alt="Stylized map showing New York City area" data-location="New York City" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz-d0eaGf-o6kZRfPcoJ6zJeqBNZL4lTKWihfXMaTvLjMmorjkw-erPoLQJoM5FyoCi9YDCsT1mWJyaX-JTpJSgRxyLI6GjjBsKQXrpIOcFRlEvGkNYBqBldWRvCTW47OzCiC9a9YhYl_94YPJ1yUurdi_8gLCn3xTBCgJRIbhQtSfMLjkPItrSpJ2-0PcuyJdtFs65mhfPvAa1jsJ5A0Ch6SiTUitcrOjmLLg54Lx5WxhrFCpk_745ixdt8I5MIXfxesYtff2lc8"/>
+<div class="absolute inset-0 bg-indigo-900/10 flex items-center justify-center">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/40 ring-4 ring-white">
+<span class="material-symbols-outlined text-base">location_on</span>
+</div>
+</div>
+</div>
+<div class="p-4">
+<p class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Geo Assignment</p>
+<p class="text-sm font-semibold">New York City, USA</p>
+<p class="text-xs text-slate-500">Est. Latency: 12ms</p>
+</div>
+</div>
+<!-- Quick Logs Snippet -->
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/10">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Live Activity</h3>
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+</div>
+<div class="space-y-3">
+<div class="flex gap-2">
+<span class="mono text-[10px] text-slate-400 mt-0.5">14:22:01</span>
+<p class="text-xs"><span class="font-bold">INBOUND</span> from +12025550198 -&gt; IVR_MAIN</p>
+</div>
+<div class="flex gap-2">
+<span class="mono text-[10px] text-slate-400 mt-0.5">14:21:44</span>
+<p class="text-xs"><span class="font-bold">MISS</span> Policy Bypass checked</p>
+</div>
+<div class="flex gap-2">
+<span class="mono text-[10px] text-slate-400 mt-0.5">14:20:15</span>
+<p class="text-xs"><span class="font-bold text-emerald-600">RECV</span> Options Ping Success</p>
+</div>
+</div>
+<button class="w-full mt-4 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-widest">View Full Call Logs</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

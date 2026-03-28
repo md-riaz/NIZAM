@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - DIDs Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f2f3ff",
+                        "surface-dim": "#d2d9f4",
+                        "tertiary-container": "#b55d00",
+                        "on-surface-variant": "#464554",
+                        "on-primary-container": "#fffbff",
+                        "surface-tint": "#494bd6",
+                        "on-tertiary-fixed": "#301400",
+                        "secondary-fixed": "#e1e0ff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "on-secondary-container": "#494b83",
+                        "primary-container": "#6063ee",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#283044",
+                        "secondary": "#575992",
+                        "outline-variant": "#c7c4d7",
+                        "on-error": "#ffffff",
+                        "on-background": "#131b2e",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#e1e0ff",
+                        "on-secondary-fixed": "#13144a",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary-container": "#bdbefe",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#904900",
+                        "on-secondary-fixed-variant": "#404178",
+                        "surface-bright": "#faf8ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "outline": "#767586",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e2e7ff",
+                        "background": "#faf8ff",
+                        "surface-variant": "#dae2fd",
+                        "on-surface": "#131b2e",
+                        "tertiary-fixed": "#ffdcc5",
+                        "primary": "#4648d4",
+                        "inverse-primary": "#c0c1ff",
+                        "surface-container": "#eaedff",
+                        "surface": "#faf8ff",
+                        "on-primary-fixed": "#07006c",
+                        "surface-container-highest": "#dae2fd",
+                        "on-tertiary-container": "#fffbff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .mono-text { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md font-sans antialiased text-sm tracking-tight fixed top-0 w-full z-50 h-16 border-b border-slate-200/40 dark:border-slate-800/40 shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center px-6 w-full h-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-slate-900 dark:text-slate-50">NIZAM</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-2 py-1 rounded" href="#">Overview</a>
+<a class="text-indigo-600 dark:text-indigo-400 font-semibold px-2 py-1 rounded" href="#">DIDs</a>
+<a class="text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-2 py-1 rounded" href="#">System</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs w-64 focus:ring-2 focus:ring-indigo-500/20" placeholder="Search numbers..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg active:scale-95 duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg active:scale-95 duration-200">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center ml-2 border border-indigo-200/50">
+<img alt="User profile" class="h-full w-full object-cover rounded-full" data-alt="User avatar profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2tmVo-aXmkwd8H4yFqLrpz65cLUhWYPM_FWVqCpuvrLMF4R2D8poq17b6vLy8ZX1zncEVZnp2bStvohx047cDz4S1B45pUDFHmTxUI71TirufnFMLT3pdMMIJSS8J1tcimWud2UvPsB_ibqW3a4wMcMSkiccLUaVjZvnXY7DbSOtzZ2-Ughlzn-ZZYbik6o9RkvSCxyXty1fc1BKePvYOC9zQTHejz5Y4qydfa3p0ThN-O5WqDBO8-AXOIGXPRUYwg38It9r0pQI"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="bg-slate-50 dark:bg-slate-950 font-sans text-sm font-medium fixed left-0 top-0 h-screen w-64 z-40 hidden lg:flex flex-col py-6 px-4 gap-2 pt-20">
+<div class="mb-8 px-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+<span class="material-symbols-outlined">phone_in_talk</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-indigo-600 dark:text-indigo-400 leading-none">NIZAM</h2>
+<p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Phone System</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">phone_in_talk</span>
+<span>Extensions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-lg transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">dialpad</span>
+<span>DIDs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">group_work</span>
+<span>Ring Groups</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">settings_input_component</span>
+<span>IVRs</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-200/60 dark:border-slate-800/60 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg" href="#">
+<span class="material-symbols-outlined text-[20px]">list_alt</span>
+<span>Logs</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="lg:ml-64 pt-24 px-8 pb-12 min-h-screen">
+<div class="max-w-[1400px] mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div>
+<div class="flex items-center gap-2 text-xs font-mono text-indigo-500 mb-2">
+<span class="uppercase tracking-widest">Routing Assets</span>
+<span class="w-1 h-1 rounded-full bg-indigo-300"></span>
+<span class="uppercase tracking-widest">Inbound Numbers</span>
+</div>
+<h1 class="text-4xl font-bold tracking-tight text-on-surface">DIDs Management</h1>
+<p class="text-on-surface-variant mt-1 text-sm max-w-2xl">Configure and assign Direct Inward Dialing numbers across your global and tenant-specific infrastructure.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 text-sm font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high rounded-xl transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">upload_file</span>
+                        Bulk Import
+                    </button>
+<button class="px-6 py-2 text-sm font-semibold text-white bg-gradient-to-br from-primary to-primary-container rounded-xl shadow-lg shadow-indigo-500/20 hover:opacity-90 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+                        Provision DID
+                    </button>
+</div>
+</div>
+<!-- Dashboard Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Total DIDs</p>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-bold tracking-tight">1,248</span>
+<span class="text-teal-600 text-xs font-medium bg-teal-50 px-1.5 py-0.5 rounded flex items-center mb-1">
+<span class="material-symbols-outlined text-xs">trending_up</span> 12%
+                        </span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Active Routes</p>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-bold tracking-tight text-indigo-600">94%</span>
+<span class="text-slate-400 text-[10px] mb-1">1,173/1,248</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Peak Concurrency</p>
+<div class="flex items-end gap-2">
+<span class="text-3xl font-bold tracking-tight">82</span>
+<span class="text-slate-400 text-[10px] mb-1">Calls / Sec</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">System Health</p>
+<div class="flex items-center gap-2 mt-2">
+<div class="flex -space-x-1">
+<span class="w-2 h-2 rounded-full bg-teal-500"></span>
+<span class="w-2 h-2 rounded-full bg-teal-500"></span>
+<span class="w-2 h-2 rounded-full bg-teal-500"></span>
+<span class="w-2 h-2 rounded-full bg-teal-500"></span>
+<span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+</div>
+<span class="text-xs font-medium text-teal-600">Nominal (42ms)</span>
+</div>
+</div>
+</div>
+<!-- Filter & List Container -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm overflow-hidden">
+<!-- List Shell Filter Row -->
+<div class="px-6 py-4 bg-surface-container-low/30 border-b border-outline-variant/10 flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-4 flex-1 min-w-[300px]">
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">filter_list</span>
+<input class="w-full pl-10 pr-4 py-2 text-sm bg-white border border-outline-variant/20 rounded-lg focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all" placeholder="Search by number or label..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<select class="text-xs font-medium bg-white border border-outline-variant/20 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500/10 outline-none">
+<option>All Scopes</option>
+<option>Global</option>
+<option>Tenant</option>
+</select>
+<select class="text-xs font-medium bg-white border border-outline-variant/20 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500/10 outline-none">
+<option>All Status</option>
+<option>Active</option>
+<option>Inactive</option>
+</select>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs text-slate-400 font-medium">Viewing 1-10 of 1,248</span>
+<div class="flex gap-1">
+<button class="p-1.5 hover:bg-white rounded-lg border border-transparent hover:border-outline-variant/20 text-slate-400">
+<span class="material-symbols-outlined text-lg">chevron_left</span>
+</button>
+<button class="p-1.5 hover:bg-white rounded-lg border border-transparent hover:border-outline-variant/20 text-slate-400">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-surface-container-low/10">
+<th class="px-6 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500 border-b border-outline-variant/10">Number</th>
+<th class="px-6 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500 border-b border-outline-variant/10">Label</th>
+<th class="px-6 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500 border-b border-outline-variant/10">Source Scope</th>
+<th class="px-6 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500 border-b border-outline-variant/10">Destination</th>
+<th class="px-6 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500 border-b border-outline-variant/10">Status</th>
+<th class="px-6 py-4 text-left text-[10px] uppercase tracking-widest font-black text-slate-500 border-b border-outline-variant/10">Last Matched</th>
+<th class="px-6 py-4 text-right text-[10px] uppercase tracking-widest font-black text-slate-500 border-b border-outline-variant/10">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Row 1 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-400 text-lg">call</span>
+<span class="mono-text font-medium text-sm text-on-surface">+1 (555) 012-9844</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm text-slate-700 font-medium">Main Office Line</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-indigo-50 text-indigo-600 border border-indigo-100">Global</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-purple-400 text-sm">settings_input_component</span>
+<span class="text-xs font-mono text-purple-700">IVR_PROMPT_01</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-teal-50 text-teal-600">
+<span class="w-1 h-1 rounded-full bg-teal-500"></span>
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-xs font-mono text-slate-500">2 min ago</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">analytics</span></button>
+<button class="p-1.5 text-slate-400 hover:text-error hover:bg-error-container/20 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-400 text-lg">call</span>
+<span class="mono-text font-medium text-sm text-on-surface">+1 (555) 892-4410</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm text-slate-700 font-medium">Support West</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200">Tenant: AcmeCorp</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-400 text-sm">phone_in_talk</span>
+<span class="text-xs font-mono text-indigo-700">EXT_8002</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-teal-50 text-teal-600">
+<span class="w-1 h-1 rounded-full bg-teal-500"></span>
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-xs font-mono text-slate-500">45 min ago</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">analytics</span></button>
+<button class="p-1.5 text-slate-400 hover:text-error hover:bg-error-container/20 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-400 text-lg">call</span>
+<span class="mono-text font-medium text-sm text-on-surface">+44 20 7946 0111</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm text-slate-700 font-medium">UK Sales Team</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-indigo-50 text-indigo-600 border border-indigo-100">Global</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500 text-sm">group_work</span>
+<span class="text-xs font-mono text-amber-700">RG_SALES_UK</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-400">
+<span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                                        Inactive
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-xs font-mono text-slate-400">Never</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">analytics</span></button>
+<button class="p-1.5 text-slate-400 hover:text-error hover:bg-error-container/20 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-400 text-lg">call</span>
+<span class="mono-text font-medium text-sm text-on-surface">+1 (555) 441-2099</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm text-slate-700 font-medium">Emergency Redirect</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200">Tenant: AcmeCorp</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-purple-400 text-sm">settings_input_component</span>
+<span class="text-xs font-mono text-purple-700">IVR_FAILOVER</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-teal-50 text-teal-600">
+<span class="w-1 h-1 rounded-full bg-teal-500"></span>
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-xs font-mono text-slate-500">12 hours ago</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">analytics</span></button>
+<button class="p-1.5 text-slate-400 hover:text-error hover:bg-error-container/20 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-400 text-lg">call</span>
+<span class="mono-text font-medium text-sm text-on-surface">+1 (555) 777-1234</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm text-slate-700 font-medium">Marketing Campaign A</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-indigo-50 text-indigo-600 border border-indigo-100">Global</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-indigo-400 text-sm">phone_in_talk</span>
+<span class="text-xs font-mono text-indigo-700">EXT_9001</span>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-teal-50 text-teal-600">
+<span class="w-1 h-1 rounded-full bg-teal-500"></span>
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-xs font-mono text-slate-500">Just now</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">analytics</span></button>
+<button class="p-1.5 text-slate-400 hover:text-error hover:bg-error-container/20 rounded-lg transition-colors"><span class="material-symbols-outlined text-lg">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="px-6 py-4 border-t border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-400">Rows per page:</span>
+<select class="text-xs font-medium bg-transparent border-none focus:ring-0 outline-none cursor-pointer">
+<option>10</option>
+<option>25</option>
+<option>50</option>
+</select>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-xs text-slate-400">1-10 of 1,248</span>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined text-xl">first_page</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined text-xl">navigate_before</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined text-xl">navigate_next</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined text-xl">last_page</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB (Suppressed on List screens as per instructions, but kept as hidden placeholder or logic check) -->
+<!-- Navigation Shell Mobile -->
+<div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-16 px-6 z-50">
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px]">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-indigo-600 font-bold">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dialpad</span>
+<span class="text-[10px]">DIDs</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">phone_in_talk</span>
+<span class="text-[10px]">Exts</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px]">Setup</span>
+</button>
+</div>
+</body></html>

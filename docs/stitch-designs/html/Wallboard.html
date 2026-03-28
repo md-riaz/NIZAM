@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM Wallboard - Contact Center Ops</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#404178",
+              "on-tertiary-container": "#fffbff",
+              "inverse-surface": "#283044",
+              "on-background": "#131b2e",
+              "tertiary": "#904900",
+              "surface-container-high": "#e2e7ff",
+              "surface-variant": "#dae2fd",
+              "surface-bright": "#faf8ff",
+              "background": "#faf8ff",
+              "inverse-on-surface": "#eef0ff",
+              "on-surface": "#131b2e",
+              "surface-container": "#eaedff",
+              "surface": "#faf8ff",
+              "surface-container-highest": "#dae2fd",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "on-secondary-fixed": "#13144a",
+              "secondary-container": "#bdbefe",
+              "on-tertiary-fixed": "#301400",
+              "primary-fixed-dim": "#c0c1ff",
+              "tertiary-container": "#b55d00",
+              "inverse-primary": "#c0c1ff",
+              "secondary-fixed-dim": "#c0c1ff",
+              "tertiary-fixed-dim": "#ffb783",
+              "surface-container-low": "#f2f3ff",
+              "on-tertiary-fixed-variant": "#703700",
+              "secondary-fixed": "#e1e0ff",
+              "primary-fixed": "#e1e0ff",
+              "on-error": "#ffffff",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "primary-container": "#6063ee",
+              "secondary": "#575992",
+              "primary": "#4648d4",
+              "on-primary-fixed": "#07006c",
+              "on-secondary-container": "#494b83",
+              "on-secondary": "#ffffff",
+              "outline-variant": "#c7c4d7",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#767586",
+              "error": "#ba1a1a",
+              "on-surface-variant": "#464554",
+              "on-primary-container": "#fffbff",
+              "surface-tint": "#494bd6",
+              "surface-dim": "#d2d9f4",
+              "error-container": "#ffdad6",
+              "tertiary-fixed": "#ffdcc5"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"],
+              "mono": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { @apply font-body bg-inverse-surface text-inverse-on-surface; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-card { @apply bg-white/5 backdrop-blur-md border border-white/10; }
+        .metric-value { @apply font-headline font-black tracking-tighter; }
+        .data-mono { @apply font-mono uppercase tracking-tight; }
+    </style>
+</head>
+<body class="overflow-hidden h-screen flex flex-col">
+<!-- TopAppBar from JSON -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md font-sans antialiased text-sm font-medium tracking-tight shadow-sm dark:shadow-none fixed top-0 w-full z-50 h-16 flex items-center justify-between px-6 w-full max-w-full border-b border-white/10">
+<div class="flex items-center gap-8">
+<div class="text-xl font-bold tracking-tighter text-slate-900 dark:text-slate-50">NIZAM</div>
+<nav class="hidden md:flex items-center gap-6 h-16">
+<a class="text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 pb-4 h-full flex items-center mt-4" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 h-full flex items-center mt-4 transition-colors duration-200" href="#">Analytics</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 h-full flex items-center mt-4 transition-colors duration-200" href="#">Logs</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 pb-4 h-full flex items-center mt-4 transition-colors duration-200" href="#">Deployments</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-slate-400 font-mono text-xs bg-slate-800 px-2 py-1 rounded">LIVE: 14:02:44</span>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 active:scale-95 duration-150 rounded-lg">
+<span class="material-symbols-outlined text-slate-500">notifications</span>
+</button>
+<button class="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 active:scale-95 duration-150 rounded-lg">
+<span class="material-symbols-outlined text-slate-500">settings</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center overflow-hidden border border-white/20">
+<img alt="User Profile" data-alt="User profile avatar placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuByAGry671UaKbhq2OB2cVU0qhCSMQ9S3TnbAwTyRU1HFmMD1-tEtT6obS7DHSVt8nIJ66hyut4JaJoXTdmHYODjLTPwAbOyNM1k35nuiF727V2MNRuQzoZtYvvd24v58YZJd5mtpoqblSlZbIc5TduB_Z9BQIvypvpBbIF2wlubPyrC21enI4nH0781M9I-GaC3rvtGsC8gbkIF-MBSngWqe0M6QhDNNNQ5cEO4qfhlHNwcSVzfpKqvqhxUBxm3yIK5DlqCmVmiKs"/>
+</div>
+</div>
+</header>
+<main class="flex-1 mt-16 p-6 grid grid-cols-12 gap-4 overflow-hidden bg-slate-950">
+<!-- Left Column: Big Metrics -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-4">
+<!-- SLA Hero -->
+<div class="glass-card rounded-xl p-6 flex flex-col justify-between h-1/3 relative overflow-hidden">
+<div class="flex justify-between items-start z-10">
+<span class="text-xs uppercase tracking-widest font-bold text-slate-400">Service Level (SLA)</span>
+<span class="text-emerald-400 flex items-center text-xs font-mono"><span class="material-symbols-outlined text-sm">trending_up</span> +1.2%</span>
+</div>
+<div class="metric-value text-7xl text-emerald-400 z-10">94.8<span class="text-3xl">%</span></div>
+<div class="text-xs text-slate-500 font-mono z-10">TARGET: 90.0% / 20S</div>
+<!-- Background visual trend -->
+<div class="absolute bottom-0 left-0 right-0 h-16 opacity-20 pointer-events-none">
+<svg class="w-full h-full preserve-aspect-ratio-none" viewbox="0 0 400 100">
+<path class="text-emerald-500" d="M0,80 Q50,70 100,85 T200,60 T300,75 T400,50 L400,100 L0,100 Z" fill="currentColor"></path>
+</svg>
+</div>
+</div>
+<!-- Answer Rate Hero -->
+<div class="glass-card rounded-xl p-6 flex flex-col justify-between h-1/3 border-l-4 border-primary">
+<div class="flex justify-between items-start">
+<span class="text-xs uppercase tracking-widest font-bold text-slate-400">Answer Rate</span>
+<span class="text-primary-fixed-dim font-mono text-xs">842 / 888</span>
+</div>
+<div class="metric-value text-7xl text-white">98.2<span class="text-3xl">%</span></div>
+<div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[98.2%]"></div>
+</div>
+</div>
+<!-- Wait Time Hero -->
+<div class="glass-card rounded-xl p-6 flex flex-col justify-between h-1/3">
+<div class="flex justify-between items-start">
+<span class="text-xs uppercase tracking-widest font-bold text-slate-400">Avg Wait Time</span>
+<span class="material-symbols-outlined text-amber-400">schedule</span>
+</div>
+<div class="metric-value text-7xl text-amber-400">00:14</div>
+<div class="text-xs text-slate-500 font-mono">PEAK TODAY: 01:22</div>
+</div>
+</div>
+<!-- Middle Column: Queue Status -->
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-4">
+<div class="glass-card rounded-xl flex-1 flex flex-col overflow-hidden">
+<div class="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+<h2 class="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">list_alt</span>
+                        Queue Real-time Status
+                    </h2>
+<span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">12 QUEUES ACTIVE</span>
+</div>
+<div class="flex-1 overflow-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-slate-900 text-[10px] uppercase text-slate-500 font-bold border-b border-white/5">
+<tr>
+<th class="px-4 py-3">Queue Name</th>
+<th class="px-4 py-3 text-center">Waiting</th>
+<th class="px-4 py-3 text-center">Active</th>
+<th class="px-4 py-3 text-right">Longest</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5 font-mono text-sm">
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-4 font-body font-semibold text-slate-200">Customer Support EN</td>
+<td class="px-4 py-4 text-center text-amber-400 font-bold">04</td>
+<td class="px-4 py-4 text-center">18</td>
+<td class="px-4 py-4 text-right text-amber-400">02:45</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-4 font-body font-semibold text-slate-200">Technical Tier 2</td>
+<td class="px-4 py-4 text-center text-emerald-400">01</td>
+<td class="px-4 py-4 text-center">05</td>
+<td class="px-4 py-4 text-right">00:12</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors bg-error/10">
+<td class="px-4 py-4 font-body font-semibold text-slate-200 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+                                    Billing &amp; Accounts
+                                </td>
+<td class="px-4 py-4 text-center text-error font-bold">12</td>
+<td class="px-4 py-4 text-center">22</td>
+<td class="px-4 py-4 text-right text-error font-bold">08:14</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-4 font-body font-semibold text-slate-200">VIP Concierge</td>
+<td class="px-4 py-4 text-center text-emerald-400">00</td>
+<td class="px-4 py-4 text-center">03</td>
+<td class="px-4 py-4 text-right">00:00</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-4 font-body font-semibold text-slate-200">Sales Inquiries</td>
+<td class="px-4 py-4 text-center text-amber-400">02</td>
+<td class="px-4 py-4 text-center">09</td>
+<td class="px-4 py-4 text-right">01:55</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-4 py-4 font-body font-semibold text-slate-200">Returns Dept</td>
+<td class="px-4 py-4 text-center text-emerald-400">01</td>
+<td class="px-4 py-4 text-center">04</td>
+<td class="px-4 py-4 text-right">00:30</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-white/5 border-t border-white/5 grid grid-cols-2 gap-4">
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold">Total Calls Waiting</span>
+<span class="text-2xl font-black text-white">20</span>
+</div>
+<div class="flex flex-col text-right">
+<span class="text-[10px] text-slate-500 uppercase font-bold">Total Active Calls</span>
+<span class="text-2xl font-black text-white">61</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Agent Status & Trends -->
+<div class="col-span-12 lg:col-span-3 flex flex-col gap-4">
+<!-- Agent Availability Grid -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Agent Availability</h3>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg flex flex-col items-center">
+<span class="text-2xl font-black text-emerald-400">42</span>
+<span class="text-[10px] uppercase font-bold text-emerald-500/70">Available</span>
+</div>
+<div class="bg-primary/10 border border-primary/20 p-3 rounded-lg flex flex-col items-center">
+<span class="text-2xl font-black text-primary-fixed-dim">18</span>
+<span class="text-[10px] uppercase font-bold text-primary-fixed-dim/70">On Call</span>
+</div>
+<div class="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg flex flex-col items-center">
+<span class="text-2xl font-black text-amber-400">06</span>
+<span class="text-[10px] uppercase font-bold text-amber-500/70">In Break</span>
+</div>
+<div class="bg-slate-500/10 border border-slate-500/20 p-3 rounded-lg flex flex-col items-center">
+<span class="text-2xl font-black text-slate-400">09</span>
+<span class="text-[10px] uppercase font-bold text-slate-500/70">Offline</span>
+</div>
+</div>
+</div>
+<!-- Visual Trends Mini-Chart Area -->
+<div class="glass-card rounded-xl p-4 flex-1 flex flex-col gap-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Hourly Call Volume</h3>
+<div class="flex-1 flex items-end justify-between gap-1 py-2">
+<div class="w-full bg-primary/20 hover:bg-primary/40 transition-colors rounded-t-sm h-[40%] relative group">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">45</div>
+</div>
+<div class="w-full bg-primary/20 hover:bg-primary/40 transition-colors rounded-t-sm h-[55%] relative group">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">62</div>
+</div>
+<div class="w-full bg-primary/20 hover:bg-primary/40 transition-colors rounded-t-sm h-[85%] relative group">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">98</div>
+</div>
+<div class="w-full bg-primary/20 hover:bg-primary/40 transition-colors rounded-t-sm h-[70%] relative group">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">82</div>
+</div>
+<div class="w-full bg-primary/20 hover:bg-primary/40 transition-colors rounded-t-sm h-[60%] relative group">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">71</div>
+</div>
+<div class="w-full bg-primary/20 hover:bg-primary/40 transition-colors rounded-t-sm h-[95%] relative group">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">110</div>
+</div>
+<div class="w-full bg-primary rounded-t-sm h-[80%] relative group">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-white">92</div>
+</div>
+</div>
+<div class="flex justify-between text-[8px] font-mono text-slate-500 border-t border-white/5 pt-2">
+<span>08:00</span>
+<span>10:00</span>
+<span>12:00</span>
+<span>NOW</span>
+</div>
+<div class="mt-4 pt-4 border-t border-white/5">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold uppercase text-slate-500">Peak Occupancy</span>
+<span class="text-xs font-mono text-white">88%</span>
+</div>
+<div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-[88%]"></div>
+</div>
+</div>
+</div>
+<!-- Footer Meta -->
+<div class="flex items-center justify-between text-[10px] font-mono text-slate-500 px-2">
+<span>SYSTEM HEALTH: OK</span>
+<span>v2.4.0-STABLE</span>
+</div>
+</div>
+</main>
+<!-- Navigation Shell Logic Suppression for Wallboard -->
+<!-- We skip SideNavBar and BottomNavBar to maximize visibility of high-density dashboard metrics -->
+<!-- Contextual Status Bar -->
+<footer class="h-8 bg-slate-900 border-t border-white/5 flex items-center px-6 justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Telephony Engine Active</span>
+</div>
+<div class="flex items-center gap-1.5 border-l border-white/10 pl-4">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Region: US-EAST-1</span>
+</div>
+</div>
+<div class="text-[10px] font-mono text-slate-500">
+            NIZAM CONTACT CENTER &amp; OPS © 2024
+        </div>
+</footer>
+</body></html>

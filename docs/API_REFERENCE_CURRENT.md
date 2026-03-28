@@ -1,7 +1,7 @@
 # NIZAM API Reference (Current)
 
-**Generated:** 2026-03-17  
-**Version:** 1.0.0  
+**Generated:** 2026-03-28  
+**Version:** 1.0.1  
 **Framework:** Laravel 12 + FreeSWITCH
 
 > All API endpoints return JSON responses and require authentication via Laravel Sanctum bearer tokens unless noted otherwise.
@@ -40,6 +40,8 @@
 28. [Usage Metering](#usage-metering)
 29. [Admin Dashboard](#admin-dashboard)
 30. [Rate Limiting](#rate-limiting)
+31. [SSL Management](#ssl-management)
+32. [WebRTC Configuration](#webrtc-configuration)
 
 ---
 
@@ -377,6 +379,34 @@ Content-Type: application/json
 ```http
 DELETE /api/tenants/{tenant_id}/extensions/{id}
 Authorization: Bearer YOUR_TOKEN
+```
+
+### WebRTC Configuration
+
+Get the complete connection suite for WebRTC clients (SIP.js, etc.):
+
+```http
+GET /api/tenants/{tenant_id}/extensions/{id}/webrtc-config
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": {
+    "enabled": true,
+    "websocket_url": "wss://nizam.example.com:7443",
+    "sip_uri": "sip:1001@acme.example.com",
+    "sip_username": "1001",
+    "sip_password": "encrypted-password",
+    "sip_domain": "acme.example.com",
+    "display_name": "John Doe",
+    "ice_servers": [
+      { "urls": "stun:stun.l.google.com:19302" }
+    ],
+    "codec_prefs": ["OPUS", "PCMU", "PCMA", "G722"]
+  }
+}
 ```
 
 ---
@@ -1287,12 +1317,46 @@ Authorization: Bearer YOUR_TOKEN
 
 ## Admin Dashboard
 
+System-wide observability endpoint (admin-only):
+
 ```http
 GET /api/admin/dashboard
 Authorization: Bearer YOUR_TOKEN
 ```
 
-Returns system-wide observability data including total tenants by status, per-tenant resource counts, and aggregate system metrics.
+Returns total tenants by status, per-tenant resource counts, and aggregate system metrics.
+
+---
+
+## SSL Management
+
+Manage system-wide SSL certificates via Certbot / Let's Encrypt (admin-only):
+
+### Get SSL Settings
+```http
+GET /api/admin/ssl
+Authorization: Bearer YOUR_TOKEN
+```
+
+### Update SSL Settings
+```http
+PUT /api/admin/ssl
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "is_enabled": true,
+  "domains": ["nizam.example.com", "api.nizam.example.com"]
+}
+```
+
+### Request Certificate
+```http
+POST /api/admin/ssl/request
+Authorization: Bearer YOUR_TOKEN
+```
+Triggers a manual Let's Encrypt certificate request/renewal.
 
 ---
 
@@ -1345,4 +1409,4 @@ All errors follow a consistent format:
 
 ---
 
-*This documentation was auto-generated from the current codebase on 2026-03-17.*
+*This documentation was auto-generated from the current codebase on 2026-03-28.*

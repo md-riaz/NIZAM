@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NIZAM - Extensions Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f2f3ff",
+                        "surface-dim": "#d2d9f4",
+                        "tertiary-container": "#b55d00",
+                        "on-surface-variant": "#464554",
+                        "on-primary-container": "#fffbff",
+                        "surface-tint": "#494bd6",
+                        "on-tertiary-fixed": "#301400",
+                        "secondary-fixed": "#e1e0ff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "on-secondary-container": "#494b83",
+                        "primary-container": "#6063ee",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#283044",
+                        "secondary": "#575992",
+                        "outline-variant": "#c7c4d7",
+                        "on-error": "#ffffff",
+                        "on-background": "#131b2e",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#e1e0ff",
+                        "on-secondary-fixed": "#13144a",
+                        "inverse-on-surface": "#eef0ff",
+                        "secondary-container": "#bdbefe",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#904900",
+                        "on-secondary-fixed-variant": "#404178",
+                        "surface-bright": "#faf8ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "outline": "#767586",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e2e7ff",
+                        "background": "#faf8ff",
+                        "surface-variant": "#dae2fd",
+                        "on-surface": "#131b2e",
+                        "tertiary-fixed": "#ffdcc5",
+                        "primary": "#4648d4",
+                        "inverse-primary": "#c0c1ff",
+                        "surface-container": "#eaedff",
+                        "surface": "#faf8ff",
+                        "on-primary-fixed": "#07006c",
+                        "surface-container-highest": "#dae2fd",
+                        "on-tertiary-container": "#fffbff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-header { backdrop-filter: blur(12px); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased">
+<!-- SideNavBar (Standardized) -->
+<aside class="fixed left-0 top-0 h-screen w-[272px] bg-[#f2f3ff] dark:bg-slate-900 flex flex-col p-5 gap-y-1 z-40 font-['Inter'] antialiased text-sm font-medium tracking-tight">
+<div class="px-2 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">phone_in_talk</span>
+</div>
+<div>
+<h1 class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">NIZAM</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Communications Control</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-[#dae2fd] dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-100 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">phone_in_talk</span>
+<span class="font-semibold">Phone System</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg">alt_route</span>
+<span>Routing</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg">hub</span>
+<span>Connectivity</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg">call</span>
+<span>Calls</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg">support_agent</span>
+<span>Contact Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg">extension</span>
+<span>Integrations</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span>Admin</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-slate-200/20 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg">help_outline</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-[272px] min-h-screen relative">
+<!-- TopAppBar (Standardized) -->
+<header class="fixed top-0 right-0 h-16 w-[calc(100%-272px)] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/20 dark:border-slate-800/20 shadow-sm dark:shadow-none z-50 font-['Inter'] text-sm font-medium">
+<div class="flex items-center justify-between px-8 h-full">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+<span>System</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-slate-900 dark:text-white font-semibold">Extensions</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group focus-within:ring-2 focus-within:ring-indigo-500/20 rounded-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-slate-100/50 dark:bg-slate-900/50 border-none rounded-full text-sm w-64 focus:ring-0 transition-all placeholder-slate-400" placeholder="Global search..." type="text"/>
+</div>
+<div class="h-8 w-px bg-slate-200/20 mx-1"></div>
+<button class="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-error rounded-full border-2 border-white dark:border-slate-950"></span>
+</button>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2.5 py-1 bg-slate-100 dark:bg-slate-900 rounded-md">Tenant: Global</span>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-slate-200/40 object-cover hover:opacity-80 transition-opacity cursor-pointer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkBIqkl4ulIa6aUGivl1MY8bAni3U6puaXYXTFOiwI9hFiaWw7UwTle0hkiiJdQuDE1VKxbGBqZdl-MGNQiE8oU6ljHwOaHBb1LkLhLyoTIGMoWEYiyl8AZ2ec2IiuOu0T-zNYFa-DlGZAUMiQgPoHphBS_75fTaFvaFzYTMvxZrN1OB-zH3swH1N2n40OwsIGgLNEtckm7ZzLz2L96HWjGUKRXdY8zDIVuq8aZc_nQz4xgdslrZvq5XfH62zKsEEKfcG7TwKO_As"/>
+</div>
+</div>
+</header>
+<!-- Main Workspace -->
+<div class="pt-24 px-8 pb-12">
+<!-- Page Header Shell -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface">Extensions</h2>
+<p class="text-slate-500 mt-1">Manage and provision internal SIP extensions for the local domain.</p>
+</div>
+<button class="bg-gradient-to-br from-indigo-600 to-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-indigo-600/20 hover:scale-[0.98] active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'wght' 700;">add</span>
+                    Create Extension
+                </button>
+</div>
+<!-- Dashboard Content -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden">
+<!-- Filter Row -->
+<div class="px-6 py-4 flex flex-wrap items-center justify-between gap-4 bg-surface-container-low/30 border-b border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">filter_list</span>
+<select class="pl-10 pr-8 py-2 bg-white border border-outline-variant/30 rounded-lg text-sm appearance-none focus:ring-indigo-500/20 focus:border-indigo-500 min-w-[140px] text-slate-600">
+<option>All Status</option>
+<option>Registered</option>
+<option>Unregistered</option>
+</select>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">devices</span>
+<select class="pl-10 pr-8 py-2 bg-white border border-outline-variant/30 rounded-lg text-sm appearance-none focus:ring-indigo-500/20 focus:border-indigo-500 min-w-[160px] text-slate-600">
+<option>All Profiles</option>
+<option>Standard Desk</option>
+<option>Remote Mobile</option>
+<option>Executive</option>
+</select>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest mr-2">Quick View:</span>
+<div class="flex p-1 bg-surface-container-high rounded-lg">
+<button class="px-3 py-1 bg-white shadow-sm rounded-md text-indigo-600">
+<span class="material-symbols-outlined text-lg">view_list</span>
+</button>
+<button class="px-3 py-1 text-slate-500 hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined text-lg">grid_view</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-outline-variant/10">Extension</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-outline-variant/10">Display Name</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-outline-variant/10">Caller ID</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-outline-variant/10">Device Profile</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-outline-variant/10 text-center">Status</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-outline-variant/10">Last Activity</th>
+<th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] border-b border-outline-variant/10 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Row 1 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4">
+<span class="font-mono text-[13px] font-semibold text-indigo-600 py-1 px-2 bg-indigo-50 rounded">1001</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold">JD</div>
+<span class="text-sm font-semibold text-on-surface">John Doe</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-mono text-xs text-on-surface-variant">+1 (555) 012-9844</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">
+<span class="material-symbols-outlined text-sm">desk</span> Yealink T54W
+                                    </span>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Registered
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs text-slate-500">2 mins ago</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-2 text-slate-400 hover:text-error hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+<button class="p-2 text-slate-400 hover:text-on-surface hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4">
+<span class="font-mono text-[13px] font-semibold text-indigo-600 py-1 px-2 bg-indigo-50 rounded">1002</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold">SM</div>
+<span class="text-sm font-semibold text-on-surface">Sarah Miller</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-mono text-xs text-on-surface-variant">+1 (555) 012-3392</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">
+<span class="material-symbols-outlined text-sm">smartphone</span> Softphone
+                                    </span>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-2"></span> Unregistered
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs text-slate-500">4 hours ago</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-2 text-slate-400 hover:text-error hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+<button class="p-2 text-slate-400 hover:text-on-surface hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4">
+<span class="font-mono text-[13px] font-semibold text-indigo-600 py-1 px-2 bg-indigo-50 rounded">2001</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 text-xs font-bold">MK</div>
+<span class="text-sm font-semibold text-on-surface">Mark Knight</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-mono text-xs text-on-surface-variant">+1 (555) 012-7712</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">
+<span class="material-symbols-outlined text-sm">desk</span> Yealink T54W
+                                    </span>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span> Registered
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs text-slate-500">Active now</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-2 text-slate-400 hover:text-error hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+<button class="p-2 text-slate-400 hover:text-on-surface hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4">
+<span class="font-mono text-[13px] font-semibold text-indigo-600 py-1 px-2 bg-indigo-50 rounded">2005</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold">AL</div>
+<span class="text-sm font-semibold text-on-surface">Anna Lee</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-mono text-xs text-on-surface-variant">+1 (555) 012-4456</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">
+<span class="material-symbols-outlined text-sm">desk</span> Poly CCX 500
+                                    </span>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span> Registered
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<span class="text-xs text-slate-500">12 mins ago</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-2 text-slate-400 hover:text-error hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+<button class="p-2 text-slate-400 hover:text-on-surface hover:bg-white rounded-lg transition-all"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 bg-surface-container-low/30 border-t border-outline-variant/10 flex items-center justify-between">
+<span class="text-xs text-slate-500 font-medium">Showing 1 to 4 of 24 extensions</span>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/30 text-slate-400 hover:bg-white disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-lg">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/30 text-slate-600 hover:bg-white font-medium text-xs">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/30 text-slate-600 hover:bg-white font-medium text-xs">3</button>
+<span class="px-1 text-slate-400">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/30 text-slate-600 hover:bg-white font-medium text-xs">6</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/30 text-slate-600 hover:bg-white transition-all">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Stats/Bento Grid for Overview -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/20 shadow-sm relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[120px]">hub</span>
+</div>
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Capacity</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-black text-on-surface">24</span>
+<span class="text-sm text-slate-400">/ 100</span>
+</div>
+<div class="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-indigo-600 h-full w-[24%]" style="box-shadow: 0 0 8px rgba(73, 75, 214, 0.4);"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/20 shadow-sm relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[120px]">check_circle</span>
+</div>
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Online Now</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-black text-emerald-600">18</span>
+<span class="text-sm text-slate-400">active SIP hooks</span>
+</div>
+<p class="text-xs text-slate-500 mt-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-emerald-500">trending_up</span>
+                        +2 from last hour
+                    </p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/20 shadow-sm relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[120px]">warning</span>
+</div>
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Provisioning Alerts</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-black text-amber-600">03</span>
+<span class="text-sm text-slate-400">failed handshakes</span>
+</div>
+<p class="text-xs text-slate-500 mt-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-amber-500">info</span>
+                        Check registration logs
+                    </p>
+</div>
+</div>
+</div>
+</main>
+</body></html>
