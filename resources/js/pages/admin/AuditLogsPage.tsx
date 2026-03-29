@@ -1,11 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { Download, Clock, User } from 'lucide-react';
+import { Clock, Download, User } from 'lucide-react';
 
-import api from '@/lib/api';
-import { useTenant } from '@/context/TenantContext';
-import type { AuditLog } from '@/types/models';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -21,9 +18,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useTenant } from '@/context/TenantContext';
+import api from '@/lib/api';
+import type { AuditLog } from '@/types/models';
 
-function eventBadge(event: string) {
-    switch (event) {
+function eventBadge(action?: string | null) {
+    switch (action) {
         case 'created':
             return <Badge variant="success">CREATE</Badge>;
         case 'updated':
@@ -31,7 +31,7 @@ function eventBadge(event: string) {
         case 'deleted':
             return <Badge variant="destructive">DELETE</Badge>;
         default:
-            return <Badge variant="secondary">{event.toUpperCase()}</Badge>;
+            return <Badge variant="secondary">{(action ?? 'unknown').toUpperCase()}</Badge>;
     }
 }
 
@@ -127,7 +127,7 @@ export default function AuditLogsPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            {eventBadge(log.event)}
+                                            {eventBadge(log.action)}
                                         </TableCell>
                                         <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
                                             {log.new_values

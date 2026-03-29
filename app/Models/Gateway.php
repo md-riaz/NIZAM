@@ -67,11 +67,6 @@ class Gateway extends Model
         return $this->belongsTo(Tenant::class);
     }
 
-    public function registrations(): HasMany
-    {
-        return $this->hasMany(GatewayRegistration::class);
-    }
-
     public function dids(): HasMany
     {
         return $this->hasMany(Did::class);

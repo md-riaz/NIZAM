@@ -87,12 +87,12 @@ export type Cdr = z.infer<typeof CdrSchema>;
 // ─── Audit Log ───────────────────────────────────────────────
 
 export const AuditLogSchema = z.object({
-    id: z.number(),
+    id: z.union([z.number(), z.string()]),
     user_id: z.number().nullable().optional(),
     tenant_id: z.number().nullable().optional(),
     auditable_type: z.string(),
-    auditable_id: z.number(),
-    event: z.string(),
+    auditable_id: z.union([z.number(), z.string()]),
+    action: z.string().nullable().optional(),
     old_values: z.record(z.string(), z.unknown()).nullable().optional(),
     new_values: z.record(z.string(), z.unknown()).nullable().optional(),
     ip_address: z.string().nullable().optional(),

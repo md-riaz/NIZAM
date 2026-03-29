@@ -16,21 +16,26 @@ class HealthController extends Controller
     public function __invoke(): JsonResponse
     {
         $dbStatus = $this->checkDatabase();
-        $redisStatus = $this->checkRedis();
-        $eslStatus = $this->checkEslConnection();
-        $gatewayStatus = $this->getGatewayStatus();
+        $cacheStatus = $this->checkRedis();
+        $switchStatus = $this->checkFreeSwitch();
 
-        // The platform is healthy only when the critical backing services are reachable.
-        $healthy = $dbStatus['status'] === 'ok' && $redisStatus['status'] === 'ok';
+        $healthy = $dbStatus['status'] === 'ok'
+            && $cacheStatus['status'] === 'ok'
+            && $switchStatus['status'] === 'ok';
 
         return response()->json([
             'status' => $healthy ? 'healthy' : 'degraded',
             'checks' => [
                 'app' => ['status' => 'ok'],
                 'database' => $dbStatus,
-                'cache' => $redisStatus,
-                'esl' => $eslStatus,
-                'gateways' => $gatewayStatus,
+                'cache' => $cacheStatus,
+                'esl' => [
+                    'status' => $switchStatus['esl_status'],
+                    'connected' => $switchStatus['connected'],
+                ],
+                'freeswitch' => $switchStatus['freeswitch'],
+                'gateways' => $switchStatus['gateways'],
+                'registrations' => $switchStatus['registrations'],
             ],
         ], $healthy ? 200 : 503);
     }
@@ -59,37 +64,88 @@ class HealthController extends Controller
         }
     }
 
-    protected function checkEslConnection(): array
+    protected function checkFreeSwitch(): array
     {
         try {
             $esl = EslConnectionManager::fromConfig();
             $connected = $esl->connect();
 
-            if ($connected) {
-                $statusResponse = $esl->api('status');
-                $esl->disconnect();
-
+            if (! $connected) {
                 return [
-                    'connected' => true,
-                    'status' => 'ok',
-                    'freeswitch' => $this->parseFreeswitchStatus($statusResponse),
+                    'status' => 'unreachable',
+                    'esl_status' => 'unreachable',
+                    'connected' => false,
+                    'freeswitch' => ['raw' => null],
+                    'gateways' => [
+                        'status' => 'unreachable',
+                        'entries' => [],
+                        'checked_at' => now()->toIso8601String(),
+                        'source' => 'esl',
+                        'live' => true,
+                    ],
+                    'registrations' => [
+                        'status' => 'unreachable',
+                        'count' => 0,
+                        'entries' => [],
+                        'checked_at' => now()->toIso8601String(),
+                        'source' => 'esl',
+                        'live' => true,
+                    ],
                 ];
             }
 
-            return ['connected' => false, 'status' => 'unreachable'];
-        } catch (\Throwable $e) {
-            return ['connected' => false, 'status' => 'error', 'message' => $e->getMessage()];
-        }
-    }
+            $statusResponse = $esl->api('status');
+            $gatewayResponse = $esl->api('sofia status');
+            $registrationsResponse = $esl->api('show registrations as json');
+            $esl->disconnect();
 
-    protected function getGatewayStatus(): array
-    {
-        return Cache::get('nizam:gateway_status', [
-            'status' => 'unknown',
-            'gateways' => [],
-            'registrations' => ['count' => 0, 'entries' => []],
-            'checked_at' => null,
-        ]);
+            $registrations = $this->parseRegistrations($registrationsResponse);
+
+            return [
+                'status' => 'ok',
+                'esl_status' => 'ok',
+                'connected' => true,
+                'freeswitch' => $this->parseFreeswitchStatus($statusResponse),
+                'gateways' => [
+                    'status' => 'ok',
+                    'entries' => $this->parseSofiaStatus($gatewayResponse),
+                    'checked_at' => now()->toIso8601String(),
+                    'source' => 'esl',
+                    'live' => true,
+                ],
+                'registrations' => [
+                    'status' => 'ok',
+                    'count' => $registrations['count'],
+                    'entries' => $registrations['entries'],
+                    'checked_at' => now()->toIso8601String(),
+                    'source' => 'esl',
+                    'live' => true,
+                ],
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'status' => 'error',
+                'esl_status' => 'error',
+                'connected' => false,
+                'message' => $e->getMessage(),
+                'freeswitch' => ['raw' => null],
+                'gateways' => [
+                    'status' => 'error',
+                    'entries' => [],
+                    'checked_at' => now()->toIso8601String(),
+                    'source' => 'esl',
+                    'live' => true,
+                ],
+                'registrations' => [
+                    'status' => 'error',
+                    'count' => 0,
+                    'entries' => [],
+                    'checked_at' => now()->toIso8601String(),
+                    'source' => 'esl',
+                    'live' => true,
+                ],
+            ];
+        }
     }
 
     protected function parseFreeswitchStatus(?string $response): array
@@ -111,5 +167,52 @@ class HealthController extends Controller
         }
 
         return $data;
+    }
+
+    protected function parseSofiaStatus(?string $response): array
+    {
+        if (! $response) {
+            return [];
+        }
+
+        $gateways = [];
+        $lines = explode("\n", trim($response));
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line) || str_starts_with($line, '=') || str_starts_with($line, 'Name')) {
+                continue;
+            }
+
+            $parts = preg_split('/\s+/', $line);
+            if (count($parts) >= 4) {
+                $gateways[] = [
+                    'name' => $parts[0],
+                    'type' => $parts[1] ?? 'unknown',
+                    'status' => $parts[3] ?? 'unknown',
+                ];
+            }
+        }
+
+        return $gateways;
+    }
+
+    protected function parseRegistrations(?string $response): array
+    {
+        if (! $response) {
+            return ['count' => 0, 'entries' => []];
+        }
+
+        $jsonStart = strpos($response, '{');
+        if ($jsonStart !== false) {
+            $response = substr($response, $jsonStart);
+        }
+
+        $data = json_decode($response, true);
+
+        return [
+            'count' => $data['row_count'] ?? 0,
+            'entries' => $data['rows'] ?? [],
+        ];
     }
 }

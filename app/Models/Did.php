@@ -23,7 +23,6 @@ class Did extends Model
     protected $fillable = [
         'tenant_id',
         'gateway_id',
-        'gateway_registration_id',
         'number',
         'normalized_number',
         'description',
@@ -80,8 +79,4 @@ class Did extends Model
         return $this->belongsTo(Gateway::class);
     }
 
-    public function gatewayRegistration(): BelongsTo
-    {
-        return $this->belongsTo(GatewayRegistration::class);
-    }
 }

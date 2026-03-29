@@ -159,9 +159,20 @@ Authorization: Bearer YOUR_TOKEN
 
 **No authentication required.**
 
+Check the health of the platform, including database, cache, and FreeSWITCH connectivity.
+
+This endpoint queries all backing services live:
+- Database: `SELECT 1` probe
+- Cache: write/read test
+- FreeSWITCH: ESL connection + live `status`, `sofia status`, and `show registrations` queries
+
 ```http
 GET /api/health
 ```
+
+All gateway and registration data is marked with `source: esl` and `live: true`.
+
+Returns HTTP 200 if healthy, 503 if degraded.
 
 **Response** `200`:
 ```json
@@ -1146,10 +1157,19 @@ GET    /api/tenants/{tenant_id}/gateways/{id}/status
 
 Get real-time SIP registration status from FreeSWITCH for a given gateway.
 
+This endpoint queries FreeSWITCH live via ESL (`sofia status gateway {name}`) and returns current state.
+
 ```http
 GET /api/tenants/{tenant_id}/gateways/{id}/status
 Authorization: Bearer YOUR_TOKEN
 ```
+
+Response includes:
+- `data.state` - gateway state (e.g., `reged`, `noreg`, `failed`)
+- `data.status` - status text from FreeSWITCH
+- `data.registered` - boolean indicating if gateway is currently registered
+- `meta.source` - always `esl`
+- `meta.live` - always `true`
 
 ---
 

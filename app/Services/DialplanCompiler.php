@@ -157,7 +157,6 @@ class DialplanCompiler
             $tenant,
             $destinationNumber,
             $gatewayContext['gateway'] ?? null,
-            $gatewayContext['gateway_registration'] ?? null,
         );
 
         if ($did) {

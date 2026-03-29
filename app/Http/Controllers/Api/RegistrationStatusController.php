@@ -144,6 +144,10 @@ class RegistrationStatusController extends Controller
                 'status' => $status,
                 'registered' => str_contains($state, 'reged') || $state === 'register',
             ],
+            'meta' => [
+                'source' => 'esl',
+                'live' => true,
+            ],
         ]);
     }
 

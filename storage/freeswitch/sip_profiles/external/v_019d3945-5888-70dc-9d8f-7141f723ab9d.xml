@@ -1,0 +1,19 @@
+<include>
+  <gateway name="v_019d3945-5888-70dc-9d8f-7141f723ab9d">
+    <param name="username" value="09644100100"/>
+    <param name="password" value="zxcvZx12390"/>
+    <param name="realm" value="123.0.31.250"/>
+    <param name="proxy" value="123.0.31.250:5060"/>
+    <param name="register-proxy" value="123.0.31.250:5060"/>
+    <param name="expire-seconds" value="3600"/>
+    <param name="retry-seconds" value="30"/>
+    <param name="caller-id-in-from" value="true"/>
+    <param name="extension" value="09644100100"/>
+    <param name="from-user" value="09644100100"/>
+    <param name="from-domain" value="123.0.31.250"/>
+    <param name="register" value="true"/>
+    <param name="contact-params" value="transport=udp"/>
+    <param name="ping" value="25"/>
+    <param name="profile" value="external"/>
+  </gateway>
+</include>

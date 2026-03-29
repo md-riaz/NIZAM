@@ -95,7 +95,6 @@ class FreeswitchXmlController extends Controller
                     $tenant,
                     $destinationNumber,
                     $gatewayContext['gateway'] ?? null,
-                    $gatewayContext['gateway_registration'] ?? null,
                 );
 
                 $session = $this->callSessionService->getOrCreateInboundSession(
@@ -107,7 +106,6 @@ class FreeswitchXmlController extends Controller
                         'destination_number' => $destinationNumber,
                         'caller_id_number' => $callerIdNumber,
                         'gateway_id' => $gatewayContext['gateway']?->id,
-                        'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                     ],
                 );
 
@@ -116,7 +114,6 @@ class FreeswitchXmlController extends Controller
                     'destination_number' => $destinationNumber,
                     'caller_id_number' => $callerIdNumber,
                     'gateway_id' => $gatewayContext['gateway']?->id,
-                    'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                     'did_id' => $did?->id,
                     'manifest_checksum' => $manifest->checksum,
                 ]);
@@ -134,7 +131,6 @@ class FreeswitchXmlController extends Controller
                 $tenant,
                 $destinationNumber,
                 $gatewayContext['gateway'] ?? null,
-                $gatewayContext['gateway_registration'] ?? null,
             );
 
             $session = $this->callSessionService->getOrCreateInboundSession(
@@ -146,7 +142,6 @@ class FreeswitchXmlController extends Controller
                     'destination_number' => $destinationNumber,
                     'caller_id_number' => $callerIdNumber,
                     'gateway_id' => $gatewayContext['gateway']?->id,
-                    'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                 ],
             );
 
@@ -155,7 +150,6 @@ class FreeswitchXmlController extends Controller
                 'destination_number' => $destinationNumber,
                 'caller_id_number' => $callerIdNumber,
                 'gateway_id' => $gatewayContext['gateway']?->id,
-                'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                 'did_id' => $did?->id,
                 'destination_type' => $did?->destination_type,
             ]);
@@ -169,7 +163,6 @@ class FreeswitchXmlController extends Controller
                     'destination_number' => $destinationNumber,
                     'caller_id_number' => $callerIdNumber,
                     'gateway_id' => $gatewayContext['gateway']?->id,
-                    'gateway_registration_id' => $gatewayContext['gateway_registration']?->id,
                     'did_id' => $did?->id,
                 ],
                 $session,

@@ -5,7 +5,6 @@ namespace Tests\Unit\Services;
 use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Gateway;
-use App\Models\GatewayRegistration;
 use App\Models\Tenant;
 use App\Services\DialplanCompiler;
 use App\Services\Routing\NumberRoutingService;
@@ -67,35 +66,6 @@ class InboundDidRoutingTest extends TestCase
         $this->assertTrue($resolved->is($gatewaySpecific));
     }
 
-    public function test_gateway_registration_specific_did_resolution_works_when_only_registration_scoped_route_exists(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $gateway = Gateway::factory()->create(['tenant_id' => $tenant->id]);
-        $registration = GatewayRegistration::create([
-            'gateway_id' => $gateway->id,
-            'registration_identifier' => 'reg-1',
-            'username' => 'mockuser',
-            'realm' => 'sip-mock.local',
-            'proxy' => 'sip-mock:5070',
-            'transport' => 'udp',
-            'status' => 'REGED',
-        ]);
-
-        $registrationSpecific = Did::factory()->create([
-            'tenant_id' => $tenant->id,
-            'number' => '+15551234567',
-            'gateway_id' => $gateway->id,
-            'gateway_registration_id' => $registration->id,
-            'is_active' => true,
-        ]);
-
-        $service = app(NumberRoutingService::class);
-        $resolved = $service->resolveInboundDid($tenant, '+15551234567', $gateway, $registration);
-
-        $this->assertNotNull($resolved);
-        $this->assertTrue($resolved->is($registrationSpecific));
-    }
-
     public function test_layered_precedence_generic_vs_gateway_specific(): void
     {
         $tenant = Tenant::factory()->create();
@@ -105,7 +75,6 @@ class InboundDidRoutingTest extends TestCase
             'tenant_id' => $tenant->id,
             'number' => '+15551234567',
             'gateway_id' => null,
-            'gateway_registration_id' => null,
             'is_active' => true,
         ]);
 
@@ -113,63 +82,12 @@ class InboundDidRoutingTest extends TestCase
             'tenant_id' => $tenant->id,
             'number' => '+15551234567',
             'gateway_id' => $gateway->id,
-            'gateway_registration_id' => null,
             'is_active' => true,
         ]);
 
         $service = app(NumberRoutingService::class);
         $resolved = $service->resolveInboundDid($tenant, '+15551234567', $gateway);
 
-        $this->assertNotNull($resolved);
-        $this->assertTrue($resolved->is($gatewaySpecific));
-        $this->assertFalse($resolved->is($generic));
-    }
-
-    public function test_layered_precedence_generic_vs_gateway_vs_registration_specific(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $gateway = Gateway::factory()->create(['tenant_id' => $tenant->id]);
-        $registration = GatewayRegistration::create([
-            'gateway_id' => $gateway->id,
-            'registration_identifier' => 'reg-1',
-            'username' => 'mockuser',
-            'realm' => 'sip-mock.local',
-            'proxy' => 'sip-mock:5070',
-            'transport' => 'udp',
-            'status' => 'REGED',
-        ]);
-
-        $generic = Did::factory()->create([
-            'tenant_id' => $tenant->id,
-            'number' => '+15551234567',
-            'gateway_id' => null,
-            'gateway_registration_id' => null,
-            'is_active' => true,
-        ]);
-
-        $gatewaySpecific = Did::factory()->create([
-            'tenant_id' => $tenant->id,
-            'number' => '+15551234567',
-            'gateway_id' => $gateway->id,
-            'gateway_registration_id' => null,
-            'is_active' => true,
-        ]);
-
-        $registrationSpecific = Did::factory()->create([
-            'tenant_id' => $tenant->id,
-            'number' => '+15551234567',
-            'gateway_id' => $gateway->id,
-            'gateway_registration_id' => $registration->id,
-            'is_active' => true,
-        ]);
-
-        $service = app(NumberRoutingService::class);
-
-        $resolved = $service->resolveInboundDid($tenant, '+15551234567', $gateway, $registration);
-        $this->assertNotNull($resolved);
-        $this->assertTrue($resolved->is($registrationSpecific));
-
-        $resolved = $service->resolveInboundDid($tenant, '+15551234567', $gateway);
         $this->assertNotNull($resolved);
         $this->assertTrue($resolved->is($gatewaySpecific));
         $this->assertFalse($resolved->is($generic));

@@ -4,7 +4,6 @@ namespace App\Services\Routing;
 
 use App\Models\Did;
 use App\Models\Gateway;
-use App\Models\GatewayRegistration;
 use App\Models\Tenant;
 use App\Services\DidNormalizationService;
 
@@ -14,7 +13,6 @@ class NumberRoutingService
         Tenant $tenant,
         string $destinationNumber,
         ?Gateway $gateway = null,
-        ?GatewayRegistration $gatewayRegistration = null
     ): ?Did {
         $normalized = DidNormalizationService::toE164($destinationNumber, $this->defaultCountryCode($tenant));
 
@@ -26,20 +24,9 @@ class NumberRoutingService
                     ->orWhere('normalized_number', $normalized);
             });
 
-        if ($gatewayRegistration) {
-            $registrationMatch = (clone $query)
-                ->where('gateway_registration_id', $gatewayRegistration->id)
-                ->first();
-
-            if ($registrationMatch) {
-                return $registrationMatch;
-            }
-        }
-
         if ($gateway) {
             $gatewayMatch = (clone $query)
                 ->where('gateway_id', $gateway->id)
-                ->whereNull('gateway_registration_id')
                 ->first();
 
             if ($gatewayMatch) {
@@ -49,7 +36,6 @@ class NumberRoutingService
 
         return (clone $query)
             ->whereNull('gateway_id')
-            ->whereNull('gateway_registration_id')
             ->first();
     }
 

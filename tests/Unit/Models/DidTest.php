@@ -42,7 +42,7 @@ class DidTest extends TestCase
     public function test_has_correct_fillable_attributes(): void
     {
         $did = new Did;
-        $expected = ['tenant_id', 'gateway_id', 'gateway_registration_id', 'number', 'normalized_number', 'description', 'destination_type', 'destination_id', 'is_active'];
+        $expected = ['tenant_id', 'gateway_id', 'number', 'normalized_number', 'description', 'destination_type', 'destination_id', 'is_active'];
 
         $this->assertEquals($expected, $did->getFillable());
     }

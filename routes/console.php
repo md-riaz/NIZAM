@@ -30,16 +30,6 @@ Schedule::command('nizam:prune-recordings')
         Log::error('Scheduled task nizam:prune-recordings failed.');
     });
 
-// Refresh FreeSWITCH gateway / registration status in the cache so the
-// health endpoint always has recent data without opening a new ESL connection
-// on every HTTP request.
-Schedule::command('nizam:gateway-status')
-    ->everyFiveMinutes()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->onFailure(function () {
-        Log::warning('Scheduled task nizam:gateway-status failed.');
-    });
 // Automatically check and renew Let's Encrypt certificates — runs daily at 01:00 AM UTC.
 Schedule::command('ssl:renew')
     ->dailyAt('01:00')
