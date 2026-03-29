@@ -1,31 +1,28 @@
-import { useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-    LayoutDashboard,
     Building2,
-    ScrollText,
-    Settings,
-    LogOut,
+    Check,
     ChevronLeft,
     ChevronRight,
-    Moon,
-    Sun,
-    Shield,
-    Phone,
+    ChevronsUpDown,
+    GitBranch,
     Globe,
     Hash,
+    LayoutDashboard,
+    LogOut,
+    Moon,
+    Phone,
     PhoneCall,
-    GitBranch,
+    ScrollText,
+    Settings,
+    Shield,
+    Sun,
     Users,
-    ChevronsUpDown,
-    Check,
 } from 'lucide-react';
+import { useState } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { useAuth } from '@/context/AuthContext';
-import { useTenant } from '@/context/TenantContext';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,6 +31,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/context/AuthContext';
+import { useTenant } from '@/context/TenantContext';
 import { cn } from '@/lib/utils';
 
 // ─── Navigation Structure (Stitch Design) ────────────────────

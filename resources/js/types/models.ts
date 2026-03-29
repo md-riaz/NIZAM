@@ -33,9 +33,10 @@ export type Extension = z.infer<typeof ExtensionSchema>;
 // ─── Gateway ─────────────────────────────────────────────────
 
 export const GatewaySchema = z.object({
-    id: z.number(),
-    tenant_id: z.number(),
+    id: z.string(),
+    tenant_id: z.string(),
     name: z.string(),
+    host: z.string().nullable().optional(),
     gateway_name: z.string().optional(),
     username: z.string().nullable().optional(),
     realm: z.string().nullable().optional(),
@@ -50,12 +51,12 @@ export type Gateway = z.infer<typeof GatewaySchema>;
 // ─── DID ─────────────────────────────────────────────────────
 
 export const DidSchema = z.object({
-    id: z.number(),
-    tenant_id: z.number(),
+    id: z.string(),
+    tenant_id: z.string(),
     number: z.string(),
     description: z.string().nullable().optional(),
     destination_type: z.string().nullable().optional(),
-    destination_id: z.number().nullable().optional(),
+    destination_id: z.string().nullable().optional(),
     enabled: z.boolean().optional(),
     created_at: z.string(),
     updated_at: z.string(),

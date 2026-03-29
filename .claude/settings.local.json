@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx shadcn@latest add checkbox select form alert-dialog --overwrite --yes)",
+      "Bash(npx shadcn@latest add form --overwrite --yes)",
+      "WebFetch(domain:ui.shadcn.com)"
+    ]
+  }
+}

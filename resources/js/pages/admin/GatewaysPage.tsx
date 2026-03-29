@@ -1,11 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Globe, Pencil, Trash2 } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Globe, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import api from '@/lib/api';
-import { useTenant } from '@/context/TenantContext';
-import type { Gateway } from '@/types/models';
-import { Button } from '@/components/ui/button';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -21,9 +30,15 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useTenant } from '@/context/TenantContext';
+import api from '@/lib/api';
+import type { Gateway } from '@/types/models';
 
 export default function GatewaysPage() {
     const { activeTenant, tenantApiPrefix } = useTenant();
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const [gatewayToDelete, setGatewayToDelete] = useState<Gateway | null>(null);
 
     const { data: gateways = [], isLoading } = useQuery({
         queryKey: ['gateways', activeTenant?.id],
@@ -34,6 +49,16 @@ export default function GatewaysPage() {
             return res.data.data;
         },
         enabled: !!activeTenant,
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            return api.delete(`${tenantApiPrefix}/gateways/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['gateways'] });
+            setGatewayToDelete(null);
+        },
     });
 
     if (!activeTenant) {
@@ -56,7 +81,7 @@ export default function GatewaysPage() {
                         SIP trunk gateways for outbound and inbound connectivity.
                     </p>
                 </div>
-                <Button>
+                <Button onClick={() => navigate('/admin/gateways/create')}>
                     <Plus className="size-4" />
                     Add Gateway
                 </Button>
@@ -79,7 +104,7 @@ export default function GatewaysPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Name</TableHead>
-                                    <TableHead>Proxy</TableHead>
+                                    <TableHead>SIP Server</TableHead>
                                     <TableHead>Register</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
@@ -95,7 +120,7 @@ export default function GatewaysPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="font-mono text-sm text-muted-foreground">
-                                            {gw.proxy ?? '—'}
+                                            {gw.host ?? '—'}
                                         </TableCell>
                                         <TableCell>
                                             {gw.register ? (
@@ -109,10 +134,18 @@ export default function GatewaysPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    onClick={() => navigate(`/admin/gateways/${gw.id}/edit`)}
+                                                >
                                                     <Pencil className="size-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    onClick={() => setGatewayToDelete(gw)}
+                                                >
                                                     <Trash2 className="size-4 text-destructive" />
                                                 </Button>
                                             </div>
@@ -131,6 +164,26 @@ export default function GatewaysPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={!!gatewayToDelete} onOpenChange={(open) => !open && setGatewayToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the gateway "{gatewayToDelete?.name}". This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={() => gatewayToDelete && deleteMutation.mutate(gatewayToDelete.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

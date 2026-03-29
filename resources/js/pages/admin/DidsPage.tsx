@@ -1,4 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Hash, Pencil, Trash2 } from 'lucide-react';
 
 import api from '@/lib/api';
@@ -21,9 +23,22 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function DidsPage() {
     const { activeTenant, tenantApiPrefix } = useTenant();
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const [didToDelete, setDidToDelete] = useState<Did | null>(null);
 
     const { data: dids = [], isLoading } = useQuery({
         queryKey: ['dids', activeTenant?.id],
@@ -34,6 +49,16 @@ export default function DidsPage() {
             return res.data.data;
         },
         enabled: !!activeTenant,
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            return api.delete(`${tenantApiPrefix}/dids/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['dids'] });
+            setDidToDelete(null);
+        },
     });
 
     if (!activeTenant) {
@@ -56,7 +81,7 @@ export default function DidsPage() {
                         Inbound phone numbers and their routing destinations.
                     </p>
                 </div>
-                <Button>
+                <Button onClick={() => navigate('/admin/dids/create')}>
                     <Plus className="size-4" />
                     Add DID
                 </Button>
@@ -115,10 +140,18 @@ export default function DidsPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    onClick={() => navigate(`/admin/dids/${did.id}/edit`)}
+                                                >
                                                     <Pencil className="size-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    onClick={() => setDidToDelete(did)}
+                                                >
                                                     <Trash2 className="size-4 text-destructive" />
                                                 </Button>
                                             </div>
@@ -137,6 +170,26 @@ export default function DidsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={!!didToDelete} onOpenChange={(open) => !open && setDidToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the DID "{didToDelete?.number}". This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={() => didToDelete && deleteMutation.mutate(didToDelete.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

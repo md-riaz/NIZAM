@@ -15,7 +15,9 @@ const TenantsPage = lazy(() => import('@/pages/admin/TenantsPage'));
 const UsersPage = lazy(() => import('@/pages/admin/UsersPage'));
 const ExtensionsPage = lazy(() => import('@/pages/admin/ExtensionsPage'));
 const GatewaysPage = lazy(() => import('@/pages/admin/GatewaysPage'));
+const GatewayFormPage = lazy(() => import('@/pages/admin/GatewayFormPage'));
 const DidsPage = lazy(() => import('@/pages/admin/DidsPage'));
+const DidFormPage = lazy(() => import('@/pages/admin/DidFormPage'));
 const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
 const CdrsPage = lazy(() => import('@/pages/admin/CdrsPage'));
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
@@ -98,9 +100,13 @@ function App() {
                     <Route path="extensions" element={<ExtensionsPage />} />
                     <Route path="ring-groups" element={<RingGroupsPage />} />
                     <Route path="dids" element={<DidsPage />} />
+                    <Route path="dids/create" element={<DidFormPage />} />
+                    <Route path="dids/:id/edit" element={<DidFormPage />} />
 
                     {/* Connectivity (tenant-scoped) */}
                     <Route path="gateways" element={<GatewaysPage />} />
+                    <Route path="gateways/create" element={<GatewayFormPage />} />
+                    <Route path="gateways/:id/edit" element={<GatewayFormPage />} />
 
                     {/* Calls (tenant-scoped) */}
                     <Route path="cdrs" element={<CdrsPage />} />
