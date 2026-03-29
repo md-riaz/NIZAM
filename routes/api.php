@@ -90,6 +90,26 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::apiResource('admin/sip-profiles', \App\Http\Controllers\Api\SipProfileController::class);
     Route::apiResource('admin/blocked-destinations', \App\Http\Controllers\Api\BlockedDestinationController::class);
 
+    // Platform Admin Log Viewer
+    Route::prefix('admin/logs')->name('admin.logs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\LogViewerController::class, 'index'])->name('index');
+        Route::get('freeswitch', [\App\Http\Controllers\Api\LogViewerController::class, 'freeswitch'])->name('freeswitch');
+        Route::get('application', [\App\Http\Controllers\Api\LogViewerController::class, 'application'])->name('application');
+    });
+
+    // Platform Admin SIP Status Monitor
+    Route::prefix('admin/sip-status')->name('admin.sip-status.')->group(function () {
+        Route::get('profiles', [\App\Http\Controllers\Api\SipStatusController::class, 'profiles'])->name('profiles');
+        Route::get('profiles/detail', [\App\Http\Controllers\Api\SipStatusController::class, 'profileDetail'])->name('profiles.detail');
+        Route::get('gateways', [\App\Http\Controllers\Api\SipStatusController::class, 'gateways'])->name('gateways');
+        Route::get('registrations', [\App\Http\Controllers\Api\SipStatusController::class, 'registrations'])->name('registrations');
+        Route::post('profiles/reload', [\App\Http\Controllers\Api\SipStatusController::class, 'reloadProfile'])->name('profiles.reload');
+        Route::post('profiles/start', [\App\Http\Controllers\Api\SipStatusController::class, 'startProfile'])->name('profiles.start');
+        Route::post('profiles/stop', [\App\Http\Controllers\Api\SipStatusController::class, 'stopProfile'])->name('profiles.stop');
+        Route::post('registrations/kill', [\App\Http\Controllers\Api\SipStatusController::class, 'killRegistration'])->name('registrations.kill');
+        Route::post('gateways/kill', [\App\Http\Controllers\Api\SipStatusController::class, 'killGateway'])->name('gateways.kill');
+    });
+
     Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
         Route::get('stats', TenantStatsController::class)->name('tenants.stats');
 

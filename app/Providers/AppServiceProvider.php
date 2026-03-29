@@ -86,6 +86,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewStatus', fn ($user) => $callPolicy->before($user, 'viewStatus') ?? $callPolicy->viewStatus($user));
         Gate::define('callControl', fn ($user) => $callPolicy->before($user, 'callControl') ?? $callPolicy->callControl($user));
 
+        // Platform admin gate - for system-level operations (logs, health, etc.)
+        Gate::define('platform-admin', fn ($user) => $user->role === 'admin' && $user->tenant_id === null);
+
         // Boot all NIZAM modules (telecom hooks: dialplan, policy, events)
         // Routes and migrations are handled by nwidart/laravel-modules ServiceProviders
         $registry = $this->app->make(ModuleRegistry::class);

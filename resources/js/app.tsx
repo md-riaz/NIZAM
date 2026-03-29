@@ -1,11 +1,11 @@
-import { StrictMode, lazy, Suspense } from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { lazy, StrictMode, Suspense } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
-import { queryClient } from '@/lib/query-client';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { TenantProvider } from '@/context/TenantContext';
+import { queryClient } from '@/lib/query-client';
 
 // ─── Lazy-loaded pages ───────────────────────────────────────
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
@@ -21,6 +21,8 @@ const DidFormPage = lazy(() => import('@/pages/admin/DidFormPage'));
 const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
 const CdrsPage = lazy(() => import('@/pages/admin/CdrsPage'));
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
+const LogViewerPage = lazy(() => import('@/pages/admin/LogViewerPage'));
+const SipStatusPage = lazy(() => import('@/pages/admin/SipStatusPage'));
 
 // ─── Route Guards ────────────────────────────────────────────
 
@@ -113,6 +115,8 @@ function App() {
 
                     {/* System */}
                     <Route path="logs" element={<AuditLogsPage />} />
+                    <Route path="system-logs" element={<LogViewerPage />} />
+                    <Route path="sip-status" element={<SipStatusPage />} />
                 </Route>
 
                 {/* Catch-all */}

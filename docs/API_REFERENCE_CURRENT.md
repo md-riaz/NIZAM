@@ -39,11 +39,12 @@
 27. [Audit Logs](#audit-logs)
 28. [Usage Metering](#usage-metering)
 29. [Admin Dashboard](#admin-dashboard)
-30. [Rate Limiting](#rate-limiting)
-31. [SSL Management](#ssl-management)
-32. [WebRTC Configuration](#webrtc-configuration)
-33. [System Media](#system-media)
-34. [Registration Status](#registration-status)
+30. [Platform Admin Log Viewer](#platform-admin-log-viewer)
+31. [Rate Limiting](#rate-limiting)
+32. [SSL Management](#ssl-management)
+33. [WebRTC Configuration](#webrtc-configuration)
+34. [System Media](#system-media)
+35. [Registration Status](#registration-status)
 
 ---
 
@@ -1395,6 +1396,78 @@ Authorization: Bearer YOUR_TOKEN
 ```
 
 Returns total tenants by status, per-tenant resource counts, and aggregate system metrics.
+
+---
+
+## Platform Admin Log Viewer
+
+Platform administrators can view FreeSWITCH and Laravel application logs from the web interface (platform-admin only).
+
+### List Available Log Files
+```http
+GET /api/admin/logs
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "directory": "/path/to/storage/logs",
+  "files": [
+    {
+      "name": "laravel.log",
+      "path": "/path/to/storage/logs/laravel.log",
+      "size": 1048576,
+      "modified": 1711670400
+    }
+  ]
+}
+```
+
+### View Laravel Application Logs
+```http
+GET /api/admin/logs/application?lines=100
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Query Parameters:**
+- `lines` (optional): Number of recent lines to retrieve (default: 100, max: 1000)
+
+**Response** `200`:
+```json
+{
+  "source": "laravel",
+  "path": "/path/to/storage/logs/laravel.log",
+  "lines": 100,
+  "logs": [
+    "[2026-03-29 10:15:23] local.INFO: User logged in {\"user_id\":\"uuid\"}",
+    "[2026-03-29 10:15:24] local.DEBUG: Extension registered {\"extension\":\"1001\"}"
+  ]
+}
+```
+
+### Query FreeSWITCH Log Level & Status
+```http
+GET /api/admin/logs/freeswitch?level=info
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Query Parameters:**
+- `level` (optional): Log level to query (default: info)
+  - Valid values: `console`, `alert`, `crit`, `err`, `warning`, `notice`, `info`, `debug`
+
+**Response** `200`:
+```json
+{
+  "source": "freeswitch",
+  "level": "info",
+  "current_log_level": "7",
+  "status": "UP 0 years, 1 day, 2 hours, 30 minutes...",
+  "note": "For live log streaming, implement SSE/WebSocket with ESL event subscription to \"log\" events."
+}
+```
+
+**Note:** For live FreeSWITCH log streaming, implement Server-Sent Events (SSE) or WebSocket with ESL event subscription to `log` events. This endpoint provides current log level and status only.
 
 ---
 
