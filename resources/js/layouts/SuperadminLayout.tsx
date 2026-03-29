@@ -42,6 +42,8 @@ interface NavItem {
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     href: string;
+    superadminOnly?: boolean;
+    adminOnly?: boolean;
 }
 
 interface NavSection {
@@ -54,8 +56,8 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'General',
         items: [
             { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-            { label: 'Tenants', icon: Building2, href: '/admin/tenants' },
-            { label: 'Users', icon: Users, href: '/admin/users' },
+            { label: 'Tenants', icon: Building2, href: '/admin/tenants', superadminOnly: true },
+            { label: 'Users', icon: Users, href: '/admin/users', adminOnly: true },
         ],
     },
     {
@@ -63,13 +65,13 @@ const NAV_SECTIONS: NavSection[] = [
         items: [
             { label: 'Extensions', icon: Phone, href: '/admin/extensions' },
             { label: 'Ring Groups', icon: GitBranch, href: '/admin/ring-groups' },
-            { label: 'DIDs', icon: Hash, href: '/admin/dids' },
+            { label: 'DIDs', icon: Hash, href: '/admin/dids', adminOnly: true },
         ],
     },
     {
         title: 'Connectivity',
         items: [
-            { label: 'Gateways', icon: Globe, href: '/admin/gateways' },
+            { label: 'Gateways', icon: Globe, href: '/admin/gateways', adminOnly: true },
         ],
     },
     {
@@ -81,8 +83,8 @@ const NAV_SECTIONS: NavSection[] = [
     {
         title: 'System',
         items: [
-            { label: 'Audit Logs', icon: ScrollText, href: '/admin/logs' },
-            { label: 'Settings', icon: Settings, href: '/admin/settings' },
+            { label: 'Audit Logs', icon: ScrollText, href: '/admin/logs', adminOnly: true },
+            { label: 'Settings', icon: Settings, href: '/admin/settings', adminOnly: true },
         ],
     },
 ];
@@ -98,6 +100,18 @@ export default function SuperadminLayout() {
     const [isDark, setIsDark] = useState(
         () => document.documentElement.classList.contains('dark'),
     );
+
+    const isSuperadmin = user?.role === 'admin' && !user?.tenant_id;
+    const isAdmin = user?.role === 'admin';
+
+    const filteredSections = NAV_SECTIONS.map((section) => ({
+        ...section,
+        items: section.items.filter((item) => {
+            if (item.superadminOnly && !isSuperadmin) return false;
+            if (item.adminOnly && !isAdmin) return false;
+            return true;
+        }),
+    })).filter((section) => section.items.length > 0);
 
     const toggleTheme = () => {
         const next = !isDark;
@@ -148,7 +162,7 @@ export default function SuperadminLayout() {
 
                 {/* Navigation — grouped sections */}
                 <nav className="flex-1 overflow-y-auto px-3 py-3">
-                    {NAV_SECTIONS.map((section) => (
+                    {filteredSections.map((section) => (
                         <div key={section.title} className="mb-4">
                             {!collapsed && (
                                 <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -272,50 +286,64 @@ export default function SuperadminLayout() {
                     </div>
 
                     {/* Tenant Switcher (FusionPBX-style) */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-2 font-normal"
-                            >
-                                <Building2 className="size-4 text-primary" />
-                                <span className="max-w-[200px] truncate">
-                                    {activeTenant?.name ?? 'Select Tenant'}
-                                </span>
-                                <ChevronsUpDown className="size-3 text-muted-foreground" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-64">
-                            <DropdownMenuLabel>Switch Tenant</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {tenants.map((tenant) => (
-                                <DropdownMenuItem
-                                    key={tenant.id}
-                                    onClick={() => switchTenant(tenant)}
+                    {isSuperadmin ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2 font-normal"
                                 >
-                                    <div className="flex flex-1 items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium">
-                                                {tenant.name}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {tenant.domain}
-                                            </p>
+                                    <Building2 className="size-4 text-primary" />
+                                    <span className="max-w-[200px] truncate">
+                                        {activeTenant?.name ?? 'Select Tenant'}
+                                    </span>
+                                    <ChevronsUpDown className="size-3 text-muted-foreground" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-64">
+                                <DropdownMenuLabel>Switch Tenant</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {tenants.map((tenant) => (
+                                    <DropdownMenuItem
+                                        key={tenant.id}
+                                        onClick={() => {
+                                            switchTenant(tenant);
+                                            if (location.pathname === '/admin/tenants') {
+                                                navigate('/admin');
+                                            }
+                                        }}
+                                    >
+                                        <div className="flex flex-1 items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium">
+                                                    {tenant.name}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {tenant.domain}
+                                                </p>
+                                            </div>
+                                            {activeTenant?.id === tenant.id && (
+                                                <Check className="size-4 text-primary" />
+                                            )}
                                         </div>
-                                        {activeTenant?.id === tenant.id && (
-                                            <Check className="size-4 text-primary" />
-                                        )}
-                                    </div>
-                                </DropdownMenuItem>
-                            ))}
-                            {tenants.length === 0 && (
-                                <DropdownMenuItem disabled>
-                                    No tenants available
-                                </DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                    </DropdownMenuItem>
+                                ))}
+                                {tenants.length === 0 && (
+                                    <DropdownMenuItem disabled>
+                                        No tenants available
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm font-medium">
+                            <Building2 className="size-4 text-primary" />
+                            <span className="max-w-[200px] truncate">
+                                {activeTenant?.name ?? 'NIZAM'}
+                            </span>
+                        </div>
+                    )}
                 </header>
 
                 {/* Page Content */}

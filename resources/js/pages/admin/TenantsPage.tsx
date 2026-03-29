@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Plus, Globe, Users } from 'lucide-react';
 
 import api from '@/lib/api';
@@ -24,6 +25,7 @@ import {
 
 export default function TenantsPage() {
     const { switchTenant } = useTenant();
+    const navigate = useNavigate();
 
     const { data: tenants = [], isLoading } = useQuery({
         queryKey: ['tenants'],
@@ -129,7 +131,10 @@ export default function TenantsPage() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => switchTenant(tenant)}
+                                                onClick={() => {
+                                                    switchTenant(tenant);
+                                                    navigate('/admin');
+                                                }}
                                             >
                                                 Switch to
                                             </Button>
