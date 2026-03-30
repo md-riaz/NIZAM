@@ -19,11 +19,13 @@ RUN set -eux; \
     python3-distutils mlocate libvpx6 swig4.0 sqlite3 unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Build libks (full clone — FusionPBX approach, no tags, no shallow)
+# Build libks (pinned commit for deterministic builds)
+ARG LIBKS_COMMIT=f8e34fa9dc8ecc4249bfba6f608318e3c6d8f9ff
 RUN set -eux; \
     cd /usr/src \
     && git clone https://github.com/signalwire/libks.git libks \
     && cd libks \
+    && git reset --hard "$LIBKS_COMMIT" \
     && cmake . \
     && make -j$(nproc) \
     && make install \

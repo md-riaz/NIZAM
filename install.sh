@@ -25,7 +25,12 @@ set -euo pipefail
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 readonly NIZAM_REPO="https://github.com/md-riaz/NIZAM.git"
-readonly NIZAM_BRANCH="main"
+readonly NIZAM_REF="4610b2bbd753204e72b4f39f9a2415c75981d0d5"
+readonly LIBKS_REPO="https://github.com/signalwire/libks.git"
+readonly LIBKS_COMMIT="f8e34fa9dc8ecc4249bfba6f608318e3c6d8f9ff"
+readonly SOFIA_SIP_VERSION="1.13.17"
+readonly SPANDSP_REPO="https://github.com/freeswitch/spandsp.git"
+readonly SPANDSP_COMMIT="0d2e6ac65e0e8f53d652665a743015a88bf048d4"
 readonly NIZAM_DIR="/var/www/nizam"
 readonly NIZAM_USER="www-data"
 readonly LOG_FILE="/var/log/nizam_install.log"
@@ -301,9 +306,12 @@ _install_freeswitch_source() {
     cd /usr/src
 
     # ── libks ────────────────────────────────────────────────────────────────
-    if [[ ! -d libks ]]; then
-        git clone --depth 1 https://github.com/signalwire/libks.git libks
+    if [[ ! -d libks/.git ]]; then
+        rm -rf libks
+        git clone "${LIBKS_REPO}" libks
     fi
+    git -C libks fetch --quiet origin
+    git -C libks reset --hard "${LIBKS_COMMIT}" --quiet
     cmake -S libks -B libks/build -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr/local > /dev/null
     cmake --build libks/build --parallel "$(nproc)" > /dev/null
@@ -311,12 +319,12 @@ _install_freeswitch_source() {
     ldconfig
 
     # ── sofia-sip ────────────────────────────────────────────────────────────
-    if [[ ! -f sofia-sip-1.13.17.zip ]]; then
-        wget -q https://github.com/freeswitch/sofia-sip/archive/refs/tags/v1.13.17.zip \
-            -O sofia-sip-1.13.17.zip
+    if [[ ! -f "sofia-sip-${SOFIA_SIP_VERSION}.zip" ]]; then
+        wget -q "https://github.com/freeswitch/sofia-sip/archive/refs/tags/v${SOFIA_SIP_VERSION}.zip" \
+            -O "sofia-sip-${SOFIA_SIP_VERSION}.zip"
     fi
-    [[ -d sofia-sip-1.13.17 ]] || unzip -q sofia-sip-1.13.17.zip
-    cd sofia-sip-1.13.17
+    [[ -d "sofia-sip-${SOFIA_SIP_VERSION}" ]] || unzip -q "sofia-sip-${SOFIA_SIP_VERSION}.zip"
+    cd "sofia-sip-${SOFIA_SIP_VERSION}"
     sh autogen.sh > /dev/null 2>&1
     ./configure CFLAGS="-g -ggdb" --with-pic --with-glib=no \
         --without-doxygen --disable-stun > /dev/null
@@ -326,11 +334,13 @@ _install_freeswitch_source() {
     cd /usr/src
 
     # ── spandsp ──────────────────────────────────────────────────────────────
-    if [[ ! -d spandsp ]]; then
-        git clone --depth 1 https://github.com/freeswitch/spandsp.git spandsp
+    if [[ ! -d spandsp/.git ]]; then
+        rm -rf spandsp
+        git clone "${SPANDSP_REPO}" spandsp
     fi
+    git -C spandsp fetch --quiet origin
+    git -C spandsp reset --hard "${SPANDSP_COMMIT}" --quiet
     cd spandsp
-    git checkout 0d2e6ac65e0e8f53d652665a743015a88bf048d4 > /dev/null 2>&1 || true
     sh autogen.sh > /dev/null 2>&1
     ./configure CFLAGS="-g -ggdb" --with-pic > /dev/null
     make -j"$(nproc)" > /dev/null
@@ -423,14 +433,14 @@ install_freeswitch() {
 install_nizam() {
     # ── Clone ──────────────────────────────────────────────────────────────────
     if [[ -d "${NIZAM_DIR}/.git" ]]; then
-        info "Repository already cloned — pulling latest…"
+        info "Repository already cloned — syncing pinned ref ${NIZAM_REF}…"
         git -C "${NIZAM_DIR}" fetch --quiet origin
-        git -C "${NIZAM_DIR}" reset --hard "origin/${NIZAM_BRANCH}" --quiet
+        git -C "${NIZAM_DIR}" reset --hard "${NIZAM_REF}" --quiet
     else
-        info "Cloning NIZAM to ${NIZAM_DIR}…"
+        info "Cloning NIZAM to ${NIZAM_DIR} at pinned ref ${NIZAM_REF}…"
         mkdir -p /var/www
-        git clone --branch "${NIZAM_BRANCH}" --depth 1 \
-            "${NIZAM_REPO}" "${NIZAM_DIR}" --quiet
+        git clone "${NIZAM_REPO}" "${NIZAM_DIR}" --quiet
+        git -C "${NIZAM_DIR}" reset --hard "${NIZAM_REF}" --quiet
         chown -R "${NIZAM_USER}:${NIZAM_USER}" "${NIZAM_DIR}"
     fi
 

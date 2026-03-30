@@ -1,0 +1,75 @@
+services:
+  esl-listener:
+    image: nizam-php-app:${APP_IMAGE_TAG:-local}
+    container_name: nizam-esl-listener
+    restart: unless-stopped
+    command: php artisan freeswitch:listen
+    volumes:
+      - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
+    networks:
+      - nizam
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_URL=${APP_URL:-http://localhost:8231}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-nizam}
+      - DB_USERNAME=${DB_USERNAME:-nizam}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - FREESWITCH_HOST=freeswitch
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+
+  freeswitch:
+    build:
+      context: .
+      dockerfile: docker/freeswitch/Dockerfile
+    container_name: nizam-freeswitch
+    restart: unless-stopped
+    cap_add:
+      - SYS_NICE
+    ulimits:
+      rtprio:
+        soft: 99
+        hard: 99
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "5080:5080/udp"
+      - "5080:5080/tcp"
+      - "7443:7443/tcp"
+      - "16384-16484:16384-16484/udp"
+    volumes:
+      - freeswitch_data:/var/lib/freeswitch
+      - certs_data:/usr/local/freeswitch/certs
+      - ./storage/freeswitch/sip_profiles/external:/usr/local/freeswitch/conf/sip_profiles/external
+    networks:
+      - nizam
+    environment:
+      - NIZAM_XML_CURL_URL=${NIZAM_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
+
+  sip-mock:
+    build:
+      context: .
+      dockerfile: docker/sip-mock/Dockerfile
+    container_name: nizam-sip-mock
+    restart: unless-stopped
+    networks:
+      - nizam
+    environment:
+      - SIP_MOCK_HOST=0.0.0.0
+      - SIP_MOCK_PORT=5070
+      - SIP_MOCK_REALM=${SIP_MOCK_REALM:-sip-mock.local}
+      - SIP_MOCK_USERNAME=${SIP_MOCK_USERNAME:-mockuser}
+      - SIP_MOCK_PASSWORD=${SIP_MOCK_PASSWORD:-mockpass}
+
+volumes:
+  freeswitch_data:
+  certs_data:
+  vendor_data:
+
+networks:
+  nizam:
+    driver: bridge

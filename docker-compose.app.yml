@@ -1,0 +1,181 @@
+services:
+  app:
+    image: nizam-php-app:${APP_IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    container_name: nizam-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
+      - ./storage:/var/www/html/storage
+    networks:
+      - nizam
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_URL=${APP_URL:-http://localhost:8231}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-nizam}
+      - DB_USERNAME=${DB_USERNAME:-nizam}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - FREESWITCH_HOST=freeswitch
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(0);"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  nginx:
+    image: nginx:alpine
+    container_name: nizam-nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8231}:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - nizam
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: nizam-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-nizam}
+      POSTGRES_USER: ${DB_USERNAME:-nizam}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    networks:
+      - nizam
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-nizam} -d ${DB_DATABASE:-nizam}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nizam-redis
+    restart: unless-stopped
+    command: >-
+      sh -c 'if [ -n "$REDIS_PASSWORD" ] && [ "$REDIS_PASSWORD" != "null" ] && [ "$REDIS_PASSWORD" != "NULL" ]; then
+        exec redis-server --requirepass "$REDIS_PASSWORD";
+      else
+        exec redis-server;
+      fi'
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - nizam
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  queue:
+    image: nizam-php-app:${APP_IMAGE_TAG:-local}
+    container_name: nizam-queue
+    restart: unless-stopped
+    command: php artisan queue:work --tries=3 --timeout=90 --sleep=3
+    depends_on:
+      app:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
+      - certs_data:/etc/letsencrypt
+    networks:
+      - nizam
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_URL=${APP_URL:-http://localhost:8231}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-nizam}
+      - DB_USERNAME=${DB_USERNAME:-nizam}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+
+  scheduler:
+    image: nizam-php-app:${APP_IMAGE_TAG:-local}
+    container_name: nizam-scheduler
+    restart: unless-stopped
+    command: php artisan schedule:work
+    depends_on:
+      app:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
+      - certs_data:/etc/letsencrypt
+    networks:
+      - nizam
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_URL=${APP_URL:-http://localhost:8231}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-nizam}
+      - DB_USERNAME=${DB_USERNAME:-nizam}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+
+  certbot:
+    image: certbot/certbot
+    container_name: nizam-certbot
+    volumes:
+      - certs_data:/etc/letsencrypt
+      - .:/var/www/html
+    networks:
+      - nizam
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  postgres_data:
+  redis_data:
+  vendor_data:
+  certs_data:
+
+networks:
+  nizam:
+    driver: bridge
