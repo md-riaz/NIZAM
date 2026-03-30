@@ -3,6 +3,7 @@ import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { TenantProvider } from '@/context/TenantContext';
 import { queryClient } from '@/lib/query-client';
@@ -31,9 +32,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
     if (isLoading) {
         return (
-            <div className="flex h-screen items-center justify-center bg-background">
+            <div className="flex h-dvh items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <div className="size-8 motion-safe:animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     <p className="text-sm text-muted-foreground">Loading…</p>
                 </div>
             </div>
@@ -60,8 +61,11 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
 
 function PageLoader() {
     return (
-        <div className="flex h-screen items-center justify-center bg-background">
-            <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="flex h-dvh items-center justify-center bg-background">
+            <div
+                className="size-8 motion-safe:animate-spin rounded-full border-2 border-primary border-t-transparent"
+                aria-label="Loading page"
+            />
         </div>
     );
 }
@@ -87,9 +91,11 @@ function App() {
                     path="/admin"
                     element={
                         <ProtectedRoute>
-                            <TenantProvider>
-                                <SuperadminLayout />
-                            </TenantProvider>
+                            <ErrorBoundary>
+                                <TenantProvider>
+                                    <SuperadminLayout />
+                                </TenantProvider>
+                            </ErrorBoundary>
                         </ProtectedRoute>
                     }
                 >
@@ -137,13 +143,15 @@ if (rootEl) {
 
     createRoot(rootEl).render(
         <StrictMode>
-            <QueryClientProvider client={queryClient}>
-                <BrowserRouter>
-                    <AuthProvider>
-                        <App />
-                    </AuthProvider>
-                </BrowserRouter>
-            </QueryClientProvider>
+            <ErrorBoundary>
+                <QueryClientProvider client={queryClient}>
+                    <BrowserRouter>
+                        <AuthProvider>
+                            <App />
+                        </AuthProvider>
+                    </BrowserRouter>
+                </QueryClientProvider>
+            </ErrorBoundary>
         </StrictMode>,
     );
 }

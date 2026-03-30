@@ -10,6 +10,7 @@ import {
     Hash,
     LayoutDashboard,
     LogOut,
+    Menu,
     Moon,
     Phone,
     PhoneCall,
@@ -19,6 +20,7 @@ import {
     Shield,
     Sun,
     Users,
+    X,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -101,6 +103,7 @@ export default function SuperadminLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState(false);
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const [isDark, setIsDark] = useState(
         () => document.documentElement.classList.contains('dark'),
     );
@@ -136,13 +139,27 @@ export default function SuperadminLayout() {
         .toUpperCase()
         .slice(0, 2) ?? 'SA';
 
+    const handleNavigate = () => {
+        setMobileNavOpen(false);
+    };
+
     return (
-        <div className="flex h-screen overflow-hidden bg-background">
+        <div className="flex h-dvh overflow-hidden bg-background">
+            {mobileNavOpen && (
+                <button
+                    type="button"
+                    aria-label="Close navigation menu"
+                    className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+                    onClick={() => setMobileNavOpen(false)}
+                />
+            )}
+
             {/* ─── Sidebar ────────────────────────────────── */}
             <aside
                 className={cn(
-                    'flex flex-col border-r bg-sidebar transition-all duration-300',
-                    collapsed ? 'w-[68px]' : 'w-64',
+                    'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar transition-transform duration-200 ease-out lg:static lg:z-auto lg:translate-x-0 lg:transition-all',
+                    collapsed ? 'lg:w-[68px]' : 'lg:w-64',
+                    mobileNavOpen ? 'translate-x-0 w-72' : '-translate-x-full w-72',
                 )}
             >
                 {/* Brand */}
@@ -168,11 +185,14 @@ export default function SuperadminLayout() {
                 <nav className="flex-1 overflow-y-auto px-3 py-3">
                     {filteredSections.map((section) => (
                         <div key={section.title} className="mb-4">
-                            {!collapsed && (
-                                <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                    {section.title}
-                                </p>
-                            )}
+                            <p
+                                className={cn(
+                                    'mb-1 px-3 text-[10px] font-semibold uppercase text-muted-foreground',
+                                    collapsed && 'lg:hidden',
+                                )}
+                            >
+                                {section.title}
+                            </p>
                             {section.items.map((item) => {
                                 const isActive =
                                     location.pathname === item.href ||
@@ -182,16 +202,17 @@ export default function SuperadminLayout() {
                                     <Link
                                         key={item.href}
                                         to={item.href}
+                                        onClick={handleNavigate}
                                         className={cn(
                                             'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
                                             isActive
                                                 ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
                                                 : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                                            collapsed && 'justify-center px-0',
+                                            collapsed && 'lg:justify-center lg:px-0',
                                         )}
                                     >
                                         <item.icon className="size-4 shrink-0" />
-                                        {!collapsed && <span>{item.label}</span>}
+                                        <span className={cn(collapsed && 'lg:hidden')}>{item.label}</span>
                                     </Link>
                                 );
                             })}
@@ -205,22 +226,23 @@ export default function SuperadminLayout() {
                         variant="ghost"
                         size="sm"
                         onClick={toggleTheme}
-                        className={cn('w-full', collapsed ? 'px-0' : 'justify-start')}
+                        className={cn('w-full cursor-pointer', collapsed ? 'lg:px-0' : 'justify-start')}
                     >
                         {isDark ? (
                             <Sun className="size-4 shrink-0" />
                         ) : (
                             <Moon className="size-4 shrink-0" />
                         )}
-                        {!collapsed && (
-                            <span className="text-xs">{isDark ? 'Light' : 'Dark'}</span>
-                        )}
+                        <span className={cn('text-xs', collapsed && 'lg:hidden')}>
+                            {isDark ? 'Light' : 'Dark'}
+                        </span>
                     </Button>
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setCollapsed(!collapsed)}
-                        className="mx-auto flex"
+                        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                        className="mx-auto hidden cursor-pointer lg:flex"
                     >
                         {collapsed ? (
                             <ChevronRight className="size-4" />
@@ -237,9 +259,10 @@ export default function SuperadminLayout() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button
+                                type="button"
                                 className={cn(
                                     'flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-sidebar-accent',
-                                    collapsed && 'justify-center px-0',
+                                    collapsed && 'lg:justify-center lg:px-0',
                                 )}
                             >
                                 <Avatar className="size-7">
@@ -247,16 +270,14 @@ export default function SuperadminLayout() {
                                         {initials}
                                     </AvatarFallback>
                                 </Avatar>
-                                {!collapsed && (
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-xs font-medium text-sidebar-foreground">
-                                            {user?.name}
-                                        </p>
-                                        <p className="truncate text-[10px] text-muted-foreground">
-                                            {user?.role}
-                                        </p>
-                                    </div>
-                                )}
+                                <div className={cn('min-w-0 flex-1', collapsed && 'lg:hidden')}>
+                                    <p className="truncate text-xs font-medium text-sidebar-foreground">
+                                        {user?.name}
+                                    </p>
+                                    <p className="truncate text-[10px] text-muted-foreground">
+                                        {user?.role}
+                                    </p>
+                                </div>
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" side="top" className="w-56">
@@ -279,12 +300,24 @@ export default function SuperadminLayout() {
             </aside>
 
             {/* ─── Main Area ──────────────────────────────── */}
-            <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 {/* Top Header Bar with Tenant Switcher */}
-                <header className="flex h-14 items-center justify-between border-b bg-background px-6">
-                    <div className="flex items-center gap-4">
-                        {/* Breadcrumb-style page context */}
-                        <span className="text-sm text-muted-foreground">
+                <header className="flex h-14 items-center justify-between gap-3 border-b bg-background px-4 lg:px-6">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                            className="cursor-pointer lg:hidden"
+                            onClick={() => setMobileNavOpen((open) => !open)}
+                        >
+                            {mobileNavOpen ? (
+                                <X className="size-4" />
+                            ) : (
+                                <Menu className="size-4" />
+                            )}
+                        </Button>
+                        <span className="truncate text-sm text-muted-foreground">
                             NIZAM Admin
                         </span>
                     </div>
@@ -296,7 +329,7 @@ export default function SuperadminLayout() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="gap-2 font-normal"
+                                    className="max-w-[12rem] gap-2 font-normal sm:max-w-[16rem]"
                                 >
                                     <Building2 className="size-4 text-primary" />
                                     <span className="max-w-[200px] truncate">
@@ -341,9 +374,9 @@ export default function SuperadminLayout() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm font-medium">
-                            <Building2 className="size-4 text-primary" />
-                            <span className="max-w-[200px] truncate">
+                        <div className="flex max-w-[12rem] items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm font-medium sm:max-w-[16rem]">
+                            <Building2 className="size-4 shrink-0 text-primary" />
+                            <span className="truncate">
                                 {activeTenant?.name ?? 'NIZAM'}
                             </span>
                         </div>
@@ -351,7 +384,7 @@ export default function SuperadminLayout() {
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-y-auto">
+                <main className="min-w-0 flex-1 overflow-y-auto">
                     <Outlet />
                 </main>
             </div>

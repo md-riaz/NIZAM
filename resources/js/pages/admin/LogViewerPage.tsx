@@ -118,7 +118,7 @@ export default function LogViewerPage() {
                     Platform Admin &rsaquo; System
                 </p>
                 <h1 className="text-2xl font-bold tracking-tight">Log Viewer</h1>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground leading-relaxed">
                     View FreeSWITCH and Laravel application logs in real-time.
                 </p>
             </div>
@@ -207,9 +207,11 @@ export default function LogViewerPage() {
                                         size="sm"
                                         onClick={() => refetchAppLogs()}
                                         disabled={appLogsLoading}
+                                        aria-label="Refresh application logs"
+                                        className="cursor-pointer"
                                     >
                                         <RefreshCw
-                                            className={`size-4 ${appLogsLoading ? 'animate-spin' : ''}`}
+                                            className={`size-4 ${appLogsLoading ? 'motion-safe:animate-spin' : ''}`}
                                         />
                                     </Button>
                                 </div>
@@ -223,7 +225,7 @@ export default function LogViewerPage() {
                                 </div>
                             ) : appLogsLoading ? (
                                 <div className="flex h-32 items-center justify-center">
-                                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                    <div className="size-6 motion-safe:animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="Loading application logs" />
                                 </div>
                             ) : (
                                 <div className="space-y-2">
@@ -231,7 +233,7 @@ export default function LogViewerPage() {
                                         <span>
                                             Showing {appLogs?.lines} most recent lines
                                         </span>
-                                        <Button variant="ghost" size="sm">
+                                        <Button variant="ghost" size="sm" aria-label="Download logs" className="cursor-pointer">
                                             <Download className="mr-2 size-4" />
                                             Download
                                         </Button>
@@ -284,9 +286,11 @@ export default function LogViewerPage() {
                                         size="sm"
                                         onClick={() => refetchFsLogs()}
                                         disabled={fsLogsLoading}
+                                        aria-label="Refresh FreeSWITCH logs"
+                                        className="cursor-pointer"
                                     >
                                         <RefreshCw
-                                            className={`size-4 ${fsLogsLoading ? 'animate-spin' : ''}`}
+                                            className={`size-4 ${fsLogsLoading ? 'motion-safe:animate-spin' : ''}`}
                                         />
                                     </Button>
                                 </div>
@@ -300,7 +304,7 @@ export default function LogViewerPage() {
                                 </div>
                             ) : fsLogsLoading ? (
                                 <div className="flex h-32 items-center justify-center">
-                                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                    <div className="size-6 motion-safe:animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="Loading FreeSWITCH logs" />
                                 </div>
                             ) : (
                                 <div className="space-y-4">

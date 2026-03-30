@@ -240,7 +240,7 @@ export default function SipStatusPage() {
                     Platform Admin &rsaquo; System
                 </p>
                 <h1 className="text-2xl font-bold tracking-tight">SIP Status Monitor</h1>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground leading-relaxed">
                     Real-time monitoring of SIP profiles, gateways, and registrations.
                 </p>
             </div>
@@ -278,9 +278,11 @@ export default function SipStatusPage() {
                                     size="sm"
                                     onClick={() => refetchProfiles()}
                                     disabled={profilesLoading}
+                                    aria-label="Refresh profiles"
+                                    className="cursor-pointer"
                                 >
                                     <RefreshCw
-                                        className={`size-4 ${profilesLoading ? 'animate-spin' : ''}`}
+                                        className={`size-4 ${profilesLoading ? 'motion-safe:animate-spin' : ''}`}
                                     />
                                 </Button>
                             </div>
@@ -288,7 +290,7 @@ export default function SipStatusPage() {
                         <CardContent>
                             {profilesLoading ? (
                                 <div className="flex h-32 items-center justify-center">
-                                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                    <div className="size-6 motion-safe:animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="Loading profiles" />
                                 </div>
                             ) : (
                                 <Table>
@@ -331,6 +333,8 @@ export default function SipStatusPage() {
                                                                         profile.name,
                                                                     )
                                                                 }
+                                                                aria-label={`Reload profile ${profile.name}`}
+                                                                className="cursor-pointer"
                                                             >
                                                                 <RotateCw className="size-4" />
                                                             </Button>
@@ -344,6 +348,8 @@ export default function SipStatusPage() {
                                                                             profile.name,
                                                                         )
                                                                     }
+                                                                    aria-label={`Stop profile ${profile.name}`}
+                                                                    className="cursor-pointer"
                                                                 >
                                                                     <Square className="size-4" />
                                                                 </Button>
@@ -357,6 +363,8 @@ export default function SipStatusPage() {
                                                                             profile.name,
                                                                         )
                                                                     }
+                                                                    aria-label={`Start profile ${profile.name}`}
+                                                                    className="cursor-pointer"
                                                                 >
                                                                     <Play className="size-4" />
                                                                 </Button>
@@ -399,9 +407,11 @@ export default function SipStatusPage() {
                                     size="sm"
                                     onClick={() => refetchGateways()}
                                     disabled={gatewaysLoading}
+                                    aria-label="Refresh gateways"
+                                    className="cursor-pointer"
                                 >
                                     <RefreshCw
-                                        className={`size-4 ${gatewaysLoading ? 'animate-spin' : ''}`}
+                                        className={`size-4 ${gatewaysLoading ? 'motion-safe:animate-spin' : ''}`}
                                     />
                                 </Button>
                             </div>
@@ -409,7 +419,7 @@ export default function SipStatusPage() {
                         <CardContent>
                             {gatewaysLoading ? (
                                 <div className="flex h-32 items-center justify-center">
-                                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                    <div className="size-6 motion-safe:animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="Loading gateways" />
                                 </div>
                             ) : (
                                 <Table>
@@ -444,6 +454,8 @@ export default function SipStatusPage() {
                                                                 gateway.name,
                                                             )
                                                         }
+                                                        aria-label={`Kill gateway ${gateway.name}`}
+                                                        className="cursor-pointer"
                                                     >
                                                         <Trash2 className="size-4" />
                                                     </Button>
@@ -483,9 +495,11 @@ export default function SipStatusPage() {
                                     size="sm"
                                     onClick={() => refetchRegistrations()}
                                     disabled={registrationsLoading}
+                                    aria-label="Refresh registrations"
+                                    className="cursor-pointer"
                                 >
                                     <RefreshCw
-                                        className={`size-4 ${registrationsLoading ? 'animate-spin' : ''}`}
+                                        className={`size-4 ${registrationsLoading ? 'motion-safe:animate-spin' : ''}`}
                                     />
                                 </Button>
                             </div>
@@ -493,7 +507,7 @@ export default function SipStatusPage() {
                         <CardContent>
                             {registrationsLoading ? (
                                 <div className="flex h-32 items-center justify-center">
-                                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                    <div className="size-6 motion-safe:animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="Loading registrations" />
                                 </div>
                             ) : (
                                 <Table>
@@ -531,6 +545,8 @@ export default function SipStatusPage() {
                                                                 realm: reg.realm,
                                                             })
                                                         }
+                                                        aria-label={`Kill registration for ${reg.reg_user}@${reg.realm}`}
+                                                        className="cursor-pointer"
                                                     >
                                                         <Trash2 className="size-4" />
                                                     </Button>

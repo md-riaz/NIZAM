@@ -1,0 +1,212 @@
+/**
+ * VoIP Admin Platform - Design System Variables
+ * 
+ * This file defines the core design tokens for the application.
+ * Based on the enterprise SaaS dashboard design system.
+ */
+
+@layer base {
+  :root {
+    /* Primary - Technology & Trust */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    /* Success - Active/Registered States */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - Degraded/Attention States */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+
+    /* Destructive - Error/Failed States */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Background & Surface */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    /* Card */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    /* Muted */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent */
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Borders */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+
+    /* Border radius */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Primary - Technology & Trust */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Success - Active/Registered States */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - Degraded/Attention States */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+
+    /* Destructive - Error/Failed States */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Background & Surface */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    /* Card */
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+
+    /* Muted */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    /* Accent */
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Borders */
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  /* Ensure minimum line height for readability */
+  p,
+  li,
+  td {
+    @apply leading-relaxed;
+  }
+
+  /* Focus visible styles for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Smooth scrolling with reduced motion support */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Ensure minimum touch targets on mobile */
+  @media (pointer: coarse) {
+    button,
+    a,
+    input[type='checkbox'],
+    input[type='radio'] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+}
+
+/* Custom utilities for the design system */
+@layer utilities {
+  /* Status indicator colors */
+  .status-running {
+    @apply text-green-600 dark:text-green-400;
+  }
+
+  .status-failed {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  .status-warning {
+    @apply text-amber-500 dark:text-amber-400;
+  }
+
+  .status-inactive {
+    @apply text-slate-400 dark:text-slate-500;
+  }
+
+  /* Technical data styling */
+  .technical-data {
+    @apply font-mono text-xs text-muted-foreground;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply size-6 motion-safe:animate-spin rounded-full border-2 border-primary border-t-transparent;
+  }
+
+  /* Interactive elements */
+  .interactive {
+    @apply cursor-pointer transition-colors duration-200 hover:bg-accent/50;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-shadow duration-200 hover:shadow-md;
+  }
+}
+
+/* Component-specific styles */
+@layer components {
+  /* Table row hover */
+  .table-row-hover {
+    @apply transition-colors hover:bg-muted/50;
+  }
+
+  /* Status badge base */
+  .status-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* Log viewer monospace container */
+  .log-container {
+    @apply max-h-[600px] overflow-auto rounded-lg border bg-muted/30 p-4 font-mono text-xs;
+  }
+
+  .log-line {
+    @apply whitespace-pre-wrap break-all py-0.5 hover:bg-accent/50;
+  }
+}
