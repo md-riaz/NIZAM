@@ -18,7 +18,7 @@ services:
       - nizam
     environment:
       - APP_ENV=${APP_ENV:-production}
-      - APP_URL=${APP_URL:-http://localhost:8091}
+      - APP_URL=${APP_URL:-http://localhost:8231}
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -40,7 +40,7 @@ services:
     container_name: nizam-nginx
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-8091}:80"
+      - "${APP_PORT:-8231}:80"
     volumes:
       - .:/var/www/html
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -152,7 +152,7 @@ services:
       - nizam
     environment:
       - APP_ENV=${APP_ENV:-production}
-      - APP_URL=${APP_URL:-http://localhost:8091}
+      - APP_URL=${APP_URL:-http://localhost:8231}
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -184,7 +184,7 @@ services:
       - nizam
     environment:
       - APP_ENV=${APP_ENV:-production}
-      - APP_URL=${APP_URL:-http://localhost:8091}
+      - APP_URL=${APP_URL:-http://localhost:8231}
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -217,7 +217,7 @@ services:
       - nizam
     environment:
       - APP_ENV=${APP_ENV:-production}
-      - APP_URL=${APP_URL:-http://localhost:8091}
+      - APP_URL=${APP_URL:-http://localhost:8231}
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres
       - DB_PORT=5432
