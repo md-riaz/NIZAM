@@ -1547,7 +1547,7 @@ All errors follow a consistent format:
 
 ## API Base URL
 
-- **Development:** `http://localhost:8091/api/v1`
+- **Development:** `http://localhost:8231/api/v1`
 - **Production:** `https://api.nizam.example.com/api/v1`
 
 ---

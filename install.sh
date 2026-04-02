@@ -450,16 +450,27 @@ install_nizam() {
         --working-dir="${NIZAM_DIR}" \
         --no-dev --optimize-autoloader --no-interaction --quiet
 
+    # ── Frontend build dependencies ────────────────────────────────────────────
+    if ! command -v npm &>/dev/null; then
+        info "Installing Node.js and npm for frontend asset build…"
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nodejs npm
+    fi
+
+    info "Building frontend assets…"
+    sudo -u "${NIZAM_USER}" npm --prefix "${NIZAM_DIR}" install --no-audit --no-fund
+    sudo -u "${NIZAM_USER}" npm --prefix "${NIZAM_DIR}" run build
+
     # ── Generate APP_KEY ───────────────────────────────────────────────────────
     APP_KEY="base64:$(openssl rand -base64 32)"
 
     # ── Write .env ────────────────────────────────────────────────────────────
     info "Writing .env…"
     cat > "${NIZAM_DIR}/.env" << ENVEOF
-APP_NAME=NIZAM
+APP_NAME="Communications Platform"
 APP_ENV=production
 APP_KEY=${APP_KEY}
 APP_DEBUG=false
+APP_PORT=80
 APP_URL=http://${SERVER_IP}
 
 LOG_CHANNEL=stack
@@ -473,14 +484,16 @@ DB_DATABASE=nizam
 DB_USERNAME=nizam
 DB_PASSWORD=${DB_PASS}
 
-SESSION_DRIVER=redis
+SESSION_DRIVER=database
 SESSION_LIFETIME=120
 SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
 
 BROADCAST_CONNECTION=log
 FILESYSTEM_DISK=local
-QUEUE_CONNECTION=redis
-CACHE_STORE=redis
+QUEUE_CONNECTION=database
+CACHE_STORE=database
 
 REDIS_CLIENT=phpredis
 REDIS_HOST=127.0.0.1
@@ -493,7 +506,8 @@ FREESWITCH_HOST=127.0.0.1
 FREESWITCH_ESL_PORT=8021
 FREESWITCH_ESL_PASSWORD=${ESL_PASS}
 FREESWITCH_XML_CURL_URL=http://127.0.0.1/freeswitch/xml-curl
-NIZAM_XML_CURL_URL=http://127.0.0.1/freeswitch/xml-curl
+FREESWITCH_XML_CURL_ENDPOINT_INTERNAL=http://127.0.0.1/freeswitch/xml-curl
+FREESWITCH_LOG_PATH=/var/log/freeswitch/freeswitch.log
 
 EXT_RTP_IP=${SERVER_IP}
 EXT_SIP_IP=${SERVER_IP}
@@ -695,7 +709,7 @@ configure_supervisor() {
     cat > /etc/supervisor/conf.d/nizam-queue.conf << SUPEOF
 [program:nizam-queue]
 process_name=%(program_name)s_%(process_num)02d
-command=php ${NIZAM_DIR}/artisan queue:work redis --sleep=3 --tries=3 --timeout=90 --max-time=3600
+command=php ${NIZAM_DIR}/artisan queue:work --sleep=3 --tries=3 --timeout=90 --max-time=3600
 autostart=true
 autorestart=true
 stopasgroup=true
@@ -710,7 +724,7 @@ SUPEOF
 
     cat > /etc/supervisor/conf.d/nizam-esl.conf << SUPEOF
 [program:nizam-esl-listener]
-command=php ${NIZAM_DIR}/artisan nizam:esl-listen
+command=php ${NIZAM_DIR}/artisan freeswitch:listen
 autostart=true
 autorestart=true
 stopasgroup=true

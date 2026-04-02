@@ -125,7 +125,7 @@ class ExtensionController extends Controller
 
         $this->authorize('view', $extension);
 
-        if (!config('nizam.webrtc.enabled')) {
+        if (!config('telephony.webrtc.enabled')) {
             return response()->json([
                 'message' => 'WebRTC is not enabled on this system.',
             ], 403);

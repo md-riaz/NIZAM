@@ -19,8 +19,13 @@ services:
       - DB_USERNAME=${DB_USERNAME:-communications}
       - DB_PASSWORD=${DB_PASSWORD:-secret}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - FREESWITCH_HOST=freeswitch
+      - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
+      - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+      - CACHE_STORE=${CACHE_STORE:-database}
+      - SESSION_DRIVER=${SESSION_DRIVER:-database}
 
   freeswitch:
     build:

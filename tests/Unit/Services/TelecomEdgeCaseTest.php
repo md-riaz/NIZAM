@@ -132,18 +132,18 @@ class TelecomEdgeCaseTest extends TestCase
 
     // -- Config --
 
-    public function test_nizam_config_has_media_section(): void
+    public function test_telephony_config_has_media_section(): void
     {
-        $this->assertNotNull(config('nizam.media'));
-        $this->assertArrayHasKey('dtmf_type', config('nizam.media'));
-        $this->assertArrayHasKey('srtp_policy', config('nizam.media'));
-        $this->assertArrayHasKey('rtp_port_range_start', config('nizam.media'));
-        $this->assertArrayHasKey('ext_rtp_ip', config('nizam.media'));
+        $this->assertNotNull(config('telephony.media'));
+        $this->assertArrayHasKey('dtmf_type', config('telephony.media'));
+        $this->assertArrayHasKey('srtp_policy', config('telephony.media'));
+        $this->assertArrayHasKey('rtp_port_range_start', config('telephony.media'));
+        $this->assertArrayHasKey('ext_rtp_ip', config('telephony.media'));
     }
 
-    public function test_nizam_config_has_emergency_patterns(): void
+    public function test_telephony_config_has_emergency_patterns(): void
     {
-        $patterns = config('nizam.emergency.patterns');
+        $patterns = config('telephony.emergency.patterns');
 
         $this->assertIsArray($patterns);
         $this->assertContains('911', $patterns);
@@ -151,13 +151,13 @@ class TelecomEdgeCaseTest extends TestCase
         $this->assertContains('999', $patterns);
     }
 
-    public function test_nizam_dtmf_defaults_to_rfc2833(): void
+    public function test_telephony_dtmf_defaults_to_rfc2833(): void
     {
-        $this->assertEquals('rfc2833', config('nizam.media.dtmf_type'));
+        $this->assertEquals('rfc2833', config('telephony.media.dtmf_type'));
     }
 
-    public function test_nizam_srtp_defaults_to_optional(): void
+    public function test_telephony_srtp_defaults_to_optional(): void
     {
-        $this->assertEquals('optional', config('nizam.media.srtp_policy'));
+        $this->assertEquals('optional', config('telephony.media.srtp_policy'));
     }
 }

@@ -12,7 +12,7 @@ class SipProfileCompiler
      */
     public function compileProfile(string $profileName = 'external'): string
     {
-        $media = config('nizam.media', []);
+        $media = config('telephony.media', []);
         
         // Load persistent profile settings from database if available
         $model = \App\Models\SipProfile::where('name', $profileName)

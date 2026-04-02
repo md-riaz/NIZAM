@@ -21,7 +21,7 @@ class LogViewerController extends Controller
         $filter = trim((string) $request->input('filter', ''));
         $sort = strtolower((string) $request->input('sort', 'desc'));
         $sort = in_array($sort, ['asc', 'desc'], true) ? $sort : 'desc';
-        $logFile = config('nizam.freeswitch.log_path');
+        $logFile = config('telephony.freeswitch.log_path');
 
         if (! $logFile || ! File::exists($logFile)) {
             return response()->json([
@@ -131,7 +131,7 @@ class LogViewerController extends Controller
         }
 
         // Include FreeSWITCH log if configured
-        $fsLogFile = config('nizam.freeswitch.log_path');
+        $fsLogFile = config('telephony.freeswitch.log_path');
         if ($fsLogFile && File::exists($fsLogFile)) {
             $files[] = [
                 'name' => basename($fsLogFile),

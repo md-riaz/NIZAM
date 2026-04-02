@@ -287,7 +287,7 @@ sudo -u www-data nano .env
 Use a production `.env` like this as the baseline:
 
 ```env
-APP_NAME=NIZAM
+APP_NAME="Communications Platform"
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://your-domain.example.com
@@ -299,9 +299,11 @@ DB_DATABASE=nizam
 DB_USERNAME=nizam
 DB_PASSWORD=change_me_now
 
-SESSION_DRIVER=redis
-CACHE_STORE=redis
-QUEUE_CONNECTION=redis
+SESSION_DRIVER=database
+SESSION_PATH=/
+SESSION_DOMAIN=null
+CACHE_STORE=database
+QUEUE_CONNECTION=database
 
 REDIS_CLIENT=phpredis
 REDIS_HOST=127.0.0.1
@@ -311,9 +313,9 @@ REDIS_PORT=6379
 FREESWITCH_HOST=127.0.0.1
 FREESWITCH_ESL_PORT=8021
 FREESWITCH_ESL_PASSWORD=change_me_now
-
 FREESWITCH_XML_CURL_URL=http://127.0.0.1/freeswitch/xml-curl
-NIZAM_XML_CURL_URL=http://127.0.0.1/freeswitch/xml-curl
+FREESWITCH_XML_CURL_ENDPOINT_INTERNAL=http://127.0.0.1/freeswitch/xml-curl
+FREESWITCH_LOG_PATH=/var/log/freeswitch/freeswitch.log
 
 # Gateway XML provisioning directory on bare metal
 FREESWITCH_GATEWAY_DIRECTORY=/etc/freeswitch/sip_profiles/external
@@ -322,6 +324,8 @@ FREESWITCH_GATEWAY_DIRECTORY=/etc/freeswitch/sip_profiles/external
 EXT_SIP_IP=YOUR_PUBLIC_IP
 EXT_RTP_IP=YOUR_PUBLIC_IP
 ```
+
+If you want Redis-backed queues, sessions, or cache in production, switch these three values deliberately after confirming Redis auth, persistence, and monitoring are in place.
 
 ### Generate key, migrate, cache, sync permissions
 
@@ -511,7 +515,7 @@ sudo systemctl start supervisor
 sudo tee /etc/supervisor/conf.d/nizam-queue.conf > /dev/null <<'EOF'
 [program:nizam-queue]
 process_name=%(program_name)s_%(process_num)02d
-command=php /var/www/nizam/artisan queue:work redis --sleep=3 --tries=3 --timeout=90 --max-time=3600
+command=php /var/www/nizam/artisan queue:work --sleep=3 --tries=3 --timeout=90 --max-time=3600
 autostart=true
 autorestart=true
 stopasgroup=true

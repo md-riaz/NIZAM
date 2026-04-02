@@ -168,12 +168,12 @@ class GatewayProvisioningService
 
     protected function directory(): string
     {
-        return config('nizam.gateway_provisioning.external_directory', storage_path('freeswitch/sip_profiles/external'));
+        return config('telephony.gateway_provisioning.external_directory', storage_path('freeswitch/sip_profiles/external'));
     }
 
     protected function profile(): string
     {
-        return config('nizam.gateway_provisioning.profile', 'external');
+        return config('telephony.gateway_provisioning.profile', 'external');
     }
 
     protected function gatewayIdentifier(Gateway $gateway): string

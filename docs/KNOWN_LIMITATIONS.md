@@ -22,7 +22,7 @@ audio or registration failures.
 - FreeSWITCH `ext-rtp-ip`, `ext-sip-ip`, `rtp-ip`, `sip-ip`, and
   `aggressive-nat-detection` are configurable via environment variables
   (`EXT_RTP_IP`, `EXT_SIP_IP`, `RTP_IP`, `SIP_IP`, `AGGRESSIVE_NAT_DETECTION`,
-  `LOCAL_NETWORK_ACL`) in the `config/nizam.php` `media` section.
+  `LOCAL_NETWORK_ACL`) in the `config/telephony.php` `media` section.
 - FreeSWITCH dynamically loads SIP profile configuration from NIZAM via
   `mod_xml_curl` (configuration section).
 - No automatic `rport` or `Contact` header rewriting is performed by NIZAM.
@@ -97,7 +97,7 @@ manipulation for carrier compliance.
 - Settings are stored in the Tenant's `settings` JSON field (`outbound_caller_id_pai`
   and `outbound_caller_id_privacy`).
 - If a tenant does not specify a PAI preference (set to `null`), it falls back to
-  the global `OUTBOUND_CALLER_ID_PAI` setting in `config/nizam.php`.
+  the global `OUTBOUND_CALLER_ID_PAI` setting in `config/telephony.php`.
 - Anonymous call presentation is supported by setting privacy to `hide` or `full`
   at the tenant level.
 
@@ -112,7 +112,7 @@ in v1.0. The platform provides configuration to block emergency number patterns
 to prevent accidental reliance on an untested path.
 
 **System behavior:**
-- Emergency number patterns can be defined in `config/nizam.php` under the
+- Emergency number patterns can be defined in `config/telephony.php` under the
   `emergency` key.
 - The `DialplanCompiler` does **not** automatically block these patterns; the
   configuration serves as a reference for operators implementing custom

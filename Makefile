@@ -35,7 +35,7 @@ setup: ## First-time setup: copy .env, start services, migrate
 	@$(COMPOSE) exec -T app php -r "exit(0);" 2>/dev/null || sleep 10
 	$(ARTISAN) migrate --force
 	@echo ""
-	@echo "  Setup complete. API → http://localhost:$${APP_PORT:-8091}/api/v1/health"
+	@echo "  Setup complete. API → http://localhost:$${APP_PORT:-8231}/api/v1/health"
 	@echo "  Run 'make seed' to load demo data."
 	@echo ""
 
@@ -68,8 +68,8 @@ status: ## Show running container status
 	$(COMPOSE) ps
 
 health: ## Hit the health endpoint and pretty-print JSON
-	@curl -s http://localhost:$${APP_PORT:-8091}/api/v1/health | python3 -m json.tool 2>/dev/null \
-	  || curl -s http://localhost:$${APP_PORT:-8091}/api/v1/health
+	@curl -s http://localhost:$${APP_PORT:-8231}/api/v1/health | python3 -m json.tool 2>/dev/null \
+	  || curl -s http://localhost:$${APP_PORT:-8231}/api/v1/health
 
 openapi-validate: ## Validate docs/openapi.yaml
 	node validate-openapi.js

@@ -28,7 +28,7 @@ const postmanCollection = {
     }]
   },
   variable: [
-    { key: 'base_url', value: 'http://localhost:8091/api/v1' },
+    { key: 'base_url', value: 'http://localhost:8231/api/v1' },
     { key: 'api_token', value: '' },
     { key: 'tenant_id', value: '' }
   ],

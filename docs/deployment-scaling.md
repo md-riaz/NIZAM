@@ -70,9 +70,11 @@ CACHE_STORE=redis
 SESSION_DRIVER=redis
 
 # FreeSWITCH ESL
-ESL_HOST=freeswitch.internal
-ESL_PORT=8021
-ESL_PASSWORD=<esl-password>
+FREESWITCH_HOST=freeswitch.internal
+FREESWITCH_ESL_PORT=8021
+FREESWITCH_ESL_PASSWORD=<esl-password>
+FREESWITCH_XML_CURL_URL=https://api.nizam.example.com/freeswitch/xml-curl
+FREESWITCH_LOG_PATH=/var/log/freeswitch/freeswitch.log
 
 # Sanctum
 SANCTUM_STATEFUL_DOMAINS=dashboard.nizam.example.com
@@ -137,7 +139,7 @@ services:
     build:
       context: .
       target: production
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
     deploy:
       replicas: 2
     depends_on:

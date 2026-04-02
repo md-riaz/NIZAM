@@ -171,17 +171,17 @@ Register, login, and obtain bearer tokens via the Auth API. All other endpoints 
 
 ```bash
 # Register
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8231/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"name":"Admin","email":"admin@example.com","password":"password","password_confirmation":"password"}'
 
 # Login
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8231/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@example.com","password":"password"}'
 
 # Use token in subsequent requests
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8080/api/tenants
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8231/api/v1/tenants
 ```
 
 ### Endpoints
@@ -400,50 +400,54 @@ Or use the **one-step shortcut** (handles steps 2–4 automatically):
 make setup
 ```
 
-The API will be available at `http://localhost:8091/api/v1` by default.
+The API will be available at `http://localhost:8231/api/v1` by default.
 
-> **Health check:** `curl http://localhost:8091/api/v1/health`
+> **Health check:** `curl http://localhost:8231/api/v1/health`
 
 #### Docker Services
 
 | Service | Container | Port | Description |
 |---------|-----------|------|-------------|
-| **app** | `nizam-app` | — | PHP-FPM application |
-| **nginx** | `nizam-nginx` | `8091` | Web server (reverse proxy) |
-| **postgres** | `nizam-postgres` | `5432` | PostgreSQL database |
-| **redis** | `nizam-redis` | `6379` | Cache and queue broker |
-| **freeswitch** | `nizam-freeswitch` | `5060` (SIP), `7443` (WSS), `8021` (ESL) | Media engine (SIP + WebRTC) |
-| **queue** | `nizam-queue` | — | Queue worker (webhook delivery, async jobs) |
-| **scheduler** | `nizam-scheduler` | — | Periodic task runner |
-| **esl-listener** | `nizam-esl-listener` | — | FreeSWITCH event listener |
-| **sip-mock** | `nizam-sip-mock` | `5070/udp` (internal) | Local SIP registrar for repeatable gateway registration tests |
+| **app** | `communications-platform-app` | — | PHP-FPM application |
+| **nginx** | `communications-platform-nginx` | `8231` | Web server (reverse proxy) |
+| **postgres** | `communications-platform-postgres` | `5432` | PostgreSQL database |
+| **redis** | `communications-platform-redis` | `6379` | Cache and queue broker |
+| **freeswitch** | `communications-platform-freeswitch` | `5060` (SIP), `7443` (WSS) | Media engine (SIP + WebRTC) |
+| **queue** | `communications-platform-queue` | — | Queue worker (webhook delivery, async jobs) |
+| **scheduler** | `communications-platform-scheduler` | — | Periodic task runner |
+| **esl-listener** | `communications-platform-esl-listener` | — | FreeSWITCH event listener |
+| **sip-mock** | `communications-platform-sip-mock` | `5070/udp` (internal) | Local SIP registrar for repeatable gateway registration tests |
 
 #### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_ENV` | `local` | Application environment |
-| `APP_KEY` | — | Auto-generated on first container boot if missing |
-| `APP_PORT` | `8091` | Published Docker port for the web UI and API |
-| `APP_URL` | `http://localhost:8091` | Public URL of the application |
+| `APP_KEY` | — | Set in `.env` before startup |
+| `APP_PORT` | `8231` | Published Docker port for the web UI and API |
+| `APP_URL` | `http://localhost:8231` | Public URL of the application |
 | `ADMIN_NAME` | `Administrator` | Bootstrap admin display name used by `db:seed` |
 | `ADMIN_EMAIL` | blank | Required in production if you want `db:seed` to create the first admin |
 | `ADMIN_PASSWORD` | blank | Required in production if you want `db:seed` to create the first admin |
 | `ADMIN_TENANT_NAME` | `Demo Company` | Tenant name created by the bootstrap seeder |
 | `ADMIN_TENANT_SLUG` | `demo-company` | Tenant slug created by the bootstrap seeder |
-| `ADMIN_TENANT_DOMAIN` | `demo.nizam.local` | Tenant domain created by the bootstrap seeder |
+| `ADMIN_TENANT_DOMAIN` | `demo.app.local` | Tenant domain created by the bootstrap seeder |
 | `DB_CONNECTION` | `pgsql` | Database driver |
 | `DB_HOST` | `127.0.0.1` | Database host |
-| `DB_DATABASE` | `nizam` | Database name |
-| `DB_USERNAME` | `nizam` | Database user |
+| `DB_DATABASE` | `communications` | Database name |
+| `DB_USERNAME` | `communications` | Database user |
 | `DB_PASSWORD` | `secret` | Database password |
+| `SESSION_DRIVER` | `database` | Session driver used by both Docker and bare-metal defaults |
+| `CACHE_STORE` | `database` | Cache store used by both Docker and bare-metal defaults |
+| `QUEUE_CONNECTION` | `database` | Queue driver used by both Docker and bare-metal defaults |
 | `FREESWITCH_HOST` | `127.0.0.1` | FreeSWITCH ESL host |
 | `FREESWITCH_ESL_PORT` | `8021` | FreeSWITCH ESL port |
 | `FREESWITCH_ESL_PASSWORD` | `ClueCon` | FreeSWITCH ESL password — **change in production** |
-| `NIZAM_XML_CURL_URL` | `http://nginx/freeswitch/xml-curl` | URL FreeSWITCH uses to fetch dialplan from NIZAM |
+| `FREESWITCH_XML_CURL_URL` | `http://nginx/freeswitch/xml-curl` | URL FreeSWITCH uses to fetch dialplan and directory XML |
+| `FREESWITCH_XML_CURL_ENDPOINT_INTERNAL` | `http://nginx/freeswitch/xml-curl` | Internal endpoint injected into the FreeSWITCH container |
+| `FREESWITCH_LOG_PATH` | `/var/log/freeswitch/freeswitch.log` | FreeSWITCH log path used by the admin log viewer |
 | `REDIS_HOST` | `127.0.0.1` | Redis host |
 | `REDIS_PASSWORD` | blank | Leave blank for local Docker. Set a real password in production |
-| `QUEUE_CONNECTION` | `database` | Queue driver. Use `redis` in production if Redis auth/config is in place |
 
 ### Option C — Local dev (no Docker)
 
@@ -497,7 +501,7 @@ NIZAM/
 │       ├── ProvisioningService.php
 │       └── WebhookDispatcher.php
 ├── config/
-│   └── nizam.php               # NIZAM configuration
+│   └── telephony.php           # Telephony and FreeSWITCH runtime configuration
 ├── database/
 │   ├── factories/              # Model factories (10 factories)
 │   ├── migrations/             # Database schema (16 migrations)

@@ -99,7 +99,7 @@ class DialplanCompiler
             // P-Asserted-Identity injection from Tenant settings
             $sendPai = data_get($extension->tenant?->settings, 'outbound_caller_id_pai');
             if ($sendPai === null) {
-                $sendPai = config('nizam.media.outbound_caller_id_pai', false);
+                $sendPai = config('telephony.media.outbound_caller_id_pai', false);
             }
             
             if ($sendPai) {

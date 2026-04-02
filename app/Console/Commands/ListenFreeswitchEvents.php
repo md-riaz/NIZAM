@@ -14,7 +14,7 @@ class ListenFreeswitchEvents extends Command
      *
      * @var string
      */
-    protected $signature = 'freeswitch:listen';
+    protected $signature = 'nizam:webhook-esl-listener';
 
     /**
      * The console command description.
@@ -44,9 +44,9 @@ class ListenFreeswitchEvents extends Command
      */
     public function handle(): int
     {
-        $host     = config('nizam.freeswitch.host', 'freeswitch');
-        $port     = (int) config('nizam.freeswitch.esl_port', 8021);
-        $password = config('nizam.freeswitch.esl_password', 'ClueCon');
+        $host     = config('telephony.freeswitch.host', 'freeswitch');
+        $port     = (int) config('telephony.freeswitch.esl_port', 8021);
+        $password = config('telephony.freeswitch.esl_password', 'ClueCon');
 
         $this->info("Connecting to FreeSWITCH ESL at {$host}:{$port}...");
 

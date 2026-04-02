@@ -58,18 +58,19 @@ php artisan key:generate --show     # copy the output
 docker compose up -d
 ```
 
-This starts 8 containers:
+This starts the local development stack:
 
 | Container | Service | Port |
 |-----------|---------|------|
-| `nizam-app` | PHP-FPM (Laravel) | — |
-| `nizam-nginx` | Web server | `8080` |
-| `nizam-postgres` | PostgreSQL | `5432` |
-| `nizam-redis` | Redis | `6379` |
-| `nizam-freeswitch` | FreeSWITCH | `5060` (SIP), `8021` (ESL) |
-| `nizam-queue` | Queue worker | — |
-| `nizam-scheduler` | Task scheduler | — |
-| `nizam-esl-listener` | FreeSWITCH event listener | — |
+| `communications-platform-app` | PHP-FPM (Laravel) | — |
+| `communications-platform-nginx` | Web server | `8231` |
+| `communications-platform-postgres` | PostgreSQL | `5432` |
+| `communications-platform-redis` | Redis | `6379` |
+| `communications-platform-freeswitch` | FreeSWITCH | `5060` (SIP), `7443` (WSS) |
+| `communications-platform-queue` | Queue worker | — |
+| `communications-platform-scheduler` | Task scheduler | — |
+| `communications-platform-esl-listener` | FreeSWITCH event listener | — |
+| `communications-platform-sip-mock` | SIP mock registrar | `5070/udp` (internal) |
 
 ### 4. Initialize Application
 
@@ -92,7 +93,7 @@ make seed
 
 ```bash
 # Check health endpoint
-curl http://localhost:8080/api/v1/health
+curl http://localhost:8231/api/v1/health
 
 # Using make
 make health
@@ -113,7 +114,7 @@ make health
 ### 6. Register First User
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
+curl -X POST http://localhost:8231/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Admin",
@@ -174,7 +175,7 @@ NIZAM integrates with FreeSWITCH via two mechanisms:
 
 FreeSWITCH fetches directory and dialplan XML from NIZAM at runtime.
 
-In Docker, this is handled automatically via `NIZAM_XML_CURL_URL`.  
+In Docker, this is handled automatically via `FREESWITCH_XML_CURL_URL` and `FREESWITCH_XML_CURL_ENDPOINT_INTERNAL`.  
 For bare-metal, edit `/etc/freeswitch/autoload_configs/xml_curl.conf.xml`:
 
 ```xml
@@ -243,7 +244,7 @@ vendor/bin/pint           # or: make fix
 - [ ] Set `APP_ENV=production` and `APP_DEBUG=false`
 - [ ] Generate a strong `APP_KEY`
 - [ ] Change `FREESWITCH_ESL_PASSWORD` from default
-- [ ] Use Redis for `QUEUE_CONNECTION` and `CACHE_STORE`
+- [ ] Choose runtime stores explicitly: the repo defaults to `database` for sessions, cache, and queues; switch to Redis only if your production Redis topology and auth are in place
 - [ ] Configure proper PostgreSQL credentials
 - [ ] Set up SSL/TLS termination (e.g., via nginx or load balancer)
 - [ ] Run `php artisan config:cache` and `php artisan route:cache`

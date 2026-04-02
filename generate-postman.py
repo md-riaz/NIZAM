@@ -230,7 +230,7 @@ def tag_folders():
 
 def collect_variables():
     variables = OrderedDict()
-    variables['base_url'] = SPEC.get('servers', [{}])[0].get('url', 'http://localhost:8091/api/v1')
+    variables['base_url'] = SPEC.get('servers', [{}])[0].get('url', 'http://localhost:8231/api/v1')
     variables['api_token'] = ''
     variables['tenant_id'] = ''
 

@@ -26,9 +26,9 @@ class EslConnectionManager
     public static function fromConfig(): static
     {
         return new static(
-            config('nizam.freeswitch.host'),
-            config('nizam.freeswitch.esl_port'),
-            config('nizam.freeswitch.esl_password')
+            config('telephony.freeswitch.host'),
+            config('telephony.freeswitch.esl_port'),
+            config('telephony.freeswitch.esl_password')
         );
     }
 

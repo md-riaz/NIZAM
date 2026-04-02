@@ -75,7 +75,7 @@ class Extension extends Model
     /**
      * Get WebRTC connection parameters for this extension.
      *
-     * Reads from system-wide config (config/nizam.php → webrtc section).
+     * Reads from system-wide config (config/telephony.php → webrtc section).
      * Returns everything a SIP.js or similar WebRTC client needs to connect.
      *
      * @param  string  $appUrl  The application base URL (used to construct WSS URL)
@@ -83,7 +83,7 @@ class Extension extends Model
      */
     public function getWebRtcConfig(string $appUrl): array
     {
-        $webrtcConfig = config('nizam.webrtc');
+        $webrtcConfig = config('telephony.webrtc');
         $sslSetting = \App\Models\SslSetting::where('is_enabled', true)->where('status', 'active')->first();
         
         $parsedUrl = parse_url($appUrl);

@@ -100,7 +100,7 @@ class MakeModuleCommand extends Command
         $this->line('    README.md                             — Module documentation');
         $this->newLine();
         $this->line('  <comment>Next steps:</comment>');
-        $this->line("    1. Add to config/nizam.php 'modules' section:");
+        $this->line("    1. Add to config/telephony.php 'modules' section:");
         $this->line("       '{$kebabName}' => [");
         $this->line("           'class' => \\Modules\\{$studlyName}\\{$studlyName}Module::class,");
         $this->line("           'enabled' => env('MODULE_".strtoupper(Str::snake($studlyName))."', true),");
