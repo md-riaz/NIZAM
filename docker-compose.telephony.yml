@@ -1,22 +1,22 @@
 services:
   esl-listener:
-    image: nizam-php-app:${APP_IMAGE_TAG:-local}
-    container_name: nizam-esl-listener
+    image: communications-platform-php-app:${APP_IMAGE_TAG:-local}
+    container_name: communications-platform-esl-listener
     restart: unless-stopped
     command: php artisan freeswitch:listen
     volumes:
       - .:/var/www/html
       - vendor_data:/var/www/html/vendor
     networks:
-      - nizam
+      - app_net
     environment:
       - APP_ENV=${APP_ENV:-production}
       - APP_URL=${APP_URL:-http://localhost:8231}
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_DATABASE=${DB_DATABASE:-nizam}
-      - DB_USERNAME=${DB_USERNAME:-nizam}
+      - DB_DATABASE=${DB_DATABASE:-communications}
+      - DB_USERNAME=${DB_USERNAME:-communications}
       - DB_PASSWORD=${DB_PASSWORD:-secret}
       - REDIS_HOST=redis
       - FREESWITCH_HOST=freeswitch
@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: docker/freeswitch/Dockerfile
-    container_name: nizam-freeswitch
+    container_name: communications-platform-freeswitch
     restart: unless-stopped
     cap_add:
       - SYS_NICE
@@ -43,21 +43,22 @@ services:
       - "16384-16484:16384-16484/udp"
     volumes:
       - freeswitch_data:/var/lib/freeswitch
+      - freeswitch_logs:/var/log/freeswitch
       - certs_data:/usr/local/freeswitch/certs
       - ./storage/freeswitch/sip_profiles/external:/usr/local/freeswitch/conf/sip_profiles/external
     networks:
-      - nizam
+      - app_net
     environment:
-      - NIZAM_XML_CURL_URL=${NIZAM_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
+      - FREESWITCH_XML_CURL_ENDPOINT_INTERNAL=${FREESWITCH_XML_CURL_ENDPOINT_INTERNAL:-http://nginx/freeswitch/xml-curl}
 
   sip-mock:
     build:
       context: .
       dockerfile: docker/sip-mock/Dockerfile
-    container_name: nizam-sip-mock
+    container_name: communications-platform-sip-mock
     restart: unless-stopped
     networks:
-      - nizam
+      - app_net
     environment:
       - SIP_MOCK_HOST=0.0.0.0
       - SIP_MOCK_PORT=5070
@@ -67,9 +68,11 @@ services:
 
 volumes:
   freeswitch_data:
+  freeswitch_logs:
   certs_data:
   vendor_data:
 
 networks:
-  nizam:
+  app_net:
+    name: communications-platform
     driver: bridge

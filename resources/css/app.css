@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import './nizam-tokens.css';
+@import './communications-tokens.css';
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
@@ -10,45 +10,43 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Shadcn UI CSS Variables
- * Remapped to the NIZAM Stitch design tokens so generated components inherit
- * the existing product theme instead of the default shadcn neutral palette.
+ * Shadcn UI CSS variables remapped to communications platform tokens.
  */
 :root {
-    --background: var(--nizam-background);
-    --foreground: var(--nizam-on-background);
-    --card: var(--nizam-surface-container-lowest);
-    --card-foreground: var(--nizam-on-background);
-    --popover: var(--nizam-surface-container-lowest);
-    --popover-foreground: var(--nizam-on-background);
-    --primary: var(--nizam-primary);
-    --primary-foreground: var(--nizam-on-primary);
-    --secondary: var(--nizam-surface-container);
-    --secondary-foreground: var(--nizam-secondary);
-    --muted: var(--nizam-surface-container-low);
-    --muted-foreground: var(--nizam-outline);
-    --accent: var(--nizam-surface-container-highest);
-    --accent-foreground: var(--nizam-primary);
-    --destructive: var(--nizam-error);
-    --destructive-foreground: var(--nizam-on-error);
-    --border: var(--nizam-outline-variant);
-    --input: var(--nizam-outline-variant);
-    --ring: color-mix(in srgb, var(--nizam-primary) 32%, white);
-    --radius: var(--nizam-radius-xl);
-    --chart-1: var(--nizam-primary);
-    --chart-2: var(--nizam-secondary);
-    --chart-3: var(--nizam-accent-teal);
-    --chart-4: var(--nizam-accent-purple);
-    --chart-5: var(--nizam-accent-amber);
+    --background: var(--communications-background);
+    --foreground: var(--communications-on-background);
+    --card: var(--communications-surface-container-lowest);
+    --card-foreground: var(--communications-on-background);
+    --popover: var(--communications-surface-container-lowest);
+    --popover-foreground: var(--communications-on-background);
+    --primary: var(--communications-primary);
+    --primary-foreground: var(--communications-on-primary);
+    --secondary: var(--communications-surface-container);
+    --secondary-foreground: var(--communications-secondary);
+    --muted: var(--communications-surface-container-low);
+    --muted-foreground: var(--communications-outline);
+    --accent: var(--communications-surface-container-highest);
+    --accent-foreground: var(--communications-primary);
+    --destructive: var(--communications-error);
+    --destructive-foreground: var(--communications-on-error);
+    --border: var(--communications-outline-variant);
+    --input: var(--communications-outline-variant);
+    --ring: color-mix(in srgb, var(--communications-primary) 32%, white);
+    --radius: var(--communications-radius-xl);
+    --chart-1: var(--communications-primary);
+    --chart-2: var(--communications-secondary);
+    --chart-3: var(--communications-accent-teal);
+    --chart-4: var(--communications-accent-purple);
+    --chart-5: var(--communications-accent-amber);
 
-    --sidebar: var(--nizam-surface-container-low);
-    --sidebar-foreground: var(--nizam-on-background);
-    --sidebar-primary: var(--nizam-primary);
-    --sidebar-primary-foreground: var(--nizam-on-primary);
-    --sidebar-accent: var(--nizam-surface-container-highest);
-    --sidebar-accent-foreground: var(--nizam-primary);
-    --sidebar-border: var(--nizam-outline-variant);
-    --sidebar-ring: color-mix(in srgb, var(--nizam-primary) 32%, white);
+    --sidebar: var(--communications-surface-container-low);
+    --sidebar-foreground: var(--communications-on-background);
+    --sidebar-primary: var(--communications-primary);
+    --sidebar-primary-foreground: var(--communications-on-primary);
+    --sidebar-accent: var(--communications-surface-container-highest);
+    --sidebar-accent-foreground: var(--communications-primary);
+    --sidebar-border: var(--communications-outline-variant);
+    --sidebar-ring: color-mix(in srgb, var(--communications-primary) 32%, white);
 }
 
 .dark {
@@ -88,8 +86,8 @@
 }
 
 @theme inline {
-    --font-sans: var(--nizam-font-sans);
-    --font-mono: var(--nizam-font-mono);
+    --font-sans: var(--communications-font-sans);
+    --font-mono: var(--communications-font-mono);
 
     --color-background: var(--background);
     --color-foreground: var(--foreground);
@@ -156,7 +154,7 @@
         color: var(--card-foreground);
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        box-shadow: var(--nizam-shadow-ambient);
+        box-shadow: var(--communications-shadow-ambient);
     }
 
     .table-shell,

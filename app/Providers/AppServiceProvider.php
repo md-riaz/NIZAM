@@ -23,6 +23,7 @@ use App\Observers\ScheduleRuleObserver;
 use App\Policies\CallPolicy;
 use App\Events\CallDetailRecordCreated;
 use App\Listeners\EnrichCallDetailRecord;
+use App\Services\EslConnectionManager;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -39,6 +40,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(EslConnectionManager::class, fn () => EslConnectionManager::fromConfig());
+
         $this->app->singleton(ModuleRegistry::class, function () {
             $registry = new ModuleRegistry;
 

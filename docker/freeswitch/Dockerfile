@@ -119,8 +119,7 @@ RUN set -eux; \
     && ldconfig
 
 # Copy custom configuration (overrides defaults)
-COPY docker/freeswitch/conf /etc/freeswitch
-RUN chown -R freeswitch:freeswitch /etc/freeswitch
+COPY --chown=freeswitch:freeswitch docker/freeswitch/conf /usr/local/freeswitch/conf
 
 # Copy custom scripts
 COPY docker/freeswitch/scripts /usr/local/freeswitch/scripts
@@ -129,6 +128,9 @@ RUN chown -R freeswitch:freeswitch /usr/local/freeswitch/scripts
 # Copy and wire up entrypoint (runs envsubst then execs freeswitch)
 COPY docker/freeswitch/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Create log directory and set permissions
+RUN mkdir -p /var/log/freeswitch && chown -R freeswitch:freeswitch /var/log/freeswitch
 
 # Drop to unprivileged user
 USER freeswitch

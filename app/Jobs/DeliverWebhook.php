@@ -47,12 +47,14 @@ class DeliverWebhook implements ShouldQueue
         try {
             $startTime = microtime(true);
 
+            $headerPrefix = (string) config('platform.webhooks.signature_header_prefix');
+
             $response = Http::timeout($this->timeout)
                 ->withHeaders([
                     'Content-Type' => 'application/json',
-                    'X-Nizam-Signature' => $signature,
-                    'X-Nizam-Timestamp' => (string) $timestamp,
-                    'X-Nizam-Event' => $this->eventType,
+                    "{$headerPrefix}-Signature" => $signature,
+                    "{$headerPrefix}-Timestamp" => (string) $timestamp,
+                    "{$headerPrefix}-Event" => $this->eventType,
                 ])
                 ->withBody($body, 'application/json')
                 ->post($this->webhook->url);

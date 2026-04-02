@@ -1,17 +1,18 @@
 #!/bin/sh
-# Substitute known NIZAM environment variables in FreeSWITCH XML configuration
-# files before starting FreeSWITCH.  We pass the variable names explicitly to
-# envsubst so that FreeSWITCH's own ${channel_variable} patterns are left
-# intact and are not accidentally replaced with empty strings.
+# Substitute known platform environment variables in FreeSWITCH XML configuration
+# files before starting FreeSWITCH. We pass variable names explicitly to
+# envsubst so that FreeSWITCH ${channel_variable} patterns are left intact
+# and are not accidentally replaced with empty strings.
 set -e
 
 CONF_DIR=/etc/freeswitch
+REAL_CONF_DIR=$(readlink -f "$CONF_DIR" 2>/dev/null || printf '%s' "$CONF_DIR")
 
 # Only substitute variables that are explicitly passed from the environment.
-# Add any new NIZAM_* variables here when they are added to the config files.
-SUBST_VARS='${NIZAM_XML_CURL_URL}'
+# Add any new variables here when they are introduced in XML templates.
+SUBST_VARS='${FREESWITCH_XML_CURL_ENDPOINT_INTERNAL}'
 
-find "$CONF_DIR" -name '*.xml' | while read -r f; do
+find -L "$REAL_CONF_DIR" -name '*.xml' | while read -r f; do
     envsubst "$SUBST_VARS" < "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
 done
 

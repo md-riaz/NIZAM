@@ -100,6 +100,10 @@ const NAV_SECTIONS: NavSection[] = [
 export default function SuperadminLayout() {
     const { user, logout } = useAuth();
     const { tenants, activeTenant, switchTenant } = useTenant();
+    const env = (import.meta as ImportMeta & {
+        env?: Record<string, string | undefined>;
+    }).env ?? {};
+    const platformName = env.VITE_APP_NAME ?? 'Communications Platform';
     const location = useLocation();
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState(false);
@@ -124,7 +128,8 @@ export default function SuperadminLayout() {
         const next = !isDark;
         setIsDark(next);
         document.documentElement.classList.toggle('dark', next);
-        localStorage.setItem('nizam-theme', next ? 'dark' : 'light');
+        const themeKey = 'communications-platform-theme';
+        localStorage.setItem(themeKey, next ? 'dark' : 'light');
     };
 
     const handleLogout = async () => {
@@ -170,7 +175,7 @@ export default function SuperadminLayout() {
                     {!collapsed && (
                         <div>
                             <span className="text-sm font-bold tracking-tight text-sidebar-foreground">
-                                NIZAM
+                                {platformName}
                             </span>
                             <p className="text-[10px] leading-none text-muted-foreground">
                                 COMMUNICATIONS CONTROL
@@ -318,7 +323,7 @@ export default function SuperadminLayout() {
                             )}
                         </Button>
                         <span className="truncate text-sm text-muted-foreground">
-                            NIZAM Admin
+                            {platformName + ' Admin'}
                         </span>
                     </div>
 
@@ -377,7 +382,7 @@ export default function SuperadminLayout() {
                         <div className="flex max-w-[12rem] items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm font-medium sm:max-w-[16rem]">
                             <Building2 className="size-4 shrink-0 text-primary" />
                             <span className="truncate">
-                                {activeTenant?.name ?? 'NIZAM'}
+                                {activeTenant?.name ?? platformName}
                             </span>
                         </div>
                     )}

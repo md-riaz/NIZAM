@@ -207,22 +207,23 @@ export default function SipStatusPage() {
 
     const getStatusBadge = (status: string) => {
         const statusLower = status.toLowerCase();
-        
+        const label = status.replace(/_/g, ' ');
+
         if (statusLower === 'running' || statusLower.includes('reged')) {
-            return <Badge variant="success">{status}</Badge>;
+            return <Badge variant="success">{label}</Badge>;
         }
         if (statusLower === 'noreg') {
-            return <Badge variant="secondary">{status}</Badge>;
+            return <Badge variant="secondary">{label}</Badge>;
         }
         if (statusLower.includes('fail') || statusLower.includes('error')) {
-            return <Badge variant="destructive">{status}</Badge>;
+            return <Badge variant="destructive">{label}</Badge>;
         }
-        return <Badge variant="default">{status}</Badge>;
+        return <Badge variant="default">{label}</Badge>;
     };
 
     const getStatusIcon = (status: string) => {
         const statusLower = status.toLowerCase();
-        
+
         if (statusLower === 'running' || statusLower.includes('reged')) {
             return <CheckCircle className="size-4 text-green-600" />;
         }
@@ -323,9 +324,9 @@ export default function SipStatusPage() {
                                                 <TableCell>{profile.calls}</TableCell>
                                                 <TableCell>
                                                     {profile.type === 'profile' && (
-                                                        <div className="flex gap-1">
+                                                        <div className="flex flex-wrap gap-2">
                                                             <Button
-                                                                variant="ghost"
+                                                                variant="outline"
                                                                 size="sm"
                                                                 onClick={() =>
                                                                     handleAction(
@@ -336,11 +337,12 @@ export default function SipStatusPage() {
                                                                 aria-label={`Reload profile ${profile.name}`}
                                                                 className="cursor-pointer"
                                                             >
-                                                                <RotateCw className="size-4" />
+                                                                <RotateCw className="mr-1 size-4" />
+                                                                Reload
                                                             </Button>
                                                             {profile.status === 'RUNNING' ? (
                                                                 <Button
-                                                                    variant="ghost"
+                                                                    variant="outline"
                                                                     size="sm"
                                                                     onClick={() =>
                                                                         handleAction(
@@ -351,11 +353,12 @@ export default function SipStatusPage() {
                                                                     aria-label={`Stop profile ${profile.name}`}
                                                                     className="cursor-pointer"
                                                                 >
-                                                                    <Square className="size-4" />
+                                                                    <Square className="mr-1 size-4" />
+                                                                    Stop
                                                                 </Button>
                                                             ) : (
                                                                 <Button
-                                                                    variant="ghost"
+                                                                    variant="outline"
                                                                     size="sm"
                                                                     onClick={() =>
                                                                         handleAction(
@@ -366,7 +369,8 @@ export default function SipStatusPage() {
                                                                     aria-label={`Start profile ${profile.name}`}
                                                                     className="cursor-pointer"
                                                                 >
-                                                                    <Play className="size-4" />
+                                                                    <Play className="mr-1 size-4" />
+                                                                    Start
                                                                 </Button>
                                                             )}
                                                         </div>
@@ -446,7 +450,7 @@ export default function SipStatusPage() {
                                                 <TableCell>{gateway.profile || '—'}</TableCell>
                                                 <TableCell>
                                                     <Button
-                                                        variant="ghost"
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() =>
                                                             handleAction(
@@ -457,7 +461,8 @@ export default function SipStatusPage() {
                                                         aria-label={`Kill gateway ${gateway.name}`}
                                                         className="cursor-pointer"
                                                     >
-                                                        <Trash2 className="size-4" />
+                                                        <Trash2 className="mr-1 size-4" />
+                                                        Kill gateway
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -537,7 +542,7 @@ export default function SipStatusPage() {
                                                 <TableCell>{reg.expires}s</TableCell>
                                                 <TableCell>
                                                     <Button
-                                                        variant="ghost"
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() =>
                                                             handleAction('kill-registration', {
@@ -548,7 +553,8 @@ export default function SipStatusPage() {
                                                         aria-label={`Kill registration for ${reg.reg_user}@${reg.realm}`}
                                                         className="cursor-pointer"
                                                     >
-                                                        <Trash2 className="size-4" />
+                                                        <Trash2 className="mr-1 size-4" />
+                                                        Kill registration
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>

@@ -26,7 +26,8 @@ class SslManager
         Log::info("Requesting Let's Encrypt certificate for domains: {$domains}");
 
         // Run Certbot inside the certbot container
-        // Note: In production Docker, we would use 'docker exec nizam-certbot ...'
+        // Note: In production Docker, we would use "docker exec {container} ..."
+        // where {container} comes from config('platform.docker.certbot_container').
         // or a shared command file. Since Laravel is running in the 'app' container,
         // it can't directly 'docker exec' without access to the docker socket.
         // A common pattern is to have 'certbot' periodicly check a directory or 

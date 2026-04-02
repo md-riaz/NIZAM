@@ -1,0 +1,51 @@
+/**
+ * Communications platform design tokens.
+ *
+ * Extracted from Google Stitch Project: 9933569802732334773
+ * Creative North Star: "The Precision Architect"
+ */
+
+:root {
+    /* Colors - Brand & Base */
+    --communications-primary: #4648d4;
+    --communications-primary-container: #6063ee;
+    --communications-on-primary: #ffffff;
+    --communications-secondary: #575992;
+    --communications-background: #faf8ff;
+    --communications-on-background: #131b2e;
+
+    /* Surfaces - Precision Architect Tiered Hierarchy */
+    --communications-surface: #faf8ff;
+    --communications-surface-dim: #d2d9f4;
+    --communications-surface-bright: #faf8ff;
+    --communications-surface-container-lowest: #ffffff; /* Tier 3: Content Cards */
+    --communications-surface-container-low: #f2f3ff;    /* Tier 2: Navigation/Sidebar */
+    --communications-surface-container: #eaedff;        /* Tier 1: Sections */
+    --communications-surface-container-high: #e2e7ff;
+    --communications-surface-container-highest: #dae2fd;
+
+    /* Semantic Colors */
+    --communications-error: #ba1a1a;
+    --communications-on-error: #ffffff;
+    --communications-outline: #767586;
+    --communications-outline-variant: #c7c4d7;
+
+    /* Routing Accents (Status Soft-Fills) */
+    --communications-accent-teal: #0e7490;
+    --communications-accent-purple: #7c3aed;
+    --communications-accent-amber: #b45309;
+
+    /* Typography */
+    --communications-font-sans: 'Inter', system-ui, sans-serif;
+    --communications-font-mono: 'JetBrains Mono', monospace;
+
+    /* Elevation & Depth */
+    --communications-shadow-ambient: 0 8px 32px rgba(19, 27, 46, 0.06);
+    --communications-radius-md: 0.375rem;
+    --communications-radius-xl: 0.75rem;
+
+    /* Special Effects */
+    --communications-glass-bg: rgba(250, 248, 255, 0.8);
+    --communications-glass-blur: 12px;
+}
+}

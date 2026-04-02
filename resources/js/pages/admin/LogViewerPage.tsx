@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import {
     AlertCircle,
+    ArrowDownZA,
+    ArrowUpAZ,
     Download,
     FileText,
     Radio,
     RefreshCw,
+    Search,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +20,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
     Select,
     SelectContent,
@@ -27,13 +31,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import api from '@/lib/api';
 
-// ─── Types ───────────────────────────────────────────────────
-
 interface LogFile {
     name: string;
     path: string;
     size: number;
     modified: number;
+    type?: 'laravel' | 'freeswitch';
 }
 
 interface ApplicationLogsResponse {
@@ -43,21 +46,30 @@ interface ApplicationLogsResponse {
     logs: string[];
 }
 
-interface FreeswitchLogsResponse {
-    source: string;
-    level: string;
-    current_log_level: string;
-    status: string;
-    note: string;
+interface FreeswitchLogLine {
+    number: number;
+    text: string;
 }
 
-// ─── Log Viewer Page ─────────────────────────────────────────
+interface FreeswitchLogsResponse {
+    source: string;
+    path: string;
+    size_kb: number;
+    filter: string;
+    sort: 'asc' | 'desc';
+    lines: number;
+    logs: FreeswitchLogLine[];
+}
+
+const SIZE_OPTIONS = ['32', '64', '128', '256', '512', '1024', '2048', '4096'];
 
 export default function LogViewerPage() {
     const [lineCount, setLineCount] = useState('100');
-    const [logLevel, setLogLevel] = useState('info');
+    const [filter, setFilter] = useState('');
+    const [debouncedFilter, setDebouncedFilter] = useState('');
+    const [logSizeKb, setLogSizeKb] = useState('256');
+    const [sort, setSort] = useState<'asc' | 'desc'>('desc');
 
-    // List available log files
     const { data: logFiles } = useQuery({
         queryKey: ['admin-logs'],
         queryFn: async () => {
@@ -68,7 +80,6 @@ export default function LogViewerPage() {
         },
     });
 
-    // Fetch Laravel application logs
     const {
         data: appLogs,
         isLoading: appLogsLoading,
@@ -84,17 +95,25 @@ export default function LogViewerPage() {
         },
     });
 
-    // Fetch FreeSWITCH log status
     const {
         data: fsLogs,
         isLoading: fsLogsLoading,
         refetch: refetchFsLogs,
         error: fsLogsError,
     } = useQuery({
-        queryKey: ['admin-logs-freeswitch', logLevel],
+        queryKey: ['admin-logs-freeswitch', debouncedFilter, logSizeKb, sort],
         queryFn: async () => {
+            const params = new URLSearchParams({
+                size_kb: logSizeKb,
+                sort,
+            });
+
+            if (debouncedFilter.trim() !== '') {
+                params.set('filter', debouncedFilter.trim());
+            }
+
             const res = await api.get<FreeswitchLogsResponse>(
-                `admin/logs/freeswitch?level=${logLevel}`,
+                `admin/logs/freeswitch?${params.toString()}`,
             );
             return res.data;
         },
@@ -110,20 +129,26 @@ export default function LogViewerPage() {
         return new Date(timestamp * 1000).toLocaleString();
     };
 
+    useEffect(() => {
+        const timeout = window.setTimeout(() => {
+            setDebouncedFilter(filter);
+        }, 250);
+
+        return () => window.clearTimeout(timeout);
+    }, [filter]);
+
     return (
         <div className="space-y-6 p-6 lg:p-8">
-            {/* Page Header */}
             <div>
                 <p className="text-sm text-muted-foreground">
                     Platform Admin &rsaquo; System
                 </p>
                 <h1 className="text-2xl font-bold tracking-tight">Log Viewer</h1>
                 <p className="text-muted-foreground leading-relaxed">
-                    View FreeSWITCH and Laravel application logs in real-time.
+                    View FreeSWITCH and Laravel application logs.
                 </p>
             </div>
 
-            {/* Log Files Overview */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -142,11 +167,19 @@ export default function LogViewerPage() {
                                     key={file.path}
                                     className="flex items-center justify-between rounded-lg border px-4 py-3"
                                 >
-                                    <div>
-                                        <p className="font-medium">{file.name}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Modified: {formatDate(file.modified)}
-                                        </p>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`rounded-full p-2 ${file.type === 'freeswitch' ? 'bg-blue-500/10 text-blue-500' : 'bg-muted text-muted-foreground'}`}>
+                                            {file.type === 'freeswitch' ? <Radio className="size-4" /> : <FileText className="size-4" />}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">{file.name}</p>
+                                            <p className="text-xs text-muted-foreground font-mono">
+                                                {file.path}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                Modified: {formatDate(file.modified)}
+                                            </p>
+                                        </div>
                                     </div>
                                     <Badge variant="secondary">
                                         {formatFileSize(file.size)}
@@ -162,7 +195,6 @@ export default function LogViewerPage() {
                 </CardContent>
             </Card>
 
-            {/* Log Viewers */}
             <Tabs defaultValue="application" className="space-y-4">
                 <TabsList>
                     <TabsTrigger value="application">
@@ -171,11 +203,10 @@ export default function LogViewerPage() {
                     </TabsTrigger>
                     <TabsTrigger value="freeswitch">
                         <Radio className="mr-2 size-4" />
-                        FreeSWITCH Status
+                        FreeSWITCH Logs
                     </TabsTrigger>
                 </TabsList>
 
-                {/* Laravel Application Logs */}
                 <TabsContent value="application">
                     <Card>
                         <CardHeader>
@@ -254,33 +285,52 @@ export default function LogViewerPage() {
                     </Card>
                 </TabsContent>
 
-                {/* FreeSWITCH Logs */}
                 <TabsContent value="freeswitch">
                     <Card>
                         <CardHeader>
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div>
-                                    <CardTitle>FreeSWITCH Status</CardTitle>
+                                    <CardTitle>FreeSWITCH Logs</CardTitle>
                                     <CardDescription>
-                                        Current log level and system status via ESL
+                                        Reading from {fsLogs?.path ?? 'configured FreeSWITCH log file'}
                                     </CardDescription>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Select value={logLevel} onValueChange={setLogLevel}>
-                                        <SelectTrigger className="w-32">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <div className="relative min-w-64 flex-1">
+                                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Input
+                                            value={filter}
+                                            onChange={(event) => setFilter(event.target.value)}
+                                            placeholder="Filter by any string"
+                                            className="pl-9"
+                                            aria-label="Filter FreeSWITCH logs"
+                                        />
+                                    </div>
+                                    <Select value={logSizeKb} onValueChange={setLogSizeKb}>
+                                        <SelectTrigger className="w-36">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="console">Console</SelectItem>
-                                            <SelectItem value="alert">Alert</SelectItem>
-                                            <SelectItem value="crit">Critical</SelectItem>
-                                            <SelectItem value="err">Error</SelectItem>
-                                            <SelectItem value="warning">Warning</SelectItem>
-                                            <SelectItem value="notice">Notice</SelectItem>
-                                            <SelectItem value="info">Info</SelectItem>
-                                            <SelectItem value="debug">Debug</SelectItem>
+                                            {SIZE_OPTIONS.map((size) => (
+                                                <SelectItem key={size} value={size}>
+                                                    {size} KB
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setSort(sort === 'desc' ? 'asc' : 'desc')}
+                                        aria-label="Toggle FreeSWITCH log sort"
+                                        className="cursor-pointer"
+                                    >
+                                        {sort === 'desc' ? (
+                                            <ArrowDownZA className="size-4" />
+                                        ) : (
+                                            <ArrowUpAZ className="size-4" />
+                                        )}
+                                    </Button>
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -300,45 +350,42 @@ export default function LogViewerPage() {
                             {fsLogsError ? (
                                 <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
                                     <AlertCircle className="size-4" />
-                                    Failed to connect to FreeSWITCH ESL
+                                    Failed to load FreeSWITCH logs
                                 </div>
                             ) : fsLogsLoading ? (
                                 <div className="flex h-32 items-center justify-center">
                                     <div className="size-6 motion-safe:animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="Loading FreeSWITCH logs" />
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                    <div className="grid gap-4 sm:grid-cols-2">
-                                        <div className="rounded-lg border p-4">
-                                            <p className="text-sm text-muted-foreground">
-                                                Current Log Level
-                                            </p>
-                                            <p className="mt-1 text-2xl font-bold">
-                                                {fsLogs?.current_log_level}
-                                            </p>
-                                        </div>
-                                        <div className="rounded-lg border p-4">
-                                            <p className="text-sm text-muted-foreground">
-                                                Query Level
-                                            </p>
-                                            <p className="mt-1 text-2xl font-bold capitalize">
-                                                {fsLogs?.level}
-                                            </p>
-                                        </div>
+                                <div className="space-y-3">
+                                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                                        <Badge variant="secondary">{fsLogs?.size_kb} KB window</Badge>
+                                        <Badge variant="secondary">{fsLogs?.sort === 'desc' ? 'Newest first' : 'Oldest first'}</Badge>
+                                        <Badge variant="secondary">{fsLogs?.lines ?? 0} lines</Badge>
+                                        {fsLogs?.filter ? (
+                                            <Badge variant="outline">Filter: {fsLogs.filter}</Badge>
+                                        ) : null}
                                     </div>
-
-                                    <div className="rounded-lg border bg-muted/30 p-4">
-                                        <p className="mb-2 text-sm font-medium">
-                                            System Status
-                                        </p>
-                                        <div className="font-mono text-xs whitespace-pre-wrap">
-                                            {fsLogs?.status}
-                                        </div>
-                                    </div>
-
-                                    <div className="rounded-lg border border-blue-500/50 bg-blue-500/10 p-4 text-sm text-blue-700 dark:text-blue-300">
-                                        <p className="font-medium">Note:</p>
-                                        <p className="mt-1">{fsLogs?.note}</p>
+                                    <div className="max-h-[600px] overflow-auto rounded-lg border bg-muted/30 font-mono text-xs">
+                                        {fsLogs?.logs.length ? (
+                                            fsLogs.logs.map((line) => (
+                                                <div
+                                                    key={`${line.number}-${line.text}`}
+                                                    className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 border-b px-4 py-2 last:border-b-0 hover:bg-accent/50"
+                                                >
+                                                    <span className="text-muted-foreground">
+                                                        {line.number}
+                                                    </span>
+                                                    <span className="whitespace-pre-wrap break-all">
+                                                        {line.text}
+                                                    </span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                                                No matching FreeSWITCH log lines found.
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

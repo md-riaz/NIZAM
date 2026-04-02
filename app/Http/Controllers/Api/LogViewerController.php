@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\EslConnectionManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -14,50 +13,59 @@ use Illuminate\Support\Facades\Gate;
  */
 class LogViewerController extends Controller
 {
-    /**
-     * Stream FreeSWITCH logs live via ESL.
-     * 
-     * Note: This endpoint queries the current log level. For live log streaming,
-     * implement SSE/WebSocket with ESL event subscription to 'log' events.
-     */
     public function freeswitch(Request $request): JsonResponse
     {
         Gate::authorize('platform-admin');
 
-        $level = $request->input('level', 'info');
+        $fileSizeKb = min(max((int) $request->integer('size_kb', 256), 32), 4096);
+        $filter = trim((string) $request->input('filter', ''));
+        $sort = strtolower((string) $request->input('sort', 'desc'));
+        $sort = in_array($sort, ['asc', 'desc'], true) ? $sort : 'desc';
+        $logFile = config('nizam.freeswitch.log_path');
 
-        $validLevels = ['console', 'alert', 'crit', 'err', 'warning', 'notice', 'info', 'debug'];
-        if (! in_array($level, $validLevels)) {
-            return response()->json(['error' => 'Invalid log level'], 400);
+        if (! $logFile || ! File::exists($logFile)) {
+            return response()->json([
+                'error' => 'Log file not found',
+                'path' => $logFile,
+                'logs' => [],
+            ], 404);
         }
 
         try {
-            $esl = EslConnectionManager::fromConfig();
-            if (! $esl->connect()) {
-                return response()->json([
-                    'error' => 'Failed to connect to FreeSWITCH ESL',
-                    'logs' => [],
-                ], 503);
+            $content = $this->readTrailingBytes($logFile, $fileSizeKb * 1024);
+            $allLines = preg_split("/\r\n|\n|\r/", $content) ?: [];
+            $allLines = array_values(array_filter($allLines, static fn (string $line): bool => $line !== ''));
+
+            $offset = $this->estimateStartingLineNumber($logFile, strlen($content), count($allLines));
+            $logs = [];
+
+            foreach ($allLines as $index => $line) {
+                if ($filter !== '' && stripos($line, $filter) === false) {
+                    continue;
+                }
+
+                $logs[] = [
+                    'number' => $offset + $index,
+                    'text' => $line,
+                ];
             }
 
-            // Query current log level
-            $logLevelResponse = $esl->api("fsctl loglevel");
-            
-            // Get FreeSWITCH status for context
-            $statusResponse = $esl->api("status");
-            
-            $esl->disconnect();
+            if ($sort === 'desc') {
+                $logs = array_reverse($logs);
+            }
 
             return response()->json([
                 'source' => 'freeswitch',
-                'level' => $level,
-                'current_log_level' => trim($logLevelResponse),
-                'status' => trim($statusResponse),
-                'note' => 'For live log streaming, implement SSE/WebSocket with ESL event subscription to "log" events.',
+                'path' => $logFile,
+                'size_kb' => $fileSizeKb,
+                'filter' => $filter,
+                'sort' => $sort,
+                'lines' => count($logs),
+                'logs' => $logs,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'error' => 'Failed to query FreeSWITCH logs',
+                'error' => 'Failed to read log file',
                 'message' => $e->getMessage(),
             ], 500);
         }
@@ -117,13 +125,83 @@ class LogViewerController extends Controller
                     'path' => $file->getPathname(),
                     'size' => $file->getSize(),
                     'modified' => $file->getMTime(),
+                    'type' => 'laravel',
                 ];
             }
+        }
+
+        // Include FreeSWITCH log if configured
+        $fsLogFile = config('nizam.freeswitch.log_path');
+        if ($fsLogFile && File::exists($fsLogFile)) {
+            $files[] = [
+                'name' => basename($fsLogFile),
+                'path' => $fsLogFile,
+                'size' => File::size($fsLogFile),
+                'modified' => File::lastModified($fsLogFile),
+                'type' => 'freeswitch',
+            ];
         }
 
         return response()->json([
             'directory' => $logDir,
             'files' => $files,
         ]);
+    }
+
+    private function readTrailingBytes(string $path, int $bytes): string
+    {
+        $handle = fopen($path, 'rb');
+
+        if ($handle === false) {
+            throw new \RuntimeException('Unable to open log file.');
+        }
+
+        try {
+            $fileSize = filesize($path);
+            if ($fileSize === false || $fileSize === 0) {
+                return '';
+            }
+
+            $start = max(0, $fileSize - $bytes);
+            fseek($handle, $start);
+            $content = stream_get_contents($handle) ?: '';
+
+            if ($start > 0) {
+                $newlinePos = strpos($content, "\n");
+                if ($newlinePos !== false) {
+                    $content = substr($content, $newlinePos + 1);
+                }
+            }
+
+            return $content;
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    private function estimateStartingLineNumber(string $path, int $chunkLength, int $lineCount): int
+    {
+        $totalSize = filesize($path);
+        if ($totalSize === false || $totalSize <= $chunkLength || $lineCount === 0) {
+            return 1;
+        }
+
+        $prefixLength = $totalSize - $chunkLength;
+        $handle = fopen($path, 'rb');
+
+        if ($handle === false) {
+            return 1;
+        }
+
+        try {
+            $prefix = $prefixLength > 0 ? fread($handle, $prefixLength) : '';
+            if (! is_string($prefix) || $prefix === '') {
+                return 1;
+            }
+
+            return substr_count($prefix, "\n") + 1;
+        } finally {
+            fclose($handle);
+        }
     }
 }

@@ -1,7 +1,7 @@
 import './bootstrap';
 
 const root = document.documentElement;
-const themeKey = 'nizam-theme';
+const themeKey = 'communications-platform-theme';
 
 const applyTheme = (theme) => {
     root.classList.toggle('dark', theme === 'dark');
