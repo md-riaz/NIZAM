@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Extension;
+use App\Services\WallboardProjectionService;
 use Illuminate\Support\Facades\Log;
 
 class ExtensionObserver
@@ -41,6 +42,8 @@ class ExtensionObserver
         $extension->deviceProfiles()->where('is_active', true)->update([
             'updated_at' => now(),
         ]);
+
+        app(WallboardProjectionService::class)->refreshExtensionProjection($extension);
 
         Log::info('Device profiles marked for reprovisioning', [
             'extension_id' => $extension->id,

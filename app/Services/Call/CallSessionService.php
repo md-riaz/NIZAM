@@ -2,6 +2,7 @@
 
 namespace App\Services\Call;
 
+use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
 use App\Models\Did;
 use App\Models\Tenant;
@@ -40,6 +41,13 @@ class CallSessionService
         }
 
         return $session;
+    }
+
+    public function hasActiveDeliveryAttempts(CallSession $session): bool
+    {
+        return $session->deliveryAttempts()
+            ->whereIn('status', CallDeliveryAttempt::ACTIVE_STATUSES)
+            ->exists();
     }
 
     public function markEnded(CallSession $session, string $state = 'ended', array $tracePayload = []): CallSession

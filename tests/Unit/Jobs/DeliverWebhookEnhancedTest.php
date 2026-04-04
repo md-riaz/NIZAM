@@ -25,7 +25,7 @@ class DeliverWebhookEnhancedTest extends TestCase
             'secret' => 'test-secret-key-12345',
         ]);
 
-        $job = new DeliverWebhook($webhook, 'call.started', ['uuid' => 'test-123']);
+        $job = new DeliverWebhook($webhook, 'call.created', ['uuid' => 'test-123']);
         $job->handle();
 
         Http::assertSent(function ($request) {
@@ -46,7 +46,7 @@ class DeliverWebhookEnhancedTest extends TestCase
             'secret' => 'test-secret-key-12345',
         ]);
 
-        $job = new DeliverWebhook($webhook, 'call.started', ['uuid' => 'test-123']);
+        $job = new DeliverWebhook($webhook, 'call.created', ['uuid' => 'test-123']);
         $job->handle();
 
         $attempt = WebhookDeliveryAttempt::first();
@@ -65,7 +65,7 @@ class DeliverWebhookEnhancedTest extends TestCase
             'secret' => 'test-secret-key-12345',
         ]);
 
-        $job = new DeliverWebhook($webhook, 'call.started', ['uuid' => 'test-123']);
+        $job = new DeliverWebhook($webhook, 'call.created', ['uuid' => 'test-123']);
         $job->handle();
 
         Http::assertSent(function ($request) {

@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Data\ExtensionData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
 use App\Http\Resources\ExtensionResource;
 use App\Models\Extension;
 use App\Models\Tenant;
+use App\Services\WebRtcConfigService;
 use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 
@@ -17,7 +19,8 @@ use Illuminate\Http\JsonResponse;
 class ExtensionController extends Controller
 {
     public function __construct(
-        protected WebhookDispatcher $webhookDispatcher
+        protected WebhookDispatcher $webhookDispatcher,
+        protected WebRtcConfigService $webRtcConfigService,
     ) {}
 
     /**
@@ -43,7 +46,7 @@ class ExtensionController extends Controller
             ], 422);
         }
 
-        $extension = $tenant->extensions()->create($request->validated());
+        $extension = $tenant->extensions()->create(ExtensionData::fromArray($request->validated())->attributes);
 
         $this->webhookDispatcher->dispatch($tenant->id, 'extension.created', [
             'extension_id' => $extension->id,
@@ -78,7 +81,7 @@ class ExtensionController extends Controller
 
         $this->authorize('update', $extension);
 
-        $extension->update($request->validated());
+        $extension->update(ExtensionData::fromArray($request->validated())->attributes);
 
         $this->webhookDispatcher->dispatch($tenant->id, 'extension.updated', [
             'extension_id' => $extension->id,
@@ -131,7 +134,7 @@ class ExtensionController extends Controller
             ], 403);
         }
 
-        $config = $extension->getWebRtcConfig(config('app.url'));
+        $config = $this->webRtcConfigService->forExtension($extension->loadMissing('tenant'), config('app.url'));
 
         return response()->json(['data' => $config]);
     }

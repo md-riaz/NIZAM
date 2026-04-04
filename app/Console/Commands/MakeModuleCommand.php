@@ -172,7 +172,7 @@ class {$studlyName}Module implements NizamModule
     public function subscribedEvents(): array
     {
         // Return event types this module listens to
-        // Example: return ['call.started', 'call.hangup'];
+        // Example: return ['call.created', 'call.hangup'];
 
         return [];
     }

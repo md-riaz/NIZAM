@@ -20,7 +20,7 @@ class WebhookFactory extends Factory
             'tenant_id' => Tenant::factory(),
             'url' => fake()->url(),
             'events' => fake()->randomElements(
-                ['call.started', 'call.answered', 'call.missed', 'call.hangup', 'voicemail.received', 'device.registered'],
+                ['call.created', 'call.answered', 'call.missed', 'call.hangup', 'voicemail.received', 'device.registered'],
                 fake()->numberBetween(1, 4)
             ),
             'secret' => Str::random(32),

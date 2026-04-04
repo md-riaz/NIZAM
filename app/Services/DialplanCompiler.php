@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Agent;
 use App\Models\BlockedDestination;
 use App\Models\Bridge;
 use App\Models\CallRoutingPolicy;
@@ -9,6 +10,7 @@ use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Flow;
 use App\Models\Ivr;
+use App\Models\Queue;
 use App\Models\RingGroup;
 use App\Models\Tenant;
 use App\Models\TimeCondition;
@@ -158,6 +160,10 @@ class DialplanCompiler
             $destinationNumber,
             $gatewayContext['gateway'] ?? null,
         );
+
+        if ($destinationNumber === 'call_delivery_entrypoint') {
+            return $this->compileDeliveryEntrypointDialplan($tenant);
+        }
 
         if ($did) {
             return $this->compileDidRouting($tenant, $did);
@@ -334,7 +340,13 @@ class DialplanCompiler
             case 'extension':
                 $ext = $tenant->extensions()->find($did->destination_id);
                 if ($ext) {
-                    $xml .= '            <action application="bridge" data="user/'.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                    $xml .= $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $ext->id);
+                }
+                break;
+            case 'agent':
+                $agent = $tenant->agents()->find($did->destination_id);
+                if ($agent) {
+                    $xml .= $this->compileAgentActions($tenant, $agent);
                 }
                 break;
             case 'ivr':
@@ -347,6 +359,12 @@ class DialplanCompiler
                 $rg = $tenant->ringGroups()->find($did->destination_id);
                 if ($rg) {
                     $xml .= $this->compileRingGroupActions($tenant, $rg);
+                }
+                break;
+            case 'queue':
+                $queue = $tenant->queues()->find($did->destination_id);
+                if ($queue) {
+                    $xml .= $this->compileQueueActions($tenant, $queue);
                 }
                 break;
             case 'voicemail':
@@ -397,13 +415,28 @@ class DialplanCompiler
         return $xml;
     }
 
+    protected function compileDeliveryEntrypointDialplan(Tenant $tenant): string
+    {
+        $xml = $this->dialplanHeader($tenant->domain);
+        $xml .= '        <extension name="call-delivery-entrypoint">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^call_delivery_entrypoint$">'."\n";
+        $xml .= '            <action application="answer"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_call_uuid=${uuid}"/>'."\n";
+        $xml .= '            <action application="park"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+        $xml .= $this->dialplanFooter();
+
+        return $xml;
+    }
+
     public function compileLocalExtension(Tenant $tenant, Extension $extension): string
     {
         $xml = '        <extension name="local-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
         $xml .= $this->compileSecurityChecks($tenant, $extension->extension);
         $xml .= $this->compileConcurrentCallLimit($tenant);
-        $xml .= '            <action application="bridge" data="user/'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $extension->id);
         $xml .= '          </condition>'."\n";
         $xml .= '        </extension>'."\n";
 
@@ -433,14 +466,8 @@ class DialplanCompiler
             return $fallback ?? '';
         }
 
-        $dialStrings = $extensions->map(function ($ext) use ($tenant) {
-            return 'user/'.$ext->extension.'@'.$tenant->domain;
-        });
-
         $xml = '            <action application="set" data="call_timeout='.(int) $ringGroup->ring_timeout.'"/>'."\n";
-        $xml .= '            <action application="set" data="continue_on_fail=USER_BUSY,NO_ANSWER,NO_USER_RESPONSE,ALLOTTED_TIMEOUT,NO_ROUTE_DESTINATION,UNALLOCATED_NUMBER,SUBSCRIBER_ABSENT"/>'."\n";
-        $xml .= '            <action application="set" data="hangup_after_bridge=false"/>'."\n";
-        $xml .= '            <action application="bridge" data="'.htmlspecialchars($dialStrings->implode($ringGroup->strategy === 'simultaneous' ? ',' : '|'), ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= $this->compileHumanTargetHandoffAction($tenant, 'ring_group', (string) $ringGroup->id);
 
         if ($fallback) {
             $xml .= '            <condition field="${originate_disposition}" expression="^(USER_BUSY|NO_ANSWER|NO_USER_RESPONSE|ALLOTTED_TIMEOUT|NO_ROUTE_DESTINATION|UNALLOCATED_NUMBER|SUBSCRIBER_ABSENT)$">'."\n";
@@ -449,6 +476,28 @@ class DialplanCompiler
         }
 
         return $xml;
+    }
+
+    protected function compileQueueActions(Tenant $tenant, Queue $queue): string
+    {
+        $hasEligibleMembers = $queue->members()
+            ->where('agents.is_active', true)
+            ->exists();
+
+        if (! $hasEligibleMembers) {
+            return '';
+        }
+
+        return $this->compileHumanTargetHandoffAction($tenant, 'queue', (string) $queue->id);
+    }
+
+    protected function compileAgentActions(Tenant $tenant, Agent $agent): string
+    {
+        if (! $agent->is_active) {
+            return '';
+        }
+
+        return $this->compileHumanTargetHandoffAction($tenant, 'agent', (string) $agent->id);
     }
 
     protected function compileTimeConditionActions(Tenant $tenant, TimeCondition $timeCondition): string
@@ -516,13 +565,32 @@ class DialplanCompiler
     /**
      * Compile a FreeSWITCH anti-action (used for no-match branch of time conditions).
      */
+    protected function compileHumanTargetHandoffAction(Tenant $tenant, string $targetType, string $targetId, bool $antiAction = false): string
+    {
+        $action = $antiAction ? 'anti-action' : 'action';
+        $entrypoint = 'call_delivery_entrypoint';
+
+        $xml = '            <'.$action.' application="set" data="nizam_delivery_target_type='.htmlspecialchars($targetType, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <'.$action.' application="set" data="nizam_delivery_target_id='.htmlspecialchars($targetId, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <'.$action.' application="set" data="nizam_call_uuid=${uuid}"/>'."\n";
+        $xml .= '            <'.$action.' application="transfer" data="'.$entrypoint.' XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+
+        return $xml;
+    }
+
     protected function compileAntiAction(Tenant $tenant, string $type, string $id): string
     {
         switch ($type) {
             case 'extension':
                 $ext = $tenant->extensions()->find($id);
                 if ($ext) {
-                    return '            <anti-action application="bridge" data="user/'.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                    return $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $ext->id, true);
+                }
+                break;
+            case 'agent':
+                $agent = $tenant->agents()->find($id);
+                if ($agent) {
+                    return $this->compileHumanTargetHandoffAction($tenant, 'agent', (string) $agent->id, true);
                 }
                 break;
             case 'voicemail':
@@ -534,13 +602,13 @@ class DialplanCompiler
             case 'ring_group':
                 $rg = $tenant->ringGroups()->find($id);
                 if ($rg) {
-                    $memberIds = $rg->members ?? [];
-                    $extensions = $tenant->extensions()->whereIn('id', $memberIds)->where('is_active', true)->get();
-                    if ($extensions->isNotEmpty()) {
-                        $dialStrings = $extensions->map(fn ($ext) => 'user/'.$ext->extension.'@'.$tenant->domain);
-
-                        return '            <anti-action application="bridge" data="'.htmlspecialchars($dialStrings->implode($rg->strategy === 'simultaneous' ? ',' : '|'), ENT_QUOTES | ENT_XML1).'"/>'."\n";
-                    }
+                    return $this->compileHumanTargetHandoffAction($tenant, 'ring_group', (string) $rg->id, true);
+                }
+                break;
+            case 'queue':
+                $queue = $tenant->queues()->find($id);
+                if ($queue) {
+                    return $this->compileHumanTargetHandoffAction($tenant, 'queue', (string) $queue->id, true);
                 }
                 break;
             case 'ivr':
@@ -572,7 +640,13 @@ class DialplanCompiler
             case 'extension':
                 $ext = $tenant->extensions()->find($id);
                 if ($ext) {
-                    return '            <action application="bridge" data="user/'.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                    return $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $ext->id);
+                }
+                break;
+            case 'agent':
+                $agent = $tenant->agents()->find($id);
+                if ($agent) {
+                    return $this->compileHumanTargetHandoffAction($tenant, 'agent', (string) $agent->id);
                 }
                 break;
             case 'voicemail':
@@ -584,7 +658,13 @@ class DialplanCompiler
             case 'ring_group':
                 $rg = $tenant->ringGroups()->find($id);
                 if ($rg) {
-                    return $this->compileRingGroupActions($tenant, $rg);
+                    return $this->compileHumanTargetHandoffAction($tenant, 'ring_group', (string) $rg->id);
+                }
+                break;
+            case 'queue':
+                $queue = $tenant->queues()->find($id);
+                if ($queue) {
+                    return $this->compileHumanTargetHandoffAction($tenant, 'queue', (string) $queue->id);
                 }
                 break;
             case 'ivr':

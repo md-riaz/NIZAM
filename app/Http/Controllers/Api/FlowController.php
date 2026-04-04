@@ -2,21 +2,20 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Data\FlowData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreFlowRequest;
 use App\Http\Requests\UpdateFlowRequest;
 use App\Http\Resources\FlowResource;
 use App\Models\Flow;
 use App\Models\Tenant;
-use App\Services\Flow\FlowGraphService;
-use App\Services\Flow\FlowPublishService;
+use App\Services\Flow\FlowApplicationService;
 use Illuminate\Http\JsonResponse;
 
 class FlowController extends Controller
 {
     public function __construct(
-        protected FlowGraphService $flowGraphService,
-        protected FlowPublishService $flowPublishService,
+        protected FlowApplicationService $flowApplicationService,
     ) {}
 
     public function index(Tenant $tenant)
@@ -26,7 +25,7 @@ class FlowController extends Controller
 
     public function store(StoreFlowRequest $request, Tenant $tenant): JsonResponse
     {
-        $flow = $this->flowGraphService->createFlowWithVersion($tenant->id, $request->validated());
+        $flow = $this->flowApplicationService->create($tenant->id, FlowData::fromArray($request->validated()));
 
         return (new FlowResource($flow))->response()->setStatusCode(201);
     }
@@ -46,7 +45,18 @@ class FlowController extends Controller
             return response()->json(['message' => 'Flow not found.'], 404);
         }
 
-        $flow = $this->flowGraphService->updateFlowWithVersion($flow, $request->validated());
+        $payload = array_merge([
+            'name' => $flow->name,
+            'description' => $flow->description,
+            'version' => ['definition' => []],
+            'publish' => false,
+        ], $request->validated());
+
+        if (! isset($payload['version']['definition'])) {
+            $payload['version']['definition'] = [];
+        }
+
+        $flow = $this->flowApplicationService->update($flow, FlowData::fromArray($payload));
 
         return new FlowResource($flow->load(['activeVersion.nodes', 'activeVersion.edges', 'versions']));
     }
@@ -68,13 +78,11 @@ class FlowController extends Controller
             return response()->json(['message' => 'Flow not found.'], 404);
         }
 
-        $version = $flow->versions()->latest('version_number')->first();
+        $result = $this->flowApplicationService->publishLatest($flow);
 
-        if (! $version) {
-            return response()->json(['message' => 'No flow version available to publish.'], 422);
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['status']);
         }
-
-        $this->flowPublishService->publish($version);
 
         return new FlowResource($flow->fresh(['activeVersion.nodes', 'activeVersion.edges', 'versions']));
     }

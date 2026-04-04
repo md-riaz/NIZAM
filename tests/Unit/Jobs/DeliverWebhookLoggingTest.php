@@ -21,12 +21,12 @@ class DeliverWebhookLoggingTest extends TestCase
 
         $webhook = Webhook::factory()->create();
 
-        $job = new DeliverWebhook($webhook, 'call.started', ['call_uuid' => 'test-uuid']);
+        $job = new DeliverWebhook($webhook, 'call.created', ['call_uuid' => 'test-uuid']);
         $job->handle();
 
         $this->assertDatabaseHas('webhook_delivery_attempts', [
             'webhook_id' => $webhook->id,
-            'event_type' => 'call.started',
+            'event_type' => 'call.created',
             'response_status' => 200,
             'success' => true,
         ]);

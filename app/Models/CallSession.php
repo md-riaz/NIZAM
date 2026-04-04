@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CallSession extends Model
 {
@@ -59,5 +60,26 @@ class CallSession extends Model
     public function traceEvents(): HasMany
     {
         return $this->hasMany(CallTraceEvent::class);
+    }
+
+    public function deliveryAttempts(): HasMany
+    {
+        return $this->hasMany(CallDeliveryAttempt::class);
+    }
+
+    public function pushNotificationLogs(): HasMany
+    {
+        return $this->hasMany(PushNotificationLog::class);
+    }
+
+    public function winningDeliveryAttempt(): HasOne
+    {
+        return $this->hasOne(CallDeliveryAttempt::class)->where('status', CallDeliveryAttempt::STATUS_WON);
+    }
+
+    public function activeDeliveryAttempts(): HasMany
+    {
+        return $this->hasMany(CallDeliveryAttempt::class)
+            ->whereIn('status', CallDeliveryAttempt::ACTIVE_STATUSES);
     }
 }

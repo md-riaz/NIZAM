@@ -21,11 +21,11 @@ class DeliverWebhookTest extends TestCase
         $webhook = Webhook::factory()->create([
             'url' => 'https://example.com/hook',
             'secret' => 'test-secret-key',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'is_active' => true,
         ]);
 
-        $job = new DeliverWebhook($webhook, 'call.started', [
+        $job = new DeliverWebhook($webhook, 'call.created', [
             'caller_id_number' => '1001',
             'destination_number' => '1002',
         ]);
@@ -35,7 +35,7 @@ class DeliverWebhookTest extends TestCase
         Http::assertSent(function ($request) {
             return $request->url() === 'https://example.com/hook'
                 && $request->hasHeader('X-Nizam-Signature')
-                && $request->hasHeader('X-Nizam-Event', 'call.started')
+                && $request->hasHeader('X-Nizam-Event', 'call.created')
                 && $request->hasHeader('Content-Type', 'application/json');
         });
     }
@@ -49,11 +49,11 @@ class DeliverWebhookTest extends TestCase
         $webhook = Webhook::factory()->create([
             'url' => 'https://example.com/hook',
             'secret' => 'my-secret-key',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'is_active' => true,
         ]);
 
-        $job = new DeliverWebhook($webhook, 'call.started', ['test' => 'data']);
+        $job = new DeliverWebhook($webhook, 'call.created', ['test' => 'data']);
 
         $job->handle();
 
@@ -68,7 +68,7 @@ class DeliverWebhookTest extends TestCase
     public function test_webhook_has_correct_retry_configuration(): void
     {
         $webhook = Webhook::factory()->create();
-        $job = new DeliverWebhook($webhook, 'call.started', []);
+        $job = new DeliverWebhook($webhook, 'call.created', []);
 
         $this->assertEquals(3, $job->tries);
         $this->assertEquals(30, $job->timeout);
@@ -84,10 +84,10 @@ class DeliverWebhookTest extends TestCase
         $webhook = Webhook::factory()->create([
             'url' => 'https://unreachable.example.com/hook',
             'secret' => 'test-secret',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
         ]);
 
-        $job = new DeliverWebhook($webhook, 'call.started', []);
+        $job = new DeliverWebhook($webhook, 'call.created', []);
 
         $this->expectException(\Illuminate\Http\Client\ConnectionException::class);
 

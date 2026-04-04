@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Queue;
 use App\Models\Tenant;
 use App\Services\MetricsService;
+use App\Services\WallboardProjectionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class QueueMetricsController extends Controller
 {
     public function __construct(
-        protected MetricsService $metricsService
+        protected MetricsService $metricsService,
+        protected WallboardProjectionService $wallboardProjectionService,
     ) {}
 
     /**
@@ -73,7 +75,7 @@ class QueueMetricsController extends Controller
     public function wallboard(Tenant $tenant): JsonResponse
     {
         return response()->json([
-            'data' => $this->metricsService->getWallboardData($tenant->id),
+            'data' => $this->wallboardProjectionService->getWallboardData($tenant->id),
         ]);
     }
 

@@ -13,6 +13,8 @@ class NodeSpec
         public array $transitions,
         public bool $terminal,
         public bool $requiresLua,
+        public array $aliases = [],
+        public ?string $validator = null,
     ) {}
 
     /**

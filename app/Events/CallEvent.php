@@ -29,7 +29,7 @@ class CallEvent implements ShouldBroadcast
 
     public function broadcastAs(): string
     {
-        return 'call.'.$this->eventType;
+        return $this->eventType;
     }
 
     /**

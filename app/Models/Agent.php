@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Agent extends Model
 {
@@ -89,6 +90,11 @@ class Agent extends Model
         return $this->belongsToMany(Queue::class, 'queue_members')
             ->withPivot('priority')
             ->withTimestamps();
+    }
+
+    public function endpointBindings(): HasMany
+    {
+        return $this->hasMany(EndpointBinding::class);
     }
 
     public function isAvailable(): bool

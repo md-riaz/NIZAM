@@ -36,7 +36,11 @@ class CallEventIngestionService
             ]
         );
 
-        if ($event->wasRecentlyCreated && in_array($eventType, ['menu.selection', 'call.answered', 'call.timeout'], true)) {
+        if ($event->wasRecentlyCreated && in_array($eventType, [
+            'menu.selection',
+            CallEventLog::EVENT_CALL_ANSWERED,
+            'call.timeout',
+        ], true)) {
             ProcessCallEventJob::dispatch($event->id);
         }
 

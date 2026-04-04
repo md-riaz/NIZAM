@@ -24,6 +24,7 @@ class DialplanCompilerPolicyTest extends TestCase
         $this->compiler = new DialplanCompiler(
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
+            app(\App\Services\Routing\BridgeCompiler::class),
         );
     }
 
@@ -57,8 +58,10 @@ class DialplanCompilerPolicyTest extends TestCase
         $xml = $this->compiler->compileDialplan($tenant->domain, '+15551000000');
 
         $this->assertStringContainsString('time-of-day="09:00-17:00"', $xml);
-        $this->assertStringContainsString('bridge', $xml);
-        $this->assertStringContainsString($extension->extension, $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$extension->id, $xml);
+        $this->assertStringContainsString('call_delivery_entrypoint XML '.$tenant->domain, $xml);
+        $this->assertStringNotContainsString('application="bridge" data="user/', $xml);
     }
 
     public function test_compiles_did_routing_via_call_flow(): void
@@ -116,10 +119,12 @@ class DialplanCompilerPolicyTest extends TestCase
 
         $xml = $this->compiler->compileDialplan($tenant->domain, '+15553000000');
 
-        $this->assertStringContainsString('<action application="bridge"', $xml);
-        $this->assertStringContainsString('<anti-action application="bridge"', $xml);
-        $this->assertStringContainsString($matchExt->extension, $xml);
-        $this->assertStringContainsString($noMatchExt->extension, $xml);
+        $this->assertStringContainsString('<action application="set" data="nizam_delivery_target_type=extension"', $xml);
+        $this->assertStringContainsString('<anti-action application="set" data="nizam_delivery_target_type=extension"', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$matchExt->id, $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$noMatchExt->id, $xml);
+        $this->assertStringContainsString('call_delivery_entrypoint XML '.$tenant->domain, $xml);
+        $this->assertStringNotContainsString('application="bridge" data="user/', $xml);
     }
 
     public function test_policy_with_day_of_week_condition(): void

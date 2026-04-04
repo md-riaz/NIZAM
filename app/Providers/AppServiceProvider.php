@@ -2,20 +2,26 @@
 
 namespace App\Providers;
 
+use App\Models\Agent;
 use App\Models\Extension;
 use App\Models\Gateway;
 use App\Models\Holiday;
 use App\Models\HolidayCalendar;
+use App\Models\Queue;
+use App\Models\QueueEntry;
 use App\Models\Schedule;
 use App\Models\ScheduleBreak;
 use App\Models\ScheduleException;
 use App\Models\ScheduleRule;
 use App\Modules\Contracts\NizamModule as NizamModuleContract;
 use App\Modules\ModuleRegistry;
+use App\Observers\AgentObserver;
 use App\Observers\ExtensionObserver;
 use App\Observers\GatewayObserver;
 use App\Observers\HolidayCalendarObserver;
 use App\Observers\HolidayObserver;
+use App\Observers\QueueEntryObserver;
+use App\Observers\QueueObserver;
 use App\Observers\ScheduleBreakObserver;
 use App\Observers\ScheduleExceptionObserver;
 use App\Observers\ScheduleObserver;
@@ -23,6 +29,8 @@ use App\Observers\ScheduleRuleObserver;
 use App\Policies\CallPolicy;
 use App\Events\CallDetailRecordCreated;
 use App\Listeners\EnrichCallDetailRecord;
+use App\Services\Call\FreeSwitchOfferCommandDispatcher;
+use App\Services\Call\OfferCommandDispatcher;
 use App\Services\EslConnectionManager;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -41,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(EslConnectionManager::class, fn () => EslConnectionManager::fromConfig());
+        $this->app->bind(OfferCommandDispatcher::class, FreeSwitchOfferCommandDispatcher::class);
 
         $this->app->singleton(ModuleRegistry::class, function () {
             $registry = new ModuleRegistry;
@@ -69,8 +78,11 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        Agent::observe(AgentObserver::class);
         Extension::observe(ExtensionObserver::class);
         Gateway::observe(GatewayObserver::class);
+        Queue::observe(QueueObserver::class);
+        QueueEntry::observe(QueueEntryObserver::class);
         Schedule::observe(ScheduleObserver::class);
         ScheduleRule::observe(ScheduleRuleObserver::class);
         ScheduleBreak::observe(ScheduleBreakObserver::class);

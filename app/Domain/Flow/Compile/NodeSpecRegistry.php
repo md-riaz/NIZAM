@@ -2,6 +2,11 @@
 
 namespace App\Domain\Flow\Compile;
 
+use App\Services\Flow\Validation\MenuNodeValidator;
+use App\Services\Flow\Validation\RingTeamNodeValidator;
+use App\Services\Flow\Validation\ScheduleCheckNodeValidator;
+use App\Services\Flow\Validation\VoicemailNodeValidator;
+
 /**
  * Node specification registry.
  *
@@ -38,6 +43,8 @@ class NodeSpecRegistry
             transitions: ['open', 'closed', 'break'],
             terminal: false,
             requiresLua: false,
+            aliases: ['business_hours'],
+            validator: ScheduleCheckNodeValidator::class,
         ));
 
         $this->register('menu', new NodeSpec(
@@ -46,6 +53,7 @@ class NodeSpecRegistry
             transitions: ['digit_1', 'digit_2', 'digit_3', 'digit_4', 'digit_5', 'digit_6', 'digit_7', 'digit_8', 'digit_9', 'digit_0', 'timeout', 'invalid'],
             terminal: false,
             requiresLua: false,
+            validator: MenuNodeValidator::class,
         ));
 
         $this->register('ring_team', new NodeSpec(
@@ -54,6 +62,7 @@ class NodeSpecRegistry
             transitions: ['answered', 'timeout', 'no_answer'],
             terminal: false,
             requiresLua: true,
+            validator: RingTeamNodeValidator::class,
         ));
 
         $this->register('voicemail', new NodeSpec(
@@ -62,6 +71,7 @@ class NodeSpecRegistry
             transitions: ['completed', 'skipped'],
             terminal: false,
             requiresLua: false,
+            validator: VoicemailNodeValidator::class,
         ));
 
         $this->register('hangup', new NodeSpec(
@@ -70,6 +80,7 @@ class NodeSpecRegistry
             transitions: [],
             terminal: true,
             requiresLua: false,
+            aliases: ['end'],
         ));
     }
 
@@ -78,14 +89,36 @@ class NodeSpecRegistry
         $this->specs[$type] = $spec;
     }
 
+    public function canonicalType(string $type): ?string
+    {
+        if (isset($this->specs[$type])) {
+            return $type;
+        }
+
+        foreach ($this->specs as $canonicalType => $spec) {
+            if (in_array($type, $spec->aliases, true)) {
+                return $canonicalType;
+            }
+        }
+
+        return null;
+    }
+
     public function get(string $type): ?NodeSpec
     {
-        return $this->specs[$type] ?? null;
+        $canonicalType = $this->canonicalType($type);
+
+        return $canonicalType ? ($this->specs[$canonicalType] ?? null) : null;
     }
 
     public function has(string $type): bool
     {
-        return isset($this->specs[$type]);
+        return $this->canonicalType($type) !== null;
+    }
+
+    public function validatorFor(string $type): ?string
+    {
+        return $this->get($type)?->validator;
     }
 
     public function all(): array

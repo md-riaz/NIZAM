@@ -15,6 +15,15 @@ class RingGroupFallbackCompilerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+        ]);
+    }
+
     public function test_ring_group_compiles_bridge_fallback(): void
     {
         $tenant = Tenant::factory()->create(['domain' => 'tenant.example.com', 'is_active' => true]);
@@ -50,8 +59,8 @@ class RingGroupFallbackCompilerTest extends TestCase
 
         $xml = app(DialplanCompiler::class)->compileDialplan($tenant->domain, '+15550003333');
 
-        $this->assertStringContainsString('continue_on_fail=USER_BUSY,NO_ANSWER,NO_USER_RESPONSE,ALLOTTED_TIMEOUT,NO_ROUTE_DESTINATION,UNALLOCATED_NUMBER,SUBSCRIBER_ABSENT', $xml);
-        $this->assertStringContainsString('hangup_after_bridge=false', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=ring_group', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$ringGroup->id, $xml);
         $this->assertStringContainsString('${originate_disposition}', $xml);
         $this->assertStringContainsString('sofia/gateway/v_'.$gateway->id.'/+15551234567', $xml);
     }

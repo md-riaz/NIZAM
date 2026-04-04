@@ -2,7 +2,9 @@
 
 namespace Tests\Unit\Services;
 
+use App\Models\Queue;
 use App\Models\Tenant;
+use Illuminate\Support\Str;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,9 +18,15 @@ class DialplanCompilerExtendedTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        config([
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+        ]);
+
         $this->compiler = new DialplanCompiler(
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
+            app(\App\Services\Routing\BridgeCompiler::class),
         );
     }
 
@@ -49,8 +57,10 @@ class DialplanCompilerExtendedTest extends TestCase
         $xml = $this->compiler->compileDialplan('test.example.com', '+15551234567');
 
         $this->assertStringContainsString('section name="dialplan"', $xml);
-        $this->assertStringContainsString('user/1001@test.example.com', $xml);
-        $this->assertStringContainsString('bridge', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$extension->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML test.example.com"', $xml);
+        $this->assertStringNotContainsString('user/1001@test.example.com', $xml);
     }
 
     public function test_compile_did_routing_to_ring_group_simultaneous(): void
@@ -96,9 +106,11 @@ class DialplanCompilerExtendedTest extends TestCase
         $xml = $this->compiler->compileDialplan('test.example.com', '+15551234567');
 
         $this->assertStringContainsString('call_timeout=30', $xml);
-        // Simultaneous uses comma separator
-        $this->assertStringContainsString('user/1001@test.example.com', $xml);
-        $this->assertStringContainsString('user/1002@test.example.com', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=ring_group', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$ringGroup->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML test.example.com"', $xml);
+        $this->assertStringNotContainsString('user/1001@test.example.com', $xml);
+        $this->assertStringNotContainsString('user/1002@test.example.com', $xml);
     }
 
     public function test_compile_did_routing_to_ring_group_sequential(): void
@@ -136,7 +148,93 @@ class DialplanCompilerExtendedTest extends TestCase
         $xml = $this->compiler->compileDialplan('test.example.com', '+15559876543');
 
         $this->assertStringContainsString('call_timeout=20', $xml);
-        $this->assertStringContainsString('user/1001@test.example.com', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=ring_group', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$ringGroup->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML test.example.com"', $xml);
+        $this->assertStringNotContainsString('user/1001@test.example.com', $xml);
+    }
+
+    public function test_compile_did_routing_to_queue_uses_shared_delivery_entrypoint(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Test Tenant',
+            'domain' => 'test.example.com',
+            'slug' => 'test-tenant',
+            'is_active' => true,
+        ]);
+
+        $extension = $tenant->extensions()->create([
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'directory_first_name' => 'John',
+            'directory_last_name' => 'Doe',
+            'is_active' => true,
+        ]);
+
+        $agent = $tenant->agents()->create([
+            'extension_id' => $extension->id,
+            'name' => 'Queue Agent',
+            'status' => 'available',
+            'is_active' => true,
+        ]);
+
+        $queue = Queue::factory()->create([
+            'tenant_id' => $tenant->id,
+            'strategy' => Queue::STRATEGY_RING_ALL,
+            'is_active' => true,
+        ]);
+        $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 1]);
+
+        $did = $tenant->dids()->create([
+            'number' => '+15551111111',
+            'destination_type' => 'queue',
+            'destination_id' => $queue->id,
+            'is_active' => true,
+        ]);
+
+        $xml = $this->compiler->compileDialplan('test.example.com', '+15551111111');
+
+        $this->assertStringContainsString('nizam_delivery_target_type=queue', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$queue->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML test.example.com"', $xml);
+    }
+
+    public function test_compile_did_routing_to_agent_uses_shared_delivery_entrypoint(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Test Tenant',
+            'domain' => 'test.example.com',
+            'slug' => 'test-tenant',
+            'is_active' => true,
+        ]);
+
+        $extension = $tenant->extensions()->create([
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'directory_first_name' => 'John',
+            'directory_last_name' => 'Doe',
+            'is_active' => true,
+        ]);
+
+        $agent = $tenant->agents()->create([
+            'extension_id' => $extension->id,
+            'name' => 'Direct Agent',
+            'status' => 'available',
+            'is_active' => true,
+        ]);
+
+        $did = $tenant->dids()->create([
+            'number' => '+15552221111',
+            'destination_type' => 'agent',
+            'destination_id' => $agent->id,
+            'is_active' => true,
+        ]);
+
+        $xml = $this->compiler->compileDialplan('test.example.com', '+15552221111');
+
+        $this->assertStringContainsString('nizam_delivery_target_type=agent', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$agent->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML test.example.com"', $xml);
     }
 
     public function test_compile_did_routing_to_ivr(): void
@@ -239,7 +337,9 @@ class DialplanCompilerExtendedTest extends TestCase
         $xml = $this->compiler->compileDialplan('test.example.com', '+15553333333');
 
         $this->assertStringContainsString('section name="dialplan"', $xml);
-        $this->assertStringContainsString('user/1001@test.example.com', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$extension->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML test.example.com"', $xml);
     }
 
     public function test_compile_directory_with_voicemail_settings(): void
@@ -293,8 +393,8 @@ class DialplanCompilerExtendedTest extends TestCase
 
         $this->assertStringContainsString('effective_caller_id_name', $xml);
         $this->assertStringContainsString('John Doe', $xml);
-        $this->assertStringContainsString('outbound_caller_id_name', $xml);
-        $this->assertStringContainsString('Company', $xml);
+        $this->assertStringContainsString('effective_caller_id_number', $xml);
+        $this->assertStringContainsString('1001', $xml);
     }
 
     public function test_inactive_tenant_returns_empty_directory(): void

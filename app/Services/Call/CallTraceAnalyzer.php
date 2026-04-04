@@ -2,7 +2,11 @@
 
 namespace App\Services\Call;
 
+use App\Http\Resources\CallDeliveryAttemptResource;
+use App\Http\Resources\PushNotificationLogResource;
+use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
+use Illuminate\Http\Request;
 
 class CallTraceAnalyzer
 {
@@ -11,7 +15,12 @@ class CallTraceAnalyzer
      */
     public function analyze(CallSession $session): array
     {
-        $traces = $session->traceEvents()->orderBy('occurred_at', 'asc')->orderBy('id', 'asc')->get();
+        $traces = $session->relationLoaded('traceEvents')
+            ? $session->traceEvents->sortBy([
+                ['occurred_at', 'asc'],
+                ['id', 'asc'],
+            ])->values()
+            : $session->traceEvents()->orderBy('occurred_at', 'asc')->orderBy('id', 'asc')->get();
 
         $timeline = [];
         $nodeMetrics = [];
@@ -86,11 +95,48 @@ class CallTraceAnalyzer
             $previousTrace = $trace;
         }
 
+        $deliveryAttempts = $session->relationLoaded('deliveryAttempts')
+            ? $session->deliveryAttempts->loadMissing('endpointBinding')->sortBy([
+                ['started_at', 'asc'],
+                ['id', 'asc'],
+            ])->values()
+            : $session->deliveryAttempts()->with('endpointBinding')->orderBy('started_at', 'asc')->orderBy('id', 'asc')->get();
+
+        $pushNotificationLogs = $session->relationLoaded('pushNotificationLogs')
+            ? $session->pushNotificationLogs->loadMissing('endpointBinding')->sortBy([
+                ['sent_at', 'asc'],
+                ['id', 'asc'],
+            ])->values()
+            : $session->pushNotificationLogs()->with('endpointBinding')->orderBy('sent_at', 'asc')->orderBy('id', 'asc')->get();
+
+        $winningAttempt = $session->relationLoaded('winningDeliveryAttempt')
+            ? $session->winningDeliveryAttempt?->loadMissing('endpointBinding')
+            : $session->winningDeliveryAttempt()->with('endpointBinding')->first();
+
+        $winnerAttemptId = data_get($session->variables, 'winner_attempt_id')
+            ?? $winningAttempt?->id;
+
+        $resolvedWinner = $deliveryAttempts->firstWhere('id', $winnerAttemptId) ?? $winningAttempt;
+        $request = Request::create('/');
+
         return [
             'total_duration_ms' => $totalDurationMs,
             'node_metrics' => array_values($nodeMetrics),
             'errors' => $errors,
             'timeline' => $timeline,
+            'winner' => [
+                'attempt_id' => $winnerAttemptId,
+                'leg_uuid' => data_get($session->variables, 'winner_leg_uuid')
+                    ?? $resolvedWinner?->freeswitch_leg_uuid,
+                'committed_at' => data_get($session->variables, 'winner_committed_at')
+                    ?? $resolvedWinner?->answered_at
+                    ?? $resolvedWinner?->updated_at,
+                'attempt' => $resolvedWinner instanceof CallDeliveryAttempt
+                    ? (new CallDeliveryAttemptResource($resolvedWinner))->resolve($request)
+                    : null,
+            ],
+            'delivery_attempts' => CallDeliveryAttemptResource::collection($deliveryAttempts)->resolve($request),
+            'push_notification_logs' => PushNotificationLogResource::collection($pushNotificationLogs)->resolve($request),
         ];
     }
 }

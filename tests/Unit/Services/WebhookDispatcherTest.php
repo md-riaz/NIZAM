@@ -29,11 +29,11 @@ class WebhookDispatcherTest extends TestCase
         $tenant = Tenant::factory()->create();
         Webhook::factory()->create([
             'tenant_id' => $tenant->id,
-            'events' => ['call.started', 'call.hangup'],
+            'events' => ['call.created', 'call.hangup'],
             'is_active' => true,
         ]);
 
-        $this->dispatcher->dispatch($tenant->id, 'call.started', ['uuid' => 'test-123']);
+        $this->dispatcher->dispatch($tenant->id, 'call.created', ['uuid' => 'test-123']);
 
         Queue::assertPushed(DeliverWebhook::class);
     }
@@ -45,11 +45,11 @@ class WebhookDispatcherTest extends TestCase
         $tenant = Tenant::factory()->create();
         Webhook::factory()->create([
             'tenant_id' => $tenant->id,
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'is_active' => false,
         ]);
 
-        $this->dispatcher->dispatch($tenant->id, 'call.started', ['uuid' => 'test-123']);
+        $this->dispatcher->dispatch($tenant->id, 'call.created', ['uuid' => 'test-123']);
 
         Queue::assertNotPushed(DeliverWebhook::class);
     }
@@ -65,7 +65,7 @@ class WebhookDispatcherTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->dispatcher->dispatch($tenant->id, 'call.started', ['uuid' => 'test-123']);
+        $this->dispatcher->dispatch($tenant->id, 'call.created', ['uuid' => 'test-123']);
 
         Queue::assertNotPushed(DeliverWebhook::class);
     }

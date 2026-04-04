@@ -88,7 +88,7 @@ class ModuleRegistryTest extends TestCase
         $registry = new ModuleRegistry;
 
         $module = $this->createMockModuleWith('non-listener', '1.0.0', [
-            'subscribedEvents' => ['call.started'],
+            'subscribedEvents' => ['call.created'],
         ]);
         $module->expects($this->never())->method('handleEvent');
 

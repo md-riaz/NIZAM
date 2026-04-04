@@ -19,6 +19,7 @@ class DialplanCompilerTest extends TestCase
         $this->compiler = new DialplanCompiler(
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
+            app(\App\Services\Routing\BridgeCompiler::class),
         );
     }
 
@@ -73,8 +74,10 @@ class DialplanCompilerTest extends TestCase
 
         $this->assertStringContainsString('<?xml version="1.0"', $xml);
         $this->assertStringContainsString('<section name="dialplan">', $xml);
-        $this->assertStringContainsString('user/1001@test.example.com', $xml);
-        $this->assertStringContainsString('application="bridge"', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$extension->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML test.example.com"', $xml);
+        $this->assertStringNotContainsString('application="bridge" data="user/1001@test.example.com"', $xml);
     }
 
     public function test_compile_dialplan_returns_empty_response_for_unknown_domain(): void

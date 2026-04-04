@@ -21,6 +21,7 @@ class DialplanCompilerTenantScopeTest extends TestCase
         $this->compiler = new DialplanCompiler(
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
+            app(\App\Services\Routing\BridgeCompiler::class),
         );
     }
 
@@ -73,8 +74,10 @@ class DialplanCompilerTenantScopeTest extends TestCase
 
         $xml = $this->compiler->compileDialplan($tenant->domain, '+15551111111');
 
-        $this->assertStringContainsString('application="bridge"', $xml);
-        $this->assertStringContainsString('user/1001@', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$ext->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML '.$tenant->domain.'"', $xml);
+        $this->assertStringNotContainsString('application="bridge" data="user/1001@', $xml);
     }
 
     public function test_did_routing_ignores_ivr_from_other_tenant(): void

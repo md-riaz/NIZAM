@@ -53,7 +53,7 @@ class WebhookEventExpansionTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->postJson("/api/v1/tenants/{$tenant->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
-                'events' => ['recording.created', 'tenant.updated', 'call.bridge'],
+                'events' => ['recording.created', 'tenant.updated', 'call.bridged'],
             ]);
 
         $response->assertStatus(201);

@@ -20,6 +20,7 @@ class TimeConditionEvaluationTest extends TestCase
         $this->compiler = new DialplanCompiler(
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
+            app(\App\Services\Routing\BridgeCompiler::class),
         );
     }
 
@@ -104,9 +105,10 @@ class TimeConditionEvaluationTest extends TestCase
 
         $xml = $this->compiler->compileDialplan('tc.example.com', '+15553334444');
 
-        // Match action: bridge to extension
-        $this->assertStringContainsString('application="bridge"', $xml);
-        $this->assertStringContainsString('user/2001@tc.example.com', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$ext->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML tc.example.com"', $xml);
+        $this->assertStringNotContainsString('user/2001@tc.example.com', $xml);
     }
 
     public function test_time_condition_generates_anti_action_for_no_match(): void
@@ -192,6 +194,10 @@ class TimeConditionEvaluationTest extends TestCase
 
         $this->assertStringContainsString('wday="1,7"', $xml);
         $this->assertStringNotContainsString('time-of-day', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$ext->id, $xml);
+        $this->assertStringContainsString('<anti-action application="transfer" data="call_delivery_entrypoint XML tc.example.com"', $xml);
+        $this->assertStringNotContainsString('user/4001@tc.example.com', $xml);
     }
 
     public function test_time_condition_without_conditions_routes_unconditionally(): void
@@ -230,8 +236,10 @@ class TimeConditionEvaluationTest extends TestCase
 
         $xml = $this->compiler->compileDialplan('tc.example.com', '+15559990000');
 
-        // Should bridge unconditionally (no time attributes means no anti-action)
-        $this->assertStringContainsString('user/5001@tc.example.com', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$ext->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML tc.example.com"', $xml);
         $this->assertStringNotContainsString('anti-action', $xml);
+        $this->assertStringNotContainsString('user/5001@tc.example.com', $xml);
     }
 }

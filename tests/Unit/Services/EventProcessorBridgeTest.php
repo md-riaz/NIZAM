@@ -3,8 +3,13 @@
 namespace Tests\Unit\Services;
 
 use App\Events\CallEvent;
+use App\Models\CallDeliveryAttempt;
+use App\Models\CallSession;
+use App\Models\EndpointBinding;
 use App\Models\Extension;
 use App\Models\Tenant;
+use App\Services\Call\CallOfferExecutor;
+use App\Services\Call\ReachabilityCache;
 use App\Services\EventProcessor;
 use App\Services\WebhookDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,6 +27,11 @@ class EventProcessorBridgeTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        config([
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+        ]);
+
         $this->dispatcher = $this->createMock(WebhookDispatcher::class);
         $this->processor = new EventProcessor($this->dispatcher);
     }
@@ -61,7 +71,7 @@ class EventProcessorBridgeTest extends TestCase
         $this->processor->process($event);
 
         Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($tenant) {
-            return $e->tenantId === $tenant->id && $e->eventType === 'bridge';
+            return $e->tenantId === $tenant->id && $e->eventType === 'call.bridged';
         });
     }
 
@@ -84,7 +94,7 @@ class EventProcessorBridgeTest extends TestCase
         $this->processor->process($event);
 
         Event::assertDispatched(CallEvent::class, function (CallEvent $e) {
-            return $e->eventType === 'bridge'
+            return $e->eventType === 'call.bridged'
                 && isset($e->data['metadata']['other_leg_uuid'])
                 && $e->data['metadata']['other_leg_uuid'] === 'other-leg-uuid-123';
         });
@@ -98,7 +108,7 @@ class EventProcessorBridgeTest extends TestCase
         $this->dispatcher = $this->createMock(WebhookDispatcher::class);
         $this->dispatcher->expects($this->once())
             ->method('dispatch')
-            ->with($tenant->id, 'call.bridge', $this->anything());
+            ->with($tenant->id, 'call.bridged', $this->anything());
 
         $processor = new EventProcessor($this->dispatcher);
 
@@ -137,7 +147,7 @@ class EventProcessorBridgeTest extends TestCase
         $this->processor->process($event);
 
         Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($tenant) {
-            return $e->tenantId === $tenant->id && $e->eventType === 'registered';
+            return $e->tenantId === $tenant->id && $e->eventType === 'device.registered';
         });
     }
 
@@ -159,7 +169,7 @@ class EventProcessorBridgeTest extends TestCase
         $this->processor->process($event);
 
         Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($tenant) {
-            return $e->tenantId === $tenant->id && $e->eventType === 'unregistered';
+            return $e->tenantId === $tenant->id && $e->eventType === 'device.unregistered';
         });
     }
 
@@ -174,7 +184,7 @@ class EventProcessorBridgeTest extends TestCase
         $this->dispatcher = $this->createMock(WebhookDispatcher::class);
         $this->dispatcher->expects($this->once())
             ->method('dispatch')
-            ->with($tenant->id, 'registration.registered', $this->anything());
+            ->with($tenant->id, 'device.registered', $this->anything());
 
         $processor = new EventProcessor($this->dispatcher);
 
@@ -202,5 +212,185 @@ class EventProcessorBridgeTest extends TestCase
         $this->processor->process($event);
 
         Event::assertNotDispatched(CallEvent::class);
+    }
+
+    public function test_registration_updates_reachability_and_originates_single_late_join_attempt_when_session_is_eligible(): void
+    {
+        [$tenant, $extension] = $this->createTenantWithExtension();
+        $binding = EndpointBinding::factory()->forExtension($extension)->create([
+            'allow_late_join_after_push' => true,
+            'is_push_capable' => true,
+            'push_token' => 'push-token',
+        ]);
+        $session = CallSession::factory()->create([
+            'tenant_id' => $tenant->id,
+            'call_uuid' => 'caller-leg-register-late-join',
+            'state' => 'parked',
+            'variables' => [
+                'delivery_wake_window_until' => now()->addSeconds(30)->toIso8601String(),
+                'delivery_late_join_bindings' => [
+                    $binding->id => [
+                        'late_join_window_until' => now()->addSeconds(30)->toIso8601String(),
+                    ],
+                ],
+                'caller_id_name' => 'Caller',
+                'caller_id_number' => '1000',
+            ],
+        ]);
+        CallDeliveryAttempt::factory()->create([
+            'call_session_id' => $session->id,
+            'endpoint_binding_id' => $binding->id,
+            'attempt_type' => CallDeliveryAttempt::TYPE_PUSH,
+            'status' => CallDeliveryAttempt::STATUS_INITIATED,
+        ]);
+
+        $cache = $this->createMock(ReachabilityCache::class);
+        $cache->expects($this->once())
+            ->method('markRegistered')
+            ->with(
+                $tenant->id,
+                $this->callback(fn ($candidate): bool => $candidate->endpointBindingId === $binding->id),
+                $this->callback(fn (array $attributes): bool => ($attributes['contact'] ?? null) === 'sip:1001@192.168.1.100:5060')
+            );
+
+        $offerExecutor = $this->createMock(CallOfferExecutor::class);
+        $offerExecutor->expects($this->once())
+            ->method('executePlan')
+            ->with(
+                $this->callback(function ($plan) use ($session, $binding): bool {
+                    return $plan->callSessionId === $session->id
+                        && count($plan->immediateSipWave) === 1
+                        && $plan->immediateSipWave[0]->attemptType === CallDeliveryAttempt::TYPE_LATE_SIP
+                        && $plan->immediateSipWave[0]->candidate->endpointBindingId === $binding->id;
+                }),
+                $this->callback(fn (array $context): bool => ($context['caller_leg_uuid'] ?? null) === $session->call_uuid)
+            )
+            ->willReturn(['sip_attempt_ids' => ['late-attempt-id'], 'push_attempt_ids' => [], 'pstn_attempt_ids' => []]);
+
+        $processor = new EventProcessor($this->dispatcher, null, null, null, $cache, $offerExecutor);
+
+        $processor->process([
+            'Event-Name' => 'CUSTOM',
+            'Event-Subclass' => 'sofia::register',
+            'domain' => 'test.example.com',
+            'from-user' => '1001',
+            'contact' => 'sip:1001@192.168.1.100:5060',
+            'user-agent' => 'Yealink SIP-T54W',
+            'network-ip' => '192.168.1.100',
+        ]);
+    }
+
+    public function test_registration_skips_duplicate_late_join_when_active_sip_attempt_already_exists(): void
+    {
+        [$tenant, $extension] = $this->createTenantWithExtension();
+        $binding = EndpointBinding::factory()->forExtension($extension)->create([
+            'allow_late_join_after_push' => true,
+        ]);
+        $session = CallSession::factory()->create([
+            'tenant_id' => $tenant->id,
+            'call_uuid' => 'caller-leg-register-duplicate',
+            'state' => 'parked',
+            'variables' => [
+                'delivery_wake_window_until' => now()->addSeconds(30)->toIso8601String(),
+                'delivery_late_join_bindings' => [
+                    $binding->id => [
+                        'late_join_window_until' => now()->addSeconds(30)->toIso8601String(),
+                    ],
+                ],
+            ],
+        ]);
+        CallDeliveryAttempt::factory()->create([
+            'call_session_id' => $session->id,
+            'endpoint_binding_id' => $binding->id,
+            'attempt_type' => CallDeliveryAttempt::TYPE_SIP,
+            'status' => CallDeliveryAttempt::STATUS_RINGING,
+        ]);
+
+        $cache = $this->createMock(ReachabilityCache::class);
+        $cache->expects($this->once())->method('markRegistered');
+
+        $offerExecutor = $this->createMock(CallOfferExecutor::class);
+        $offerExecutor->expects($this->never())->method('executePlan');
+
+        $processor = new EventProcessor($this->dispatcher, null, null, null, $cache, $offerExecutor);
+
+        $processor->process([
+            'Event-Name' => 'CUSTOM',
+            'Event-Subclass' => 'sofia::register',
+            'domain' => 'test.example.com',
+            'from-user' => '1001',
+            'contact' => 'sip:1001@192.168.1.100:5060',
+        ]);
+    }
+
+    public function test_registration_skips_late_join_when_winner_is_already_committed(): void
+    {
+        [$tenant, $extension] = $this->createTenantWithExtension();
+        $binding = EndpointBinding::factory()->forExtension($extension)->create([
+            'allow_late_join_after_push' => true,
+        ]);
+        $session = CallSession::factory()->create([
+            'tenant_id' => $tenant->id,
+            'call_uuid' => 'caller-leg-register-winner-exists',
+            'state' => 'bridged',
+            'variables' => [
+                'winner_attempt_id' => 'winner-attempt-id',
+                'delivery_wake_window_until' => now()->addSeconds(30)->toIso8601String(),
+                'delivery_late_join_bindings' => [
+                    $binding->id => [
+                        'late_join_window_until' => now()->addSeconds(30)->toIso8601String(),
+                    ],
+                ],
+            ],
+        ]);
+        CallDeliveryAttempt::factory()->create([
+            'call_session_id' => $session->id,
+            'endpoint_binding_id' => $binding->id,
+            'attempt_type' => CallDeliveryAttempt::TYPE_PUSH,
+            'status' => CallDeliveryAttempt::STATUS_INITIATED,
+        ]);
+
+        $cache = $this->createMock(ReachabilityCache::class);
+        $cache->expects($this->once())->method('markRegistered');
+
+        $offerExecutor = $this->createMock(CallOfferExecutor::class);
+        $offerExecutor->expects($this->never())->method('executePlan');
+
+        $processor = new EventProcessor($this->dispatcher, null, null, null, $cache, $offerExecutor);
+
+        $processor->process([
+            'Event-Name' => 'CUSTOM',
+            'Event-Subclass' => 'sofia::register',
+            'domain' => 'test.example.com',
+            'from-user' => '1001',
+            'contact' => 'sip:1001@192.168.1.100:5060',
+        ]);
+    }
+
+    public function test_unregistration_updates_reachability_without_originating_late_join(): void
+    {
+        [$tenant, $extension] = $this->createTenantWithExtension();
+        $binding = EndpointBinding::factory()->forExtension($extension)->create();
+
+        $cache = $this->createMock(ReachabilityCache::class);
+        $cache->expects($this->once())
+            ->method('markUnregistered')
+            ->with(
+                $tenant->id,
+                $this->callback(fn ($candidate): bool => $candidate->endpointBindingId === $binding->id),
+                $this->anything()
+            );
+
+        $offerExecutor = $this->createMock(CallOfferExecutor::class);
+        $offerExecutor->expects($this->never())->method('executePlan');
+
+        $processor = new EventProcessor($this->dispatcher, null, null, null, $cache, $offerExecutor);
+
+        $processor->process([
+            'Event-Name' => 'CUSTOM',
+            'Event-Subclass' => 'sofia::unregister',
+            'domain' => 'test.example.com',
+            'from-user' => '1001',
+        ]);
     }
 }

@@ -255,7 +255,7 @@ class SystemCheckpointAuditTest extends TestCase
         Webhook::create([
             'tenant_id' => $this->tenantA->id,
             'url' => 'https://alpha.example.com/hook',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'secret' => 'alpha-secret-key',
             'is_active' => true,
         ]);
@@ -263,7 +263,7 @@ class SystemCheckpointAuditTest extends TestCase
         Webhook::create([
             'tenant_id' => $this->tenantB->id,
             'url' => 'https://beta.example.com/hook',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'secret' => 'beta-secret-key',
             'is_active' => true,
         ]);
@@ -903,7 +903,7 @@ class SystemCheckpointAuditTest extends TestCase
         Webhook::create([
             'tenant_id' => $this->tenantA->id,
             'url' => 'https://alpha.example.com/hook',
-            'events' => ['call.started', 'call.hangup'],
+            'events' => ['call.created', 'call.hangup'],
             'secret' => 'alpha-secret-key',
             'is_active' => true,
         ]);
@@ -911,7 +911,7 @@ class SystemCheckpointAuditTest extends TestCase
         Webhook::create([
             'tenant_id' => $this->tenantB->id,
             'url' => 'https://beta.example.com/hook',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'secret' => 'beta-secret-key',
             'is_active' => true,
         ]);
@@ -958,9 +958,9 @@ class SystemCheckpointAuditTest extends TestCase
             'variable_end_stamp' => now()->toIso8601String(),
         ]));
 
-        // Verify dispatches: call.started, call.hangup, call.missed
+        // Verify dispatches: call.created, call.hangup, call.missed
         $eventTypes = array_column($dispatched, 'event_type');
-        $this->assertContains('call.started', $eventTypes);
+        $this->assertContains('call.created', $eventTypes);
         $this->assertContains('call.hangup', $eventTypes);
         $this->assertContains('call.missed', $eventTypes);
 

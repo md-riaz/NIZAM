@@ -16,7 +16,7 @@ class WebhookEncryptionTest extends TestCase
 
         $webhook = $tenant->webhooks()->create([
             'url' => 'https://example.com/webhook',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'secret' => 'my-secret-key-123',
             'is_active' => true,
         ]);
@@ -37,7 +37,7 @@ class WebhookEncryptionTest extends TestCase
 
         $webhook = $tenant->webhooks()->create([
             'url' => 'https://example.com/webhook',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'secret' => 'hidden-secret',
             'is_active' => true,
         ]);

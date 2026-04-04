@@ -2,15 +2,16 @@
 
 namespace App\Services\Flow;
 
-use App\Services\Flow\Validation\MenuNodeValidator;
+use App\Domain\Flow\Compile\NodeSpecRegistry;
 use App\Services\Flow\Validation\NodeValidator;
-use App\Services\Flow\Validation\RingTeamNodeValidator;
-use App\Services\Flow\Validation\ScheduleCheckNodeValidator;
-use App\Services\Flow\Validation\VoicemailNodeValidator;
 use InvalidArgumentException;
 
 class FlowValidationService
 {
+    public function __construct(
+        protected NodeSpecRegistry $nodeSpecRegistry,
+    ) {}
+
     public function validateDefinition(array $nodes): array
     {
         $errors = [];
@@ -42,18 +43,21 @@ class FlowValidationService
 
     protected function validatorFor(string $type): NodeValidator
     {
-        return match ($type) {
-            'menu' => app(MenuNodeValidator::class),
-            'ring_team' => app(RingTeamNodeValidator::class),
-            'schedule_check', 'business_hours' => app(ScheduleCheckNodeValidator::class),
-            'voicemail' => app(VoicemailNodeValidator::class),
-            'start', 'hangup', 'end' => new class implements NodeValidator {
+        $validatorClass = $this->nodeSpecRegistry->validatorFor($type);
+
+        if ($validatorClass) {
+            return app($validatorClass);
+        }
+
+        if ($this->nodeSpecRegistry->has($type)) {
+            return new class implements NodeValidator {
                 public function validate(array $node): array
                 {
                     return [];
                 }
-            },
-            default => throw new InvalidArgumentException("Unsupported node type [{$type}] for validation."),
-        };
+            };
+        }
+
+        throw new InvalidArgumentException("Unsupported node type [{$type}] for validation.");
     }
 }

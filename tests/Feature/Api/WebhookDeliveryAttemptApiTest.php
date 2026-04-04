@@ -41,7 +41,7 @@ class WebhookDeliveryAttemptApiTest extends TestCase
         $webhook = Webhook::factory()->create(['tenant_id' => $this->tenant->id]);
         WebhookDeliveryAttempt::factory()->create([
             'webhook_id' => $webhook->id,
-            'event_type' => 'call.started',
+            'event_type' => 'call.created',
             'response_status' => 200,
             'success' => true,
         ]);
@@ -51,7 +51,7 @@ class WebhookDeliveryAttemptApiTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonFragment([
-            'event_type' => 'call.started',
+            'event_type' => 'call.created',
             'response_status' => 200,
             'success' => true,
         ]);

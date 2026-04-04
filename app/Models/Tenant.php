@@ -122,6 +122,16 @@ class Tenant extends Model implements HasMedia
         return $this->hasMany(DeviceProfile::class);
     }
 
+    public function endpointBindings(): HasMany
+    {
+        return $this->hasMany(EndpointBinding::class);
+    }
+
+    public function deviceRegistrationSnapshots(): HasMany
+    {
+        return $this->hasMany(DeviceRegistrationSnapshot::class);
+    }
+
     public function webhooks(): HasMany
     {
         return $this->hasMany(Webhook::class);
@@ -140,11 +150,6 @@ class Tenant extends Model implements HasMedia
     public function callRoutingPolicies(): HasMany
     {
         return $this->hasMany(CallRoutingPolicy::class);
-    }
-
-    public function callFlows(): HasMany
-    {
-        return $this->hasMany(CallFlow::class);
     }
 
     public function usageRecords(): HasMany

@@ -330,7 +330,7 @@ class DatabaseSeeder extends Seeder
         Webhook::firstOrCreate(
             ['tenant_id' => $tenant->id, 'url' => 'https://nizam.local/api/webhooks/calls'],
             [
-                'events'      => ['call.started', 'call.answered', 'call.hangup'],
+                'events'      => ['call.created', 'call.answered', 'call.hangup'],
                 'secret'      => bin2hex(random_bytes(16)),
                 'is_active'   => true,
                 'description' => 'Internal call event notifications',

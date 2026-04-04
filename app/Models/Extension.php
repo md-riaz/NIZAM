@@ -26,6 +26,7 @@ class Extension extends Model
         'directory_last_name',
         'effective_caller_id_name',
         'effective_caller_id_number',
+        'outbound_caller_id_name',
         'outbound_caller_id_number',
         'voicemail_enabled',
         'voicemail_pin',
@@ -67,67 +68,20 @@ class Extension extends Model
         return $this->hasMany(DeviceProfile::class);
     }
 
+    public function endpointBindings(): HasMany
+    {
+        return $this->hasMany(EndpointBinding::class);
+    }
+
+    public function deviceRegistrationSnapshots(): HasMany
+    {
+        return $this->hasMany(DeviceRegistrationSnapshot::class);
+    }
+
     public function agent(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Agent::class);
     }
 
-    /**
-     * Get WebRTC connection parameters for this extension.
-     *
-     * Reads from system-wide config (config/telephony.php → webrtc section).
-     * Returns everything a SIP.js or similar WebRTC client needs to connect.
-     *
-     * @param  string  $appUrl  The application base URL (used to construct WSS URL)
-     * @return array<string, mixed>
-     */
-    public function getWebRtcConfig(string $appUrl): array
-    {
-        $webrtcConfig = config('telephony.webrtc');
-        $sslSetting = \App\Models\SslSetting::where('is_enabled', true)->where('status', 'active')->first();
-        
-        $parsedUrl = parse_url($appUrl);
-        $host = $parsedUrl['host'] ?? 'localhost';
-        
-        // If SSL is active for a specific domain, use that domain instead of the app URL host
-        if ($sslSetting && !empty($sslSetting->domains)) {
-            $host = $sslSetting->domains[0];
-        }
 
-        $wssPort = $webrtcConfig['wss_port'] ?? 7443;
-
-        // Build ICE servers array for WebRTC clients
-        $iceServers = [];
-
-        if (!empty($webrtcConfig['stun_server'])) {
-            $iceServers[] = [
-                'urls' => $webrtcConfig['stun_server'],
-            ];
-        }
-
-        if (!empty($webrtcConfig['turn_server'])) {
-            $turnEntry = [
-                'urls' => $webrtcConfig['turn_server'],
-            ];
-            if (!empty($webrtcConfig['turn_username'])) {
-                $turnEntry['username'] = $webrtcConfig['turn_username'];
-            }
-            if (!empty($webrtcConfig['turn_password'])) {
-                $turnEntry['credential'] = $webrtcConfig['turn_password'];
-            }
-            $iceServers[] = $turnEntry;
-        }
-
-        return [
-            'enabled' => (bool) ($webrtcConfig['enabled'] ?? false),
-            'websocket_url' => "wss://{$host}:{$wssPort}",
-            'sip_uri' => "sip:{$this->extension}@{$this->tenant->domain}",
-            'sip_username' => $this->extension,
-            'sip_password' => $this->password,
-            'sip_domain' => $this->tenant->domain,
-            'display_name' => trim(($this->directory_first_name ?? '').' '.($this->directory_last_name ?? '')),
-            'ice_servers' => $iceServers,
-            'codec_prefs' => explode(',', $webrtcConfig['codec_prefs'] ?? 'OPUS,PCMU,PCMA,G722'),
-        ];
-    }
 }

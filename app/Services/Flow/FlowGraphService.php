@@ -2,6 +2,7 @@
 
 namespace App\Services\Flow;
 
+use App\Data\FlowData;
 use App\Models\Flow;
 use App\Models\FlowVersion;
 use Illuminate\Support\Facades\DB;
@@ -12,16 +13,17 @@ class FlowGraphService
     public function __construct(
         protected FlowPublishService $flowPublishService,
     ) {}
-    public function createFlowWithVersion(string $tenantId, array $payload): Flow
+
+    public function createFlowWithVersion(string $tenantId, FlowData $data): Flow
     {
-        return DB::transaction(function () use ($tenantId, $payload) {
+        return DB::transaction(function () use ($tenantId, $data) {
             $flow = Flow::create([
                 'tenant_id' => $tenantId,
-                'name' => $payload['name'],
-                'description' => $payload['description'] ?? null,
+                'name' => $data->name,
+                'description' => $data->description,
             ]);
 
-            $version = $this->createVersion($flow, $payload['version']['definition'] ?? [], (bool) ($payload['publish'] ?? false));
+            $version = $this->createVersion($flow, $data->definition, $data->publish);
 
             if ($version->is_published) {
                 $flow->forceFill(['active_version_id' => $version->id])->save();
@@ -31,16 +33,16 @@ class FlowGraphService
         });
     }
 
-    public function updateFlowWithVersion(Flow $flow, array $payload): Flow
+    public function updateFlowWithVersion(Flow $flow, FlowData $data): Flow
     {
-        return DB::transaction(function () use ($flow, $payload) {
+        return DB::transaction(function () use ($flow, $data) {
             $flow->fill([
-                'name' => $payload['name'] ?? $flow->name,
-                'description' => array_key_exists('description', $payload) ? $payload['description'] : $flow->description,
+                'name' => $data->name,
+                'description' => $data->description,
             ])->save();
 
-            if (isset($payload['version']['definition'])) {
-                $version = $this->createVersion($flow, $payload['version']['definition'], (bool) ($payload['publish'] ?? false));
+            if ($data->definition !== []) {
+                $version = $this->createVersion($flow, $data->definition, $data->publish);
 
                 if ($version->is_published) {
                     $flow->forceFill(['active_version_id' => $version->id])->save();

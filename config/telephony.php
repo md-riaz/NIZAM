@@ -122,4 +122,9 @@ return [
         'profile' => env('FREESWITCH_GATEWAY_PROFILE', 'external'),
         'external_directory' => env('FREESWITCH_GATEWAY_DIRECTORY', storage_path('freeswitch/sip_profiles/external')),
     ],
+
+    'call_delivery' => [
+        'wake_window_seconds' => (int) env('CALL_DELIVERY_WAKE_WINDOW_SECONDS', 30),
+        'pstn_delay_seconds' => (int) env('CALL_DELIVERY_PSTN_DELAY_SECONDS', 8),
+    ],
 ];

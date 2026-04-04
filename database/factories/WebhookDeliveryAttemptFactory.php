@@ -17,7 +17,7 @@ class WebhookDeliveryAttemptFactory extends Factory
     {
         return [
             'webhook_id' => Webhook::factory(),
-            'event_type' => fake()->randomElement(['call.started', 'call.answered', 'call.hangup']),
+            'event_type' => fake()->randomElement(['call.created', 'call.answered', 'call.hangup']),
             'payload' => ['call_uuid' => fake()->uuid(), 'caller' => '+15551234567'],
             'response_status' => 200,
             'response_body' => null,

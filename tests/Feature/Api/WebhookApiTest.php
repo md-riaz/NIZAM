@@ -39,7 +39,7 @@ class WebhookApiTest extends TestCase
         $response = $this->actingAs($this->user, 'sanctum')
             ->postJson("/api/v1/tenants/{$this->tenant->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
-                'events' => ['call.started', 'call.hangup'],
+                'events' => ['call.created', 'call.hangup'],
                 'description' => 'Test webhook',
             ]);
 

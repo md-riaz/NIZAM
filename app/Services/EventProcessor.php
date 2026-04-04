@@ -4,17 +4,33 @@ namespace App\Services;
 
 use App\Events\CallDetailRecordCreated;
 use App\Events\CallEvent;
+use App\Models\CallDeliveryAttempt;
 use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
+use App\Models\CallSession;
+use App\Models\EndpointBinding;
 use App\Models\Tenant;
 use App\Models\UsageRecord;
+use App\Services\Call\CallEventIngestionService;
+use App\Services\Call\CallOfferExecutor;
+use App\Services\Call\CallWinnerService;
+use App\Services\Call\DeliveryPlan;
+use App\Services\Call\DeliveryPlanItem;
+use App\Services\Call\EndpointCandidate;
+use App\Services\Call\ReachabilityCache;
+use App\Services\Call\ReachabilityDecision;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class EventProcessor
 {
     public function __construct(
         protected WebhookDispatcher $webhookDispatcher,
-        protected ?UsageMeteringService $meteringService = null
+        protected ?UsageMeteringService $meteringService = null,
+        protected ?CallEventIngestionService $callEventIngestionService = null,
+        protected ?CallWinnerService $callWinnerService = null,
+        protected ?ReachabilityCache $reachabilityCache = null,
+        protected ?CallOfferExecutor $callOfferExecutor = null,
     ) {}
 
     /**
@@ -41,11 +57,18 @@ class EventProcessor
             return;
         }
 
-        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_CREATED, $this->extractCallData($event));
+        $context = $this->resolveOrchestrationContext($tenantId, $event);
+        $this->markAttemptRinging($context['attempt']);
 
-        CallEvent::dispatch($tenantId, 'started', $data);
-        $this->webhookDispatcher->dispatch($tenantId, 'call.started', $data);
-        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_CREATED, $data);
+        $data = $this->buildEventPayload(
+            $tenantId,
+            CallEventLog::EVENT_CALL_CREATED,
+            $this->augmentCallData($this->extractCallData($event), $context),
+        );
+
+        CallEvent::dispatch($tenantId, CallEventLog::EVENT_CALL_CREATED, $data);
+        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_CALL_CREATED, $data);
+        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_CREATED, $data, $context['call_session']);
 
         Log::debug('Call started', ['uuid' => $data['call_uuid'] ?? 'unknown']);
     }
@@ -57,11 +80,19 @@ class EventProcessor
             return;
         }
 
-        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $this->extractCallData($event));
+        $context = $this->resolveOrchestrationContext($tenantId, $event);
+        $this->markAttemptAnswered($context['attempt']);
+        $this->electWinnerForAnsweredAttempt($context['call_session'], $context['attempt']);
 
-        CallEvent::dispatch($tenantId, 'answered', $data);
-        $this->webhookDispatcher->dispatch($tenantId, 'call.answered', $data);
-        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $data);
+        $data = $this->buildEventPayload(
+            $tenantId,
+            CallEventLog::EVENT_CALL_ANSWERED,
+            $this->augmentCallData($this->extractCallData($event), $context),
+        );
+
+        CallEvent::dispatch($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $data);
+        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $data);
+        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $data, $context['call_session']);
 
         Log::debug('Call answered', ['uuid' => $data['call_uuid'] ?? 'unknown']);
     }
@@ -73,14 +104,31 @@ class EventProcessor
             return;
         }
 
+        $context = $this->resolveOrchestrationContext($tenantId, $event);
         $callData = $this->extractCallData($event);
         $callData['other_leg_uuid'] = $event['Other-Leg-Unique-ID'] ?? '';
+        $callData = $this->augmentCallData($callData, $context);
+
+        $this->persistBridgeContext(
+            $context['call_session'],
+            $context['attempt'],
+            $context['peer_attempt'],
+            $callData['uuid'] ?? null,
+            $callData['other_leg_uuid'] ?: null,
+        );
+        $this->finalizeWinningBridge(
+            $context['call_session'],
+            $context['attempt'],
+            $context['peer_attempt'],
+            $callData['uuid'] ?? null,
+            $callData['other_leg_uuid'] ?: null,
+        );
 
         $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $callData);
 
-        CallEvent::dispatch($tenantId, 'bridge', $data);
-        $this->webhookDispatcher->dispatch($tenantId, 'call.bridge', $data);
-        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $data);
+        CallEvent::dispatch($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $data);
+        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $data);
+        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $data, $context['call_session']);
 
         Log::debug('Call bridged', ['uuid' => $data['call_uuid'] ?? 'unknown', 'other_leg' => $callData['other_leg_uuid']]);
     }
@@ -92,24 +140,25 @@ class EventProcessor
             return;
         }
 
+        $context = $this->resolveOrchestrationContext($tenantId, $event);
         $callData = $this->extractCallData($event);
         $callData['hangup_cause'] = $event['Hangup-Cause'] ?? 'NORMAL_CLEARING';
         $callData['duration'] = (int) ($event['variable_duration'] ?? 0);
         $callData['billsec'] = (int) ($event['variable_billsec'] ?? 0);
+        $callData = $this->augmentCallData($callData, $context);
+
+        $this->finalizeAttemptFromHangup($context['call_session'], $context['attempt'], $callData['hangup_cause']);
+        $this->cleanupWinningHangup($context['call_session'], $context['attempt']);
 
         $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_HANGUP, $callData);
 
-        // Create CDR record
         $this->createCdr($tenantId, $data, $event);
-
-        // Record call minutes for usage metering
         $this->recordCallMinutes($tenantId, $callData['billsec']);
 
-        CallEvent::dispatch($tenantId, 'hangup', $data);
-        $this->webhookDispatcher->dispatch($tenantId, 'call.hangup', $data);
-        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_HANGUP, $data);
+        CallEvent::dispatch($tenantId, CallEventLog::EVENT_CALL_HANGUP, $data);
+        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_CALL_HANGUP, $data);
+        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_HANGUP, $data, $context['call_session']);
 
-        // Check for missed call (no answer)
         if (($callData['hangup_cause'] ?? '') === 'NO_ANSWER') {
             $this->webhookDispatcher->dispatch($tenantId, 'call.missed', $data);
         }
@@ -162,7 +211,7 @@ class EventProcessor
             return;
         }
 
-        $tenant = \App\Models\Tenant::where('domain', $domain)->where('is_active', true)->first();
+        $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
         if (! $tenant) {
             return;
         }
@@ -176,22 +225,28 @@ class EventProcessor
             'action' => $action,
         ];
 
+        $binding = $this->resolveRegistrationBinding($tenant->id, $regData['user']);
+        $this->updateReachabilityFromRegistration($tenant->id, $binding, $regData, $action);
+
+        if ($action === 'registered') {
+            $this->tryLateJoinForRegistration($tenant->id, $binding, $domain, $regData);
+        }
+
         $eventType = $action === 'registered'
             ? CallEventLog::EVENT_DEVICE_REGISTERED
             : CallEventLog::EVENT_DEVICE_UNREGISTERED;
 
-        $data = $this->buildEventPayload($tenant->id, $eventType, $regData);
+        $data = $this->buildEventPayload($tenant->id, $eventType, $regData + [
+            'endpoint_binding_id' => $binding?->id,
+        ]);
 
-        CallEvent::dispatch($tenant->id, $action, $data);
-        $this->webhookDispatcher->dispatch($tenant->id, "registration.{$action}", $data);
+        CallEvent::dispatch($tenant->id, $eventType, $data);
+        $this->webhookDispatcher->dispatch($tenant->id, $eventType, $data);
         $this->recordEvent($tenant->id, $eventType, $data);
 
-        Log::debug("SIP {$action}", ['user' => $regData['user'], 'domain' => $domain]);
+        Log::debug("SIP {$action}", ['user' => $regData['user'], 'domain' => $domain, 'endpoint_binding_id' => $binding?->id]);
     }
 
-    /**
-     * Build an immutable event payload with canonical fields.
-     */
     protected function buildEventPayload(string $tenantId, string $eventType, array $metadata): array
     {
         return [
@@ -204,9 +259,6 @@ class EventProcessor
         ];
     }
 
-    /**
-     * Resolve tenant ID from a FreeSWITCH event.
-     */
     protected function resolveTenantId(array $event): ?string
     {
         $domain = $event['variable_domain_name']
@@ -218,7 +270,7 @@ class EventProcessor
             return null;
         }
 
-        $tenant = \App\Models\Tenant::where('domain', $domain)->where('is_active', true)->first();
+        $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
 
         if (! $tenant || ! $tenant->isOperational()) {
             return null;
@@ -227,9 +279,6 @@ class EventProcessor
         return $tenant->id;
     }
 
-    /**
-     * Extract common call data from event.
-     */
     protected function extractCallData(array $event): array
     {
         return [
@@ -242,14 +291,523 @@ class EventProcessor
     }
 
     /**
-     * Extract RTP quality metrics from a FreeSWITCH hangup event.
+     * @return array{call_session:?CallSession,attempt:?CallDeliveryAttempt,peer_attempt:?CallDeliveryAttempt,caller_leg_uuid:?string}
      */
+    protected function resolveOrchestrationContext(string $tenantId, array $event): array
+    {
+        $legUuid = $event['Unique-ID'] ?? $event['variable_uuid'] ?? null;
+        $otherLegUuid = $event['Other-Leg-Unique-ID'] ?? null;
+        $sessionId = (string) ($event['variable_sip_h_X-Nizam-Call-Session-Id'] ?? $event['sip_h_X-Nizam-Call-Session-Id'] ?? '');
+        $callerLegUuid = $event['variable_nizam_call_uuid'] ?? $event['variable_origination_caller_channel_name'] ?? null;
+
+        $attempt = $this->findAttemptByLegUuid($tenantId, is_string($legUuid) ? $legUuid : null);
+        $peerAttempt = $this->findAttemptByLegUuid($tenantId, is_string($otherLegUuid) ? $otherLegUuid : null);
+
+        $callSession = null;
+
+        if ($sessionId !== '') {
+            $callSession = CallSession::query()
+                ->whereKey($sessionId)
+                ->where('tenant_id', $tenantId)
+                ->first();
+        }
+
+        if (! $callSession && $attempt?->callSession instanceof CallSession) {
+            $callSession = $attempt->callSession;
+        }
+
+        if (! $callSession && $peerAttempt?->callSession instanceof CallSession) {
+            $callSession = $peerAttempt->callSession;
+        }
+
+        if (! $callSession && is_string($callerLegUuid) && $callerLegUuid !== '') {
+            $callSession = CallSession::query()
+                ->where('tenant_id', $tenantId)
+                ->where('call_uuid', $callerLegUuid)
+                ->first();
+        }
+
+        if (! $callSession && is_string($legUuid) && $legUuid !== '') {
+            $callSession = CallSession::query()
+                ->where('tenant_id', $tenantId)
+                ->where('call_uuid', $legUuid)
+                ->first();
+        }
+
+        return [
+            'call_session' => $callSession,
+            'attempt' => $attempt,
+            'peer_attempt' => $peerAttempt,
+            'caller_leg_uuid' => is_string($callerLegUuid) && $callerLegUuid !== '' ? $callerLegUuid : null,
+        ];
+    }
+
+    protected function findAttemptByLegUuid(string $tenantId, ?string $legUuid): ?CallDeliveryAttempt
+    {
+        if (! is_string($legUuid) || $legUuid === '') {
+            return null;
+        }
+
+        return CallDeliveryAttempt::query()
+            ->with('callSession')
+            ->where('freeswitch_leg_uuid', $legUuid)
+            ->whereHas('callSession', function ($query) use ($tenantId): void {
+                $query->where('tenant_id', $tenantId);
+            })
+            ->latest('created_at')
+            ->first();
+    }
+
+    /**
+     * @param  array<string, mixed>  $callData
+     * @param  array{call_session:?CallSession,attempt:?CallDeliveryAttempt,peer_attempt:?CallDeliveryAttempt,caller_leg_uuid:?string}  $context
+     * @return array<string, mixed>
+     */
+    protected function augmentCallData(array $callData, array $context): array
+    {
+        $session = $context['call_session'];
+        $attempt = $context['attempt'];
+        $peerAttempt = $context['peer_attempt'];
+
+        if ($session instanceof CallSession) {
+            $callData['call_session_id'] = $session->id;
+            $callData['orchestration_call_uuid'] = $session->call_uuid;
+        }
+
+        if ($context['caller_leg_uuid']) {
+            $callData['caller_leg_uuid'] = $context['caller_leg_uuid'];
+        }
+
+        if ($attempt instanceof CallDeliveryAttempt) {
+            $callData['delivery_attempt_id'] = $attempt->id;
+            $callData['endpoint_binding_id'] = $attempt->endpoint_binding_id;
+            $callData['delivery_attempt_type'] = $attempt->attempt_type;
+        }
+
+        if ($peerAttempt instanceof CallDeliveryAttempt) {
+            $callData['other_leg_attempt_id'] = $peerAttempt->id;
+            $callData['other_leg_endpoint_binding_id'] = $peerAttempt->endpoint_binding_id;
+            $callData['other_leg_attempt_type'] = $peerAttempt->attempt_type;
+        }
+
+        return $callData;
+    }
+
+    protected function markAttemptRinging(?CallDeliveryAttempt $attempt): void
+    {
+        if (! $attempt instanceof CallDeliveryAttempt) {
+            return;
+        }
+
+        if (! in_array($attempt->status, [
+            CallDeliveryAttempt::STATUS_PLANNED,
+            CallDeliveryAttempt::STATUS_INITIATED,
+        ], true)) {
+            return;
+        }
+
+        $attempt->forceFill([
+            'status' => CallDeliveryAttempt::STATUS_RINGING,
+            'started_at' => $attempt->started_at ?? now(),
+            'failure_reason' => null,
+        ])->save();
+    }
+
+    protected function markAttemptAnswered(?CallDeliveryAttempt $attempt): void
+    {
+        if (! $attempt instanceof CallDeliveryAttempt) {
+            return;
+        }
+
+        if (! in_array($attempt->status, [
+            CallDeliveryAttempt::STATUS_PLANNED,
+            CallDeliveryAttempt::STATUS_INITIATED,
+            CallDeliveryAttempt::STATUS_RINGING,
+        ], true)) {
+            return;
+        }
+
+        $attempt->forceFill([
+            'status' => CallDeliveryAttempt::STATUS_ANSWERED,
+            'answered_at' => $attempt->answered_at ?? now(),
+            'failure_reason' => null,
+        ])->save();
+    }
+
+    protected function finalizeAttemptFromHangup(?CallSession $callSession, ?CallDeliveryAttempt $attempt, string $hangupCause): void
+    {
+        if (! $callSession instanceof CallSession || ! $attempt instanceof CallDeliveryAttempt) {
+            return;
+        }
+
+        if (filled(data_get($callSession->variables, 'winner_attempt_id'))) {
+            return;
+        }
+
+        if (! in_array($attempt->status, CallDeliveryAttempt::ACTIVE_STATUSES, true)) {
+            return;
+        }
+
+        [$status, $failureReason, $metadata] = $this->hangupOutcome($attempt, $hangupCause);
+
+        $attempt->forceFill([
+            'status' => $status,
+            'ended_at' => $attempt->ended_at ?? now(),
+            'failure_reason' => $failureReason,
+            'metadata' => [
+                ...($attempt->metadata ?? []),
+                ...$metadata,
+            ],
+        ])->save();
+    }
+
+    protected function hangupStatus(string $hangupCause): string
+    {
+        return match ($hangupCause) {
+            'NO_ANSWER', 'NO_USER_RESPONSE', 'ALLOTTED_TIMEOUT' => CallDeliveryAttempt::STATUS_TIMED_OUT,
+            'ORIGINATOR_CANCEL', 'LOSE_RACE' => CallDeliveryAttempt::STATUS_CANCELLED,
+            default => CallDeliveryAttempt::STATUS_FAILED,
+        };
+    }
+
+    /**
+     * @return array{0:string,1:string,2:array<string,mixed>}
+     */
+    protected function hangupOutcome(CallDeliveryAttempt $attempt, string $hangupCause): array
+    {
+        if ($this->isAwaitingPstnConfirmation($attempt)) {
+            return [
+                CallDeliveryAttempt::STATUS_FAILED,
+                'confirmation_not_received',
+                [
+                    'awaiting_confirmation' => false,
+                    'confirmation_failed_at' => now()->toIso8601String(),
+                    'confirmation_failure_cause' => $hangupCause,
+                ],
+            ];
+        }
+
+        return [
+            $this->hangupStatus($hangupCause),
+            strtolower($hangupCause),
+            [],
+        ];
+    }
+
+    protected function isAwaitingPstnConfirmation(CallDeliveryAttempt $attempt): bool
+    {
+        return $attempt->attempt_type === CallDeliveryAttempt::TYPE_PSTN
+            && (bool) data_get($attempt->metadata, 'requires_confirmation', false)
+            && (bool) data_get($attempt->metadata, 'awaiting_confirmation', false);
+    }
+
+    protected function persistBridgeContext(
+        ?CallSession $callSession,
+        ?CallDeliveryAttempt $attempt,
+        ?CallDeliveryAttempt $peerAttempt,
+        ?string $bridgeLegUuid,
+        ?string $otherLegUuid,
+    ): void {
+        if (! $callSession instanceof CallSession) {
+            return;
+        }
+
+        $bridgeAttempt = $attempt instanceof CallDeliveryAttempt
+            ? $attempt
+            : ($peerAttempt instanceof CallDeliveryAttempt ? $peerAttempt : null);
+
+        $callSession->forceFill([
+            'variables' => [
+                ...($callSession->variables ?? []),
+                'delivery_bridge_last_event_at' => now()->toIso8601String(),
+                'delivery_bridge_leg_uuid' => $bridgeLegUuid,
+                'delivery_bridge_other_leg_uuid' => $otherLegUuid,
+                'delivery_bridge_attempt_id' => $bridgeAttempt?->id,
+            ],
+        ])->save();
+
+        if (! $bridgeAttempt instanceof CallDeliveryAttempt) {
+            return;
+        }
+
+        $bridgeAttempt->forceFill([
+            'metadata' => [
+                ...($bridgeAttempt->metadata ?? []),
+                'bridge_last_event_at' => now()->toIso8601String(),
+                'bridge_leg_uuid' => $bridgeLegUuid,
+                'bridge_other_leg_uuid' => $otherLegUuid,
+            ],
+        ])->save();
+    }
+
+    protected function electWinnerForAnsweredAttempt(?CallSession $callSession, ?CallDeliveryAttempt $attempt): void
+    {
+        if (! $callSession instanceof CallSession || ! $attempt instanceof CallDeliveryAttempt) {
+            return;
+        }
+
+        if (! in_array($attempt->status, [
+            CallDeliveryAttempt::STATUS_ANSWERED,
+            CallDeliveryAttempt::STATUS_CONFIRMED,
+        ], true)) {
+            return;
+        }
+
+        if (filled(data_get($callSession->variables, 'winner_attempt_id'))) {
+            return;
+        }
+
+        $this->winnerService()->electWinner($callSession, $attempt);
+    }
+
+    protected function finalizeWinningBridge(
+        ?CallSession $callSession,
+        ?CallDeliveryAttempt $attempt,
+        ?CallDeliveryAttempt $peerAttempt,
+        ?string $bridgeLegUuid,
+        ?string $otherLegUuid,
+    ): void {
+        if (! $callSession instanceof CallSession) {
+            return;
+        }
+
+        $winnerAttemptId = data_get($callSession->variables, 'winner_attempt_id');
+
+        if (! filled($winnerAttemptId)) {
+            return;
+        }
+
+        $bridgeAttempt = $attempt instanceof CallDeliveryAttempt
+            ? $attempt
+            : ($peerAttempt instanceof CallDeliveryAttempt ? $peerAttempt : null);
+
+        if (! $bridgeAttempt instanceof CallDeliveryAttempt || $bridgeAttempt->id !== $winnerAttemptId) {
+            return;
+        }
+
+        $callSession->forceFill([
+            'variables' => [
+                ...($callSession->variables ?? []),
+                'winner_bridge_leg_uuid' => $bridgeLegUuid,
+                'winner_bridge_other_leg_uuid' => $otherLegUuid,
+                'winner_bridge_completed_at' => now()->toIso8601String(),
+            ],
+        ])->save();
+
+        $bridgeAttempt->forceFill([
+            'metadata' => [
+                ...($bridgeAttempt->metadata ?? []),
+                'winner_bridge_leg_uuid' => $bridgeLegUuid,
+                'winner_bridge_other_leg_uuid' => $otherLegUuid,
+                'winner_bridge_completed_at' => now()->toIso8601String(),
+            ],
+        ])->save();
+    }
+
+    protected function cleanupWinningHangup(?CallSession $callSession, ?CallDeliveryAttempt $attempt): void
+    {
+        if (! $callSession instanceof CallSession || ! $attempt instanceof CallDeliveryAttempt) {
+            return;
+        }
+
+        $winnerAttemptId = data_get($callSession->variables, 'winner_attempt_id');
+
+        if (! filled($winnerAttemptId) || $winnerAttemptId !== $attempt->id) {
+            return;
+        }
+
+        $attempt->forceFill([
+            'status' => $attempt->status === CallDeliveryAttempt::STATUS_WON ? CallDeliveryAttempt::STATUS_WON : $attempt->status,
+            'ended_at' => $attempt->ended_at ?? now(),
+        ])->save();
+
+        $this->winnerService()->cleanupAfterWinnerHangup($callSession, $attempt);
+
+        $freshSession = $callSession->fresh(['deliveryAttempts']);
+
+        if (! $freshSession instanceof CallSession || $freshSession->activeDeliveryAttempts()->exists()) {
+            return;
+        }
+
+        $freshSession->forceFill([
+            'state' => 'ended',
+            'ended_at' => $freshSession->ended_at ?? now(),
+            'variables' => [
+                ...($freshSession->variables ?? []),
+                'winner_hangup_completed_at' => now()->toIso8601String(),
+            ],
+        ])->save();
+    }
+
+    protected function resolveRegistrationBinding(string $tenantId, string $user): ?EndpointBinding
+    {
+        if ($user === '') {
+            return null;
+        }
+
+        return EndpointBinding::query()
+            ->with(['tenant', 'extension'])
+            ->where('tenant_id', $tenantId)
+            ->where('is_enabled', true)
+            ->whereHas('extension', function ($query) use ($user): void {
+                $query->where('extension', $user)->where('is_active', true);
+            })
+            ->orderByDesc('allow_late_join_after_push')
+            ->orderBy('type')
+            ->first();
+    }
+
+    protected function updateReachabilityFromRegistration(string $tenantId, ?EndpointBinding $binding, array $regData, string $action): void
+    {
+        if (! $binding instanceof EndpointBinding) {
+            return;
+        }
+
+        $candidate = $this->candidateForBinding($binding);
+        $attributes = [
+            'registration_user' => strtolower((string) $regData['user']),
+            'realm' => strtolower((string) $regData['domain']),
+            'contact' => $regData['contact'] ?: null,
+            'user_agent' => $regData['user_agent'] ?: null,
+            'network_ip' => $regData['network_ip'] ?: null,
+        ];
+
+        if ($action === 'registered') {
+            $this->reachabilityCache()->markRegistered($tenantId, $candidate, $attributes);
+            $binding->forceFill(['last_registered_at' => now()])->save();
+
+            return;
+        }
+
+        $this->reachabilityCache()->markUnregistered($tenantId, $candidate, $attributes);
+    }
+
+    protected function tryLateJoinForRegistration(string $tenantId, ?EndpointBinding $binding, string $domain, array $regData): void
+    {
+        if (! $binding instanceof EndpointBinding || ! $binding->allow_late_join_after_push) {
+            return;
+        }
+
+        $sessions = CallSession::query()
+            ->where('tenant_id', $tenantId)
+            ->whereNull('ended_at')
+            ->where(function ($query): void {
+                $query->where('state', 'parked')->orWhere('state', 'bridged');
+            })
+            ->get();
+
+        foreach ($sessions as $callSession) {
+            if (! $this->canLateJoinSession($callSession, $binding)) {
+                continue;
+            }
+
+            $this->originateLateJoinAttempt($callSession, $binding, $domain, $regData);
+        }
+    }
+
+    protected function canLateJoinSession(CallSession $callSession, EndpointBinding $binding): bool
+    {
+        if (filled(data_get($callSession->variables, 'winner_attempt_id'))) {
+            return false;
+        }
+
+        $windowUntil = data_get($callSession->variables, 'delivery_wake_window_until');
+        if (! is_string($windowUntil) || $windowUntil === '') {
+            return false;
+        }
+
+        try {
+            if (Carbon::parse($windowUntil)->isPast()) {
+                return false;
+            }
+        } catch (\Throwable) {
+            return false;
+        }
+
+        $lateJoinBindings = data_get($callSession->variables, 'delivery_late_join_bindings', []);
+        if (! is_array($lateJoinBindings) || ! array_key_exists($binding->id, $lateJoinBindings)) {
+            return false;
+        }
+
+        if (! $callSession->deliveryAttempts()->exists()) {
+            return false;
+        }
+
+        return ! $callSession->deliveryAttempts()
+            ->where('endpoint_binding_id', $binding->id)
+            ->whereIn('attempt_type', [CallDeliveryAttempt::TYPE_SIP, CallDeliveryAttempt::TYPE_LATE_SIP])
+            ->whereIn('status', CallDeliveryAttempt::ACTIVE_STATUSES)
+            ->exists();
+    }
+
+    protected function originateLateJoinAttempt(CallSession $callSession, EndpointBinding $binding, string $domain, array $regData): void
+    {
+        $candidate = $this->candidateForBinding($binding);
+        $windowUntil = data_get($callSession->variables, 'delivery_late_join_bindings.'.$binding->id.'.late_join_window_until')
+            ?? data_get($callSession->variables, 'delivery_wake_window_until');
+
+        $plan = new DeliveryPlan(
+            callSessionId: $callSession->id,
+            wakeWindowSeconds: 0,
+            immediateSipWave: [
+                new DeliveryPlanItem(
+                    candidate: $candidate,
+                    decision: new ReachabilityDecision(
+                        endpointBindingId: $binding->id,
+                        status: ReachabilityDecision::STATUS_ONLINE_SIP,
+                        canRingNow: true,
+                        shouldSendPush: false,
+                        allowLateJoinWindowUntil: is_string($windowUntil) ? $windowUntil : null,
+                        shouldOfferPstn: false,
+                        decisionReason: 'late_join_registration',
+                        metadata: ['source' => 'sofia_register'],
+                    ),
+                    wave: 'late_join',
+                    attemptType: CallDeliveryAttempt::TYPE_LATE_SIP,
+                    lateJoinWindowUntil: is_string($windowUntil) ? $windowUntil : null,
+                    metadata: [
+                        'origin' => 'sofia_register',
+                        'registration_user' => $regData['user'],
+                    ],
+                ),
+            ],
+        );
+
+        $this->callOfferExecutor()->executePlan($plan, [
+            'caller_leg_uuid' => $callSession->call_uuid,
+            'caller_id_name' => (string) data_get($callSession->variables, 'caller_id_name', 'Inbound Call'),
+            'caller_id_number' => (string) data_get($callSession->variables, 'caller_id_number', 'unknown'),
+            'tenant_domain' => $domain,
+        ]);
+    }
+
+    protected function candidateForBinding(EndpointBinding $binding): EndpointCandidate
+    {
+        $extension = $binding->extension;
+        $sipAor = $extension && $binding->tenant?->domain
+            ? sprintf('sip:%s@%s', $extension->extension, $binding->tenant->domain)
+            : null;
+
+        return new EndpointCandidate(
+            endpointBindingId: $binding->id,
+            ownerType: $binding->agent_id ? 'agent' : 'extension',
+            ownerId: $binding->agent_id ?: (string) $binding->extension_id,
+            candidateType: $binding->type,
+            sipAor: $sipAor,
+            pushCapable: $binding->is_push_capable && $binding->hasPushTokenMaterial(),
+            allowLateJoinAfterPush: $binding->allow_late_join_after_push,
+            forwardNumber: $binding->type === EndpointBinding::TYPE_PSTN_FORWARD ? $binding->forward_number : null,
+            forwardRequiresConfirm: $binding->type === EndpointBinding::TYPE_PSTN_FORWARD ? $binding->forward_requires_confirm : false,
+            priority: 0,
+            sourcePath: [['type' => 'registration', 'id' => $binding->id]],
+        );
+    }
+
     protected function extractQualityMetrics(array $event): array
     {
         $rtpQuality = $event['variable_rtp_audio_in_quality_percentage'] ?? null;
         $mosScore = $event['variable_rtp_audio_in_mos'] ?? null;
 
-        // Derive packet loss from FreeSWITCH RTP stats
         $packetsReceived = (int) ($event['variable_rtp_audio_in_packet_count'] ?? 0);
         $packetsLost = (int) ($event['variable_rtp_audio_in_skip_packet_count'] ?? 0);
         $packetLoss = ($packetsReceived + $packetsLost) > 0
@@ -268,18 +826,13 @@ class EventProcessor
         ];
     }
 
-    /**
-     * Classify the call type based on direction and context.
-     */
     protected function classifyCallType(array $event, string $direction): ?string
     {
-        // Conference detection
         $appName = $event['variable_current_application'] ?? '';
         if ($appName === 'conference') {
             return 'conference';
         }
 
-        // Internal call detection: same domain on both legs
         $callerDomain = $event['variable_domain_name'] ?? '';
         $destDomain = $event['variable_dialed_domain'] ?? '';
         if ($callerDomain && $destDomain && $callerDomain === $destDomain) {
@@ -293,9 +846,6 @@ class EventProcessor
         };
     }
 
-    /**
-     * Create a CDR from hangup event.
-     */
     protected function createCdr(string $tenantId, array $data, array $event): void
     {
         try {
@@ -332,36 +882,64 @@ class EventProcessor
                 'latency' => $qualityMetrics['latency'],
             ]);
 
-            // Dispatch event for asynchronous enrichment
             CallDetailRecordCreated::dispatch($cdr);
         } catch (\Exception $e) {
             Log::error('Failed to create CDR', ['error' => $e->getMessage(), 'uuid' => $data['call_uuid'] ?? 'unknown']);
         }
     }
 
-
-    /**
-     * Persist a call event for replay/audit.
-     */
-    protected function recordEvent(string $tenantId, string $eventType, array $data): void
+    protected function recordEvent(string $tenantId, string $eventType, array $data, ?CallSession $callSession = null): void
     {
         try {
+            $tenant = Tenant::find($tenantId);
+
+            if ($tenant) {
+                $this->eventIngestionService()->ingest(
+                    $tenant,
+                    $eventType,
+                    (string) ($data['call_uuid'] ?? $data['uuid'] ?? $data['user'] ?? ''),
+                    $data,
+                    $callSession,
+                );
+
+                return;
+            }
+
             CallEventLog::create([
+                'call_session_id' => $callSession?->id,
                 'tenant_id' => $tenantId,
                 'call_uuid' => $data['call_uuid'] ?? $data['uuid'] ?? $data['user'] ?? '',
                 'event_type' => $eventType,
                 'payload' => $data,
                 'schema_version' => CallEventLog::SCHEMA_VERSION,
                 'occurred_at' => now(),
+                'received_at' => now(),
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to record call event', ['error' => $e->getMessage(), 'event_type' => $eventType]);
         }
     }
 
-    /**
-     * Record call minutes for usage metering.
-     */
+    protected function eventIngestionService(): CallEventIngestionService
+    {
+        return $this->callEventIngestionService ??= app(CallEventIngestionService::class);
+    }
+
+    protected function winnerService(): CallWinnerService
+    {
+        return $this->callWinnerService ??= app(CallWinnerService::class);
+    }
+
+    protected function reachabilityCache(): ReachabilityCache
+    {
+        return $this->reachabilityCache ??= app(ReachabilityCache::class);
+    }
+
+    protected function callOfferExecutor(): CallOfferExecutor
+    {
+        return $this->callOfferExecutor ??= app(CallOfferExecutor::class);
+    }
+
     protected function recordCallMinutes(string $tenantId, int $billsec): void
     {
         if ($billsec <= 0 || ! $this->meteringService) {

@@ -191,7 +191,7 @@ class PolicyTest extends TestCase
         $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
         $webhook = $tenant->webhooks()->create([
             'url' => 'https://example.com/webhook',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'secret' => 'test-secret',
         ]);
 
@@ -206,7 +206,7 @@ class PolicyTest extends TestCase
         $user = User::factory()->create(['tenant_id' => $tenantA->id, 'role' => 'user']);
         $webhook = $tenantB->webhooks()->create([
             'url' => 'https://example.com/webhook',
-            'events' => ['call.started'],
+            'events' => ['call.created'],
             'secret' => 'test-secret',
         ]);
 

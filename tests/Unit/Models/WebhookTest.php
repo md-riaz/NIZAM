@@ -18,7 +18,7 @@ class WebhookTest extends TestCase
         $webhook = Webhook::factory()->create([
             'tenant_id' => $tenant->id,
             'url' => 'https://example.com/webhook',
-            'events' => ['call.started', 'call.hangup'],
+            'events' => ['call.created', 'call.hangup'],
             'is_active' => true,
         ]);
 
@@ -49,11 +49,11 @@ class WebhookTest extends TestCase
     public function test_events_is_cast_to_array(): void
     {
         $webhook = Webhook::factory()->create([
-            'events' => ['call.started', 'call.hangup'],
+            'events' => ['call.created', 'call.hangup'],
         ]);
 
         $webhook->refresh();
         $this->assertIsArray($webhook->events);
-        $this->assertEquals(['call.started', 'call.hangup'], $webhook->events);
+        $this->assertEquals(['call.created', 'call.hangup'], $webhook->events);
     }
 }

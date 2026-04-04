@@ -12,7 +12,7 @@ class CallEventBroadcastTest extends TestCase
     {
         $event = new CallEvent(
             tenantId: 'tenant-123',
-            eventType: 'started',
+            eventType: 'call.created',
             data: ['uuid' => 'call-456']
         );
 
@@ -27,7 +27,7 @@ class CallEventBroadcastTest extends TestCase
     {
         $event = new CallEvent(
             tenantId: 'tenant-123',
-            eventType: 'hangup',
+            eventType: 'call.hangup',
             data: ['uuid' => 'call-456']
         );
 
