@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Data\FlowData;
 use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Flow;
@@ -120,7 +121,7 @@ class GraphFlowDemoSeeder extends Seeder
         );
 
         if (! $flow->versions()->exists()) {
-            app(FlowGraphService::class)->updateFlowWithVersion($flow, [
+            app(FlowGraphService::class)->updateFlowWithVersion($flow, FlowData::fromArray([
                 'name' => $flow->name,
                 'description' => $flow->description,
                 'publish' => true,
@@ -147,7 +148,7 @@ class GraphFlowDemoSeeder extends Seeder
                         ],
                     ],
                 ],
-            ]);
+            ]));
 
             $flow->fresh(['activeVersion']);
         }

@@ -1,5 +1,24 @@
 # Call Delivery Orchestration Todo
 
+## README storage sizing and Docker host deployment plan
+- [x] Review current README, Docker compose files, and deployment assumptions → Verify: storage estimate inputs and current-host deploy path are grounded in repo config
+- [x] Update README with a disk footprint section that breaks down Laravel, FreeSWITCH, PostgreSQL, Redis, logs, recordings, and Docker volumes → Verify: README includes concrete sizing guidance for small, medium, and recording-heavy installs
+- [x] Deploy the Docker stack on the current host and verify container status and health → Verify: `docker compose` stack starts or deployment blockers are documented accurately in the review notes
+- [x] Repair the persisted Docker PostgreSQL state so the stack reaches a healthy application state → Verify: app can authenticate to Postgres, queue stops restarting, and health endpoint no longer reports DB/cache errors
+- [x] Capture final deployment verification in the review section → Verify: task outcome, recovery path, and remaining caveats are documented
+
+### README storage sizing and Docker host deployment review
+- Added a new README section that estimates the platform footprint by major area: Laravel app image and storage, FreeSWITCH image and runtime data, PostgreSQL, Redis, Docker overhead, and recordings.
+- Added a current-host Docker deployment section to README with the exact environment variables to set, build and start commands, verification commands, and notes about host port conflicts.
+- Fixed a real frontend build blocker in `resources/css/communications-tokens.css` by removing an extra closing brace that caused `npm run build` and the Docker app image build to fail.
+- Made FreeSWITCH published host ports configurable in `docker-compose.telephony.yml` using `FREESWITCH_SIP_PORT`, `FREESWITCH_EXTERNAL_SIP_PORT`, `FREESWITCH_WSS_PORT`, and `FREESWITCH_RTP_PORT_RANGE`, then updated README to document those overrides.
+- On this host, the original FreeSWITCH published ports were blocked, so the stack was brought up using alternate host ports: SIP `25060`, external SIP `25080`, WSS `17443`, RTP `20000-20100`.
+- Current deployment state on this host: `app`, `nginx`, `freeswitch`, `scheduler`, `postgres`, `redis`, `esl-listener`, `sip-mock`, `queue`, and `certbot` are up, and the health endpoint now reports `healthy`.
+- Verified root cause of the remaining deployment blocker: the persisted Docker volume `nizam_postgres_data` contained an older PostgreSQL cluster with no `communications` role, so the app failed with `Role "communications" does not exist` and `password authentication failed for user "communications"`.
+- Recovery performed: backed up the existing Postgres volume to `nizam_postgres_data_backup_2026-04-04_0545utc.tgz`, removed only `nizam_postgres_data`, let Docker initialize a fresh cluster with the configured `communications` database and user, then ran `php artisan migrate --force`.
+- A second issue surfaced during seeding: `GraphFlowDemoSeeder` was passing a raw array into `FlowGraphService::updateFlowWithVersion()`, which now requires `App\Data\FlowData`. Fixed the seeder to call `FlowData::fromArray(...)`, reran `php artisan db:seed --force`, and seeding completed successfully.
+- Final verification on this host: `docker compose ps` shows the stack stable, queue is no longer restarting, and `curl http://localhost:8231/api/v1/health` returns `{"status":"healthy"...}`.
+
 ## Full System Alignment Audit Plan
 - [x] Map database schema hotspots across call, queue, flow, tenant, and webhook tables → Verify: critical migrations and indexes reviewed
 - [x] Audit model relationships and tenant scoping for eager loading, N+1, and DB alignment → Verify: key Eloquent models and relationships reviewed

@@ -449,6 +449,122 @@ The API will be available at `http://localhost:8231/api/v1` by default.
 | `REDIS_HOST` | `127.0.0.1` | Redis host |
 | `REDIS_PASSWORD` | blank | Leave blank for local Docker. Set a real password in production |
 
+#### Estimated Disk Footprint
+
+The exact footprint depends mostly on call recordings and CDR retention, but the Docker stack is predictable enough to budget up front.
+
+##### Base platform footprint before call recordings
+
+| Component | What it stores | Typical size on disk |
+|----------|----------------|----------------------|
+| Laravel app image | PHP 8.3, Composer deps, Node build output, app code | ~0.8 to 1.5 GB |
+| FreeSWITCH image | FreeSWITCH 1.10 build, sounds, modules, runtime libs | ~1.5 to 2.5 GB |
+| PostgreSQL image + data volume | PostgreSQL engine plus schema and app data | ~0.3 GB image + 0.5 to 5 GB data |
+| Redis image + data volume | Redis engine plus cache, sessions, queue state | ~0.05 GB image + 0.1 to 1 GB data |
+| Nginx image | Reverse proxy only | ~0.05 GB |
+| Laravel logs and app storage | `storage/logs`, exports, generated files | ~0.1 to 1 GB |
+| FreeSWITCH logs and runtime files | FreeSWITCH logs, runtime state, generated XML | ~0.1 to 1 GB |
+| Docker overhead and named volumes | local layer cache and volume metadata | ~0.5 to 2 GB |
+
+That puts a fresh non-recording deployment at roughly:
+
+- small lab or dev host: 4 to 7 GB
+- small production host with history retained: 6 to 12 GB
+- safer minimum host disk budget: 20 GB
+- recommended production disk budget: 40 GB or more
+
+##### Recordings are the real storage driver
+
+If call recording is enabled, `storage/app` becomes the dominant consumer.
+
+| Recording profile | Estimated extra disk |
+|------------------|----------------------|
+| light usage or short retention | 5 to 20 GB |
+| moderate production | 20 to 100 GB |
+| heavy recording retention | 100 GB+ |
+
+Practical rule: size the base platform first, then add recording retention separately. If you keep long-term recordings, plan object storage or a dedicated archive policy instead of relying only on the app host disk.
+
+##### Per-area breakdown for planning
+
+- FreeSWITCH: usually 1.5 to 3.5 GB including image, sounds, modules, logs, and runtime data
+- Laravel app: usually 1 to 2 GB including image layers, vendor dependencies, built frontend assets, and logs
+- PostgreSQL: starts small, but CDRs, events, audit logs, queue tables, and tenant data will steadily grow; 5 to 20 GB is a sensible early production budget
+- Redis: generally small unless you retain a lot of transient data; usually under 1 GB
+- Certbot and TLS material: usually well under 0.5 GB
+- Recordings: unbounded relative to the rest of the stack, so treat them as a separate capacity plan
+
+#### Deploy on the Current Host with Docker
+
+If this host already has Docker and Docker Compose available, this is the shortest production-style path.
+
+##### 1. Prepare the environment
+
+```bash
+cp .env.example .env
+```
+
+Set these before first boot:
+
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_URL=https://your-domain`
+- `APP_PORT=8231` or another host port if needed
+- `APP_KEY=base64:...`
+- `DB_PASSWORD=` strong password
+- `REDIS_PASSWORD=` strong password
+- `FREESWITCH_ESL_PASSWORD=` strong password
+- `FREESWITCH_SIP_PORT=5060` unless the host already uses it
+- `FREESWITCH_EXTERNAL_SIP_PORT=5080` unless the host already uses it
+- `FREESWITCH_WSS_PORT=7443` unless the host already uses it
+- `FREESWITCH_RTP_PORT_RANGE=16384-16484` unless the host already uses it
+- `ADMIN_EMAIL=` desired bootstrap admin email
+- `ADMIN_PASSWORD=` desired bootstrap admin password
+
+Generate an app key if needed:
+
+```bash
+docker run --rm -v "$PWD":/app -w /app php:8.3-alpine php artisan key:generate --show
+```
+
+##### 2. Build and start the stack
+
+```bash
+docker compose up -d --build
+```
+
+##### 3. Initialize the database
+
+```bash
+docker compose exec app php artisan migrate --force
+docker compose exec app php artisan db:seed --force
+```
+
+##### 4. Verify the deployment
+
+```bash
+docker compose ps
+curl http://localhost:8231/api/v1/health
+```
+
+##### 5. Useful operational checks
+
+```bash
+docker compose logs -f nginx
+docker compose logs -f app
+docker compose logs -f freeswitch
+docker compose logs -f esl-listener
+```
+
+##### Notes for real production hosts
+
+- The compose stack publishes SIP, WSS, and RTP directly from the FreeSWITCH container, so the host firewall and cloud security group need to allow the required ports.
+- If the host already uses `5060`, `5080`, `7443`, or the RTP range, set `FREESWITCH_SIP_PORT`, `FREESWITCH_EXTERNAL_SIP_PORT`, `FREESWITCH_WSS_PORT`, or `FREESWITCH_RTP_PORT_RANGE` in `.env` before starting the stack.
+- Keep `8021` internal only. FreeSWITCH ESL should not be exposed publicly.
+- `postgres` and `redis` are bound to `127.0.0.1` in the compose file, which is good for a single-host deployment.
+- For long-term production, recordings should be rotated or offloaded. They will outgrow the rest of the platform quickly.
+- If this machine already runs another reverse proxy, map `APP_PORT` differently and terminate TLS there, or adapt the nginx service accordingly.
+
 ### Option C — Local dev (no Docker)
 
 ```bash
