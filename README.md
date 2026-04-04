@@ -408,15 +408,14 @@ The API will be available at `http://localhost:8231/api/v1` by default.
 
 | Service | Container | Port | Description |
 |---------|-----------|------|-------------|
-| **app** | `communications-platform-app` | — | PHP-FPM application |
-| **nginx** | `communications-platform-nginx` | `8231` | Web server (reverse proxy) |
-| **postgres** | `communications-platform-postgres` | `5432` | PostgreSQL database |
-| **redis** | `communications-platform-redis` | `6379` | Cache and queue broker |
-| **freeswitch** | `communications-platform-freeswitch` | `5060` (SIP), `7443` (WSS) | Media engine (SIP + WebRTC) |
-| **queue** | `communications-platform-queue` | — | Queue worker (webhook delivery, async jobs) |
-| **scheduler** | `communications-platform-scheduler` | — | Periodic task runner |
-| **esl-listener** | `communications-platform-esl-listener` | — | FreeSWITCH event listener |
-| **sip-mock** | `communications-platform-sip-mock` | `5070/udp` (internal) | Local SIP registrar for repeatable gateway registration tests |
+| **app** | `app` | — | PHP-FPM application |
+| **nginx** | `nginx` | `8231` | Web server (reverse proxy) |
+| **postgres** | `postgres` | `5432` | PostgreSQL database |
+| **redis** | `redis` | `6379` | Cache and queue broker |
+| **freeswitch** | `freeswitch` | `5060` (SIP), `7443` (WSS) | Media engine (SIP + WebRTC) |
+| **queue** | `queue` | — | Queue worker (webhook delivery, async jobs) |
+| **scheduler** | `scheduler` | — | Periodic task runner |
+| **esl-listener** | `esl-listener` | — | FreeSWITCH event listener |
 
 #### Environment Variables
 
@@ -448,6 +447,8 @@ The API will be available at `http://localhost:8231/api/v1` by default.
 | `FREESWITCH_LOG_PATH` | `/var/log/freeswitch/freeswitch.log` | FreeSWITCH log path used by the admin log viewer |
 | `REDIS_HOST` | `127.0.0.1` | Redis host |
 | `REDIS_PASSWORD` | blank | Leave blank for local Docker. Set a real password in production |
+
+On first boot, Docker initializes PostgreSQL with `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` from `.env`. If you change those values later, you must either recreate the Postgres volume or update the database role and password inside the existing cluster.
 
 #### Estimated Disk Footprint
 

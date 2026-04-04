@@ -6,7 +6,7 @@
 .PHONY: help setup up down restart build rebuild logs shell \
         migrate seed key-generate sync-permissions \
         test lint fix queue-restart esl-restart status health \
-        openapi-validate postman-generate api-docs sip-mock-up sip-mock-logs \
+        openapi-validate postman-generate api-docs \
         backup-db restore-db clean
 
 COMPOSE    := docker compose
@@ -79,12 +79,6 @@ postman-generate: ## Regenerate docs/postman-collection.json from docs/openapi.y
 
 api-docs: openapi-validate postman-generate ## Validate OpenAPI and regenerate Postman collection
 
-sip-mock-up: ## Start local SIP mock registrar for gateway testing
-	docker compose up -d sip-mock
-
-sip-mock-logs: ## Tail SIP mock logs
-	docker compose logs -f --tail=100 sip-mock
-
 # ────────────────────────────────────────────────────────────────────
 # Application management
 # ────────────────────────────────────────────────────────────────────
@@ -156,7 +150,7 @@ backup-db: ## Dump the PostgreSQL database to ./backups/
 	  | gzip > backups/nizam_$$(date +%Y%m%d_%H%M%S).sql.gz
 	@echo "Backup saved to backups/"
 
-restore-db: ## Restore from a .sql.gz file: make restore-db F=backups/nizam_20260228.sql.gz
+restore-db: ## Restore from a .sql.gz file: make restore-db F=backups/communications_20260228.sql.gz
 	@[ -n "$(F)" ] || { echo "Usage: make restore-db F=<file.sql.gz>"; exit 1; }
 	gunzip -c $(F) | $(COMPOSE) exec -T postgres psql -U $${DB_USERNAME:-nizam} $${DB_DATABASE:-nizam}
 

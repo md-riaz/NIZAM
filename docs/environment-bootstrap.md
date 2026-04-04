@@ -62,15 +62,16 @@ This starts the local development stack:
 
 | Container | Service | Port |
 |-----------|---------|------|
-| `communications-platform-app` | PHP-FPM (Laravel) | — |
-| `communications-platform-nginx` | Web server | `8231` |
-| `communications-platform-postgres` | PostgreSQL | `5432` |
-| `communications-platform-redis` | Redis | `6379` |
-| `communications-platform-freeswitch` | FreeSWITCH | `5060` (SIP), `7443` (WSS) |
-| `communications-platform-queue` | Queue worker | — |
-| `communications-platform-scheduler` | Task scheduler | — |
-| `communications-platform-esl-listener` | FreeSWITCH event listener | — |
-| `communications-platform-sip-mock` | SIP mock registrar | `5070/udp` (internal) |
+| `app` | PHP-FPM (Laravel) | — |
+| `nginx` | Web server | `8231` |
+| `postgres` | PostgreSQL | `5432` |
+| `redis` | Redis | `6379` |
+| `freeswitch` | FreeSWITCH | `5060` (SIP), `7443` (WSS) |
+| `queue` | Queue worker | — |
+| `scheduler` | Task scheduler | — |
+| `esl-listener` | FreeSWITCH event listener | — |
+
+On first boot, the `postgres` container creates the database and login from `.env` using `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`. If you change those values later, recreate the Postgres volume or update the existing role and password inside the running cluster.
 
 ### 4. Initialize Application
 
@@ -263,7 +264,7 @@ vendor/bin/pint           # or: make fix
 make backup-db
 
 # Manual
-docker compose exec postgres pg_dump -U nizam nizam > backup_$(date +%Y%m%d_%H%M%S).sql
+docker compose exec postgres pg_dump -U communications communications > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 ### Database Restore
@@ -273,7 +274,7 @@ docker compose exec postgres pg_dump -U nizam nizam > backup_$(date +%Y%m%d_%H%M
 make restore-db F=backups/nizam_20260101.sql.gz
 
 # Manual
-gunzip -c backup_20260101.sql.gz | docker compose exec -T postgres psql -U nizam nizam
+gunzip -c backup_20260101.sql.gz | docker compose exec -T postgres psql -U communications communications
 ```
 
 ### FreeSWITCH Config Backup
@@ -290,5 +291,5 @@ Add to your crontab or task scheduler:
 
 ```bash
 # Daily database backup at 2:00 AM, keep 7 days
-0 2 * * * cd /path/to/nizam && docker compose exec -T postgres pg_dump -U nizam nizam | gzip > backups/nizam_$(date +\%Y\%m\%d).sql.gz 2>> backups/backup.log && find backups/ -name "*.sql.gz" -mtime +7 -delete || echo "[$(date)] Backup failed" >> backups/backup.log
+0 2 * * * cd /path/to/nizam && docker compose exec -T postgres pg_dump -U communications communications | gzip > backups/communications_$(date +\%Y\%m\%d).sql.gz 2>> backups/backup.log && find backups/ -name "*.sql.gz" -mtime +7 -delete || echo "[$(date)] Backup failed" >> backups/backup.log
 ```

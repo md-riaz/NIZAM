@@ -5,3 +5,4 @@
 - When the user explicitly asks for spec mode on broad architectural work, create the spec artifacts first and stop at the implementation gate for plan verification before editing application code.
 - When the user says the project is not live and compatibility does not matter, prefer direct normalization over compatibility layers or alias-heavy migrations.
 - When the user asks for a dedicated read model in this repo, do not stop at extracting a read service boundary; finish the persisted or projection-backed read path if live-query debt still remains.
+- When the user corrects Docker naming or deployment direction, update `tasks/lessons.md` immediately and normalize compose, docs, and operational helpers together so runtime names, backup commands, and first-boot credential docs do not drift.

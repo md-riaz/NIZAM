@@ -86,7 +86,7 @@ That means:
 ### Notes
 - `8021` must **not** be exposed publicly.
 - If you deploy behind NAT, you must set the FreeSWITCH external SIP/RTP IP values correctly.
-- If you want local SIP trunk testing without a real carrier, use the separate `docs/sip-mock-testing.md` workflow in Docker/dev. Bare metal here is the production-style install path.
+- This guide assumes real SIP credentials and production-style trunk testing, not a local mock registrar.
 
 ---
 
@@ -184,11 +184,13 @@ sudo systemctl start postgresql
 
 ### Create DB and user
 
+Use the same credentials the app expects in `.env` so Docker, bare metal, and operator docs stay aligned:
+
 ```bash
 sudo -u postgres psql <<'SQL'
-CREATE USER nizam WITH PASSWORD 'change_me_now';
-CREATE DATABASE nizam OWNER nizam;
-GRANT ALL PRIVILEGES ON DATABASE nizam TO nizam;
+CREATE USER communications WITH PASSWORD 'change_me_now';
+CREATE DATABASE communications OWNER communications;
+GRANT ALL PRIVILEGES ON DATABASE communications TO communications;
 SQL
 ```
 
@@ -295,8 +297,8 @@ APP_URL=https://your-domain.example.com
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_DATABASE=nizam
-DB_USERNAME=nizam
+DB_DATABASE=communications
+DB_USERNAME=communications
 DB_PASSWORD=change_me_now
 
 SESSION_DRIVER=database
@@ -743,5 +745,4 @@ So this install guide assumes the current bridge/gateway-era backend, not the ol
 - [docs/environment-bootstrap.md](environment-bootstrap.md)
 - [docs/deployment-scaling.md](deployment-scaling.md)
 - [docs/api-reference.md](api-reference.md)
-- [docs/sip-mock-testing.md](sip-mock-testing.md)
 - [install.sh](../install.sh)

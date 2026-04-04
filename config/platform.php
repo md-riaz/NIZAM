@@ -2,17 +2,17 @@
 
 return [
     'name' => env('APP_NAME', 'Communications Platform'),
-    'slug' => 'communications-platform',
+    'slug' => 'platform',
 
     'ui' => [
-        'theme_storage_key' => 'communications-platform-theme',
+        'theme_storage_key' => 'platform-theme',
     ],
 
     'webhooks' => [
-        'signature_header_prefix' => 'X-Communications-Platform',
+        'signature_header_prefix' => 'X-Platform',
     ],
 
     'docker' => [
-        'certbot_container' => 'communications-platform-certbot',
+        'certbot_container' => 'certbot',
     ],
 ];

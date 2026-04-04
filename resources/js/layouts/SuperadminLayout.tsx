@@ -128,7 +128,7 @@ export default function SuperadminLayout() {
         const next = !isDark;
         setIsDark(next);
         document.documentElement.classList.toggle('dark', next);
-        const themeKey = 'communications-platform-theme';
+        const themeKey = 'platform-theme';
         localStorage.setItem(themeKey, next ? 'dark' : 'light');
     };
 

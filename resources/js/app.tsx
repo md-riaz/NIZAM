@@ -136,7 +136,7 @@ function App() {
 
 const rootEl = document.getElementById('app');
 if (rootEl) {
-    const themeKey = 'communications-platform-theme';
+    const themeKey = 'platform-theme';
     const storedTheme = localStorage.getItem(themeKey);
     if (storedTheme === 'dark') {
         document.documentElement.classList.add('dark');

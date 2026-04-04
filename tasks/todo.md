@@ -1,5 +1,19 @@
 # Call Delivery Orchestration Todo
 
+## Docker naming and service cleanup plan
+- [x] Remove Docker runtime naming prefixes and switch to generic identifiable service, image, and network names → Verify: compose config no longer emits `communications-platform-` runtime names
+- [x] Remove the `sip-mock` service and related assets/docs because deployment will use real SIP credentials → Verify: no compose service or README bootstrap path still depends on `sip-mock`
+- [x] Clarify first-boot PostgreSQL credential behavior so Docker initialization and app env stay aligned → Verify: compose/env/docs describe the same DB credential contract for fresh volumes
+- [x] Validate touched Docker/config/docs files and capture review notes → Verify: compose config resolves cleanly and diagnostics pass for edited code/config files
+
+### Docker naming and service cleanup review
+- Simplified Docker runtime naming by switching service image tags to `php-app`, shortening container names to `app`, `nginx`, `postgres`, `redis`, `queue`, `scheduler`, `freeswitch`, `esl-listener`, and `certbot`, and renaming the Docker network to `app-net`.
+- Removed the `sip-mock` service from `docker-compose.telephony.yml`, removed Makefile shortcuts that depended on it, and updated docs to assume real SIP credentials instead of the mock registrar workflow.
+- Deleted stale `sip-mock` implementation and documentation assets so future operators do not follow a fake-carrier path by mistake.
+- Aligned operational helpers and docs with the current app env defaults by changing Docker backup and restore examples from `nizam` to `communications` and documenting that first-boot PostgreSQL initialization uses `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` from `.env`.
+- Normalized platform-level runtime identifiers used by the app by changing the theme storage key to `platform-theme`, the webhook signature prefix to `X-Platform`, and the Docker certbot container reference to `certbot`.
+- This change updates runtime resource names. Existing old containers, networks, or Postgres volumes created under prior naming may still need a one-time manual cleanup with `docker compose down -v --remove-orphans` before bringing the refreshed stack back up.
+
 ## README storage sizing and Docker host deployment plan
 - [x] Review current README, Docker compose files, and deployment assumptions → Verify: storage estimate inputs and current-host deploy path are grounded in repo config
 - [x] Update README with a disk footprint section that breaks down Laravel, FreeSWITCH, PostgreSQL, Redis, logs, recordings, and Docker volumes → Verify: README includes concrete sizing guidance for small, medium, and recording-heavy installs
