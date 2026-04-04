@@ -36,7 +36,7 @@ services:
       - CACHE_STORE=${CACHE_STORE:-database}
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
     healthcheck:
-      test: ["CMD", "php", "-r", "exit(0);"]
+      test: ["CMD-SHELL", "netstat -lnt | grep -q ':9000 '"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -21,7 +21,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "  NIZAM — available make targets"
 	@echo ""
-	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  \033[36m%-22s\033[0m %s\n", $1, $2 }' $(MAKEFILE_LIST)
 	@echo ""
 
 # ────────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ setup: ## First-time setup: copy .env, start services, migrate
 	@$(COMPOSE) exec -T app php -r "exit(0);" 2>/dev/null || sleep 10
 	$(ARTISAN) migrate --force
 	@echo ""
-	@echo "  Setup complete. API → http://localhost:$${APP_PORT:-8231}/api/v1/health"
+	@echo "  Setup complete. API → http://localhost:${APP_PORT:-8231}/api/v1/health"
 	@echo "  Run 'make seed' to load demo data."
 	@echo ""
 
@@ -68,8 +68,8 @@ status: ## Show running container status
 	$(COMPOSE) ps
 
 health: ## Hit the health endpoint and pretty-print JSON
-	@curl -s http://localhost:$${APP_PORT:-8231}/api/v1/health | python3 -m json.tool 2>/dev/null \
-	  || curl -s http://localhost:$${APP_PORT:-8231}/api/v1/health
+	@curl -s http://localhost:${APP_PORT:-8231}/api/v1/health | python3 -m json.tool 2>/dev/null \
+	  || curl -s http://localhost:${APP_PORT:-8231}/api/v1/health
 
 openapi-validate: ## Validate docs/openapi.yaml
 	node validate-openapi.js
@@ -96,8 +96,8 @@ seed: ## Seed demo data
 	$(ARTISAN) db:seed
 
 key-generate: ## Generate APP_KEY and write it to .env
-	@KEY=$$($(APP) php artisan key:generate --show --no-ansi); \
-	  sed -i "s|^APP_KEY=.*|APP_KEY=$$KEY|" .env; \
+	@KEY=$($(APP) php artisan key:generate --show --no-ansi); \
+	  sed -i "s|^APP_KEY=.*|APP_KEY=$KEY|" .env; \
 	  echo "APP_KEY updated in .env"
 
 sync-permissions: ## Sync API permissions from code to database
@@ -146,13 +146,13 @@ fix: ## Auto-fix code style (Pint)
 
 backup-db: ## Dump the PostgreSQL database to ./backups/
 	@mkdir -p backups
-	$(COMPOSE) exec -T postgres pg_dump -U $${DB_USERNAME:-nizam} $${DB_DATABASE:-nizam} \
-	  | gzip > backups/nizam_$$(date +%Y%m%d_%H%M%S).sql.gz
+	$(COMPOSE) exec -T postgres pg_dump -U ${DB_USERNAME:-communications} ${DB_DATABASE:-communications} \
+	  | gzip > backups/communications_$(date +%Y%m%d_%H%M%S).sql.gz
 	@echo "Backup saved to backups/"
 
 restore-db: ## Restore from a .sql.gz file: make restore-db F=backups/communications_20260228.sql.gz
 	@[ -n "$(F)" ] || { echo "Usage: make restore-db F=<file.sql.gz>"; exit 1; }
-	gunzip -c $(F) | $(COMPOSE) exec -T postgres psql -U $${DB_USERNAME:-nizam} $${DB_DATABASE:-nizam}
+	gunzip -c $(F) | $(COMPOSE) exec -T postgres psql -U ${DB_USERNAME:-communications} ${DB_DATABASE:-communications}
 
 # ────────────────────────────────────────────────────────────────────
 # Cleanup

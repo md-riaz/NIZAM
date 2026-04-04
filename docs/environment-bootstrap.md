@@ -271,7 +271,7 @@ docker compose exec postgres pg_dump -U communications communications > backup_$
 
 ```bash
 # Via make
-make restore-db F=backups/nizam_20260101.sql.gz
+make restore-db F=backups/communications_20260101.sql.gz
 
 # Manual
 gunzip -c backup_20260101.sql.gz | docker compose exec -T postgres psql -U communications communications

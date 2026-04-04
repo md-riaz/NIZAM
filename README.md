@@ -138,7 +138,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Shared generated gateway config mounted into FreeSWITCH external profile includes
 - Bridge objects for reusable outbound targets
 - Bridge destinations supported across DIDs, routing policies, time conditions, IVR timeout routing, and ring-group fallbacks
-- Built-in SIP mock registrar for repeatable local trunk-registration testing without real carrier credentials
+- Designed for real SIP gateway credentials and production-style trunk testing instead of a bundled mock registrar
 
 ### WebRTC Support
 - Dedicated WSS (WebSocket Secure) SIP profile on port 7443

@@ -13,6 +13,10 @@ chown -R www-data:www-data \
     "$APP_ROOT/storage" \
     "$APP_ROOT/bootstrap/cache"
 
+rm -f \
+    "$APP_ROOT/bootstrap/cache/packages.php" \
+    "$APP_ROOT/bootstrap/cache/services.php"
+
 if [ -f "$ENV_FILE" ] && ! grep -q '^APP_KEY=base64:' "$ENV_FILE"; then
     echo "[entrypoint] APP_KEY missing. Generating one..."
     php artisan key:generate --force --no-interaction
@@ -23,30 +27,11 @@ if [ -f "$VITE_HOT_FILE" ]; then
     rm -f "$VITE_HOT_FILE"
 fi
 
-if [ -f "$APP_ROOT/package.json" ]; then
-    SHOULD_BUILD_FRONTEND=0
-
-    if [ ! -f "$VITE_MANIFEST" ]; then
-        SHOULD_BUILD_FRONTEND=1
-        echo "[entrypoint] Vite manifest missing. Building frontend assets..."
-    elif find \
-        "$APP_ROOT/resources/css" \
-        "$APP_ROOT/resources/js" \
-        -type f -newer "$VITE_MANIFEST" | grep -q .; then
-        SHOULD_BUILD_FRONTEND=1
-        echo "[entrypoint] Frontend sources changed. Rebuilding Vite assets..."
-    fi
-
-    if [ "$SHOULD_BUILD_FRONTEND" -eq 1 ]; then
-        if [ -f "$APP_ROOT/package-lock.json" ]; then
-            npm ci --no-audit --no-fund --force
-        else
-            npm install --no-audit --no-fund --force
-        fi
-
-        npm run build
-        php artisan optimize:clear --no-interaction
-    fi
+if [ -f "$APP_ROOT/package.json" ] && [ ! -f "$VITE_MANIFEST" ]; then
+    echo "[entrypoint] Vite manifest missing. Restoring prebuilt frontend assets..."
+    mkdir -p "$APP_ROOT/public/build"
+    cp -R /opt/app-build/public-build/. "$APP_ROOT/public/build/"
+    php artisan optimize:clear --no-interaction
 fi
 
 exec "$@"

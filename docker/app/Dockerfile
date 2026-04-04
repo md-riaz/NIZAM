@@ -56,7 +56,10 @@ COPY . .
 RUN composer dump-autoload --optimize --no-interaction
 
 # Build frontend assets during Docker build to avoid npm conflicts at runtime
-RUN npm install --no-audit --no-fund && npm run build
+RUN npm install --no-audit --no-fund \
+    && npm run build \
+    && mkdir -p /opt/app-build/public-build \
+    && cp -R public/build/. /opt/app-build/public-build/
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache

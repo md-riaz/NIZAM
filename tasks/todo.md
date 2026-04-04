@@ -27,11 +27,11 @@
 - Fixed a real frontend build blocker in `resources/css/communications-tokens.css` by removing an extra closing brace that caused `npm run build` and the Docker app image build to fail.
 - Made FreeSWITCH published host ports configurable in `docker-compose.telephony.yml` using `FREESWITCH_SIP_PORT`, `FREESWITCH_EXTERNAL_SIP_PORT`, `FREESWITCH_WSS_PORT`, and `FREESWITCH_RTP_PORT_RANGE`, then updated README to document those overrides.
 - On this host, the original FreeSWITCH published ports were blocked, so the stack was brought up using alternate host ports: SIP `25060`, external SIP `25080`, WSS `17443`, RTP `20000-20100`.
-- Current deployment state on this host: `app`, `nginx`, `freeswitch`, `scheduler`, `postgres`, `redis`, `esl-listener`, `sip-mock`, `queue`, and `certbot` are up, and the health endpoint now reports `healthy`.
+- Current deployment state on this host before the final cleanup redeploy: the old `communications-platform-*` container set was still running, including `sip-mock`, even though the compose files on disk had already been normalized.
 - Verified root cause of the remaining deployment blocker: the persisted Docker volume `nizam_postgres_data` contained an older PostgreSQL cluster with no `communications` role, so the app failed with `Role "communications" does not exist` and `password authentication failed for user "communications"`.
 - Recovery performed: backed up the existing Postgres volume to `nizam_postgres_data_backup_2026-04-04_0545utc.tgz`, removed only `nizam_postgres_data`, let Docker initialize a fresh cluster with the configured `communications` database and user, then ran `php artisan migrate --force`.
 - A second issue surfaced during seeding: `GraphFlowDemoSeeder` was passing a raw array into `FlowGraphService::updateFlowWithVersion()`, which now requires `App\Data\FlowData`. Fixed the seeder to call `FlowData::fromArray(...)`, reran `php artisan db:seed --force`, and seeding completed successfully.
-- Final verification on this host: `docker compose ps` shows the stack stable, queue is no longer restarting, and `curl http://localhost:8231/api/v1/health` returns `{"status":"healthy"...}`.
+- Verification before the final cleanup redeploy showed the app and health endpoint were live again, but the runtime was still out of sync with the cleaned compose files because `docker compose ps` still showed the old `communications-platform-*` container names and a running `sip-mock` container.
 
 ## Full System Alignment Audit Plan
 - [x] Map database schema hotspots across call, queue, flow, tenant, and webhook tables → Verify: critical migrations and indexes reviewed
