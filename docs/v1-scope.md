@@ -67,7 +67,7 @@ Any capability not listed as Included is either a roadmap item or unsupported.
 - Module SDK documented
 
 ### WebRTC Support
-- Dedicated WSS (WebSocket Secure) SIP profile on port 7443
+- WebSocket transport on the `internal` SIP profile, including WSS on port 7443
 - DTLS-SRTP for encrypted media transport
 - Opus codec prioritized for high-quality audio
 - ICE/STUN/TURN support for NAT traversal

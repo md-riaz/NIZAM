@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\TimeConditionController;
 use App\Http\Controllers\Api\TokenController;
 use App\Http\Controllers\Api\UsageController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WebRtcTlsSettingsController;
 use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -79,6 +80,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('admin/ssl', [SslController::class, 'index'])->name('admin.ssl.index');
     Route::put('admin/ssl', [SslController::class, 'update'])->name('admin.ssl.update');
     Route::post('admin/ssl/request', [SslController::class, 'requestCertificate'])->name('admin.ssl.request');
+
+    // WebRTC TLS profile management
+    Route::get('admin/webrtc-tls', [WebRtcTlsSettingsController::class, 'index'])->name('admin.webrtc-tls.index');
+    Route::put('admin/webrtc-tls', [WebRtcTlsSettingsController::class, 'update'])->name('admin.webrtc-tls.update');
 
     // User management (admin-only)
     Route::apiResource('users', UserController::class);

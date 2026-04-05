@@ -128,13 +128,13 @@ class ExtensionController extends Controller
 
         $this->authorize('view', $extension);
 
-        if (!config('telephony.webrtc.enabled')) {
+        $config = $this->webRtcConfigService->forExtension($extension->loadMissing('tenant'), config('app.url'));
+
+        if (! $config['enabled']) {
             return response()->json([
                 'message' => 'WebRTC is not enabled on this system.',
             ], 403);
         }
-
-        $config = $this->webRtcConfigService->forExtension($extension->loadMissing('tenant'), config('app.url'));
 
         return response()->json(['data' => $config]);
     }

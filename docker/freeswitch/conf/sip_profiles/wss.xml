@@ -1,17 +1,17 @@
-<profile name="wss">
-  <!-- WebRTC SIP Profile for Secure WebSocket connections -->
-  <!-- Based on FusionPBX WebRTC configuration -->
+<profile name="internal">
+  <!-- Internal SIP profile with WebRTC WebSocket transport -->
+  <!-- Static sample aligned with XML-curl generated internal profile -->
   
   <settings>
     <param name="debug" value="0"/>
     <param name="sip-trace" value="no"/>
     <param name="sip-capture" value="no"/>
     
-    <!-- WebSocket Secure (WSS) binding -->
+    <!-- WebSocket transport bindings on the internal profile -->
     <param name="ws-binding" value=":5066"/>
     <param name="wss-binding" value=":7443"/>
     
-    <!-- TLS Configuration for WSS -->
+    <!-- TLS configuration for secure WebSocket transport -->
     <param name="tls" value="true"/>
     <param name="tls-only" value="false"/>
     <param name="tls-bind-params" value="transport=wss"/>

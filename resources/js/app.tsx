@@ -23,6 +23,7 @@ const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
 const CdrsPage = lazy(() => import('@/pages/admin/CdrsPage'));
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
 const LogViewerPage = lazy(() => import('@/pages/admin/LogViewerPage'));
+const SettingsPage = lazy(() => import('@/pages/admin/SettingsPage'));
 const SipStatusPage = lazy(() => import('@/pages/admin/SipStatusPage'));
 
 // ─── Route Guards ────────────────────────────────────────────
@@ -122,6 +123,7 @@ function App() {
                     {/* System */}
                     <Route path="logs" element={<AuditLogsPage />} />
                     <Route path="system-logs" element={<LogViewerPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
                     <Route path="sip-status" element={<SipStatusPage />} />
                 </Route>
 

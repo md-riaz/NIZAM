@@ -8,9 +8,14 @@ use Illuminate\Support\Facades\Cache;
 
 class WebRtcConfigService
 {
+    public function __construct(
+        protected WebRtcTlsSettingsService $tlsSettingsService,
+    ) {}
+
     public function forExtension(Extension $extension, string $appUrl): array
     {
         $webrtcConfig = config('telephony.webrtc');
+        $tlsSettings = $this->tlsSettingsService->getSettings();
         $host = parse_url($appUrl, PHP_URL_HOST) ?: 'localhost';
         $sslDomains = Cache::remember('webrtc:active-ssl-domains', 60, function (): array {
             return SslSetting::query()
@@ -44,7 +49,7 @@ class WebRtcConfigService
         }
 
         return [
-            'enabled' => (bool) ($webrtcConfig['enabled'] ?? false),
+            'enabled' => $tlsSettings['webrtc_enabled'],
             'websocket_url' => sprintf('wss://%s:%s', $host, $webrtcConfig['wss_port'] ?? 7443),
             'sip_uri' => sprintf('sip:%s@%s', $extension->extension, $extension->tenant->domain),
             'sip_username' => $extension->extension,
@@ -53,6 +58,10 @@ class WebRtcConfigService
             'display_name' => trim(($extension->directory_first_name ?? '').' '.($extension->directory_last_name ?? '')),
             'ice_servers' => $iceServers,
             'codec_prefs' => explode(',', $webrtcConfig['codec_prefs'] ?? 'OPUS,PCMU,PCMA,G722'),
+            'tls_mode' => [
+                'active' => $tlsSettings['active_mode'],
+                'modes' => $tlsSettings['modes'],
+            ],
         ];
     }
 }

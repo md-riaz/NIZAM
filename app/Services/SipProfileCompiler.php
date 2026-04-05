@@ -2,8 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\SipProfile;
+
 class SipProfileCompiler
 {
+    public function __construct(
+        protected WebRtcTlsSettingsService $tlsSettingsService,
+    ) {}
+
     /**
      * Compile SIP profile XML for FreeSWITCH configuration section.
      *
@@ -13,9 +19,9 @@ class SipProfileCompiler
     public function compileProfile(string $profileName = 'external'): string
     {
         $media = config('telephony.media', []);
-        
+
         // Load persistent profile settings from database if available
-        $model = \App\Models\SipProfile::where('name', $profileName)
+        $model = SipProfile::where('name', $profileName)
             ->where('is_active', true)
             ->first();
 
@@ -56,17 +62,21 @@ class SipProfileCompiler
             'tls-only' => 'false',
         ];
 
+        if ($profileName === 'internal' && $this->tlsSettingsService->isWebRtcEnabled()) {
+            $params = array_merge($params, $this->tlsSettingsService->profileOverrides());
+        }
+
         if ($media['aggressive_nat_detection'] ?? false) {
             $params['aggressive-nat-detection'] = 'true';
         }
 
         // Override with model settings if present
-        if ($model && !empty($model->settings)) {
+        if ($model && ! empty($model->settings)) {
             $params = array_merge($params, $model->settings);
         }
 
         foreach ($params as $name => $value) {
-            $xml .= '            <param name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'" value="'.htmlspecialchars((string)$value, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+            $xml .= '            <param name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'" value="'.htmlspecialchars((string) $value, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         }
 
         $xml .= '          </settings>'."\n";

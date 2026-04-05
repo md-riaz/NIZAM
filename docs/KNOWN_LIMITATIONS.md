@@ -63,21 +63,35 @@ fax server outside NIZAM, or configure FreeSWITCH directly for T.38 passthrough.
 ### SRTP / TLS / WebRTC
 
 SRTP and SIP-TLS are **optional and not enforced** in v1.0. WebRTC endpoints
-are supported via a dedicated WSS profile with DTLS-SRTP.
+are supported via WebSocket transport on the `internal` profile with DTLS-SRTP.
 
 **System behavior:**
-- FreeSWITCH TLS and SRTP configuration is external to NIZAM's application
-  layer.
+- WebRTC is available via the `internal` SIP profile using WSS on port 7443
+  with DTLS-SRTP and Opus codec support. See [WebRTC Setup](webrtc-setup.md) for details.
+- Platform admins can now choose the active WebRTC TLS mode from the admin
+  settings screen while keeping both certificate strategies visible:
+  - **Trusted/public CA certificates** for production browser access.
+  - **Self-signed / development certificates** for labs and controlled testing.
+- NIZAM stores which mode is active and which certificate directory FreeSWITCH
+  should use for WebSocket transport on the `internal` profile, similar to FusionPBX-style SIP profile
+  selection.
+- Certificate files must still be provisioned externally in the configured
+  directory; NIZAM does not issue, renew, or rotate certificates.
 - Per-tenant TLS/SRTP enforcement is not available; all tenants share the same
   media security posture.
-- No certificate management or automatic rotation is provided by NIZAM.
-- WebRTC is available via the WSS SIP profile on port 7443 with DTLS-SRTP
-  and Opus codec support. See [WebRTC Setup](webrtc-setup.md) for details.
-- TLS certificates must be provisioned externally (e.g., Let's Encrypt).
 
-**Recommendation:** For production WebRTC deployments, use valid TLS
-certificates from a trusted CA. Configure STUN and optionally TURN servers
-for NAT traversal.
+**Why external trusted certificates are still required for production:**
+- Browsers only trust WSS connections when the presented TLS certificate chains
+  to a CA already trusted by the client device.
+- A self-signed certificate can work for development, but every browser or OS
+  must manually trust that certificate before WebRTC registration succeeds.
+- Because trust is enforced by the browser, NIZAM cannot bypass this at the
+  application layer.
+
+**Recommendation:** For production WebRTC deployments, activate the trusted CA
+mode, install valid browser-trusted certificates, and configure STUN and
+optionally TURN servers for NAT traversal. Reserve self-signed mode for local,
+staging, or controlled internal testing.
 
 ---
 

@@ -6,9 +6,10 @@ This guide covers configuring NIZAM's FreeSWITCH-based WebRTC support for browse
 
 ## Overview
 
-NIZAM includes a dedicated FreeSWITCH SIP profile for WebRTC that provides:
+NIZAM exposes WebRTC transport on the FreeSWITCH `internal` SIP profile and provides:
 
 - **WSS (WebSocket Secure)** signaling on port 7443
+- **WS (WebSocket)** signaling on port 5066 for controlled compatibility cases
 - **DTLS-SRTP** for encrypted media
 - **Opus codec** prioritized for high-quality audio
 - **ICE/STUN** support for NAT traversal
@@ -19,11 +20,11 @@ NIZAM includes a dedicated FreeSWITCH SIP profile for WebRTC that provides:
 ## Architecture
 
 ```
-┌────────────────┐     WSS (7443)      ┌──────────────────┐
-│  Browser        │ ───────────────────▶│  FreeSWITCH       │
-│  (SIP.js)       │     DTLS-SRTP       │  WSS Profile      │
-│                 │ ◀──────────────────▶│                    │
-└────────────────┘                      └──────────────────┘
+┌────────────────┐     WSS (7443)      ┌──────────────────────────┐
+│  Browser        │ ───────────────────▶│  FreeSWITCH               │
+│  (SIP.js)       │     DTLS-SRTP       │  Internal SIP Profile     │
+│                 │ ◀──────────────────▶│  + WebSocket Transport    │
+└────────────────┘                      └──────────────────────────┘
         │                                       │
         │  GET /api/.../webrtc-config           │  ESL
         ▼                                       ▼
@@ -45,7 +46,7 @@ All WebRTC settings are system-wide (configured in `.env`):
 # Enable WebRTC globally
 WEBRTC_ENABLED=true
 
-# WSS port (must match FreeSWITCH wss.xml profile)
+# WSS port (must match the internal SIP profile WebSocket transport)
 WEBRTC_WSS_PORT=7443
 
 # STUN server for NAT traversal
@@ -59,7 +60,24 @@ WEBRTC_TURN_PASSWORD=
 
 ### TLS Certificates
 
-WebRTC **requires** valid TLS certificates for WSS connections. Browsers will reject self-signed certificates.
+NIZAM now exposes two WebRTC TLS modes for the shared `internal` SIP profile WebSocket transport:
+
+- **Trusted/public CA certificates**: recommended for production browser use.
+- **Self-signed / development certificates**: useful for labs, staging, and local testing.
+
+Platform admins can review both modes and select the active one from the admin settings page. The selected mode controls which certificate directory is applied to the FreeSWITCH `internal` profile WebSocket transport. This mirrors the operational model used by FusionPBX-style SIP profile settings, while still leaving certificate issuance and file placement under operator control.
+
+#### When to use each mode
+
+- Use **trusted/public CA certificates** when browser clients connect from normal user devices. Browsers require a TLS chain they already trust for WSS.
+- Use **self-signed** mode only when you control the client environment and can manually trust the certificate chain on each device.
+- In both modes, FreeSWITCH expects these files in the configured certificate directory:
+  - `wss.pem`
+  - `wss.key`
+  - `agent.pem`
+  - `cafile.pem`
+
+> **Important**: NIZAM selects the active certificate directory, but it does not issue, renew, or rotate the certificate files stored there.
 
 #### Using Let's Encrypt (Recommended for Production)
 
@@ -101,6 +119,16 @@ chown -R freeswitch:freeswitch /usr/local/freeswitch/certs/
 
 > **Note**: Self-signed certificates will cause browser security warnings. You may need to navigate to `https://your-domain:7443` and accept the certificate before WebRTC will work.
 
+### Admin workflow
+
+1. Open the platform admin settings page.
+2. Leave both modes enabled if you want the operators to switch between them without re-entering values.
+3. Set the certificate directory for each mode.
+4. Choose the active mode.
+5. Save settings and reload the FreeSWITCH `internal` profile if required by your deployment process.
+
+The active mode is also returned by the WebRTC configuration API so browser clients and diagnostics can display which trust model is currently selected.
+
 ---
 
 ## API Endpoint
@@ -118,6 +146,31 @@ GET /api/v1/tenants/{tenant_id}/extensions/{extension_id}/webrtc-config
   "data": {
     "enabled": true,
     "websocket_url": "wss://your-domain.com:7443",
+    "tls_mode": {
+      "active": "trusted_ca",
+      "modes": {
+        "trusted_ca": {
+          "key": "trusted_ca",
+          "label": "Trusted/public CA certificates",
+          "enabled": true,
+          "cert_dir": "/usr/local/freeswitch/certs",
+          "production_ready": true,
+          "summary": "Use browser-trusted certificates for production WSS and WebRTC.",
+          "details": "Browsers require a trusted HTTPS and WSS certificate chain for production WebRTC.",
+          "expected_files": ["wss.pem", "wss.key", "agent.pem", "cafile.pem"]
+        },
+        "self_signed": {
+          "key": "self_signed",
+          "label": "Self-signed / development certificates",
+          "enabled": true,
+          "cert_dir": "/usr/local/freeswitch/certs/dev",
+          "production_ready": false,
+          "summary": "Use self-signed certificates for labs, staging, or local testing.",
+          "details": "Self-signed certificates require manual trust on each client device.",
+          "expected_files": ["wss.pem", "wss.key", "agent.pem", "cafile.pem"]
+        }
+      }
+    },
     "sip_uri": "sip:1001@demo.nizam.local",
     "sip_username": "1001",
     "sip_password": "secret1234",
@@ -223,12 +276,12 @@ Ensure these ports are open:
 
 1. **Credentials**: Verify extension username/password via the API
 2. **Domain**: Ensure `sip_domain` matches the tenant domain in FreeSWITCH
-3. **Profile**: Verify WSS profile is loaded: `fs_cli -x "sofia status profile wss"`
+3. **Profile**: Verify the internal profile is loaded and listening for WebSocket transport: `fs_cli -x "sofia status profile internal"`
 
 ### Codec Negotiation Issues
 
 1. **Opus not loaded**: Verify mod_opus is loaded: `fs_cli -x "module_exists mod_opus"`
-2. **Codec order**: Check `inbound-codec-prefs` in the WSS profile
+2. **Codec order**: Check `inbound-codec-prefs` in the internal profile
 3. **Browser support**: All modern browsers support Opus natively
 
 ---
