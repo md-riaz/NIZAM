@@ -34,4 +34,15 @@ if [ -f "$APP_ROOT/package.json" ] && [ ! -f "$VITE_MANIFEST" ]; then
     php artisan optimize:clear --no-interaction
 fi
 
+# ── Auto-run migrations on boot (safe: Laravel skips already-run migrations) ──
+if [ -f "$ENV_FILE" ] && grep -q '^DB_HOST=' "$ENV_FILE"; then
+    echo "[entrypoint] Running pending migrations..."
+    php artisan migrate --force --no-interaction 2>&1 || echo "[entrypoint] Migration failed — continuing anyway"
+
+    if grep -q '^ADMIN_EMAIL=.\+' "$ENV_FILE" && grep -q '^ADMIN_PASSWORD=.\+' "$ENV_FILE"; then
+        echo "[entrypoint] ADMIN_EMAIL + ADMIN_PASSWORD set — running seeders..."
+        php artisan db:seed --force --no-interaction 2>&1 || echo "[entrypoint] Seeding failed — continuing anyway"
+    fi
+fi
+
 exec "$@"
