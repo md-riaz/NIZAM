@@ -13,13 +13,20 @@ const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const SuperadminLayout = lazy(() => import('@/layouts/SuperadminLayout'));
 const DashboardPage = lazy(() => import('@/pages/admin/DashboardPage'));
 const TenantsPage = lazy(() => import('@/pages/admin/TenantsPage'));
+const TenantFormPage = lazy(() => import('@/pages/admin/TenantFormPage'));
+const TenantSettingsPage = lazy(() => import('@/pages/admin/TenantSettingsPage'));
 const UsersPage = lazy(() => import('@/pages/admin/UsersPage'));
+const UserFormPage = lazy(() => import('@/pages/admin/UserFormPage'));
+const UserPermissionsPage = lazy(() => import('@/pages/admin/UserPermissionsPage'));
 const ExtensionsPage = lazy(() => import('@/pages/admin/ExtensionsPage'));
+const ExtensionFormPage = lazy(() => import('@/pages/admin/ExtensionFormPage'));
+const ExtensionDetailPage = lazy(() => import('@/pages/admin/ExtensionDetailPage'));
 const GatewaysPage = lazy(() => import('@/pages/admin/GatewaysPage'));
 const GatewayFormPage = lazy(() => import('@/pages/admin/GatewayFormPage'));
 const DidsPage = lazy(() => import('@/pages/admin/DidsPage'));
 const DidFormPage = lazy(() => import('@/pages/admin/DidFormPage'));
 const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
+const RingGroupFormPage = lazy(() => import('@/pages/admin/RingGroupFormPage'));
 const CdrsPage = lazy(() => import('@/pages/admin/CdrsPage'));
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
 const LogViewerPage = lazy(() => import('@/pages/admin/LogViewerPage'));
@@ -103,11 +110,22 @@ function App() {
                     {/* General */}
                     <Route index element={<DashboardPage />} />
                     <Route path="tenants" element={<TenantsPage />} />
+                    <Route path="tenants/create" element={<TenantFormPage />} />
+                    <Route path="tenants/:id/edit" element={<TenantFormPage />} />
+                    <Route path="tenants/:id/settings" element={<TenantSettingsPage />} />
                     <Route path="users" element={<UsersPage />} />
+                    <Route path="users/create" element={<UserFormPage />} />
+                    <Route path="users/:id/edit" element={<UserFormPage />} />
+                    <Route path="users/:id/permissions" element={<UserPermissionsPage />} />
 
                     {/* Phone System (tenant-scoped) */}
                     <Route path="extensions" element={<ExtensionsPage />} />
+                    <Route path="extensions/create" element={<ExtensionFormPage />} />
+                    <Route path="extensions/:id" element={<ExtensionDetailPage />} />
+                    <Route path="extensions/:id/edit" element={<ExtensionFormPage />} />
                     <Route path="ring-groups" element={<RingGroupsPage />} />
+                    <Route path="ring-groups/create" element={<RingGroupFormPage />} />
+                    <Route path="ring-groups/:id/edit" element={<RingGroupFormPage />} />
                     <Route path="dids" element={<DidsPage />} />
                     <Route path="dids/create" element={<DidFormPage />} />
                     <Route path="dids/:id/edit" element={<DidFormPage />} />

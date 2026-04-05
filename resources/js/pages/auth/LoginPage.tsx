@@ -1,15 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type AxiosError } from 'axios';
 import { Loader2, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '@/context/AuthContext';
-import { LoginRequestSchema, type LoginRequest, type ApiError } from '@/types/auth';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Card,
     CardContent,
@@ -17,6 +13,10 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/context/AuthContext';
+import { LoginRequestSchema, type ApiError, type LoginRequest } from '@/types/auth';
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -45,10 +45,10 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br from-background via-background to-primary/5">
             {/* Ambient Glow */}
-            <div className="pointer-events-none absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/10 blur-[120px]" />
-            <div className="pointer-events-none absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-primary/5 blur-[100px]" />
+            <div className="pointer-events-none absolute -top-40 -right-40 h-125 w-125 rounded-full bg-primary/10 blur-[120px]" />
+            <div className="pointer-events-none absolute -bottom-40 -left-40 h-100 w-100 rounded-full bg-primary/5 blur-[100px]" />
 
             <div className="relative z-10 w-full max-w-md px-4">
                 {/* Logo & Brand */}

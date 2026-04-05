@@ -1,11 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Phone as PhoneIcon, Pencil, Trash2, Copy } from 'lucide-react';
+import { Eye, Phone as PhoneIcon, Plus, SquarePen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-import api from '@/lib/api';
-import { useTenant } from '@/context/TenantContext';
-import type { Extension } from '@/types/models';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -21,22 +19,23 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useTenant } from '@/context/TenantContext';
+import api from '@/lib/api';
+import type { Extension } from '@/types/models';
 
 export default function ExtensionsPage() {
     const { activeTenant, tenantApiPrefix } = useTenant();
+    const navigate = useNavigate();
 
     const { data: extensions = [], isLoading } = useQuery({
         queryKey: ['extensions', activeTenant?.id],
         queryFn: async () => {
-            const res = await api.get<{ data: Extension[] }>(
-                `${tenantApiPrefix}/extensions`,
-            );
+            const res = await api.get<{ data: Extension[] }>(`${tenantApiPrefix}/extensions`);
             return res.data.data;
         },
         enabled: !!activeTenant,
     });
 
-    // Fetch registration status
     const { data: statusMap = {} } = useQuery({
         queryKey: ['extension-status', activeTenant?.id],
         queryFn: async () => {
@@ -57,31 +56,24 @@ export default function ExtensionsPage() {
         );
     }
 
-    const registeredCount = Object.values(statusMap).filter(
-        (s) => s.status === 'registered',
-    ).length;
+    const registeredCount = Object.values(statusMap).filter((s) => s.status === 'registered').length;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm text-muted-foreground">
-                        {activeTenant.name} &rsaquo; Phone System
-                    </p>
+                    <p className="text-sm text-muted-foreground">{activeTenant.name} &rsaquo; Phone System</p>
                     <h1 className="text-2xl font-bold tracking-tight">Extensions</h1>
                     <p className="text-muted-foreground">
-                        Manage and provision internal SIP extensions for{' '}
-                        {activeTenant.domain}.
+                        Manage and provision internal SIP extensions for {activeTenant.domain}.
                     </p>
                 </div>
-                <Button>
+                <Button onClick={() => navigate('/admin/extensions/create')}>
                     <Plus className="size-4" />
                     Create Extension
                 </Button>
             </div>
 
-            {/* Stats */}
             <div className="grid gap-4 sm:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -100,9 +92,7 @@ export default function ExtensionsPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-emerald-600">
-                            {registeredCount}
-                        </div>
+                        <div className="text-2xl font-bold text-emerald-600">{registeredCount}</div>
                         <p className="text-xs text-muted-foreground">Active SIP links</p>
                     </CardContent>
                 </Card>
@@ -113,14 +103,11 @@ export default function ExtensionsPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-amber-600">
-                            {extensions.length - registeredCount}
-                        </div>
+                        <div className="text-2xl font-bold text-amber-600">{extensions.length - registeredCount}</div>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Table */}
             <Card>
                 <CardHeader>
                     <CardTitle>All Extensions</CardTitle>
@@ -138,7 +125,7 @@ export default function ExtensionsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Extension</TableHead>
-                                    <TableHead>Display Name</TableHead>
+                                    <TableHead>Directory Name</TableHead>
                                     <TableHead>Caller ID</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>IP / Agent</TableHead>
@@ -149,6 +136,10 @@ export default function ExtensionsPage() {
                                 {extensions.map((ext) => {
                                     const status = statusMap[ext.extension];
                                     const isOnline = status?.status === 'registered';
+                                    const directoryName = [ext.directory_first_name, ext.directory_last_name]
+                                        .filter(Boolean)
+                                        .join(' ');
+
                                     return (
                                         <TableRow key={ext.id}>
                                             <TableCell>
@@ -156,16 +147,14 @@ export default function ExtensionsPage() {
                                                     <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
                                                         <PhoneIcon className="size-4 text-primary" />
                                                     </div>
-                                                    <span className="font-mono font-semibold text-primary">
-                                                        {ext.extension}
-                                                    </span>
+                                                    <span className="font-mono font-semibold text-primary">{ext.extension}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                {ext.effective_caller_id_name ?? '—'}
-                                            </TableCell>
+                                            <TableCell>{directoryName || '—'}</TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {ext.effective_caller_id_number ?? '—'}
+                                                {ext.effective_caller_id_name || ext.effective_caller_id_number
+                                                    ? `${ext.effective_caller_id_name ?? ''} ${ext.effective_caller_id_number ?? ''}`.trim()
+                                                    : '—'}
                                             </TableCell>
                                             <TableCell>
                                                 {isOnline ? (
@@ -174,19 +163,24 @@ export default function ExtensionsPage() {
                                                     <Badge variant="secondary">Unregistered</Badge>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="text-xs text-muted-foreground">
-                                                {status?.ip ?? '—'}
-                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">{status?.ip ?? '—'}</TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-1">
-                                                    <Button variant="ghost" size="icon">
-                                                        <Pencil className="size-4" />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon-sm"
+                                                        onClick={() => navigate(`/admin/extensions/${ext.id}`)}
+                                                    >
+                                                        <Eye className="size-4" />
+                                                        <span className="sr-only">View extension details</span>
                                                     </Button>
-                                                    <Button variant="ghost" size="icon">
-                                                        <Copy className="size-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon">
-                                                        <Trash2 className="size-4 text-destructive" />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon-sm"
+                                                        onClick={() => navigate(`/admin/extensions/${ext.id}/edit`)}
+                                                    >
+                                                        <SquarePen className="size-4" />
+                                                        <span className="sr-only">Edit extension</span>
                                                     </Button>
                                                 </div>
                                             </TableCell>

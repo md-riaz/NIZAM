@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, GitBranch } from 'lucide-react';
+import { GitBranch, Plus, SquarePen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-import api from '@/lib/api';
-import { useTenant } from '@/context/TenantContext';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -20,24 +19,18 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-
-interface RingGroup {
-    id: number;
-    name: string;
-    strategy: string;
-    timeout: number;
-    created_at: string;
-}
+import { useTenant } from '@/context/TenantContext';
+import api from '@/lib/api';
+import type { RingGroup } from '@/types/models';
 
 export default function RingGroupsPage() {
     const { activeTenant, tenantApiPrefix } = useTenant();
+    const navigate = useNavigate();
 
     const { data: groups = [], isLoading } = useQuery({
         queryKey: ['ring-groups', activeTenant?.id],
         queryFn: async () => {
-            const res = await api.get<{ data: RingGroup[] }>(
-                `${tenantApiPrefix}/ring-groups`,
-            );
+            const res = await api.get<{ data: RingGroup[] }>(`${tenantApiPrefix}/ring-groups`);
             return res.data.data;
         },
         enabled: !!activeTenant,
@@ -55,15 +48,13 @@ export default function RingGroupsPage() {
         <div className="space-y-6 p-6 lg:p-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm text-muted-foreground">
-                        {activeTenant.name} &rsaquo; Routing
-                    </p>
+                    <p className="text-sm text-muted-foreground">{activeTenant.name} &rsaquo; Routing</p>
                     <h1 className="text-2xl font-bold tracking-tight">Ring Groups</h1>
                     <p className="text-muted-foreground">
                         Simultaneous and sequential ring strategies for call distribution.
                     </p>
                 </div>
-                <Button>
+                <Button onClick={() => navigate('/admin/ring-groups/create')}>
                     <Plus className="size-4" />
                     Create Ring Group
                 </Button>
@@ -72,9 +63,7 @@ export default function RingGroupsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>All Ring Groups</CardTitle>
-                    <CardDescription>
-                        {groups.length} ring groups for {activeTenant.domain}
-                    </CardDescription>
+                    <CardDescription>{groups.length} ring groups for {activeTenant.domain}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
@@ -88,6 +77,7 @@ export default function RingGroupsPage() {
                                     <TableHead>Name</TableHead>
                                     <TableHead>Strategy</TableHead>
                                     <TableHead>Timeout</TableHead>
+                                    <TableHead>Members</TableHead>
                                     <TableHead>Created</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -104,19 +94,20 @@ export default function RingGroupsPage() {
                                         <TableCell>
                                             <Badge variant="outline">{group.strategy}</Badge>
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            {group.timeout}s
-                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">{group.ring_timeout ?? 0}s</TableCell>
+                                        <TableCell className="text-muted-foreground">{group.members.length}</TableCell>
                                         <TableCell className="text-muted-foreground">
                                             {new Date(group.created_at).toLocaleDateString()}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon">
-                                                    <Pencil className="size-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon">
-                                                    <Trash2 className="size-4 text-destructive" />
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    onClick={() => navigate(`/admin/ring-groups/${group.id}/edit`)}
+                                                >
+                                                    <SquarePen className="size-4" />
+                                                    <span className="sr-only">Edit ring group</span>
                                                 </Button>
                                             </div>
                                         </TableCell>
@@ -124,7 +115,7 @@ export default function RingGroupsPage() {
                                 ))}
                                 {groups.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                             No ring groups configured.
                                         </TableCell>
                                     </TableRow>

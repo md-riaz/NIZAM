@@ -1,12 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+import { Building2, Globe, Plus, Settings, SquarePen, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Globe, Users } from 'lucide-react';
 
-import api from '@/lib/api';
-import type { Tenant } from '@/types/models';
-import { useTenant } from '@/context/TenantContext';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -22,6 +19,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useTenant } from '@/context/TenantContext';
+import api from '@/lib/api';
+import type { Tenant } from '@/types/models';
 
 export default function TenantsPage() {
     const { switchTenant } = useTenant();
@@ -35,9 +35,10 @@ export default function TenantsPage() {
         },
     });
 
+    const activeTenants = tenants.filter((tenant) => tenant.is_active).length;
+
     return (
         <div className="space-y-6 p-6 lg:p-8">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Tenants</h1>
@@ -45,13 +46,12 @@ export default function TenantsPage() {
                         Manage organizations provisioned on this platform.
                     </p>
                 </div>
-                <Button>
+                <Button onClick={() => navigate('/admin/tenants/create')}>
                     <Plus className="size-4" />
                     Create Tenant
                 </Button>
             </div>
 
-            {/* Stats Cards */}
             <div className="grid gap-4 sm:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -72,7 +72,7 @@ export default function TenantsPage() {
                         <Globe className="size-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{tenants.length}</div>
+                        <div className="text-2xl font-bold">{activeTenants}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -88,12 +88,11 @@ export default function TenantsPage() {
                 </Card>
             </div>
 
-            {/* Table */}
             <Card>
                 <CardHeader>
                     <CardTitle>All Tenants</CardTitle>
                     <CardDescription>
-                        Click on a tenant to switch context and manage its resources.
+                        Switch context, edit tenant configuration, or open settings.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -115,9 +114,7 @@ export default function TenantsPage() {
                             <TableBody>
                                 {tenants.map((tenant) => (
                                     <TableRow key={tenant.id}>
-                                        <TableCell className="font-medium">
-                                            {tenant.name}
-                                        </TableCell>
+                                        <TableCell className="font-medium">{tenant.name}</TableCell>
                                         <TableCell className="font-mono text-sm text-muted-foreground">
                                             {tenant.domain}
                                         </TableCell>
@@ -125,19 +122,39 @@ export default function TenantsPage() {
                                             {new Date(tenant.created_at).toLocaleDateString()}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="success">Active</Badge>
+                                            <Badge variant={tenant.is_active ? 'success' : 'secondary'}>
+                                                {tenant.status ?? (tenant.is_active ? 'active' : 'inactive')}
+                                            </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    switchTenant(tenant);
-                                                    navigate('/admin');
-                                                }}
-                                            >
-                                                Switch to
-                                            </Button>
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        switchTenant(tenant);
+                                                        navigate('/admin');
+                                                    }}
+                                                >
+                                                    Switch to
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    onClick={() => navigate(`/admin/tenants/${tenant.id}/edit`)}
+                                                >
+                                                    <SquarePen className="size-4" />
+                                                    <span className="sr-only">Edit tenant</span>
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    onClick={() => navigate(`/admin/tenants/${tenant.id}/settings`)}
+                                                >
+                                                    <Settings className="size-4" />
+                                                    <span className="sr-only">Open tenant settings</span>
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}

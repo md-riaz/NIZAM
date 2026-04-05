@@ -163,7 +163,7 @@ export default function SuperadminLayout() {
             <aside
                 className={cn(
                     'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar transition-transform duration-200 ease-out lg:static lg:z-auto lg:translate-x-0 lg:transition-all',
-                    collapsed ? 'lg:w-[68px]' : 'lg:w-64',
+                    collapsed ? 'lg:w-17' : 'lg:w-64',
                     mobileNavOpen ? 'translate-x-0 w-72' : '-translate-x-full w-72',
                 )}
             >
@@ -334,10 +334,10 @@ export default function SuperadminLayout() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="max-w-[12rem] gap-2 font-normal sm:max-w-[16rem]"
+                                    className="max-w-48 gap-2 font-normal sm:max-w-64"
                                 >
                                     <Building2 className="size-4 text-primary" />
-                                    <span className="max-w-[200px] truncate">
+                                    <span className="max-w-50 truncate">
                                         {activeTenant?.name ?? 'Select Tenant'}
                                     </span>
                                     <ChevronsUpDown className="size-3 text-muted-foreground" />
@@ -379,7 +379,7 @@ export default function SuperadminLayout() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <div className="flex max-w-[12rem] items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm font-medium sm:max-w-[16rem]">
+                        <div className="flex max-w-48 items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm font-medium sm:max-w-64">
                             <Building2 className="size-4 shrink-0 text-primary" />
                             <span className="truncate">
                                 {activeTenant?.name ?? platformName}

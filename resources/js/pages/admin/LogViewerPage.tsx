@@ -269,7 +269,7 @@ export default function LogViewerPage() {
                                             Download
                                         </Button>
                                     </div>
-                                    <div className="max-h-[600px] overflow-auto rounded-lg border bg-muted/30 p-4 font-mono text-xs">
+                                    <div className="max-h-150 overflow-auto rounded-lg border bg-muted/30 p-4 font-mono text-xs">
                                         {appLogs?.logs.map((line, idx) => (
                                             <div
                                                 key={idx}
@@ -366,7 +366,7 @@ export default function LogViewerPage() {
                                             <Badge variant="outline">Filter: {fsLogs.filter}</Badge>
                                         ) : null}
                                     </div>
-                                    <div className="max-h-[600px] overflow-auto rounded-lg border bg-muted/30 font-mono text-xs">
+                                    <div className="max-h-150 overflow-auto rounded-lg border bg-muted/30 font-mono text-xs">
                                         {fsLogs?.logs.length ? (
                                             fsLogs.logs.map((line) => (
                                                 <div

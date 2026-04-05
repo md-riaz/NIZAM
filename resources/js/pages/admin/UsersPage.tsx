@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { UserPlus, Shield, User as UserIcon } from 'lucide-react';
+import { KeyRound, Shield, SquarePen, User as UserIcon, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-import api from '@/lib/api';
-import type { User } from '@/types/models';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -20,8 +19,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import api from '@/lib/api';
+import type { User } from '@/types/models';
 
 export default function UsersPage() {
+    const navigate = useNavigate();
+
     const { data: users = [], isLoading } = useQuery({
         queryKey: ['users'],
         queryFn: async () => {
@@ -49,7 +52,7 @@ export default function UsersPage() {
                         Manage platform users and their permissions.
                     </p>
                 </div>
-                <Button>
+                <Button onClick={() => navigate('/admin/users/create')}>
                     <UserPlus className="size-4" />
                     Create User
                 </Button>
@@ -76,6 +79,7 @@ export default function UsersPage() {
                                     <TableHead>Role</TableHead>
                                     <TableHead>Tenant</TableHead>
                                     <TableHead>Created</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -93,21 +97,39 @@ export default function UsersPage() {
                                                 {user.name}
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            {user.email}
-                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">{user.email}</TableCell>
                                         <TableCell>{roleBadge(user.role)}</TableCell>
                                         <TableCell className="text-muted-foreground">
-                                            {user.tenant_id ?? 'Global'}
+                                            {user.tenant?.name ?? 'Global'}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">
                                             {new Date(user.created_at).toLocaleDateString()}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    onClick={() => navigate(`/admin/users/${user.id}/edit`)}
+                                                >
+                                                    <SquarePen className="size-4" />
+                                                    <span className="sr-only">Edit user</span>
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    onClick={() => navigate(`/admin/users/${user.id}/permissions`)}
+                                                >
+                                                    <KeyRound className="size-4" />
+                                                    <span className="sr-only">Manage user permissions</span>
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
                                 {users.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                             No users found.
                                         </TableCell>
                                     </TableRow>
