@@ -336,6 +336,55 @@ paths:
         '200':
           description: Certificate request initiated
 
+  /admin/webrtc-tls:
+    get:
+      tags: [Admin]
+      summary: Get WebRTC TLS settings
+      description: Returns the platform-wide WebRTC TLS mode configuration used to drive WebSocket transport on the internal SIP profile.
+      operationId: getWebRtcTlsSettings
+      responses:
+        '200':
+          description: WebRTC TLS settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [success] }
+                  data: { $ref: '#/components/schemas/WebRtcTlsSettings' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    put:
+      tags: [Admin]
+      summary: Update WebRTC TLS settings
+      description: Updates the platform-wide WebRTC TLS mode selection and certificate directories.
+      operationId: updateWebRtcTlsSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebRtcTlsSettingsUpdateRequest'
+      responses:
+        '200':
+          description: WebRTC TLS settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [success] }
+                  message: { type: string }
+                  data: { $ref: '#/components/schemas/WebRtcTlsSettings' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
   /admin/sip-profiles:
     get:
       tags: [Admin]
@@ -638,6 +687,26 @@ paths:
       responses:
         '200':
           description: Extension details
+    put:
+      tags: [Extensions]
+      summary: Update extension
+      operationId: updateExtension
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtensionInput'
+      responses:
+        '200':
+          description: Extension updated
+    delete:
+      tags: [Extensions]
+      summary: Delete extension
+      operationId: deleteExtension
+      responses:
+        '204':
+          description: Extension deleted
 
   /tenants/{tenantId}/extensions/status/all:
     parameters:
@@ -677,6 +746,7 @@ paths:
     get:
       tags: [Extensions]
       summary: Get WebRTC configuration for extension
+      description: Returns runtime WebRTC registration settings for a tenant extension. If WebRTC is disabled system-wide, the endpoint responds with 403.
       operationId: getWebRtcConfig
       responses:
         '200':
@@ -687,27 +757,16 @@ paths:
                 type: object
                 properties:
                   data: { $ref: '#/components/schemas/WebRtcConfig' }
-
-    put:
-      tags: [Extensions]
-      summary: Update extension
-      operationId: updateExtension
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExtensionInput'
-      responses:
-        '200':
-          description: Extension updated
-    delete:
-      tags: [Extensions]
-      summary: Delete extension
-      operationId: deleteExtension
-      responses:
-        '204':
-          description: Extension deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: WebRTC is disabled or caller lacks permission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /tenants/{tenantId}/holiday-calendars:
     parameters:
@@ -2213,6 +2272,7 @@ components:
     TokenId: { name: tokenId, in: path, required: true, schema: { type: integer } }
     UserId: { name: userId, in: path, required: true, schema: { type: integer } }
     ExtensionId: { name: extensionId, in: path, required: true, schema: { type: string, format: uuid } }
+    MediaId: { name: mediaId, in: path, required: true, schema: { type: string, format: uuid } }
     HolidayCalendarId: { name: holidayCalendarId, in: path, required: true, schema: { type: string, format: uuid } }
     ScheduleId: { name: scheduleId, in: path, required: true, schema: { type: string, format: uuid } }
     TeamId: { name: teamId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -2370,8 +2430,75 @@ components:
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
+    WebRtcTlsMode:
+      type: object
+      required: [key, label, enabled, cert_dir, production_ready, summary, details, expected_files]
+      properties:
+        key:
+          type: string
+          enum: [trusted_ca, self_signed]
+        label: { type: string }
+        enabled: { type: boolean }
+        cert_dir: { type: string }
+        production_ready: { type: boolean }
+        summary: { type: string }
+        details: { type: string }
+        expected_files:
+          type: array
+          items: { type: string }
+
+    WebRtcTlsModes:
+      type: object
+      required: [trusted_ca, self_signed]
+      properties:
+        trusted_ca:
+          $ref: '#/components/schemas/WebRtcTlsMode'
+        self_signed:
+          $ref: '#/components/schemas/WebRtcTlsMode'
+
+    WebRtcTlsSettings:
+      type: object
+      required: [webrtc_enabled, active_mode, modes]
+      properties:
+        webrtc_enabled: { type: boolean }
+        active_mode:
+          type: string
+          enum: [trusted_ca, self_signed]
+        modes:
+          $ref: '#/components/schemas/WebRtcTlsModes'
+
+    WebRtcTlsSettingsUpdateRequest:
+      type: object
+      required:
+        - webrtc_enabled
+        - active_mode
+        - trusted_ca_enabled
+        - trusted_ca_cert_dir
+        - self_signed_enabled
+        - self_signed_cert_dir
+      properties:
+        webrtc_enabled: { type: boolean }
+        active_mode:
+          type: string
+          enum: [trusted_ca, self_signed]
+        trusted_ca_enabled: { type: boolean }
+        trusted_ca_cert_dir: { type: string, maxLength: 255 }
+        self_signed_enabled: { type: boolean }
+        self_signed_cert_dir: { type: string, maxLength: 255 }
+
     WebRtcConfig:
       type: object
+      required:
+        - enabled
+        - websocket_url
+        - sip_uri
+        - sip_username
+        - sip_password
+        - sip_domain
+        - display_name
+        - ice_servers
+        - codec_prefs
+        - tls_mode
       properties:
         enabled: { type: boolean }
         websocket_url: { type: string, format: uri }
@@ -2391,6 +2518,15 @@ components:
         codec_prefs:
           type: array
           items: { type: string }
+        tls_mode:
+          type: object
+          required: [active, modes]
+          properties:
+            active:
+              type: string
+              enum: [trusted_ca, self_signed]
+            modes:
+              $ref: '#/components/schemas/WebRtcTlsModes'
 
     PermissionMutationRequest:
       type: object
