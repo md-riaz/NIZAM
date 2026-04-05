@@ -32,6 +32,10 @@
 - Recovery performed: backed up the existing Postgres volume to `nizam_postgres_data_backup_2026-04-04_0545utc.tgz`, removed only `nizam_postgres_data`, let Docker initialize a fresh cluster with the configured `communications` database and user, then ran `php artisan migrate --force`.
 - A second issue surfaced during seeding: `GraphFlowDemoSeeder` was passing a raw array into `FlowGraphService::updateFlowWithVersion()`, which now requires `App\Data\FlowData`. Fixed the seeder to call `FlowData::fromArray(...)`, reran `php artisan db:seed --force`, and seeding completed successfully.
 - Verification before the final cleanup redeploy showed the app and health endpoint were live again, but the runtime was still out of sync with the cleaned compose files because `docker compose ps` still showed the old `communications-platform-*` container names and a running `sip-mock` container.
+- Final runtime recovery on the normalized stack: the app container was serving PHP-FPM again but `/api/v1/health` still returned `degraded` because the recreated PostgreSQL instance had no Laravel schema at all, including the `migrations`, `cache`, and `jobs` tables.
+- Root cause was confirmed directly from the live stack with `php artisan migrate:status` failing with `Migration table not found` and a direct `psql` table listing returning no relations.
+- Recovery performed: ran `docker compose exec -T app php artisan migrate --force` against the live normalized stack, which created the Laravel schema including the database-backed cache and queue tables required by the current `.env` settings.
+- Final verification on this host now passes: `docker compose ps` shows `app`, `nginx`, `postgres`, and `redis` healthy with `queue` running; `curl http://localhost:8231/api/v1/health` returns `{"status":"healthy"...}`; and `curl -I http://localhost:8231/` returns `HTTP/1.1 200 OK`.
 
 ## Full System Alignment Audit Plan
 - [x] Map database schema hotspots across call, queue, flow, tenant, and webhook tables → Verify: critical migrations and indexes reviewed
