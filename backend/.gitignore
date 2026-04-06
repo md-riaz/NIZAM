@@ -17,6 +17,14 @@
 /public/hot
 /public/storage
 /storage
+!/storage/app/
+/storage/app/*
+!/storage/app/freeswitch/
+/storage/app/freeswitch/*
+!/storage/app/freeswitch/sip_profiles/
+/storage/app/freeswitch/sip_profiles/*
+!/storage/app/freeswitch/sip_profiles/internal.xml
+!/storage/app/freeswitch/sip_profiles/external.xml
 /vendor
 /stubs/nwidart-stubs
 /vite-module-loader.js
