@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Gateway;
 use App\Services\EslConnectionManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -256,10 +257,14 @@ class SipStatusController extends Controller
     {
         $gateways = [];
         $lines = explode("\n", $raw);
+        $gatewayNames = Gateway::query()
+            ->select(['id', 'name'])
+            ->get()
+            ->mapWithKeys(fn (Gateway $gateway) => ['v_'.$gateway->id => $gateway->name]);
 
         foreach ($lines as $line) {
             $line = trim($line);
-            
+
             if (empty($line) || str_contains($line, '===') || str_contains($line, 'Profile::Gateway-Name') || str_contains($line, 'gateways:')) {
                 continue;
             }
@@ -267,9 +272,12 @@ class SipStatusController extends Controller
             // Match gateway line: Profile::GatewayName Data State Ping
             // Example: internal::my_gw  sip:user@host  REGED
             if (preg_match('/^([^:]+)::(\S+)\s+(\S+)\s+(\S+)/', $line, $matches)) {
+                $freeswitchName = $matches[2];
+
                 $gateways[] = [
                     'profile' => $matches[1],
-                    'name' => $matches[2],
+                    'name' => $gatewayNames[$freeswitchName] ?? $freeswitchName,
+                    'freeswitch_name' => $freeswitchName,
                     'uri' => $matches[3],
                     'status' => $matches[4],
                 ];

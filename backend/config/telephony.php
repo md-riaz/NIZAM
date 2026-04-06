@@ -120,7 +120,7 @@ return [
 
     'gateway_provisioning' => [
         'profile' => env('FREESWITCH_GATEWAY_PROFILE', 'external'),
-        'external_directory' => env('FREESWITCH_GATEWAY_DIRECTORY', storage_path('freeswitch/sip_profiles/external')),
+        'external_directory' => env('FREESWITCH_GATEWAY_DIRECTORY', storage_path('app/freeswitch/sip_profiles/external')),
     ],
 
     'call_delivery' => [

@@ -55,7 +55,9 @@ interface SipProfile {
 
 interface SipGateway {
     name: string;
+    freeswitch_name?: string;
     profile: string | null;
+    uri?: string;
     status: string;
 }
 
@@ -431,6 +433,7 @@ export default function SipStatusPage() {
                                         <TableRow>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Name</TableHead>
+                                            <TableHead>URI</TableHead>
                                             <TableHead>Profile</TableHead>
                                             <TableHead>Actions</TableHead>
                                         </TableRow>
@@ -447,6 +450,9 @@ export default function SipStatusPage() {
                                                 <TableCell className="font-medium">
                                                     {gateway.name}
                                                 </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">
+                                                    {gateway.uri || '—'}
+                                                </TableCell>
                                                 <TableCell>{gateway.profile || '—'}</TableCell>
                                                 <TableCell>
                                                     <Button
@@ -455,7 +461,7 @@ export default function SipStatusPage() {
                                                         onClick={() =>
                                                             handleAction(
                                                                 'kill-gateway',
-                                                                gateway.name,
+                                                                gateway.freeswitch_name ?? gateway.name,
                                                             )
                                                         }
                                                         aria-label={`Kill gateway ${gateway.name}`}
@@ -470,7 +476,7 @@ export default function SipStatusPage() {
                                         {gateways?.length === 0 && (
                                             <TableRow>
                                                 <TableCell
-                                                    colSpan={4}
+                                                    colSpan={5}
                                                     className="h-24 text-center text-muted-foreground"
                                                 >
                                                     No gateways found
