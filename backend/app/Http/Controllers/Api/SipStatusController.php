@@ -260,16 +260,18 @@ class SipStatusController extends Controller
         foreach ($lines as $line) {
             $line = trim($line);
             
-            // Match gateway lines
-            if (preg_match('/^(\S+)\s+(\S+)\s+(\S+)/', $line, $matches)) {
-                if ($matches[1] === 'Gateway' || $matches[1] === 'Name') {
-                    continue; // Skip header
-                }
+            if (empty($line) || str_contains($line, '===') || str_contains($line, 'Profile::Gateway-Name') || str_contains($line, 'gateways:')) {
+                continue;
+            }
 
+            // Match gateway line: Profile::GatewayName Data State Ping
+            // Example: internal::my_gw  sip:user@host  REGED
+            if (preg_match('/^([^:]+)::(\S+)\s+(\S+)\s+(\S+)/', $line, $matches)) {
                 $gateways[] = [
-                    'name' => $matches[1],
-                    'profile' => $matches[2] ?? null,
-                    'status' => $matches[3] ?? 'unknown',
+                    'profile' => $matches[1],
+                    'name' => $matches[2],
+                    'uri' => $matches[3],
+                    'status' => $matches[4],
                 ];
             }
         }

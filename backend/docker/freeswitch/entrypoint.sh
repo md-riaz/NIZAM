@@ -13,7 +13,7 @@ REAL_CONF_DIR=$(readlink -f "$CONF_DIR" 2>/dev/null || printf '%s' "$CONF_DIR")
 SUBST_VARS='${FREESWITCH_XML_CURL_ENDPOINT_INTERNAL}'
 
 find -L "$REAL_CONF_DIR" -name '*.xml' | while read -r f; do
-    envsubst "$SUBST_VARS" < "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
+    envsubst "$SUBST_VARS" < "$f" > "${f}.tmp" && cat "${f}.tmp" > "$f" && rm "${f}.tmp"
 done
 
 exec /usr/sbin/freeswitch "$@"

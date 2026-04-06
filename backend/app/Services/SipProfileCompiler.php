@@ -12,6 +12,7 @@ class SipProfileCompiler
      */
     public function compileAllToDisk(): void
     {
+        /** @var \Illuminate\Database\Eloquent\Collection|\App\Models\SipProfile[] $profiles */
         $profiles = SipProfile::with(['settings' => function ($query) {
             $query->where('is_enabled', true);
         }])->where('is_active', true)->get();
@@ -39,24 +40,28 @@ class SipProfileCompiler
      */
     protected function compileProfileXml(SipProfile $profile): string
     {
-        $xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'."\n";
-        $xml .= '<document type="freeswitch/xml">'."\n";
-        $xml .= '  <section name="configuration">'."\n";
-        $xml .= '    <configuration name="sofia.conf" description="Sofia SIP">'."\n";
-        $xml .= '      <profiles>'."\n";
-        $xml .= '        <profile name="'.htmlspecialchars($profile->name, ENT_QUOTES | ENT_XML1).'">'."\n";
-        $xml .= '          <settings>'."\n";
+        $safeName = htmlspecialchars($profile->name, ENT_QUOTES | ENT_XML1);
+        $xml = '<profile name="'.$safeName.'">'."\n";
+        
+        $xml .= '  <aliases>'."\n";
+        $xml .= '  </aliases>'."\n";
+
+        $xml .= '  <gateways>'."\n";
+        $xml .= '    <X-PRE-PROCESS cmd="include" data="'.$safeName.'/*.xml"/>'."\n";
+        $xml .= '  </gateways>'."\n";
+
+        $xml .= '  <domains>'."\n";
+        $xml .= '    <domain name="all" alias="true" parse="false"/>'."\n";
+        $xml .= '  </domains>'."\n";
+
+        $xml .= '  <settings>'."\n";
 
         foreach ($profile->settings as $setting) {
-            $xml .= '            <param name="'.htmlspecialchars($setting->name, ENT_QUOTES | ENT_XML1).'" value="'.htmlspecialchars((string) $setting->value, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+            $xml .= '    <param name="'.htmlspecialchars($setting->name, ENT_QUOTES | ENT_XML1).'" value="'.htmlspecialchars((string) $setting->value, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         }
 
-        $xml .= '          </settings>'."\n";
-        $xml .= '        </profile>'."\n";
-        $xml .= '      </profiles>'."\n";
-        $xml .= '    </configuration>'."\n";
-        $xml .= '  </section>'."\n";
-        $xml .= '</document>';
+        $xml .= '  </settings>'."\n";
+        $xml .= '</profile>';
 
         return $xml;
     }
