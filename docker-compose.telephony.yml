@@ -5,10 +5,11 @@ services:
     restart: unless-stopped
     command: php artisan freeswitch:listen
     volumes:
-      - .:/var/www/html
+      - ./backend:/var/www/html
       - vendor_data:/var/www/html/vendor
     networks:
       - app_net
+    env_file: .env
     environment:
       - APP_ENV=${APP_ENV:-production}
       - APP_URL=${APP_URL:-http://localhost:8231}
@@ -29,7 +30,7 @@ services:
 
   freeswitch:
     build:
-      context: .
+      context: ./backend
       dockerfile: docker/freeswitch/Dockerfile
     container_name: freeswitch
     restart: unless-stopped
@@ -50,7 +51,7 @@ services:
       - freeswitch_data:/var/lib/freeswitch
       - freeswitch_logs:/var/log/freeswitch
       - certs_data:/usr/local/freeswitch/certs
-      - ./storage/freeswitch/sip_profiles/external:/usr/local/freeswitch/conf/sip_profiles/external
+      - ./backend/storage/app/freeswitch/sip_profiles:/usr/local/freeswitch/conf/sip_profiles
     networks:
       - app_net
     environment:

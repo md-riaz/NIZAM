@@ -676,8 +676,27 @@ FSEOF
 </configuration>
 FSEOF
 
+    # sofia.conf.xml — Native SIP profiles without XML curl
+    cat > "${conf}/sofia.conf.xml" << FSEOF
+<configuration name="sofia.conf" description="Sofia Endpoint">
+  <global_settings>
+    <param name="log-level" value="0"/>
+    <param name="debug-presence" value="0"/>
+    <!-- <param name="auto-restart" value="false"/> -->
+  </global_settings>
+  <profiles>
+    <X-PRE-PROCESS cmd="include" data="../sip_profiles/*.xml"/>
+  </profiles>
+</configuration>
+FSEOF
+
+    # Link sip_profiles to Laravels storage directory
+    rm -rf "${FS_CONF_DIR}/sip_profiles"
+    ln -sfn "${NIZAM_DIR}/storage/app/freeswitch/sip_profiles" "${FS_CONF_DIR}/sip_profiles"
+
     # Ownership (packages user is 'freeswitch', source build also uses 'freeswitch')
     chown -R freeswitch:freeswitch "${FS_CONF_DIR}" 2>/dev/null || true
+    chown -R freeswitch:freeswitch "${NIZAM_DIR}/storage/app/freeswitch" 2>/dev/null || true
 
     # Restart to apply new config
     systemctl restart freeswitch

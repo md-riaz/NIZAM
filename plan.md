@@ -566,11 +566,11 @@ Create or standardize:
 - shared pagination/filter helpers if list sizes grow
 
 Suggested structure:
-- `resources/js/features/tenants/*`
-- `resources/js/features/users/*`
-- `resources/js/features/extensions/*`
-- `resources/js/features/operations/*`
-- `resources/js/features/reporting/*`
+- `frontend/src/features/tenants/*`
+- `frontend/src/features/users/*`
+- `frontend/src/features/extensions/*`
+- `frontend/src/features/operations/*`
+- `frontend/src/features/reporting/*`
 
 ## Shared UI Patterns
 Build reusable components for:

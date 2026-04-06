@@ -48,8 +48,8 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 ### Configuration Model
 
 1. API call updates the database (single source of truth)
-2. Dialplan compiler generates runtime XML configuration
-3. `mod_xml_curl` dynamically serves directory & dialplan to FreeSWITCH
+2. SIP Profiles are compiled to static XML on disk for deterministic loading
+3. Dialplan and Directory compilers serve dynamic state over `mod_xml_curl`
 4. No manual XML editing required
 
 ---
@@ -390,9 +390,11 @@ docker compose exec app php artisan db:seed
 ```
 
 Behavior:
-- non-production with blank admin env vars: seeds demo login `admin@nizam.local` / `password`
-- production with blank admin env vars: seeds demo data but does **not** create a login user
-- any environment with `ADMIN_EMAIL` + `ADMIN_PASSWORD` set: creates or updates that admin user idempotently
+- non-production with blank admin env vars: seeds two default logins:
+  - **Platform Superadmin:** `admin@nizam.io` / `password` (has global cross-tenant access)
+  - **Tenant Admin:** `admin@nizam.local` / `password` (scoped purely to the "Nizam Communications" demo tenant)
+- production with blank admin env vars: seeds demo structure but does **not** create default login users (for security)
+- any environment with `ADMIN_EMAIL` + `ADMIN_PASSWORD` set in `.env`: securely creates or updates that exact platform admin user instead!
 
 Or use the **one-step shortcut** (handles steps 2–4 automatically):
 
