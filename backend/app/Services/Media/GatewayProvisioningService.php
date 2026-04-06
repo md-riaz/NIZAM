@@ -168,7 +168,7 @@ class GatewayProvisioningService
 
     protected function directory(): string
     {
-        return config('telephony.gateway_provisioning.external_directory', storage_path('freeswitch/sip_profiles/external'));
+        return config('telephony.gateway_provisioning.external_directory', storage_path('app/freeswitch/sip_profiles/external'));
     }
 
     protected function profile(): string
