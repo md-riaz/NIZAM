@@ -37,3 +37,7 @@ Document Results: Add review section to tasks/todo.md
 Capture Lessons: Update tasks/lessons.md after corrections
 Core Principles
 Simplicity First: Make every change as simple as possible. Impact minimal code.
+
+Project Research References
+For this project, there are two reference sources under /reference.
+When you need to research implementation details, prior patterns, or external project behavior, check those references first.
