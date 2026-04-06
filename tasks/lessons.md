@@ -6,3 +6,4 @@
 - When the user says the project is not live and compatibility does not matter, prefer direct normalization over compatibility layers or alias-heavy migrations.
 - When the user asks for a dedicated read model in this repo, do not stop at extracting a read service boundary; finish the persisted or projection-backed read path if live-query debt still remains.
 - When the user corrects Docker naming or deployment direction, update `tasks/lessons.md` immediately and normalize compose, docs, and operational helpers together so runtime names, backup commands, and first-boot credential docs do not drift.
+- When the user explicitly excludes domains (for example flows/ivrs/time-conditions), lock those out of implementation scope and plan complete frontend coverage for all remaining APIs.

@@ -1,7 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
-import { Building2, Globe, Plus, Settings, SquarePen, Users } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Building2, Globe, Plus, Settings, SquarePen, Trash2, Users, WandSparkles } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,8 +35,10 @@ import api from '@/lib/api';
 import type { Tenant } from '@/types/models';
 
 export default function TenantsPage() {
-    const { switchTenant } = useTenant();
+    const { switchTenant, activeTenant } = useTenant();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
 
     const { data: tenants = [], isLoading } = useQuery({
         queryKey: ['tenants'],
@@ -37,6 +50,40 @@ export default function TenantsPage() {
 
     const activeTenants = tenants.filter((tenant) => tenant.is_active).length;
 
+    const provisionMutation = useMutation({
+        mutationFn: async () => {
+            const stamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
+            return api.post('tenants/provision', {
+                name: `Provisioned Tenant ${stamp}`,
+                slug: `provisioned-${stamp}`,
+                domain: `provisioned-${stamp}.nizam.local`,
+                max_extensions: 100,
+                max_concurrent_calls: 30,
+                max_dids: 20,
+                max_ring_groups: 20,
+            });
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['tenants'] });
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await api.delete(`tenants/${id}`);
+        },
+        onSuccess: async (_, deletedId) => {
+            await queryClient.invalidateQueries({ queryKey: ['tenants'] });
+            if (activeTenant && String(activeTenant.id) === deletedId) {
+                const nextTenant = tenants.find((tenant) => String(tenant.id) !== deletedId);
+                if (nextTenant) {
+                    switchTenant(nextTenant);
+                }
+            }
+            setTenantToDelete(null);
+        },
+    });
+
     return (
         <div className="space-y-6 p-6 lg:p-8">
             <div className="flex items-center justify-between">
@@ -46,10 +93,20 @@ export default function TenantsPage() {
                         Manage organizations provisioned on this platform.
                     </p>
                 </div>
-                <Button onClick={() => navigate('/admin/tenants/create')}>
-                    <Plus className="size-4" />
-                    Create Tenant
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => provisionMutation.mutate()}
+                        disabled={provisionMutation.isPending}
+                    >
+                        <WandSparkles className="size-4" />
+                        {provisionMutation.isPending ? 'Provisioning…' : 'Quick Provision'}
+                    </Button>
+                    <Button onClick={() => navigate('/admin/tenants/create')}>
+                        <Plus className="size-4" />
+                        Create Tenant
+                    </Button>
+                </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
@@ -154,6 +211,15 @@ export default function TenantsPage() {
                                                     <Settings className="size-4" />
                                                     <span className="sr-only">Open tenant settings</span>
                                                 </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    onClick={() => setTenantToDelete(tenant)}
+                                                    disabled={activeTenant?.id === tenant.id}
+                                                >
+                                                    <Trash2 className="size-4 text-destructive" />
+                                                    <span className="sr-only">Delete tenant</span>
+                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -170,6 +236,28 @@ export default function TenantsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={!!tenantToDelete} onOpenChange={(open) => !open && setTenantToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete tenant?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete tenant &quot;{tenantToDelete?.name}&quot; and all associated
+                            records. Switch active context first if this tenant is in use.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={() => tenantToDelete && deleteMutation.mutate(String(tenantToDelete.id))}
+                            disabled={deleteMutation.isPending}
+                        >
+                            {deleteMutation.isPending ? 'Deleting…' : 'Delete tenant'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

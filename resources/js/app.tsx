@@ -7,6 +7,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { TenantProvider } from '@/context/TenantContext';
 import { queryClient } from '@/lib/query-client';
+import { Toaster } from '@/components/ui/sonner';
 
 // ─── Lazy-loaded pages ───────────────────────────────────────
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
@@ -32,6 +33,10 @@ const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
 const LogViewerPage = lazy(() => import('@/pages/admin/LogViewerPage'));
 const SettingsPage = lazy(() => import('@/pages/admin/SettingsPage'));
 const SipStatusPage = lazy(() => import('@/pages/admin/SipStatusPage'));
+const AuthTokensPage = lazy(() => import('@/pages/admin/AuthTokensPage'));
+const SslManagementPage = lazy(() => import('@/pages/admin/SslManagementPage'));
+const SipProfilesPage = lazy(() => import('@/pages/admin/SipProfilesPage'));
+const BlockedDestinationsPage = lazy(() => import('@/pages/admin/BlockedDestinationsPage'));
 
 // ─── Route Guards ────────────────────────────────────────────
 
@@ -141,8 +146,12 @@ function App() {
                     {/* System */}
                     <Route path="logs" element={<AuditLogsPage />} />
                     <Route path="system-logs" element={<LogViewerPage />} />
+                    <Route path="auth-tokens" element={<AuthTokensPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                     <Route path="sip-status" element={<SipStatusPage />} />
+                    <Route path="ssl" element={<SslManagementPage />} />
+                    <Route path="sip-profiles" element={<SipProfilesPage />} />
+                    <Route path="blocked-destinations" element={<BlockedDestinationsPage />} />
                 </Route>
 
                 {/* Catch-all */}
@@ -171,6 +180,7 @@ if (rootEl) {
                             <App />
                         </AuthProvider>
                     </BrowserRouter>
+                    <Toaster position="top-right" richColors />
                 </QueryClientProvider>
             </ErrorBoundary>
         </StrictMode>,

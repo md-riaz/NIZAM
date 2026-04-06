@@ -1,7 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
-import { GitBranch, Plus, SquarePen } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { GitBranch, Plus, SquarePen, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +37,8 @@ import type { RingGroup } from '@/types/models';
 export default function RingGroupsPage() {
     const { activeTenant, tenantApiPrefix } = useTenant();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const [groupToDelete, setGroupToDelete] = useState<RingGroup | null>(null);
 
     const { data: groups = [], isLoading } = useQuery({
         queryKey: ['ring-groups', activeTenant?.id],
@@ -34,6 +47,16 @@ export default function RingGroupsPage() {
             return res.data.data;
         },
         enabled: !!activeTenant,
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await api.delete(`${tenantApiPrefix}/ring-groups/${id}`);
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['ring-groups', activeTenant?.id] });
+            setGroupToDelete(null);
+        },
     });
 
     if (!activeTenant) {
@@ -109,6 +132,14 @@ export default function RingGroupsPage() {
                                                     <SquarePen className="size-4" />
                                                     <span className="sr-only">Edit ring group</span>
                                                 </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    onClick={() => setGroupToDelete(group)}
+                                                >
+                                                    <Trash2 className="size-4 text-destructive" />
+                                                    <span className="sr-only">Delete ring group</span>
+                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -125,6 +156,27 @@ export default function RingGroupsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={!!groupToDelete} onOpenChange={(open) => !open && setGroupToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete ring group?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the ring group &quot;{groupToDelete?.name}&quot; and stop
+                            calls from using this routing target.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={() => groupToDelete && deleteMutation.mutate(String(groupToDelete.id))}
+                        >
+                            {deleteMutation.isPending ? 'Deleting…' : 'Delete ring group'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

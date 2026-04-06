@@ -1,7 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
-import { Eye, Phone as PhoneIcon, Plus, SquarePen } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Eye, Phone as PhoneIcon, Plus, SquarePen, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +37,8 @@ import type { Extension } from '@/types/models';
 export default function ExtensionsPage() {
     const { activeTenant, tenantApiPrefix } = useTenant();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const [extensionToDelete, setExtensionToDelete] = useState<Extension | null>(null);
 
     const { data: extensions = [], isLoading } = useQuery({
         queryKey: ['extensions', activeTenant?.id],
@@ -46,6 +59,19 @@ export default function ExtensionsPage() {
         },
         enabled: !!activeTenant,
         refetchInterval: 15_000,
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await api.delete(`${tenantApiPrefix}/extensions/${id}`);
+        },
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['extensions', activeTenant?.id] }),
+                queryClient.invalidateQueries({ queryKey: ['extension-status', activeTenant?.id] }),
+            ]);
+            setExtensionToDelete(null);
+        },
     });
 
     if (!activeTenant) {
@@ -182,6 +208,14 @@ export default function ExtensionsPage() {
                                                         <SquarePen className="size-4" />
                                                         <span className="sr-only">Edit extension</span>
                                                     </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon-sm"
+                                                        onClick={() => setExtensionToDelete(ext)}
+                                                    >
+                                                        <Trash2 className="size-4 text-destructive" />
+                                                        <span className="sr-only">Delete extension</span>
+                                                    </Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -199,6 +233,27 @@ export default function ExtensionsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={!!extensionToDelete} onOpenChange={(open) => !open && setExtensionToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete extension?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete extension &quot;{extensionToDelete?.extension}&quot;.
+                            Any linked configuration depending on this extension may stop working.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={() => extensionToDelete && deleteMutation.mutate(String(extensionToDelete.id))}
+                        >
+                            {deleteMutation.isPending ? 'Deleting…' : 'Delete extension'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

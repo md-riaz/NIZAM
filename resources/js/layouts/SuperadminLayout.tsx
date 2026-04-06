@@ -8,6 +8,7 @@ import {
     GitBranch,
     Globe,
     Hash,
+    KeyRound,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -18,6 +19,8 @@ import {
     ScrollText,
     Settings,
     Shield,
+    ShieldAlert,
+    ShieldCheck,
     Sun,
     Users,
     X,
@@ -82,6 +85,15 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Calls',
         items: [
             { label: 'CDRs', icon: PhoneCall, href: '/admin/cdrs' },
+        ],
+    },
+    {
+        title: 'Security',
+        items: [
+            { label: 'Auth Tokens', icon: KeyRound, href: '/admin/auth-tokens', adminOnly: true },
+            { label: 'SSL Management', icon: ShieldCheck, href: '/admin/ssl', superadminOnly: true },
+            { label: 'SIP Profiles', icon: Radio, href: '/admin/sip-profiles', superadminOnly: true },
+            { label: 'Blocked Destinations', icon: ShieldAlert, href: '/admin/blocked-destinations', superadminOnly: true },
         ],
     },
     {
