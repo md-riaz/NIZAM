@@ -31,6 +31,7 @@ class GatewayResource extends JsonResource
             'caller_id_in_from' => $this->caller_id_in_from,
             'profile' => $this->profile,
             'is_active' => $this->is_active,
+            'tenant' => TenantResource::make($this->whenLoaded('tenant')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

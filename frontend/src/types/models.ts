@@ -80,6 +80,7 @@ export const GatewaySchema = z.object({
     proxy: z.string().nullable().optional(),
     register: z.boolean().optional(),
     enabled: z.boolean().optional(),
+    tenant: TenantSchema.nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
 });

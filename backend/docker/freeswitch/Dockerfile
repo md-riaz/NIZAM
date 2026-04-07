@@ -111,11 +111,6 @@ RUN set -eux; \
     && ln -sf /usr/local/freeswitch/bin/fs_cli /usr/bin/fs_cli \
     && ln -sf /usr/local/freeswitch/conf /etc/freeswitch \
     && chown -R freeswitch:freeswitch /usr/local/freeswitch \
-    && sed -i 's|<!--<load module="mod_callcenter"/>-->|<load module="mod_callcenter"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
-    && sed -i 's|<!-- <load module="mod_xml_curl"/> -->|<load module="mod_xml_curl"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
-    && sed -i 's|<!--<load module="mod_shout"/>-->|<load module="mod_shout"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
-    && sed -i 's|<!-- <load module="mod_curl"/> -->|<load module="mod_curl"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
-    && sed -i 's|<!--<load module="mod_opus"/>-->|<load module="mod_opus"/>|' /usr/local/freeswitch/conf/autoload_configs/modules.conf.xml \
     && ldconfig
 
 # Copy custom configuration (overrides defaults)

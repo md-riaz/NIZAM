@@ -12,6 +12,10 @@ REAL_CONF_DIR=$(readlink -f "$CONF_DIR" 2>/dev/null || printf '%s' "$CONF_DIR")
 # Add any new variables here when they are introduced in XML templates.
 SUBST_VARS='${FREESWITCH_XML_CURL_ENDPOINT_INTERNAL}'
 
+# Ensure gateway directories exist before FreeSWITCH starts to avoid include errors
+mkdir -p /usr/local/freeswitch/conf/sip_profiles/external
+mkdir -p /usr/local/freeswitch/conf/sip_profiles/internal
+
 find -L "$REAL_CONF_DIR" -name '*.xml' | while read -r f; do
     envsubst "$SUBST_VARS" < "$f" > "${f}.tmp" && cat "${f}.tmp" > "$f" && rm "${f}.tmp"
 done

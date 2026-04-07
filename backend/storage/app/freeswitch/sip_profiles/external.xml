@@ -2,6 +2,7 @@
   <aliases>
   </aliases>
   <gateways>
+    <X-PRE-PROCESS cmd="include" data="external/*.xml"/>
   </gateways>
   <domains>
     <domain name="all" alias="true" parse="false"/>
@@ -28,8 +29,8 @@
     <param name="sip-ip" value="$${local_ip_v4}"/>
     <param name="ext-rtp-ip" value="auto-nat"/>
     <param name="ext-sip-ip" value="auto-nat"/>
-    <param name="media_timeout" value="300"/>
-    <param name="media_hold_timeout" value="1800"/>
+    <param name="rtp-timeout-sec" value="300"/>
+    <param name="rtp-hold-timeout-sec" value="1800"/>
     <param name="tls" value="false"/>
     <param name="tls-only" value="false"/>
   </settings>

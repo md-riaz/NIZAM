@@ -96,6 +96,7 @@ export default function GatewaysPage() {
                                 <TableRow>
                                     <TableHead>Name</TableHead>
                                     <TableHead>SIP Server</TableHead>
+                                    {!activeTenant && <TableHead>Tenant</TableHead>}
                                     <TableHead>Register</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
@@ -113,6 +114,14 @@ export default function GatewaysPage() {
                                         <TableCell className="font-mono text-sm text-muted-foreground">
                                             {gw.host ?? '—'}
                                         </TableCell>
+                                        {!activeTenant && (
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium">{gw.tenant?.name ?? 'Global'}</span>
+                                                    <span className="text-xs text-muted-foreground">{gw.tenant?.domain}</span>
+                                                </div>
+                                            </TableCell>
+                                        )}
                                         <TableCell>
                                             {gw.register ? (
                                                 <Badge variant="default">Yes</Badge>
@@ -145,7 +154,7 @@ export default function GatewaysPage() {
                                 ))}
                                 {gateways.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={activeTenant ? 5 : 6} className="h-24 text-center text-muted-foreground">
                                             No gateways configured.
                                         </TableCell>
                                     </TableRow>
