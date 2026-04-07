@@ -32,11 +32,10 @@ const RingGroupFormPage = lazy(() => import('@/pages/admin/RingGroupFormPage'));
 const CdrsPage = lazy(() => import('@/pages/admin/CdrsPage'));
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
 const LogViewerPage = lazy(() => import('@/pages/admin/LogViewerPage'));
-const SettingsPage = lazy(() => import('@/pages/admin/SettingsPage'));
 const SipStatusPage = lazy(() => import('@/pages/admin/SipStatusPage'));
 const AuthTokensPage = lazy(() => import('@/pages/admin/AuthTokensPage'));
-const SslManagementPage = lazy(() => import('@/pages/admin/SslManagementPage'));
 const SipProfilesPage = lazy(() => import('@/pages/admin/SipProfilesPage'));
+const SipProfileFormPage = lazy(() => import('@/pages/admin/SipProfileFormPage'));
 const BlockedDestinationsPage = lazy(() => import('@/pages/admin/BlockedDestinationsPage'));
 
 // ─── Phase 2 (Contact Center) ────────────────────────────────
@@ -169,10 +168,10 @@ function App() {
                     <Route path="logs" element={<AuditLogsPage />} />
                     <Route path="system-logs" element={<LogViewerPage />} />
                     <Route path="auth-tokens" element={<AuthTokensPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
                     <Route path="sip-status" element={<SipStatusPage />} />
-                    <Route path="ssl" element={<SslManagementPage />} />
                     <Route path="sip-profiles" element={<SipProfilesPage />} />
+                    <Route path="sip-profiles/create" element={<SipProfileFormPage />} />
+                    <Route path="sip-profiles/:id/edit" element={<SipProfileFormPage />} />
                     <Route path="blocked-destinations" element={<BlockedDestinationsPage />} />
                 </Route>
 
