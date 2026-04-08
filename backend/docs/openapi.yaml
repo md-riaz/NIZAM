@@ -291,100 +291,6 @@ paths:
         '200':
           description: Dashboard data
 
-  /admin/ssl:
-    get:
-      tags: [Admin]
-      summary: Get SSL settings and status
-      operationId: getSslSettings
-      responses:
-        '200':
-          description: SSL settings
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status: { type: string }
-                  data: { $ref: '#/components/schemas/SslSetting' }
-    put:
-      tags: [Admin]
-      summary: Update SSL settings
-      operationId: updateSslSettings
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [email, is_enabled, domains]
-              properties:
-                email: { type: string, format: email }
-                is_enabled: { type: boolean }
-                domains:
-                  type: array
-                  items: { type: string }
-      responses:
-        '200':
-          description: SSL settings updated
-
-  /admin/ssl/request:
-    post:
-      tags: [Admin]
-      summary: Trigger manual SSL certificate request
-      operationId: requestSslCertificate
-      responses:
-        '200':
-          description: Certificate request initiated
-
-  /admin/webrtc-tls:
-    get:
-      tags: [Admin]
-      summary: Get WebRTC TLS settings
-      description: Returns the platform-wide WebRTC TLS mode configuration used to drive WebSocket transport on the internal SIP profile.
-      operationId: getWebRtcTlsSettings
-      responses:
-        '200':
-          description: WebRTC TLS settings
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status: { type: string, enum: [success] }
-                  data: { $ref: '#/components/schemas/WebRtcTlsSettings' }
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-    put:
-      tags: [Admin]
-      summary: Update WebRTC TLS settings
-      description: Updates the platform-wide WebRTC TLS mode selection and certificate directories.
-      operationId: updateWebRtcTlsSettings
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WebRtcTlsSettingsUpdateRequest'
-      responses:
-        '200':
-          description: WebRTC TLS settings updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status: { type: string, enum: [success] }
-                  message: { type: string }
-                  data: { $ref: '#/components/schemas/WebRtcTlsSettings' }
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
   /admin/sip-profiles:
     get:
       tags: [Admin]
@@ -2414,22 +2320,6 @@ components:
         role: { type: string }
         tenant_id: { type: string, format: uuid, nullable: true }
 
-    SslSetting:
-      type: object
-      properties:
-        id: { type: integer }
-        email: { type: string, format: email }
-        is_enabled: { type: boolean }
-        domains:
-          type: array
-          items: { type: string }
-        status: { type: string, enum: [pending, active, error] }
-        last_error: { type: string, nullable: true }
-        last_renewed_at: { type: string, format: date-time, nullable: true }
-        expires_at: { type: string, format: date-time, nullable: true }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
-
     WebRtcTlsMode:
       type: object
       required: [key, label, enabled, cert_dir, production_ready, summary, details, expected_files]
@@ -2447,44 +2337,6 @@ components:
           type: array
           items: { type: string }
 
-    WebRtcTlsModes:
-      type: object
-      required: [trusted_ca, self_signed]
-      properties:
-        trusted_ca:
-          $ref: '#/components/schemas/WebRtcTlsMode'
-        self_signed:
-          $ref: '#/components/schemas/WebRtcTlsMode'
-
-    WebRtcTlsSettings:
-      type: object
-      required: [webrtc_enabled, active_mode, modes]
-      properties:
-        webrtc_enabled: { type: boolean }
-        active_mode:
-          type: string
-          enum: [trusted_ca, self_signed]
-        modes:
-          $ref: '#/components/schemas/WebRtcTlsModes'
-
-    WebRtcTlsSettingsUpdateRequest:
-      type: object
-      required:
-        - webrtc_enabled
-        - active_mode
-        - trusted_ca_enabled
-        - trusted_ca_cert_dir
-        - self_signed_enabled
-        - self_signed_cert_dir
-      properties:
-        webrtc_enabled: { type: boolean }
-        active_mode:
-          type: string
-          enum: [trusted_ca, self_signed]
-        trusted_ca_enabled: { type: boolean }
-        trusted_ca_cert_dir: { type: string, maxLength: 255 }
-        self_signed_enabled: { type: boolean }
-        self_signed_cert_dir: { type: string, maxLength: 255 }
 
     WebRtcConfig:
       type: object

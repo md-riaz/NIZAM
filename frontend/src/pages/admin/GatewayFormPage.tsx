@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Globe, Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -25,10 +25,18 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useTenant } from '@/context/TenantContext';
 import api from '@/lib/api';
 
 const gatewaySchema = z.object({
+    tenant_id: z.string().nullable().optional(),
     name: z.string().min(1, 'Name is required'),
     host: z.string().min(1, 'SIP server is required'),
     username: z.string().optional(),
@@ -43,12 +51,13 @@ export default function GatewayFormPage() {
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeTenant, tenantApiPrefix, tenants } = useTenant();
     const queryClient = useQueryClient();
 
     const form = useForm<GatewayFormValues>({
         resolver: zodResolver(gatewaySchema),
         defaultValues: {
+            tenant_id: 'global',
             name: '',
             host: '',
             username: '',
@@ -59,17 +68,19 @@ export default function GatewayFormPage() {
     });
 
     const { data: gateway, isLoading: isFetching } = useQuery({
-        queryKey: ['gateway', id],
+        queryKey: ['gateway', id, activeTenant?.id || 'global'],
         queryFn: async () => {
-            const res = await api.get(`${tenantApiPrefix}/gateways/${id}`);
+            const url = activeTenant ? `${tenantApiPrefix}/gateways/${id}` : `admin/gateways/${id}`;
+            const res = await api.get(url);
             return res.data.data;
         },
-        enabled: isEdit && !!activeTenant,
+        enabled: isEdit,
     });
 
     useEffect(() => {
         if (gateway) {
             form.reset({
+                tenant_id: gateway.tenant_id || 'global',
                 name: gateway.name || '',
                 host: gateway.host || '',
                 username: gateway.username || '',
@@ -82,10 +93,13 @@ export default function GatewayFormPage() {
 
     const mutation = useMutation({
         mutationFn: async (values: GatewayFormValues) => {
+            const payload = { ...values, tenant_id: values.tenant_id === 'global' ? null : values.tenant_id };
+            const baseUrl = activeTenant ? `${tenantApiPrefix}/gateways` : 'admin/gateways';
+            
             if (isEdit) {
-                return api.put(`${tenantApiPrefix}/gateways/${id}`, values);
+                return api.put(`${baseUrl}/${id}`, payload);
             }
-            return api.post(`${tenantApiPrefix}/gateways`, values);
+            return api.post(baseUrl, payload);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['gateways'] });
@@ -97,18 +111,7 @@ export default function GatewayFormPage() {
         mutation.mutate(values);
     };
 
-    if (!activeTenant) {
-        return (
-            <div className="flex h-64 flex-col items-center justify-center space-y-4 text-center">
-                <Globe className="size-12 text-muted-foreground" />
-                <div>
-                    <h2 className="text-lg font-semibold">Select a Tenant</h2>
-                    <p className="text-muted-foreground">You must select a tenant from the dropdown above to create or edit a gateway.</p>
-                </div>
-                <Button variant="outline" onClick={() => navigate('/admin/gateways')}>Back to Gateways</Button>
-            </div>
-        );
-    }
+
 
     return (
         <div className="space-y-6 p-6 lg:p-8">
@@ -118,7 +121,7 @@ export default function GatewayFormPage() {
                 </Button>
                 <div>
                     <p className="text-sm text-muted-foreground">
-                        {activeTenant.name} &rsaquo; Connectivity
+                        {activeTenant ? activeTenant.name : 'Platform Admin'} &rsaquo; Connectivity
                     </p>
                     <h1 className="text-2xl font-bold tracking-tight">
                         {isEdit ? 'Edit Gateway' : 'Add Gateway'}
@@ -141,6 +144,35 @@ export default function GatewayFormPage() {
                     ) : (
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                {!activeTenant && (
+                                    <FormField
+                                        control={form.control}
+                                        name="tenant_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tenant / Owner</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value || 'global'}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select an owner" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="global">Platform (Global)</SelectItem>
+                                                        {tenants.map(t => (
+                                                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription>
+                                                    Platform gateways can be used by all tenants contextually or serve as global outbounds.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
                                 <FormField
                                     control={form.control}
                                     name="name"

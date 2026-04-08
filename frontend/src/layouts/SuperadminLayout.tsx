@@ -17,7 +17,6 @@ import {
     PhoneCall,
     Radio,
     ScrollText,
-    Settings,
     Shield,
     ShieldAlert,
     ShieldCheck,
@@ -101,7 +100,6 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Security',
         items: [
             { label: 'Auth Tokens', icon: KeyRound, href: '/admin/auth-tokens', adminOnly: true, tenantRequired: true },
-            { label: 'SSL Management', icon: ShieldCheck, href: '/admin/ssl', superadminOnly: true },
             { label: 'SIP Profiles', icon: Radio, href: '/admin/sip-profiles', superadminOnly: true },
             { label: 'Blocked Destinations', icon: ShieldAlert, href: '/admin/blocked-destinations', superadminOnly: true },
         ],
@@ -112,7 +110,6 @@ const NAV_SECTIONS: NavSection[] = [
             { label: 'Audit Logs', icon: ScrollText, href: '/admin/logs', adminOnly: true, tenantRequired: true },
             { label: 'System Logs', icon: FileText, href: '/admin/system-logs', superadminOnly: true },
             { label: 'SIP Status', icon: Radio, href: '/admin/sip-status', superadminOnly: true },
-            { label: 'Settings', icon: Settings, href: '/admin/settings', adminOnly: true, tenantRequired: true },
         ],
     },
 ];

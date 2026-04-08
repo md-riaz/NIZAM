@@ -118,7 +118,7 @@ class ExtensionController extends Controller
      * Get WebRTC connection configuration for an extension.
      *
      * Returns everything a SIP.js or similar WebRTC client needs to register
-     * and make calls via WebSocket. Settings are read from system-wide config.
+     * and make calls via WebSocket. Settings are read from the internal SIP profile.
      */
     public function webRtcConfig(Tenant $tenant, Extension $extension): JsonResponse
     {

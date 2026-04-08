@@ -28,6 +28,8 @@ class SipProfileController extends Controller
             'settings.*.description' => 'nullable|string',
         ]);
 
+        $this->validateWebRtcSettings($validated['settings'] ?? []);
+
         $profile = SipProfile::create([
             'name' => $validated['name'],
             'hostname' => $validated['hostname'] ?? null,
@@ -66,6 +68,8 @@ class SipProfileController extends Controller
             'settings_to_delete.*' => 'uuid'
         ]);
 
+        $this->validateWebRtcSettings($validated['settings'] ?? []);
+
         $sipProfile->update([
             'name' => $validated['name'] ?? $sipProfile->name,
             'hostname' => array_key_exists('hostname', $validated) ? $validated['hostname'] : $sipProfile->hostname,
@@ -101,5 +105,50 @@ class SipProfileController extends Controller
         $sipProfile->delete();
 
         return response()->noContent();
+    }
+
+    protected function validateWebRtcSettings(array $settings): void
+    {
+        $bindings = ['ws-binding', 'wss-binding'];
+        $booleans = ['tls', 'tls-only', 'dtls-srtp', 'enable-ice', 'tls-verify-date'];
+        $ports = ['tls-sip-port'];
+
+        foreach ($settings as $setting) {
+            $name = $setting['name'] ?? null;
+            $value = (string) ($setting['value'] ?? '');
+            $isEnabled = (bool) ($setting['is_enabled'] ?? false);
+
+            if ($name === null) {
+                continue;
+            }
+
+            if (in_array($name, $bindings, true) && ! preg_match('/^:\d+$/', $value)) {
+                abort(response()->json([
+                    'message' => sprintf('The %s value must be in :port format.', $name),
+                    'errors' => [$name => [sprintf('The %s value must be in :port format.', $name)]],
+                ], 422));
+            }
+
+            if (in_array($name, $booleans, true) && ! in_array($value, ['true', 'false'], true)) {
+                abort(response()->json([
+                    'message' => sprintf('The %s value must be true or false.', $name),
+                    'errors' => [$name => [sprintf('The %s value must be true or false.', $name)]],
+                ], 422));
+            }
+
+            if (in_array($name, $ports, true) && ! ctype_digit($value)) {
+                abort(response()->json([
+                    'message' => sprintf('The %s value must be numeric.', $name),
+                    'errors' => [$name => [sprintf('The %s value must be numeric.', $name)]],
+                ], 422));
+            }
+
+            if ($name === 'tls-cert-dir' && $isEnabled && trim($value) === '') {
+                abort(response()->json([
+                    'message' => 'The tls-cert-dir value is required when WebRTC is enabled.',
+                    'errors' => ['tls-cert-dir' => ['The tls-cert-dir value is required when WebRTC is enabled.']],
+                ], 422));
+            }
+        }
     }
 }

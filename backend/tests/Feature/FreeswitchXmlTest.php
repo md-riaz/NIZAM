@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\SipProfile;
 use App\Models\Tenant;
-use App\Models\WebRtcTlsSetting;
+use Database\Seeders\SipProfileSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+
+use function PHPUnit\Framework\assertNotNull;
 
 class FreeswitchXmlTest extends TestCase
 {
@@ -98,29 +101,27 @@ class FreeswitchXmlTest extends TestCase
         $this->assertStringContainsString('<section name="directory"></section>', $response->getContent());
     }
 
-    public function test_returns_internal_configuration_with_webrtc_transport_using_active_tls_mode(): void
+    public function test_compiler_outputs_internal_profile_with_enabled_webrtc_settings(): void
     {
-        WebRtcTlsSetting::query()->create([
-            'webrtc_enabled' => true,
-            'active_mode' => 'self_signed',
-            'trusted_ca_enabled' => true,
-            'trusted_ca_cert_dir' => '/secure/certs/trusted',
-            'self_signed_enabled' => true,
-            'self_signed_cert_dir' => '/secure/certs/dev',
-        ]);
+        $this->seed(SipProfileSeeder::class);
 
-        $response = $this->post('/freeswitch/xml-curl', [
-            'section' => 'configuration',
-            'key_name' => 'sofia.conf',
-            'profile' => 'internal',
-        ]);
+        $profile = SipProfile::query()->where('name', 'internal')->first();
+        assertNotNull($profile);
 
-        $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
-        $this->assertStringContainsString('<profile name="internal">', $response->getContent());
-        $this->assertStringContainsString('name="tls-cert-dir" value="/secure/certs/dev"', $response->getContent());
-        $this->assertStringContainsString('name="wss-binding" value=":7443"', $response->getContent());
-        $this->assertStringContainsString('name="ws-binding" value=":5066"', $response->getContent());
-        $this->assertStringContainsString('name="dtls-srtp" value="true"', $response->getContent());
+        $profile->settings()->updateOrCreate(['name' => 'ws-binding'], ['value' => ':5066', 'is_enabled' => true]);
+        $profile->settings()->updateOrCreate(['name' => 'wss-binding'], ['value' => ':7443', 'is_enabled' => true]);
+        $profile->settings()->updateOrCreate(['name' => 'tls-cert-dir'], ['value' => '/secure/certs/dev', 'is_enabled' => true]);
+        $profile->settings()->updateOrCreate(['name' => 'dtls-srtp'], ['value' => 'true', 'is_enabled' => true]);
+
+        app(\App\Services\SipProfileCompiler::class)->compileAllToDisk();
+
+        $compiledXml = file_get_contents(storage_path('app/freeswitch/sip_profiles/internal.xml'));
+
+        $this->assertIsString($compiledXml);
+        $this->assertStringContainsString('<profile name="internal">', $compiledXml);
+        $this->assertStringContainsString('name="tls-cert-dir" value="/secure/certs/dev"', $compiledXml);
+        $this->assertStringContainsString('name="wss-binding" value=":7443"', $compiledXml);
+        $this->assertStringContainsString('name="ws-binding" value=":5066"', $compiledXml);
+        $this->assertStringContainsString('name="dtls-srtp" value="true"', $compiledXml);
     }
 }

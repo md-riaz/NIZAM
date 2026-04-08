@@ -3,30 +3,29 @@
 namespace App\Services;
 
 use App\Models\Extension;
-use App\Models\SslSetting;
-use Illuminate\Support\Facades\Cache;
+use App\Models\SipProfile;
 
 class WebRtcConfigService
 {
-    public function __construct(
-        protected WebRtcTlsSettingsService $tlsSettingsService,
-    ) {}
-
     public function forExtension(Extension $extension, string $appUrl): array
     {
         $webrtcConfig = config('telephony.webrtc');
-        $tlsSettings = $this->tlsSettingsService->getSettings();
-        $host = parse_url($appUrl, PHP_URL_HOST) ?: 'localhost';
-        $sslDomains = Cache::remember('webrtc:active-ssl-domains', 60, function (): array {
-            return SslSetting::query()
-                ->where('is_enabled', true)
-                ->where('status', 'active')
-                ->value('domains') ?? [];
-        });
+        $internalProfile = SipProfile::query()
+            ->with(['settings' => function ($query) {
+                $query->where('is_enabled', true);
+            }])
+            ->where('name', 'internal')
+            ->first();
 
-        if ($sslDomains !== []) {
-            $host = $sslDomains[0];
-        }
+        $enabledSettings = $internalProfile?->settings
+            ? $internalProfile->settings->pluck('value', 'name')->all()
+            : [];
+
+        $wssBinding = (string) ($enabledSettings['wss-binding'] ?? '');
+        $wsBinding = (string) ($enabledSettings['ws-binding'] ?? '');
+        $webrtcEnabled = $wssBinding !== '' && (($enabledSettings['dtls-srtp'] ?? null) === 'true');
+        $wssPort = $this->extractPort($wssBinding) ?? ($webrtcConfig['wss_port'] ?? 7443);
+        $host = parse_url($appUrl, PHP_URL_HOST) ?: 'localhost';
 
         $iceServers = [];
 
@@ -49,19 +48,35 @@ class WebRtcConfigService
         }
 
         return [
-            'enabled' => $tlsSettings['webrtc_enabled'],
-            'websocket_url' => sprintf('wss://%s:%s', $host, $webrtcConfig['wss_port'] ?? 7443),
+            'enabled' => $webrtcEnabled,
+            'websocket_url' => sprintf('wss://%s:%s', $host, $wssPort),
             'sip_uri' => sprintf('sip:%s@%s', $extension->extension, $extension->tenant->domain),
             'sip_username' => $extension->extension,
             'sip_password' => $extension->password,
             'sip_domain' => $extension->tenant->domain,
             'display_name' => trim(($extension->directory_first_name ?? '').' '.($extension->directory_last_name ?? '')),
             'ice_servers' => $iceServers,
-            'codec_prefs' => explode(',', $webrtcConfig['codec_prefs'] ?? 'OPUS,PCMU,PCMA,G722'),
-            'tls_mode' => [
-                'active' => $tlsSettings['active_mode'],
-                'modes' => $tlsSettings['modes'],
+            'codec_prefs' => explode(',', $enabledSettings['inbound-codec-prefs'] ?? ($webrtcConfig['codec_prefs'] ?? 'OPUS,PCMU,PCMA,G722')),
+            'source_profile' => 'internal',
+            'transport' => [
+                'ws_binding' => $wsBinding !== '' ? $wsBinding : null,
+                'wss_binding' => $wssBinding !== '' ? $wssBinding : null,
+                'tls_cert_dir' => $enabledSettings['tls-cert-dir'] ?? null,
+                'dtls_srtp' => ($enabledSettings['dtls-srtp'] ?? null) === 'true',
+                'enable_ice' => ($enabledSettings['enable-ice'] ?? null) === 'true',
+                'tls_version' => $enabledSettings['tls-version'] ?? null,
             ],
         ];
+    }
+
+    protected function extractPort(string $binding): ?int
+    {
+        if ($binding === '') {
+            return null;
+        }
+
+        $port = ltrim($binding, ':');
+
+        return ctype_digit($port) ? (int) $port : null;
     }
 }

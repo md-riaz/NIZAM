@@ -30,11 +30,3 @@ Schedule::command('nizam:prune-recordings')
         Log::error('Scheduled task nizam:prune-recordings failed.');
     });
 
-// Automatically check and renew Let's Encrypt certificates — runs daily at 01:00 AM UTC.
-Schedule::command('ssl:renew')
-    ->dailyAt('01:00')
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->onFailure(function () {
-        Log::error('Scheduled task ssl:renew failed.');
-    });

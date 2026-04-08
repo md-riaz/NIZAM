@@ -118,7 +118,7 @@ export default function ExtensionDetailPage() {
                                 WebRTC configuration
                             </CardTitle>
                             <CardDescription>
-                                Read-only connection details for browser and softphone provisioning.
+                                Read-only connection details derived from the internal SIP profile WebRTC transport settings.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm">

@@ -33,5 +33,9 @@
     <param name="rtp-hold-timeout-sec" value="1800"/>
     <param name="tls" value="false"/>
     <param name="tls-only" value="false"/>
+    <param name="wss-binding" value=":7445"/>
+    <param name="dtls-srtp" value="true"/>
+    <param name="enable-ice" value="true"/>
+    <param name="tls-cert-dir" value="/secure/certs/dev"/>
   </settings>
 </profile>
