@@ -89,7 +89,7 @@ class Agent extends Model
     {
         return $this->belongsToMany(Queue::class, 'queue_members')
             ->withPivot('priority')
-            ->withTimestamps();
+            ->withTimestamps()->using(QueueMember::class);
     }
 
     public function endpointBindings(): HasMany

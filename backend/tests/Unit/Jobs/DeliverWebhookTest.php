@@ -33,9 +33,10 @@ class DeliverWebhookTest extends TestCase
         $job->handle();
 
         Http::assertSent(function ($request) {
+            $prefix = config('platform.webhooks.signature_header_prefix', 'X-Nizam');
             return $request->url() === 'https://example.com/hook'
-                && $request->hasHeader('X-Nizam-Signature')
-                && $request->hasHeader('X-Nizam-Event', 'call.created')
+                && $request->hasHeader("{$prefix}-Signature")
+                && $request->hasHeader("{$prefix}-Event", 'call.created')
                 && $request->hasHeader('Content-Type', 'application/json');
         });
     }
@@ -58,7 +59,8 @@ class DeliverWebhookTest extends TestCase
         $job->handle();
 
         Http::assertSent(function ($request) {
-            $signature = $request->header('X-Nizam-Signature')[0] ?? '';
+            $prefix = config('platform.webhooks.signature_header_prefix', 'X-Nizam');
+            $signature = $request->header("{$prefix}-Signature")[0] ?? '';
 
             // Verify signature is a valid hex string (SHA256 = 64 hex chars)
             return strlen($signature) === 64 && ctype_xdigit($signature);

@@ -46,8 +46,4 @@ class TenantResource extends BaseResource
         return $this->client->put("tenants/{$id}/settings", $settings);
     }
 
-    public function provision(array $data): array
-    {
-        return $this->client->post('tenants/provision', $data);
-    }
 }

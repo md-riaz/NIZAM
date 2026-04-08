@@ -40,10 +40,12 @@ class MetricsService
         $abandonRate = $offered > 0 ? round(($abandoned / $offered) * 100, 2) : 0;
         $serviceLevel = $offered > 0 ? round(($withinSla / $offered) * 100, 2) : 100;
 
-        $memberStats = $queue->members()
-            ->where('is_active', true)
+        $memberStats = Agent::query()
+            ->join('queue_members', 'agents.id', '=', 'queue_members.agent_id')
+            ->where('queue_members.queue_id', $queue->id)
+            ->where('agents.is_active', true)
             ->selectRaw('COUNT(*) as total_members')
-            ->selectRaw('SUM(CASE WHEN state = ? THEN 1 ELSE 0 END) as busy_agents', [Agent::STATE_BUSY])
+            ->selectRaw('SUM(CASE WHEN agents.state = ? THEN 1 ELSE 0 END) as busy_agents', [Agent::STATE_BUSY])
             ->first();
 
         $totalMembers = (int) ($memberStats?->total_members ?? 0);
@@ -96,10 +98,12 @@ class MetricsService
         $abandonRate = $offered > 0 ? round(($abandoned / $offered) * 100, 2) : 0;
         $serviceLevel = $offered > 0 ? round(($withinSla / $offered) * 100, 2) : 100;
 
-        $memberStats = $queue->members()
-            ->where('is_active', true)
+        $memberStats = Agent::query()
+            ->join('queue_members', 'agents.id', '=', 'queue_members.agent_id')
+            ->where('queue_members.queue_id', $queue->id)
+            ->where('agents.is_active', true)
             ->selectRaw('COUNT(*) as total_members')
-            ->selectRaw('SUM(CASE WHEN state = ? THEN 1 ELSE 0 END) as busy_agents', [Agent::STATE_BUSY])
+            ->selectRaw('SUM(CASE WHEN agents.state = ? THEN 1 ELSE 0 END) as busy_agents', [Agent::STATE_BUSY])
             ->first();
 
         $totalMembers = (int) ($memberStats?->total_members ?? 0);

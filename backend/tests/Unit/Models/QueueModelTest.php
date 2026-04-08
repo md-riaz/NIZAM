@@ -140,7 +140,7 @@ class QueueModelTest extends TestCase
         ]);
 
         $queue->members()->attach($agent->id, [
-            'id' => Str::uuid(),
+            'id' => (string) Str::uuid(),
             'priority' => 0,
         ]);
 

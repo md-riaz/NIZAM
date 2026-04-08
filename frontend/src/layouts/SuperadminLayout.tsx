@@ -45,7 +45,7 @@ import { cn } from '@/lib/utils';
 // ─── Navigation Structure (Stitch Design) ────────────────────
 
 interface NavItem {
-    label: string;
+    label: string | ((activeTenant: boolean) => string);
     icon: React.ComponentType<{ className?: string }>;
     href: string;
     superadminOnly?: boolean;
@@ -87,7 +87,7 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Connectivity',
         items: [
             // Gateways remain visible globally for Platform Admins to control all infrastructure
-            { label: 'Gateways', icon: Globe, href: '/admin/gateways', adminOnly: true },
+            { label: (hasTenant) => hasTenant ? 'Gateways' : 'Platform Gateways', icon: Globe, href: '/admin/gateways', adminOnly: true },
         ],
     },
     {
@@ -185,20 +185,27 @@ export default function SuperadminLayout() {
                     'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar transition-transform duration-200 ease-out lg:static lg:z-auto lg:translate-x-0 lg:transition-all',
                     collapsed ? 'lg:w-17' : 'lg:w-64',
                     mobileNavOpen ? 'translate-x-0 w-72' : '-translate-x-full w-72',
+                    activeTenant ? 'border-primary/20' : ''
                 )}
             >
                 {/* Brand */}
-                <div className="flex h-14 items-center gap-3 px-4">
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                        <Shield className="size-4" />
+                <div className={cn(
+                    "flex h-14 items-center gap-3 px-4",
+                    activeTenant ? "bg-primary/5" : ""
+                )}>
+                    <div className={cn(
+                        "flex size-8 shrink-0 items-center justify-center rounded-lg text-primary-foreground",
+                        activeTenant ? "bg-primary" : "bg-sidebar-primary"
+                    )}>
+                        {activeTenant ? <Building2 className="size-4" /> : <Shield className="size-4" />}
                     </div>
                     {!collapsed && (
-                        <div>
-                            <span className="text-sm font-bold tracking-tight text-sidebar-foreground">
-                                {platformName}
+                        <div className="flex flex-col min-w-0">
+                            <span className="truncate text-sm font-bold tracking-tight text-sidebar-foreground">
+                                {activeTenant ? activeTenant.name : platformName}
                             </span>
-                            <p className="text-[10px] leading-none text-muted-foreground">
-                                COMMUNICATIONS CONTROL
+                            <p className="truncate text-[10px] leading-none text-muted-foreground mt-1">
+                                {activeTenant ? 'TENANT MANAGEMENT' : 'GLOBAL PLATFORM CONTROL'}
                             </p>
                         </div>
                     )}
@@ -237,7 +244,9 @@ export default function SuperadminLayout() {
                                         )}
                                     >
                                         <item.icon className="size-4 shrink-0" />
-                                        <span className={cn(collapsed && 'lg:hidden')}>{item.label}</span>
+                                        <span className={cn(collapsed && 'lg:hidden')}>
+                                            {typeof item.label === 'function' ? item.label(!!activeTenant) : item.label}
+                                        </span>
                                     </Link>
                                 );
                             })}
@@ -342,9 +351,17 @@ export default function SuperadminLayout() {
                                 <Menu className="size-4" />
                             )}
                         </Button>
-                        <span className="truncate text-sm text-muted-foreground">
-                            {platformName + ' Admin'}
-                        </span>
+                        <div className="flex flex-col">
+                            <span className="truncate text-sm font-semibold text-foreground">
+                                {platformName}
+                            </span>
+                            <span className={cn(
+                                "text-[10px] font-medium tracking-wider uppercase",
+                                activeTenant ? "text-primary" : "text-muted-foreground"
+                            )}>
+                                {activeTenant ? `Tenant: ${activeTenant.name}` : 'Platform Admin'}
+                            </span>
+                        </div>
                     </div>
 
                     {/* Tenant Switcher (FusionPBX-style) */}

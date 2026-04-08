@@ -126,10 +126,12 @@ class WallboardProjectionService
         $offered = (int) ($metric?->calls_offered ?? $entryStats?->offered ?? 0);
         $abandoned = (int) ($metric?->calls_abandoned ?? $entryStats?->abandoned ?? 0);
 
-        $memberStats = $queue->members()
-            ->where('is_active', true)
+        $memberStats = Agent::query()
+            ->join('queue_members', 'agents.id', '=', 'queue_members.agent_id')
+            ->where('queue_members.queue_id', $queue->id)
+            ->where('agents.is_active', true)
             ->selectRaw('COUNT(*) as total_members')
-            ->selectRaw('SUM(CASE WHEN state = ? THEN 1 ELSE 0 END) as busy_agents', [Agent::STATE_BUSY])
+            ->selectRaw('SUM(CASE WHEN agents.state = ? THEN 1 ELSE 0 END) as busy_agents', [Agent::STATE_BUSY])
             ->first();
 
         $totalMembers = (int) ($memberStats?->total_members ?? 0);
@@ -180,9 +182,9 @@ class WallboardProjectionService
             [
                 'name' => $agent->name,
                 'role' => $agent->role,
-                'state' => $agent->state,
+                'state' => $agent->state ?? Agent::STATE_OFFLINE,
                 'pause_reason' => $agent->pause_reason,
-                'state_changed_at' => $agent->state_changed_at,
+                'state_changed_at' => $agent->state_changed_at ?? now(),
                 'extension' => $agent->extension?->extension,
                 'is_active' => (bool) $agent->is_active,
             ]

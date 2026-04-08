@@ -68,6 +68,8 @@ class CallDetailRecordTest extends TestCase
             'destination_number', 'context', 'start_stamp', 'answer_stamp',
             'end_stamp', 'duration', 'billsec', 'hangup_cause', 'direction',
             'recording_path', 'read_codec', 'write_codec', 'negotiated_codec',
+            'mos_score', 'packet_loss', 'jitter', 'latency', 'quality_score',
+            'sip_user_agent', 'remote_media_ip', 'call_type', 'tags', 'metadata',
         ];
 
         $this->assertEquals($expected, $cdr->getFillable());

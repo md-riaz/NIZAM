@@ -29,9 +29,10 @@ class DeliverWebhookEnhancedTest extends TestCase
         $job->handle();
 
         Http::assertSent(function ($request) {
-            return $request->hasHeader('X-Nizam-Timestamp')
-                && $request->hasHeader('X-Nizam-Signature')
-                && $request->hasHeader('X-Nizam-Event');
+            $prefix = config('platform.webhooks.signature_header_prefix', 'X-Nizam');
+            return $request->hasHeader("{$prefix}-Timestamp")
+                && $request->hasHeader("{$prefix}-Signature")
+                && $request->hasHeader("{$prefix}-Event");
         });
     }
 
@@ -69,8 +70,9 @@ class DeliverWebhookEnhancedTest extends TestCase
         $job->handle();
 
         Http::assertSent(function ($request) {
-            $timestamp = $request->header('X-Nizam-Timestamp')[0] ?? '';
-            $signature = $request->header('X-Nizam-Signature')[0] ?? '';
+            $prefix = config('platform.webhooks.signature_header_prefix', 'X-Nizam');
+            $timestamp = $request->header("{$prefix}-Timestamp")[0] ?? '';
+            $signature = $request->header("{$prefix}-Signature")[0] ?? '';
 
             // Verify signature was computed with timestamp prefix
             return ! empty($timestamp) && ! empty($signature) && is_numeric($timestamp);

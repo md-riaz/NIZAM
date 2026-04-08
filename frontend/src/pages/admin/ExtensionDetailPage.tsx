@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Copy, Phone, ShieldCheck } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ export default function ExtensionDetailPage() {
         enabled: Boolean(id) && Boolean(activeTenant),
     });
 
-    const { data: webRtcConfig } = useQuery({
+    const { data: webRtcConfig, isLoading: isWebRtcConfigLoading, isError: isWebRtcConfigError } = useQuery({
         queryKey: ['extension-webrtc', activeTenant?.id, id],
         queryFn: async () => {
             const response = await api.get(`${tenantApiPrefix}/extensions/${id}/webrtc-config`);
@@ -122,28 +123,52 @@ export default function ExtensionDetailPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm">
-                            <div>
-                                <p className="text-muted-foreground">WebSocket URL</p>
-                                <p className="mt-1 break-all font-mono">{webRtcConfig?.websocket_url ?? 'Unavailable'}</p>
-                            </div>
-                            <div>
-                                <p className="text-muted-foreground">SIP URI</p>
-                                <p className="mt-1 break-all font-mono">{webRtcConfig?.sip_uri ?? 'Unavailable'}</p>
-                            </div>
-                            <div>
-                                <p className="text-muted-foreground">Username</p>
-                                <p className="mt-1 break-all font-mono">{webRtcConfig?.sip_username ?? extension.extension}</p>
-                            </div>
-                            <div>
-                                <p className="text-muted-foreground">Password</p>
-                                <p className="mt-1 break-all font-mono">{webRtcConfig?.sip_password ?? 'Hidden'}</p>
-                            </div>
-                            <div className="flex justify-end">
-                                <Button variant="outline" onClick={() => navigate(`/admin/extensions/${id}/edit`)}>
-                                    <Copy className="mr-2 size-4" />
-                                    Edit configuration
-                                </Button>
-                            </div>
+                            {isWebRtcConfigLoading ? (
+                                <div className="flex justify-center p-4">
+                                    <div className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                </div>
+                            ) : isWebRtcConfigError || !webRtcConfig ? (
+                                <div className="rounded-md border p-4 text-center">
+                                    <p className="text-muted-foreground text-sm">
+                                        WebRTC is currently disabled on this system.
+                                    </p>
+                                    <Button variant="link" className="mt-2 h-auto p-0" onClick={() => navigate('/admin/sip-profiles')}>
+                                        Enable in SIP Profiles (internal)
+                                    </Button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div>
+                                        <p className="text-muted-foreground">WebSocket URL</p>
+                                        <p className="mt-1 break-all font-mono">{webRtcConfig.websocket_url}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-muted-foreground">SIP URI</p>
+                                        <p className="mt-1 break-all font-mono">{webRtcConfig.sip_uri}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-muted-foreground">Username</p>
+                                        <p className="mt-1 break-all font-mono">{webRtcConfig.sip_username}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-muted-foreground">Password</p>
+                                        <p className="mt-1 break-all font-mono">{webRtcConfig.sip_password || 'Hidden'}</p>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <Button 
+                                            variant="outline" 
+                                            onClick={() => {
+                                                const textToCopy = `WebSocket URL: ${webRtcConfig.websocket_url || 'Unavailable'}\nSIP URI: ${webRtcConfig.sip_uri || 'Unavailable'}\nUsername: ${webRtcConfig.sip_username || extension.extension}\nPassword: ${webRtcConfig.sip_password || 'Hidden'}`;
+                                                navigator.clipboard.writeText(textToCopy);
+                                                toast.success('Configuration copied to clipboard');
+                                            }}
+                                        >
+                                            <Copy className="mr-2 size-4" />
+                                            Copy configuration
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

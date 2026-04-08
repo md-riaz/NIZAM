@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, Globe, Plus, Settings, SquarePen, Trash2, Users, WandSparkles } from 'lucide-react';
+import { Building2, Globe, Plus, Settings, SquarePen, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,24 +50,6 @@ export default function TenantsPage() {
 
     const activeTenants = tenants.filter((tenant) => tenant.is_active).length;
 
-    const provisionMutation = useMutation({
-        mutationFn: async () => {
-            const stamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
-            return api.post('tenants/provision', {
-                name: `Provisioned Tenant ${stamp}`,
-                slug: `provisioned-${stamp}`,
-                domain: `provisioned-${stamp}.nizam.local`,
-                max_extensions: 100,
-                max_concurrent_calls: 30,
-                max_dids: 20,
-                max_ring_groups: 20,
-            });
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['tenants'] });
-        },
-    });
-
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
             await api.delete(`tenants/${id}`);
@@ -94,14 +76,6 @@ export default function TenantsPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => provisionMutation.mutate()}
-                        disabled={provisionMutation.isPending}
-                    >
-                        <WandSparkles className="size-4" />
-                        {provisionMutation.isPending ? 'Provisioning…' : 'Quick Provision'}
-                    </Button>
                     <Button onClick={() => navigate('/admin/tenants/create')}>
                         <Plus className="size-4" />
                         Create Tenant

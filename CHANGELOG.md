@@ -177,6 +177,10 @@ See [docs/v1-scope.md](docs/v1-scope.md#known-limitations-v10) for the full list
 - Queued delivery via `DeliverWebhook` job with retry logic
 - Events: call.started, call.answered, call.bridge, call.missed, call.hangup, voicemail.received, registration.registered, registration.unregistered
 
+#### UI/UX Enhancements
+- Added dynamic label support to the superadmin navigation sidebar (SuperadminLayout.tsx)
+- Sidebar visually differentiates between Platform Admin mode and Tenant mode
+- Updated "Gateways" menu item to dynamically render as "Platform Gateways" when acting globally and "Gateways" when a tenant is selected
 #### API & Features
 - **System Media & Prompts API**: Integrated `spatie/laravel-medialibrary` for RESTful audio management (prompts, MOH).
 - **Registration Status API**: Real-time SIP registration queries for Extensions and Gateways via FreeSWITCH ESL.

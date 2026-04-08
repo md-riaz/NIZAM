@@ -69,7 +69,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::apiResource('tenants', TenantController::class);
     Route::get('tenants/{tenant}/settings', [TenantController::class, 'settings'])->name('tenants.settings');
     Route::put('tenants/{tenant}/settings', [TenantController::class, 'updateSettings'])->name('tenants.settings.update');
-    Route::post('tenants/provision', [TenantController::class, 'provision'])->name('tenants.provision');
 
     // Admin observability dashboard
     Route::get('admin/dashboard', AdminDashboardController::class)->name('admin.dashboard');

@@ -3,7 +3,22 @@
     "allow": [
       "Bash(npx shadcn@latest add checkbox select form alert-dialog --overwrite --yes)",
       "Bash(npx shadcn@latest add form --overwrite --yes)",
-      "WebFetch(domain:ui.shadcn.com)"
+      "WebFetch(domain:ui.shadcn.com)",
+      "Bash(printf '\\\\n---UNSTAGED---\\\\n')",
+      "Bash(grep:*)",
+      "Bash(php artisan:*)",
+      "Bash(vendor/bin/phpunit:*)",
+      "Bash(./vendor/bin/phpunit --filter test_returns_internal_configuration_with_webrtc_transport_using_active_tls_mode)",
+      "Bash(./vendor/bin/phpunit tests/Feature/FreeswitchXmlTest.php)",
+      "Read(//tmp/**)",
+      "Bash(php:*)",
+      "Bash(/c/laragon/bin/php/php-8.3.29-nts-Win32-vs16-x64/php.exe:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(C:/laragon/bin/php/php-8.2.30-Win32-vs16-x64/php.exe:*)",
+      "Bash(npm:*)",
+      "Bash(APP_ENV=testing C:/laragon/bin/php/php-8.2.30-Win32-vs16-x64/php.exe:*)",
+      "Bash(docker exec:*)"
     ]
   }
 }
