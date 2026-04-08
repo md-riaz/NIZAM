@@ -27,8 +27,10 @@ use App\Observers\ScheduleExceptionObserver;
 use App\Observers\ScheduleObserver;
 use App\Observers\ScheduleRuleObserver;
 use App\Policies\CallPolicy;
+use App\Events\CallDeliveryPushRequested;
 use App\Events\CallDetailRecordCreated;
 use App\Listeners\EnrichCallDetailRecord;
+use App\Listeners\HandleCallDeliveryPushRequested;
 use App\Services\Call\FreeSwitchOfferCommandDispatcher;
 use App\Services\Call\OfferCommandDispatcher;
 use App\Services\EslConnectionManager;
@@ -93,6 +95,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             CallDetailRecordCreated::class,
             EnrichCallDetailRecord::class,
+        );
+
+        Event::listen(
+            CallDeliveryPushRequested::class,
+            HandleCallDeliveryPushRequested::class,
         );
 
         // Register non-model call authorization gates

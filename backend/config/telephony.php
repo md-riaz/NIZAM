@@ -127,4 +127,21 @@ return [
         'wake_window_seconds' => (int) env('CALL_DELIVERY_WAKE_WINDOW_SECONDS', 30),
         'pstn_delay_seconds' => (int) env('CALL_DELIVERY_PSTN_DELAY_SECONDS', 8),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Push Notification Driver
+    |--------------------------------------------------------------------------
+    |
+    | Controls which transport is used to deliver VoIP / data push notifications
+    | to mobile devices during call delivery orchestration.
+    |
+    | Supported drivers:
+    |   - "log"  — logs the notification payload (default, safe for development)
+    |
+    | To enable live push delivery, set PUSH_DRIVER to a custom driver that
+    | implements APNs VoIP (for iOS CallKit) and FCM (for Android) delivery.
+    |
+    */
+    'push_driver' => env('PUSH_DRIVER', 'log'),
 ];
