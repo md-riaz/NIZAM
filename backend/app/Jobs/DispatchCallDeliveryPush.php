@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Models\EndpointBinding;
 use App\Models\PushNotificationLog;
+use App\Services\Push\PushDeliveryResult;
+use App\Services\Push\PushDriverManager;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -43,7 +45,7 @@ class DispatchCallDeliveryPush implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(PushDriverManager $manager): void
     {
         $log = PushNotificationLog::find($this->pushNotificationLogId);
 
@@ -62,18 +64,35 @@ class DispatchCallDeliveryPush implements ShouldQueue
         $binding = EndpointBinding::with('tenant', 'extension')->find($this->endpointBindingId);
 
         if (! $binding instanceof EndpointBinding) {
-            $this->markFailed($log, 'endpoint_binding_not_found');
+            $this->persistResult($log, PushDeliveryResult::failed('endpoint_binding_not_found'));
 
             return;
         }
 
         if (! $binding->is_push_capable || ! $binding->hasPushTokenMaterial()) {
-            $this->markFailed($log, 'endpoint_not_push_capable');
+            $this->persistResult($log, PushDeliveryResult::failed('endpoint_not_push_capable'));
 
             return;
         }
 
-        $this->deliverPush($log, $binding);
+        $pushType = (string) ($this->payload['notification_type'] ?? $log->push_type ?? 'wake');
+
+        try {
+            $result = $manager->deliver($binding, $pushType, $this->payload);
+        } catch (\Throwable $e) {
+            Log::error('DispatchCallDeliveryPush: uncaught delivery exception', [
+                'push_notification_log_id' => $log->id,
+                'call_session_id' => $this->callSessionId,
+                'endpoint_binding_id' => $this->endpointBindingId,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->persistResult($log, PushDeliveryResult::failed('delivery_exception: '.$e->getMessage()));
+
+            throw $e;
+        }
+
+        $this->persistResult($log, $result);
     }
 
     /**
@@ -83,8 +102,11 @@ class DispatchCallDeliveryPush implements ShouldQueue
     {
         $log = PushNotificationLog::find($this->pushNotificationLogId);
 
-        if ($log instanceof PushNotificationLog) {
-            $this->markFailed($log, 'max_retries_exhausted: '.($exception?->getMessage() ?? 'unknown'));
+        if ($log instanceof PushNotificationLog && in_array($log->status, ['queued', 'retrying'], true)) {
+            $this->persistResult(
+                $log,
+                PushDeliveryResult::failed('max_retries_exhausted: '.($exception?->getMessage() ?? 'unknown')),
+            );
         }
 
         Log::error('DispatchCallDeliveryPush: push delivery dead-lettered', [
@@ -95,155 +117,37 @@ class DispatchCallDeliveryPush implements ShouldQueue
         ]);
     }
 
-    /**
-     * Deliver the push notification to the appropriate platform channel.
-     */
-    protected function deliverPush(PushNotificationLog $log, EndpointBinding $binding): void
+    protected function persistResult(PushNotificationLog $log, PushDeliveryResult $result): void
     {
-        $platform = $binding->platform ?? EndpointBinding::PLATFORM_UNKNOWN;
-        $pushType = (string) ($this->payload['notification_type'] ?? $log->push_type ?? 'wake');
+        $status = $result->success ? 'sent' : 'failed';
 
-        try {
-            if ($platform === EndpointBinding::PLATFORM_IOS && filled($binding->voip_push_token)) {
-                $this->deliverApnsVoip($log, $binding, $pushType);
+        $responsePatch = $result->toArray();
+        if ($result->success) {
+            $responsePatch['sent_at'] = now()->toIso8601String();
+        } else {
+            $responsePatch['failed_at'] = now()->toIso8601String();
+        }
 
-                return;
-            }
+        $log->forceFill([
+            'status' => $status,
+            'response_payload' => array_merge(
+                is_array($log->response_payload) ? $log->response_payload : [],
+                $responsePatch,
+            ),
+        ])->save();
 
-            if (in_array($platform, [EndpointBinding::PLATFORM_ANDROID, EndpointBinding::PLATFORM_WEB], true)
-                && filled($binding->push_token)) {
-                $this->deliverFcm($log, $binding, $pushType);
-
-                return;
-            }
-
-            if (filled($binding->push_token)) {
-                $this->deliverFcm($log, $binding, $pushType);
-
-                return;
-            }
-
-            if (filled($binding->voip_push_token)) {
-                $this->deliverApnsVoip($log, $binding, $pushType);
-
-                return;
-            }
-
-            $this->markFailed($log, 'no_push_token_material');
-        } catch (\Throwable $e) {
-            $this->markFailed($log, 'delivery_exception: '.$e->getMessage());
-
-            Log::error('DispatchCallDeliveryPush: delivery exception', [
+        if ($result->success) {
+            Log::debug('DispatchCallDeliveryPush: push sent', [
                 'push_notification_log_id' => $log->id,
-                'call_session_id' => $this->callSessionId,
-                'endpoint_binding_id' => $this->endpointBindingId,
-                'platform' => $platform,
-                'error' => $e->getMessage(),
+                'channel' => $result->channel,
+                'provider_message_id' => $result->providerMessageId,
+                'push_type' => $log->push_type,
             ]);
-
-            throw $e;
+        } else {
+            Log::warning('DispatchCallDeliveryPush: push failed', [
+                'push_notification_log_id' => $log->id,
+                'error' => $result->error,
+            ]);
         }
-    }
-
-    /**
-     * Deliver an APNs VoIP push notification (iOS CallKit wake).
-     *
-     * The actual APNs transport is resolved from the configured push driver
-     * (see config/telephony.php push_driver). In the default 'log' driver, the
-     * notification is written to the application log so the delivery pipeline is
-     * fully exercised without requiring real APNs credentials.
-     */
-    protected function deliverApnsVoip(PushNotificationLog $log, EndpointBinding $binding, string $pushType): void
-    {
-        $driver = (string) config('telephony.push_driver', 'log');
-
-        $logContext = [
-            'push_notification_log_id' => $log->id,
-            'call_session_id' => $this->callSessionId,
-            'endpoint_binding_id' => $binding->id,
-            'push_type' => $pushType,
-            'platform' => 'ios',
-            'driver' => $driver,
-            'payload_keys' => array_keys($this->payload),
-        ];
-
-        if ($driver === 'log') {
-            Log::info('DispatchCallDeliveryPush: APNs VoIP push (log driver)', $logContext);
-            $this->markSent($log, 'apns_voip', ['driver' => 'log']);
-
-            return;
-        }
-
-        // Real APNs dispatch is delegated to the configured push driver.
-        // Operators who need live APNs delivery should implement a custom
-        // push driver and bind it via the telephony.push_driver config key.
-        Log::warning('DispatchCallDeliveryPush: APNs VoIP push driver not implemented', $logContext);
-        $this->markFailed($log, 'push_driver_not_implemented');
-    }
-
-    /**
-     * Deliver an FCM data push notification (Android / web wake).
-     *
-     * @see deliverApnsVoip for driver behaviour notes.
-     */
-    protected function deliverFcm(PushNotificationLog $log, EndpointBinding $binding, string $pushType): void
-    {
-        $driver = (string) config('telephony.push_driver', 'log');
-
-        $logContext = [
-            'push_notification_log_id' => $log->id,
-            'call_session_id' => $this->callSessionId,
-            'endpoint_binding_id' => $binding->id,
-            'push_type' => $pushType,
-            'platform' => $binding->platform,
-            'driver' => $driver,
-            'payload_keys' => array_keys($this->payload),
-        ];
-
-        if ($driver === 'log') {
-            Log::info('DispatchCallDeliveryPush: FCM push (log driver)', $logContext);
-            $this->markSent($log, 'fcm', ['driver' => 'log']);
-
-            return;
-        }
-
-        Log::warning('DispatchCallDeliveryPush: FCM push driver not implemented', $logContext);
-        $this->markFailed($log, 'push_driver_not_implemented');
-    }
-
-    /**
-     * @param  array<string, mixed>  $meta
-     */
-    protected function markSent(PushNotificationLog $log, string $channel, array $meta = []): void
-    {
-        $log->forceFill([
-            'status' => 'sent',
-            'response_payload' => array_merge(
-                is_array($log->response_payload) ? $log->response_payload : [],
-                ['sent_via' => $channel, 'sent_at' => now()->toIso8601String(), ...$meta],
-            ),
-        ])->save();
-
-        Log::debug('DispatchCallDeliveryPush: push sent', [
-            'push_notification_log_id' => $log->id,
-            'channel' => $channel,
-            'push_type' => $log->push_type,
-        ]);
-    }
-
-    protected function markFailed(PushNotificationLog $log, string $reason): void
-    {
-        $log->forceFill([
-            'status' => 'failed',
-            'response_payload' => array_merge(
-                is_array($log->response_payload) ? $log->response_payload : [],
-                ['failure_reason' => $reason, 'failed_at' => now()->toIso8601String()],
-            ),
-        ])->save();
-
-        Log::warning('DispatchCallDeliveryPush: push failed', [
-            'push_notification_log_id' => $log->id,
-            'reason' => $reason,
-        ]);
     }
 }

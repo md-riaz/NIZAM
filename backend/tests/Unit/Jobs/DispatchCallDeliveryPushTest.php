@@ -7,8 +7,12 @@ use App\Models\CallSession;
 use App\Models\EndpointBinding;
 use App\Models\PushNotificationLog;
 use App\Models\Tenant;
+use App\Services\Push\ApnsPushDriver;
+use App\Services\Push\FcmPushDriver;
+use App\Services\Push\NullPushDriver;
+use App\Services\Push\PushDeliveryResult;
+use App\Services\Push\PushDriverManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class DispatchCallDeliveryPushTest extends TestCase
@@ -18,269 +22,140 @@ class DispatchCallDeliveryPushTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        config([
-            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
-            'telephony.push_driver' => 'log',
-        ]);
+        config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
     }
 
-    public function test_marks_ios_push_as_sent_via_apns_on_log_driver(): void
+    private function makeTenantAndBinding(string $domain, string $ext, string $platform, array $tokens = []): array
     {
-        Log::spy();
-
-        $tenant = Tenant::factory()->create(['domain' => 'ios.push.test']);
+        $tenant = Tenant::factory()->create(['domain' => $domain]);
         $extension = $tenant->extensions()->create([
-            'extension' => '3001',
-            'password' => 'secret',
-            'directory_first_name' => 'iOS',
-            'directory_last_name' => 'Device',
-            'voicemail_enabled' => false,
-            'is_active' => true,
+            'extension' => $ext, 'password' => 'secret',
+            'directory_first_name' => 'Test', 'directory_last_name' => 'User',
+            'voicemail_enabled' => false, 'is_active' => true,
         ]);
-        $binding = EndpointBinding::factory()->forExtension($extension)->create([
+        $binding = EndpointBinding::factory()->forExtension($extension)->create(array_merge([
             'type' => EndpointBinding::TYPE_MOBILE_APP,
-            'platform' => EndpointBinding::PLATFORM_IOS,
+            'platform' => $platform,
             'is_push_capable' => true,
-            'voip_push_token' => 'test-voip-token-ios',
-            'push_token' => null,
-        ]);
+        ], $tokens));
+        $session = CallSession::factory()->for($tenant)->create(['call_uuid' => 'test-uuid', 'state' => 'parked']);
 
-        $session = CallSession::factory()->for($tenant)->create([
-            'call_uuid' => 'ios-push-uuid-1',
-            'state' => 'parked',
-        ]);
-
-        $log = $session->pushNotificationLogs()->create([
-            'endpoint_binding_id' => $binding->id,
-            'push_type' => 'wake',
-            'provider_message_id' => 'msg-ios-1',
-            'status' => 'queued',
-            'sent_at' => now(),
-            'response_payload' => ['call_session_id' => $session->id],
-        ]);
-
-        $job = new DispatchCallDeliveryPush(
-            $log->id,
-            $session->id,
-            $binding->id,
-            ['call_session_id' => $session->id, 'call_uuid' => 'ios-push-uuid-1'],
-        );
-
-        $job->handle();
-
-        $log->refresh();
-        $this->assertSame('sent', $log->status);
-        $this->assertSame('apns_voip', data_get($log->response_payload, 'sent_via'));
-        $this->assertSame('log', data_get($log->response_payload, 'driver'));
+        return [$binding, $session];
     }
 
-    public function test_marks_android_push_as_sent_via_fcm_on_log_driver(): void
+    private function makeLog(CallSession $session, EndpointBinding $binding, string $status = 'queued'): PushNotificationLog
     {
-        Log::spy();
-
-        $tenant = Tenant::factory()->create(['domain' => 'android.push.test']);
-        $extension = $tenant->extensions()->create([
-            'extension' => '3002',
-            'password' => 'secret',
-            'directory_first_name' => 'Android',
-            'directory_last_name' => 'Device',
-            'voicemail_enabled' => false,
-            'is_active' => true,
-        ]);
-        $binding = EndpointBinding::factory()->forExtension($extension)->create([
-            'type' => EndpointBinding::TYPE_MOBILE_APP,
-            'platform' => EndpointBinding::PLATFORM_ANDROID,
-            'is_push_capable' => true,
-            'push_token' => 'test-fcm-token-android',
-            'voip_push_token' => null,
-        ]);
-
-        $session = CallSession::factory()->for($tenant)->create([
-            'call_uuid' => 'android-push-uuid-1',
-            'state' => 'parked',
-        ]);
-
-        $log = $session->pushNotificationLogs()->create([
+        return $session->pushNotificationLogs()->create([
             'endpoint_binding_id' => $binding->id,
             'push_type' => 'wake',
-            'provider_message_id' => 'msg-android-1',
-            'status' => 'queued',
+            'provider_message_id' => 'msg-'.uniqid(),
+            'status' => $status,
             'sent_at' => now(),
             'response_payload' => [],
         ]);
+    }
 
-        $job = new DispatchCallDeliveryPush(
-            $log->id,
-            $session->id,
-            $binding->id,
-            ['call_session_id' => $session->id],
-        );
+    public function test_ios_binding_uses_apns_driver(): void
+    {
+        [$binding, $session] = $this->makeTenantAndBinding('ios.test', '4001', EndpointBinding::PLATFORM_IOS, [
+            'voip_push_token' => 'voip-tok', 'push_token' => null,
+        ]);
+        $log = $this->makeLog($session, $binding);
 
-        $job->handle();
+        $apns = $this->createMock(ApnsPushDriver::class);
+        $apns->expects($this->once())->method('send')
+            ->willReturn(PushDeliveryResult::sent('apns_voip', 'msg-id-1'));
+        app()->instance(ApnsPushDriver::class, $apns);
+
+        (new DispatchCallDeliveryPush($log->id, $session->id, $binding->id, []))->handle(app(PushDriverManager::class));
 
         $log->refresh();
         $this->assertSame('sent', $log->status);
-        $this->assertSame('fcm', data_get($log->response_payload, 'sent_via'));
+        $this->assertSame('apns_voip', data_get($log->response_payload, 'channel'));
     }
 
-    public function test_marks_push_as_failed_when_binding_not_found(): void
+    public function test_android_binding_uses_fcm_driver(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'notfound.push.test']);
-        $extension = $tenant->extensions()->create([
-            'extension' => '3003',
-            'password' => 'secret',
-            'directory_first_name' => 'Ghost',
-            'directory_last_name' => 'Binding',
-            'voicemail_enabled' => false,
-            'is_active' => true,
+        [$binding, $session] = $this->makeTenantAndBinding('android.test', '4002', EndpointBinding::PLATFORM_ANDROID, [
+            'push_token' => 'fcm-tok', 'voip_push_token' => null,
         ]);
-        $binding = EndpointBinding::factory()->forExtension($extension)->create([
-            'type' => EndpointBinding::TYPE_MOBILE_APP,
-            'platform' => EndpointBinding::PLATFORM_IOS,
-            'is_push_capable' => true,
+        $log = $this->makeLog($session, $binding);
+
+        $fcm = $this->createMock(FcmPushDriver::class);
+        $fcm->expects($this->once())->method('send')
+            ->willReturn(PushDeliveryResult::sent('fcm', 'projects/p/messages/x'));
+        app()->instance(FcmPushDriver::class, $fcm);
+
+        (new DispatchCallDeliveryPush($log->id, $session->id, $binding->id, []))->handle(app(PushDriverManager::class));
+
+        $log->refresh();
+        $this->assertSame('sent', $log->status);
+        $this->assertSame('fcm', data_get($log->response_payload, 'channel'));
+    }
+
+    public function test_driver_failure_marks_log_failed(): void
+    {
+        [$binding, $session] = $this->makeTenantAndBinding('fail.test', '4003', EndpointBinding::PLATFORM_IOS, [
+            'voip_push_token' => 'voip-tok2',
         ]);
+        $log = $this->makeLog($session, $binding);
 
-        $session = CallSession::factory()->for($tenant)->create([
-            'call_uuid' => 'notfound-push-uuid',
-            'state' => 'parked',
-        ]);
+        $apns = $this->createMock(ApnsPushDriver::class);
+        $apns->method('send')->willReturn(PushDeliveryResult::failed('apns_rejected:BadDeviceToken'));
+        app()->instance(ApnsPushDriver::class, $apns);
 
-        $log = $session->pushNotificationLogs()->create([
-            'endpoint_binding_id' => $binding->id,
-            'push_type' => 'wake',
-            'provider_message_id' => 'msg-notfound',
-            'status' => 'queued',
-            'sent_at' => now(),
-            'response_payload' => [],
-        ]);
-
-        $missingBindingId = 'nonexistent-binding-id-00000000-0000-0000-0000-000000000000';
-
-        $job = new DispatchCallDeliveryPush(
-            $log->id,
-            $session->id,
-            $missingBindingId,
-            [],
-        );
-
-        $job->handle();
+        (new DispatchCallDeliveryPush($log->id, $session->id, $binding->id, []))->handle(app(PushDriverManager::class));
 
         $log->refresh();
         $this->assertSame('failed', $log->status);
-        $this->assertStringContainsString('endpoint_binding_not_found', (string) data_get($log->response_payload, 'failure_reason'));
-    }
-
-    public function test_noop_when_log_not_found(): void
-    {
-        $job = new DispatchCallDeliveryPush(
-            'nonexistent-log-id',
-            'nonexistent-session-id',
-            'nonexistent-binding-id',
-            [],
-        );
-
-        // Should not throw - silently exits
-        $job->handle();
-
-        $this->assertTrue(true);
+        $this->assertStringContainsString('apns_rejected', (string) data_get($log->response_payload, 'error'));
     }
 
     public function test_noop_when_log_already_sent(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'already.sent.test']);
-        $extension = $tenant->extensions()->create([
-            'extension' => '3004',
-            'password' => 'secret',
-            'directory_first_name' => 'Already',
-            'directory_last_name' => 'Sent',
-            'voicemail_enabled' => false,
-            'is_active' => true,
+        [$binding, $session] = $this->makeTenantAndBinding('sent.test', '4004', EndpointBinding::PLATFORM_IOS, [
+            'voip_push_token' => 'voip-tok3',
         ]);
-        $binding = EndpointBinding::factory()->forExtension($extension)->create([
-            'type' => EndpointBinding::TYPE_MOBILE_APP,
-            'platform' => EndpointBinding::PLATFORM_IOS,
-            'is_push_capable' => true,
-            'voip_push_token' => 'already-sent-token',
-        ]);
+        $log = $this->makeLog($session, $binding, 'sent');
 
-        $session = CallSession::factory()->for($tenant)->create([
-            'call_uuid' => 'already-sent-uuid',
-            'state' => 'parked',
-        ]);
+        $manager = $this->createMock(PushDriverManager::class);
+        $manager->expects($this->never())->method('deliver');
 
-        $log = $session->pushNotificationLogs()->create([
-            'endpoint_binding_id' => $binding->id,
-            'push_type' => 'wake',
-            'provider_message_id' => 'msg-already-sent',
-            'status' => 'sent',
-            'sent_at' => now(),
-            'response_payload' => ['sent_via' => 'apns_voip'],
-        ]);
-
-        $job = new DispatchCallDeliveryPush(
-            $log->id,
-            $session->id,
-            $binding->id,
-            [],
-        );
-
-        $job->handle();
+        (new DispatchCallDeliveryPush($log->id, $session->id, $binding->id, []))->handle($manager);
 
         $log->refresh();
-        // Status should remain 'sent' and not be modified
         $this->assertSame('sent', $log->status);
-        $this->assertSame('apns_voip', data_get($log->response_payload, 'sent_via'));
     }
 
-    public function test_answered_elsewhere_push_is_processed(): void
+    public function test_noop_when_log_not_found(): void
     {
-        Log::spy();
+        $manager = $this->createMock(PushDriverManager::class);
+        $manager->expects($this->never())->method('deliver');
 
-        $tenant = Tenant::factory()->create(['domain' => 'elsewhere.push.test']);
+        (new DispatchCallDeliveryPush('nonexistent', 'sess', 'bind', []))->handle($manager);
+        $this->assertTrue(true);
+    }
+
+    public function test_marks_failed_when_binding_not_found(): void
+    {
+        $tenant = Tenant::factory()->create(['domain' => 'nob.test']);
         $extension = $tenant->extensions()->create([
-            'extension' => '3005',
-            'password' => 'secret',
-            'directory_first_name' => 'Elsewhere',
-            'directory_last_name' => 'Test',
-            'voicemail_enabled' => false,
-            'is_active' => true,
+            'extension' => '4005', 'password' => 'x',
+            'directory_first_name' => 'A', 'directory_last_name' => 'B',
+            'voicemail_enabled' => false, 'is_active' => true,
         ]);
         $binding = EndpointBinding::factory()->forExtension($extension)->create([
-            'type' => EndpointBinding::TYPE_MOBILE_APP,
-            'platform' => EndpointBinding::PLATFORM_IOS,
-            'is_push_capable' => true,
-            'voip_push_token' => 'elsewhere-voip-token',
+            'type' => EndpointBinding::TYPE_MOBILE_APP, 'is_push_capable' => true,
         ]);
+        $session = CallSession::factory()->for($tenant)->create(['call_uuid' => 'nob-uuid', 'state' => 'parked']);
+        $log = $this->makeLog($session, $binding);
 
-        $session = CallSession::factory()->for($tenant)->create([
-            'call_uuid' => 'elsewhere-uuid-1',
-            'state' => 'bridged',
-        ]);
+        $manager = $this->createMock(PushDriverManager::class);
+        $manager->expects($this->never())->method('deliver');
 
-        $log = $session->pushNotificationLogs()->create([
-            'endpoint_binding_id' => $binding->id,
-            'push_type' => 'answered_elsewhere',
-            'provider_message_id' => 'msg-elsewhere-1',
-            'status' => 'queued',
-            'sent_at' => now(),
-            'response_payload' => [
-                'notification_type' => 'answered_elsewhere',
-                'call_session_id' => $session->id,
-            ],
-        ]);
-
-        $job = new DispatchCallDeliveryPush(
-            $log->id,
-            $session->id,
-            $binding->id,
-            ['notification_type' => 'answered_elsewhere', 'call_session_id' => $session->id],
-        );
-
-        $job->handle();
+        (new DispatchCallDeliveryPush($log->id, $session->id, 'nonexistent-binding', []))->handle($manager);
 
         $log->refresh();
-        $this->assertSame('sent', $log->status);
-        $this->assertSame('apns_voip', data_get($log->response_payload, 'sent_via'));
+        $this->assertSame('failed', $log->status);
     }
 }

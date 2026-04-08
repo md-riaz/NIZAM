@@ -144,4 +144,25 @@ return [
     |
     */
     'push_driver' => env('PUSH_DRIVER', 'log'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Push Notification Drivers
+    |--------------------------------------------------------------------------
+    */
+    'push' => [
+        'apns' => [
+            'key_id'           => env('APNS_KEY_ID'),
+            'team_id'          => env('APNS_TEAM_ID'),
+            'private_key'      => env('APNS_PRIVATE_KEY'),
+            'private_key_path' => env('APNS_PRIVATE_KEY_PATH'),
+            'bundle_id'        => env('APNS_BUNDLE_ID'),
+            'production'       => (bool) env('APNS_PRODUCTION', true),
+        ],
+        'fcm' => [
+            'project_id'            => env('FCM_PROJECT_ID'),
+            'service_account_json'  => env('FCM_SERVICE_ACCOUNT_JSON'),
+            'service_account_path'  => env('FCM_SERVICE_ACCOUNT_PATH'),
+        ],
+    ],
 ];
