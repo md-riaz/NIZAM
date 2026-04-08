@@ -83,8 +83,8 @@ class CodecResolutionService
         } elseif ($bridgeTranscodePolicy === 'web_only') {
             $transcodeAllowed = ($endpointType === 'webrtc');
         } elseif ($bridgeTranscodePolicy === 'allow') {
-            // keep gateway setting unless gateway explicitly denies
-            $transcodeAllowed = $transcodeAllowed || true;
+            // Bridge explicitly permits transcoding (overrides gateway default-deny)
+            $transcodeAllowed = true;
         }
 
         $inheritCodec = false;
