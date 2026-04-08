@@ -127,4 +127,42 @@ return [
         'wake_window_seconds' => (int) env('CALL_DELIVERY_WAKE_WINDOW_SECONDS', 30),
         'pstn_delay_seconds' => (int) env('CALL_DELIVERY_PSTN_DELAY_SECONDS', 8),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Push Notification Driver
+    |--------------------------------------------------------------------------
+    |
+    | Controls which transport is used to deliver VoIP / data push notifications
+    | to mobile devices during call delivery orchestration.
+    |
+    | Supported drivers:
+    |   - "log"  — logs the notification payload (default, safe for development)
+    |
+    | To enable live push delivery, set PUSH_DRIVER to a custom driver that
+    | implements APNs VoIP (for iOS CallKit) and FCM (for Android) delivery.
+    |
+    */
+    'push_driver' => env('PUSH_DRIVER', 'log'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Push Notification Drivers
+    |--------------------------------------------------------------------------
+    */
+    'push' => [
+        'apns' => [
+            'key_id'           => env('APNS_KEY_ID'),
+            'team_id'          => env('APNS_TEAM_ID'),
+            'private_key'      => env('APNS_PRIVATE_KEY'),
+            'private_key_path' => env('APNS_PRIVATE_KEY_PATH'),
+            'bundle_id'        => env('APNS_BUNDLE_ID'),
+            'production'       => (bool) env('APNS_PRODUCTION', true),
+        ],
+        'fcm' => [
+            'project_id'            => env('FCM_PROJECT_ID'),
+            'service_account_json'  => env('FCM_SERVICE_ACCOUNT_JSON'),
+            'service_account_path'  => env('FCM_SERVICE_ACCOUNT_PATH'),
+        ],
+    ],
 ];
