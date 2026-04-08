@@ -18,6 +18,9 @@ class Bridge extends Model
         'bridge_type',
         'gateway_id',
         'destination_template',
+        'codec_policy',
+        'codec_list',
+        'transcode_policy',
         'description',
         'is_active',
     ];
@@ -25,6 +28,7 @@ class Bridge extends Model
     protected function casts(): array
     {
         return [
+            'codec_list' => 'array',
             'is_active' => 'boolean',
         ];
     }

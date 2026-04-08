@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\CallSessionController;
 use App\Http\Controllers\Api\CdrAnalyticsController;
 use App\Http\Controllers\Api\CdrExportController;
 use App\Http\Controllers\Api\CodecMetricsController;
+use App\Http\Controllers\Api\CodecResolutionController;
 use App\Http\Controllers\Api\DeviceProfileController;
 use App\Http\Controllers\Api\DidController;
 use App\Http\Controllers\Api\ExtensionController;
@@ -157,7 +158,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('queues/{queue}/metrics/history', [QueueMetricsController::class, 'history'])->name('queues.metrics.history');
         Route::get('wallboard', [QueueMetricsController::class, 'wallboard'])->name('wallboard');
         Route::get('agent-states', [QueueMetricsController::class, 'agentStates'])->name('agent-states');
-        Route::get('codec-metrics', [CodecMetricsController::class, 'index'])->name('codec-metrics.index');
+        Route::get('codec-metrics', CodecMetricsController::class)->name('codec-metrics.index');
+        Route::post('codec-resolution/preview', [CodecResolutionController::class, 'preview'])->name('codec-resolution.preview');
         Route::apiResource('recordings', RecordingController::class)->only(['index', 'show', 'destroy']);
         Route::get('recordings/{recording}/download', [RecordingController::class, 'download'])->name('recordings.download');
         Route::get('call-events', [CallEventController::class, 'index'])->name('call-events.index');
