@@ -111,15 +111,21 @@ class GatewayProvisioningService
             default => 'transport=udp',
         };
 
+        // Build effective codec preference strings for the gateway profile
+        $inboundCodecs = $gateway->inbound_codecs ?? [];
+        $outboundCodecs = ! empty($gateway->preferred_codecs)
+            ? $gateway->preferred_codecs
+            : ($gateway->outbound_codecs ?? []);
+
         $params = [
             'username' => $gateway->username,
             'password' => $gateway->password,
             'realm' => $realm,
             'proxy' => $proxy,
             'register-proxy' => $proxy,
-            'expire-seconds' => '3600',
-            'retry-seconds' => '30',
-            'caller-id-in-from' => 'true',
+            'expire-seconds' => (string) ($gateway->expire_seconds ?: 3600),
+            'retry-seconds' => (string) ($gateway->retry_seconds ?: 30),
+            'caller-id-in-from' => $gateway->caller_id_in_from ? 'true' : 'false',
             'extension' => $fromUser,
             'from-user' => $fromUser,
             'from-domain' => $realm,
@@ -128,6 +134,24 @@ class GatewayProvisioningService
             'ping' => '25',
             'profile' => $profile,
         ];
+
+        // Inject codec preferences when explicitly configured
+        if (! empty($inboundCodecs)) {
+            $params['inbound-codec-prefs'] = implode(',', $inboundCodecs);
+        }
+        if (! empty($outboundCodecs)) {
+            $params['outbound-codec-prefs'] = implode(',', $outboundCodecs);
+        }
+
+        // Inject DTMF mode
+        if ($gateway->dtmf_mode && $gateway->dtmf_mode !== 'rfc2833') {
+            $params['dtmf-type'] = $gateway->dtmf_mode;
+        }
+
+        // Inject SRTP mode
+        if ($gateway->srtp_mode && $gateway->srtp_mode !== 'none') {
+            $params['rtp-secure-media'] = $gateway->srtp_mode === 'required' ? 'true' : 'optional';
+        }
 
         $xml = ["<include>", "  <gateway name=\"{$this->xml($name)}\">"];
         foreach ($params as $key => $value) {

@@ -18,6 +18,7 @@ class GatewayFactory extends Factory
         return [
             'tenant_id' => Tenant::factory(),
             'name' => fake()->company().' SIP Trunk',
+            'vendor' => fake()->randomElement(['carrier_a', 'carrier_b', 'carrier_c', null]),
             'host' => fake()->ipv4(),
             'port' => 5060,
             'username' => fake()->userName(),
@@ -26,6 +27,9 @@ class GatewayFactory extends Factory
             'transport' => fake()->randomElement(['udp', 'tcp', 'tls']),
             'inbound_codecs' => ['PCMU', 'PCMA', 'G722'],
             'outbound_codecs' => ['PCMU', 'PCMA'],
+            'preferred_codecs' => ['PCMU', 'PCMA'],
+            'dtmf_mode' => 'rfc2833',
+            'srtp_mode' => 'none',
             'allow_transcoding' => true,
             'is_active' => true,
         ];
