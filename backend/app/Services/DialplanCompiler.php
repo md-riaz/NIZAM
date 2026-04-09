@@ -21,6 +21,8 @@ use App\Services\Routing\NumberRoutingService;
 
 class DialplanCompiler
 {
+    protected string $currentEndpointType = 'sip';
+
     public function __construct(
         protected NumberRoutingService $numberRoutingService,
         protected GatewayResolutionService $gatewayResolutionService,
@@ -130,10 +132,28 @@ class DialplanCompiler
     }
 
     /**
+     * Infer the A-leg endpoint type ('sip' or 'webrtc') from the FreeSWITCH XML-CURL payload.
+     * If the call came over WSS (WebSocket Secure), it's a WebRTC call.
+     */
+    public static function inferEndpointType(array $payload): string
+    {
+        $viaProtocol = strtolower((string) ($payload['variable_sip_via_protocol'] ?? ''));
+        $transport = strtolower((string) ($payload['variable_sip_transport'] ?? ''));
+
+        if ($viaProtocol === 'wss' || $transport === 'wss') {
+            return 'webrtc';
+        }
+
+        return 'sip';
+    }
+
+    /**
      * Compile the inbound dialplan XML for a given domain.
      */
     public function compileDialplan(string $domain, string $destinationNumber, ?string $callerIdNumber = null, array $requestPayload = []): string
     {
+        $this->currentEndpointType = self::inferEndpointType($requestPayload);
+
         $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
 
         if (! $tenant || ! $tenant->isOperational()) {
@@ -395,7 +415,7 @@ class DialplanCompiler
             case 'bridge':
                 $bridge = $tenant->bridges()->where('is_active', true)->find($did->destination_id);
                 if ($bridge) {
-                    $xml .= $this->bridgeCompiler->compileAction($tenant, $bridge);
+                    $xml .= $this->bridgeCompiler->compileAction($tenant, $bridge, false, $this->currentEndpointType);
                 }
                 break;
         }
@@ -626,7 +646,7 @@ class DialplanCompiler
             case 'bridge':
                 $bridge = $tenant->bridges()->where('is_active', true)->find($id);
                 if ($bridge) {
-                    return $this->bridgeCompiler->compileAction($tenant, $bridge, true);
+                    return $this->bridgeCompiler->compileAction($tenant, $bridge, true, $this->currentEndpointType);
                 }
                 break;
         }
@@ -682,7 +702,7 @@ class DialplanCompiler
             case 'bridge':
                 $bridge = $tenant->bridges()->where('is_active', true)->find($id);
                 if ($bridge) {
-                    return $this->bridgeCompiler->compileAction($tenant, $bridge);
+                    return $this->bridgeCompiler->compileAction($tenant, $bridge, false, $this->currentEndpointType);
                 }
                 break;
         }

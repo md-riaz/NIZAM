@@ -53,6 +53,24 @@ See [docs/v1-scope.md](docs/v1-scope.md#known-limitations-v10) for the full list
 
 ---
 
+## [1.0.1] - 2026-04-09
+
+### Changed
+- **Frontend Routing:** Migrated the app from `<BrowserRouter>` to the data router `<RouterProvider>` (`createBrowserRouter`) to properly support React Router v6.4+ features like `useBlocker` without runtime crashes.
+- **SIP Profile Form:** Separated WebRTC transport enablement into independent WS and WSS toggles, allowing WS to be enabled without forcing WSS/TLS settings (useful when proxying WebRTC via NGINX).
+- **Extension Details:** Replaced the WebRTC configuration card with a generic "SIP Credentials" card that displays the SIP Server, TLS Server (if applicable), Transport options, Username, and Password. WebRTC status is now shown as an indicator badge.
+- **Codec Resolution:** `BridgeCompiler` now accepts and forwards the real A-leg endpoint type (`sip` or `webrtc`) to `CodecResolutionService` instead of hardcoding `'sip'`. WebRTC calls now correctly resolve Opus-first codec defaults and honour `web_only` transcoding policies during bridge compilation.
+- **Dialplan Compiler:** Added `inferEndpointType()` which detects WebRTC calls from the FreeSWITCH XML-CURL payload (`variable_sip_via_protocol=wss` or `variable_sip_transport=wss`) and threads the result through all bridge compilation paths (`compileDidExtension`, `compileAntiAction`, `compileDestinationAction`).
+- **Call Session:** `FreeswitchXmlController` now persists the inferred `endpoint_type` into `CallSession->variables` on both the compiled-manifest and interpreted-fallback paths, making the A-leg transport type available for tracing, analytics, and downstream logic.
+
+### Fixed
+- **Form Validation:** Improved the `getErrorMessage` utility to parse Laravel's `errors` validation bag and display nested field errors as a readable list instead of a cryptic summary string.
+- **Form Validation:** Added pre-submit frontend validation to the SIP Profile dynamic settings table to prevent empty setting rows from being sent to the API.
+- **UI UX:** Added a `required` prop to the reusable `FormLabel` component to render a red asterisk `*`, and applied it to mandatory fields in the SIP Profile editor.
+- **UI UX:** Empty required fields in the SIP Profile settings table now highlight with a red border if left blank after a save attempt.
+
+---
+
 ## [Unreleased]
 
 ### Added

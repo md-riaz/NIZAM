@@ -108,6 +108,7 @@ class FreeswitchXmlController extends Controller
                         'destination_number' => $destinationNumber,
                         'caller_id_number' => $callerIdNumber,
                         'gateway_id' => $gatewayContext['gateway']?->id,
+                        'endpoint_type' => DialplanCompiler::inferEndpointType($requestPayload),
                     ],
                 );
 
@@ -144,6 +145,7 @@ class FreeswitchXmlController extends Controller
                     'destination_number' => $destinationNumber,
                     'caller_id_number' => $callerIdNumber,
                     'gateway_id' => $gatewayContext['gateway']?->id,
+                    'endpoint_type' => DialplanCompiler::inferEndpointType($requestPayload),
                 ],
             );
 

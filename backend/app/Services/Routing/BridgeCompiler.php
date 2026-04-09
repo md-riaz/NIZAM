@@ -11,11 +11,18 @@ class BridgeCompiler
         protected CodecResolutionService $codecResolution,
     ) {}
 
-    public function compileAction(Tenant $tenant, Bridge $bridge, bool $anti = false): string
+    /**
+     * Compile a bridge action with codec variables for the given endpoint type.
+     *
+     * @param  string  $endpointType  The A-leg endpoint type ('sip' or 'webrtc').
+     *                                WebRTC calls get Opus-first defaults and
+     *                                different transcoding behaviour.
+     */
+    public function compileAction(Tenant $tenant, Bridge $bridge, bool $anti = false, string $endpointType = 'sip'): string
     {
         $tag = $anti ? 'anti-action' : 'action';
 
-        $codecVars = $this->buildCodecVariables($bridge);
+        $codecVars = $this->buildCodecVariables($bridge, $endpointType);
 
         if ($bridge->bridge_type === 'gateway' && $bridge->gateway_id) {
             $destination = htmlspecialchars($bridge->destination_template, ENT_QUOTES | ENT_XML1);
@@ -31,13 +38,13 @@ class BridgeCompiler
      * These are injected immediately before the bridge action so FreeSWITCH
      * can honour them during outbound SDP negotiation.
      */
-    protected function buildCodecVariables(Bridge $bridge): string
+    protected function buildCodecVariables(Bridge $bridge, string $endpointType = 'sip'): string
     {
         $policy = $bridge->codec_policy ?? 'default';
         $gateway = $bridge->gateway_id ? $bridge->gateway()->first() : null;
 
         $result = $this->codecResolution->resolve(
-            endpointType: 'sip',
+            endpointType: $endpointType,
             bridge: $bridge,
             gateway: $gateway,
         );

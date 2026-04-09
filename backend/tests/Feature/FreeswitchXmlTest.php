@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\CallSession;
+use App\Models\Did;
 use App\Models\SipProfile;
 use App\Models\Tenant;
 use Database\Seeders\SipProfileSeeder;
@@ -123,5 +125,81 @@ class FreeswitchXmlTest extends TestCase
         $this->assertStringContainsString('name="wss-binding" value=":7443"', $compiledXml);
         $this->assertStringContainsString('name="ws-binding" value=":5066"', $compiledXml);
         $this->assertStringContainsString('name="dtls-srtp" value="true"', $compiledXml);
+    }
+
+    public function test_dialplan_persists_webrtc_endpoint_type_on_call_session(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Test Tenant',
+            'domain' => 'test.example.com',
+            'slug' => 'test-tenant-endpoint',
+            'is_active' => true,
+        ]);
+
+        $did = Did::factory()->create([
+            'tenant_id' => $tenant->id,
+            'number' => '+15559990001',
+            'destination_type' => 'extension',
+            'destination_id' => $tenant->extensions()->create([
+                'extension' => '2001',
+                'password' => 'pass1234',
+                'directory_first_name' => 'Jane',
+                'directory_last_name' => 'Doe',
+                'is_active' => true,
+            ])->id,
+            'is_active' => true,
+        ]);
+
+        $callUuid = 'test-uuid-webrtc-'.uniqid();
+
+        $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'test.example.com',
+            'Caller-Destination-Number' => '+15559990001',
+            'Unique-ID' => $callUuid,
+            'variable_sip_via_protocol' => 'wss',
+        ]);
+
+        $session = CallSession::where('call_uuid', $callUuid)->first();
+        $this->assertNotNull($session, 'CallSession should be created');
+        $this->assertSame('webrtc', $session->variables['endpoint_type'] ?? null);
+    }
+
+    public function test_dialplan_persists_sip_endpoint_type_on_call_session(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Test Tenant',
+            'domain' => 'test2.example.com',
+            'slug' => 'test-tenant-sip',
+            'is_active' => true,
+        ]);
+
+        $did = Did::factory()->create([
+            'tenant_id' => $tenant->id,
+            'number' => '+15559990002',
+            'destination_type' => 'extension',
+            'destination_id' => $tenant->extensions()->create([
+                'extension' => '2002',
+                'password' => 'pass1234',
+                'directory_first_name' => 'Bob',
+                'directory_last_name' => 'Smith',
+                'is_active' => true,
+            ])->id,
+            'is_active' => true,
+        ]);
+
+        $callUuid = 'test-uuid-sip-'.uniqid();
+
+        $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'test2.example.com',
+            'Caller-Destination-Number' => '+15559990002',
+            'Unique-ID' => $callUuid,
+            'variable_sip_via_protocol' => 'udp',
+        ]);
+
+        $session = CallSession::where('call_uuid', $callUuid)->first();
+        $this->assertNotNull($session, 'CallSession should be created');
+        $this->assertSame('sip', $session->variables['endpoint_type'] ?? null);
     }
 }
