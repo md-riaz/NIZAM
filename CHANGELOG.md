@@ -68,6 +68,7 @@ See [docs/v1-scope.md](docs/v1-scope.md#known-limitations-v10) for the full list
 - **Form Validation:** Added pre-submit frontend validation to the SIP Profile dynamic settings table to prevent empty setting rows from being sent to the API.
 - **UI UX:** Added a `required` prop to the reusable `FormLabel` component to render a red asterisk `*`, and applied it to mandatory fields in the SIP Profile editor.
 - **UI UX:** Empty required fields in the SIP Profile settings table now highlight with a red border if left blank after a save attempt.
+- **Test Safety:** Hardened Laravel test bootstrap so `php artisan test` always uses in-memory SQLite and aborts immediately if the test environment ever tries to boot against a non-SQLite connection, protecting the Docker Postgres users table from accidental wipes.
 
 ---
 

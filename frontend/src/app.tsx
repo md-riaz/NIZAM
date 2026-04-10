@@ -2,7 +2,7 @@ import './assets/app.css';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, RouterProvider, createBrowserRouter, createRoutesFromElements } from 'react-router-dom';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -92,92 +92,100 @@ function PageLoader() {
     );
 }
 
+// ─── Router Configuration ────────────────────────────────────────
+
+const router = createBrowserRouter(
+    createRoutesFromElements(
+        <>
+            {/* Guest */}
+            <Route
+                path="/login"
+                element={
+                    <GuestRoute>
+                        <LoginPage />
+                    </GuestRoute>
+                }
+            />
+
+            {/* Protected Admin */}
+            <Route
+                path="/admin"
+                element={
+                    <ProtectedRoute>
+                        <ErrorBoundary>
+                            <TenantProvider>
+                                <SuperadminLayout />
+                            </TenantProvider>
+                        </ErrorBoundary>
+                    </ProtectedRoute>
+                }
+            >
+                {/* General */}
+                <Route index element={<DashboardPage />} />
+                <Route path="tenants" element={<TenantsPage />} />
+                <Route path="tenants/create" element={<TenantFormPage />} />
+                <Route path="tenants/:id/edit" element={<TenantFormPage />} />
+                <Route path="tenants/:id/settings" element={<TenantSettingsPage />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="users/create" element={<UserFormPage />} />
+                <Route path="users/:id/edit" element={<UserFormPage />} />
+                <Route path="users/:id/permissions" element={<UserPermissionsPage />} />
+
+                {/* Phone System (tenant-scoped) */}
+                <Route path="extensions" element={<ExtensionsPage />} />
+                <Route path="extensions/create" element={<ExtensionFormPage />} />
+                <Route path="extensions/:id" element={<ExtensionDetailPage />} />
+                <Route path="extensions/:id/edit" element={<ExtensionFormPage />} />
+                <Route path="ring-groups" element={<RingGroupsPage />} />
+                <Route path="ring-groups/create" element={<RingGroupFormPage />} />
+                <Route path="ring-groups/:id/edit" element={<RingGroupFormPage />} />
+                <Route path="dids" element={<DidsPage />} />
+                <Route path="dids/create" element={<DidFormPage />} />
+                <Route path="dids/:id/edit" element={<DidFormPage />} />
+
+                {/* Contact Center (tenant-scoped) */}
+                <Route path="teams" element={<TeamsPage />} />
+                <Route path="teams/create" element={<TeamFormPage />} />
+                <Route path="teams/:id/edit" element={<TeamFormPage />} />
+                <Route path="agents" element={<AgentsPage />} />
+                <Route path="agents/create" element={<AgentFormPage />} />
+                <Route path="agents/:id/edit" element={<AgentFormPage />} />
+                <Route path="queues" element={<QueuesPage />} />
+                <Route path="queues/create" element={<QueueFormPage />} />
+                <Route path="queues/:id/edit" element={<QueueFormPage />} />
+                <Route path="queues/:id" element={<QueueDetailPage />} />
+
+                {/* Connectivity (tenant-scoped) */}
+                <Route path="gateways" element={<GatewaysPage />} />
+                <Route path="gateways/create" element={<GatewayFormPage />} />
+                <Route path="gateways/:id/edit" element={<GatewayFormPage />} />
+
+                {/* Calls (tenant-scoped) */}
+                <Route path="cdrs" element={<CdrsPage />} />
+
+                {/* System */}
+                <Route path="logs" element={<AuditLogsPage />} />
+                <Route path="system-logs" element={<LogViewerPage />} />
+                <Route path="auth-tokens" element={<AuthTokensPage />} />
+                <Route path="sip-status" element={<SipStatusPage />} />
+                <Route path="sip-profiles" element={<SipProfilesPage />} />
+                <Route path="sip-profiles/create" element={<SipProfileFormPage />} />
+                <Route path="sip-profiles/:id/edit" element={<SipProfileFormPage />} />
+                <Route path="blocked-destinations" element={<BlockedDestinationsPage />} />
+            </Route>
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+        </>
+    )
+);
+
 // ─── App ─────────────────────────────────────────────────────
 
 function App() {
     return (
         <Suspense fallback={<PageLoader />}>
-            <Routes>
-                {/* Guest */}
-                <Route
-                    path="/login"
-                    element={
-                        <GuestRoute>
-                            <LoginPage />
-                        </GuestRoute>
-                    }
-                />
-
-                {/* Protected Admin */}
-                <Route
-                    path="/admin"
-                    element={
-                        <ProtectedRoute>
-                            <ErrorBoundary>
-                                <TenantProvider>
-                                    <SuperadminLayout />
-                                </TenantProvider>
-                            </ErrorBoundary>
-                        </ProtectedRoute>
-                    }
-                >
-                    {/* General */}
-                    <Route index element={<DashboardPage />} />
-                    <Route path="tenants" element={<TenantsPage />} />
-                    <Route path="tenants/create" element={<TenantFormPage />} />
-                    <Route path="tenants/:id/edit" element={<TenantFormPage />} />
-                    <Route path="tenants/:id/settings" element={<TenantSettingsPage />} />
-                    <Route path="users" element={<UsersPage />} />
-                    <Route path="users/create" element={<UserFormPage />} />
-                    <Route path="users/:id/edit" element={<UserFormPage />} />
-                    <Route path="users/:id/permissions" element={<UserPermissionsPage />} />
-
-                    {/* Phone System (tenant-scoped) */}
-                    <Route path="extensions" element={<ExtensionsPage />} />
-                    <Route path="extensions/create" element={<ExtensionFormPage />} />
-                    <Route path="extensions/:id" element={<ExtensionDetailPage />} />
-                    <Route path="extensions/:id/edit" element={<ExtensionFormPage />} />
-                    <Route path="ring-groups" element={<RingGroupsPage />} />
-                    <Route path="ring-groups/create" element={<RingGroupFormPage />} />
-                    <Route path="ring-groups/:id/edit" element={<RingGroupFormPage />} />
-                    <Route path="dids" element={<DidsPage />} />
-                    <Route path="dids/create" element={<DidFormPage />} />
-                    <Route path="dids/:id/edit" element={<DidFormPage />} />
-
-                    {/* Contact Center (tenant-scoped) */}
-                    <Route path="teams" element={<TeamsPage />} />
-                    <Route path="teams/create" element={<TeamFormPage />} />
-                    <Route path="teams/:id/edit" element={<TeamFormPage />} />
-                    <Route path="agents" element={<AgentsPage />} />
-                    <Route path="agents/create" element={<AgentFormPage />} />
-                    <Route path="agents/:id/edit" element={<AgentFormPage />} />
-                    <Route path="queues" element={<QueuesPage />} />
-                    <Route path="queues/create" element={<QueueFormPage />} />
-                    <Route path="queues/:id/edit" element={<QueueFormPage />} />
-                    <Route path="queues/:id" element={<QueueDetailPage />} />
-
-                    {/* Connectivity (tenant-scoped) */}
-                    <Route path="gateways" element={<GatewaysPage />} />
-                    <Route path="gateways/create" element={<GatewayFormPage />} />
-                    <Route path="gateways/:id/edit" element={<GatewayFormPage />} />
-
-                    {/* Calls (tenant-scoped) */}
-                    <Route path="cdrs" element={<CdrsPage />} />
-
-                    {/* System */}
-                    <Route path="logs" element={<AuditLogsPage />} />
-                    <Route path="system-logs" element={<LogViewerPage />} />
-                    <Route path="auth-tokens" element={<AuthTokensPage />} />
-                    <Route path="sip-status" element={<SipStatusPage />} />
-                    <Route path="sip-profiles" element={<SipProfilesPage />} />
-                    <Route path="sip-profiles/create" element={<SipProfileFormPage />} />
-                    <Route path="sip-profiles/:id/edit" element={<SipProfileFormPage />} />
-                    <Route path="blocked-destinations" element={<BlockedDestinationsPage />} />
-                </Route>
-
-                {/* Catch-all */}
-                <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+            <RouterProvider router={router} />
         </Suspense>
     );
 }
@@ -196,11 +204,9 @@ if (rootEl) {
         <StrictMode>
             <ErrorBoundary>
                 <QueryClientProvider client={queryClient}>
-                    <BrowserRouter>
-                        <AuthProvider>
-                            <App />
-                        </AuthProvider>
-                    </BrowserRouter>
+                    <AuthProvider>
+                        <App />
+                    </AuthProvider>
                     <Toaster position="top-right" richColors />
                 </QueryClientProvider>
             </ErrorBoundary>

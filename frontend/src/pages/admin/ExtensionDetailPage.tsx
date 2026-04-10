@@ -29,14 +29,13 @@ export default function ExtensionDetailPage() {
         enabled: Boolean(id) && Boolean(activeTenant),
     });
 
-    const { data: webRtcConfig, isLoading: isWebRtcConfigLoading, isError: isWebRtcConfigError } = useQuery({
-        queryKey: ['extension-webrtc', activeTenant?.id, id],
+    const { data: sipConfig, isLoading: isSipConfigLoading } = useQuery({
+        queryKey: ['extension-sip-config', activeTenant?.id, id],
         queryFn: async () => {
-            const response = await api.get(`${tenantApiPrefix}/extensions/${id}/webrtc-config`);
+            const response = await api.get(`${tenantApiPrefix}/extensions/${id}/sip-config`);
             return response.data.data;
         },
         enabled: Boolean(id) && Boolean(activeTenant),
-        retry: false,
     });
 
     if (!activeTenant) {
@@ -116,58 +115,81 @@ export default function ExtensionDetailPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <ShieldCheck className="size-5 text-primary" />
-                                WebRTC configuration
+                                SIP Credentials
                             </CardTitle>
                             <CardDescription>
-                                Read-only connection details derived from the internal SIP profile WebRTC transport settings.
+                                Connection details for registering SIP clients (softphones, IP phones, etc.)
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm">
-                            {isWebRtcConfigLoading ? (
+                            {isSipConfigLoading ? (
                                 <div className="flex justify-center p-4">
                                     <div className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                                 </div>
-                            ) : isWebRtcConfigError || !webRtcConfig ? (
-                                <div className="rounded-md border p-4 text-center">
-                                    <p className="text-muted-foreground text-sm">
-                                        WebRTC is currently disabled on this system.
-                                    </p>
-                                    <Button variant="link" className="mt-2 h-auto p-0" onClick={() => navigate('/admin/sip-profiles')}>
-                                        Enable in SIP Profiles (internal)
-                                    </Button>
-                                </div>
-                            ) : (
+                            ) : sipConfig ? (
                                 <>
                                     <div>
-                                        <p className="text-muted-foreground">WebSocket URL</p>
-                                        <p className="mt-1 break-all font-mono">{webRtcConfig.websocket_url}</p>
+                                        <p className="text-muted-foreground">SIP Server</p>
+                                        <p className="mt-1 break-all font-mono">{sipConfig.sip_server}</p>
                                     </div>
+                                    {sipConfig.sip_tls_server && (
+                                        <div>
+                                            <p className="text-muted-foreground">TLS Server</p>
+                                            <p className="mt-1 break-all font-mono">{sipConfig.sip_tls_server}</p>
+                                        </div>
+                                    )}
                                     <div>
-                                        <p className="text-muted-foreground">SIP URI</p>
-                                        <p className="mt-1 break-all font-mono">{webRtcConfig.sip_uri}</p>
+                                        <p className="text-muted-foreground">Transport</p>
+                                        <p className="mt-1 break-all font-mono">{sipConfig.sip_transport}</p>
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground">Username</p>
-                                        <p className="mt-1 break-all font-mono">{webRtcConfig.sip_username}</p>
+                                        <p className="mt-1 break-all font-mono">{sipConfig.sip_username}</p>
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground">Password</p>
-                                        <p className="mt-1 break-all font-mono">{webRtcConfig.sip_password || 'Hidden'}</p>
+                                        <p className="mt-1 break-all font-mono">{sipConfig.sip_password || 'Hidden'}</p>
                                     </div>
-                                    <div className="flex justify-end">
-                                        <Button 
-                                            variant="outline" 
+                                    <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                                        <p className="text-muted-foreground">WebRTC support:</p>
+                                        <Badge variant={sipConfig.enabled ? 'success' : 'secondary'}>
+                                            {sipConfig.enabled ? 'Enabled' : 'Disabled'}
+                                        </Badge>
+                                        {sipConfig.enabled && sipConfig.websocket_url && (
+                                            <span className="break-all font-mono text-xs text-muted-foreground ml-2">{sipConfig.websocket_url}</span>
+                                        )}
+                                    </div>
+                                    <div className="flex justify-end pt-2">
+                                        <Button
+                                            variant="outline"
                                             onClick={() => {
-                                                const textToCopy = `WebSocket URL: ${webRtcConfig.websocket_url || 'Unavailable'}\nSIP URI: ${webRtcConfig.sip_uri || 'Unavailable'}\nUsername: ${webRtcConfig.sip_username || extension.extension}\nPassword: ${webRtcConfig.sip_password || 'Hidden'}`;
-                                                navigator.clipboard.writeText(textToCopy);
-                                                toast.success('Configuration copied to clipboard');
+                                                const lines = [
+                                                    `SIP Server: ${sipConfig.sip_server || sipConfig.sip_domain || ''}`,
+                                                    `Transport: ${sipConfig.sip_transport || 'UDP/TCP'}`,
+                                                    `Username: ${sipConfig.sip_username || extension.extension}`,
+                                                    `Password: ${sipConfig.sip_password || 'Hidden'}`,
+                                                ];
+                                                if (sipConfig.sip_tls_server) {
+                                                    lines.push(`TLS Server: ${sipConfig.sip_tls_server}`);
+                                                }
+                                                if (sipConfig.enabled && sipConfig.websocket_url) {
+                                                    lines.push(`WebSocket URL: ${sipConfig.websocket_url}`);
+                                                }
+                                                navigator.clipboard.writeText(lines.join('\n'));
+                                                toast.success('SIP credentials copied to clipboard');
                                             }}
                                         >
                                             <Copy className="mr-2 size-4" />
-                                            Copy configuration
+                                            Copy credentials
                                         </Button>
                                     </div>
                                 </>
+                            ) : (
+                                <div className="rounded-md border p-4 text-center">
+                                    <p className="text-muted-foreground text-sm">
+                                        Unable to load SIP credentials.
+                                    </p>
+                                </div>
                             )}
                         </CardContent>
                     </Card>

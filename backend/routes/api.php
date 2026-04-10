@@ -116,7 +116,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
         // Core resources
         Route::apiResource('extensions', ExtensionController::class);
-        Route::get('extensions/{extension}/webrtc-config', [ExtensionController::class, 'webRtcConfig'])->name('extensions.webrtc-config');
+        Route::get('extensions/{extension}/sip-config', [ExtensionController::class, 'sipConfig'])->name('extensions.sip-config');
 
         // System media (audio prompts, MOH)
         Route::apiResource('system-media', SystemMediaController::class)->parameters(['system-media' => 'mediaId']);

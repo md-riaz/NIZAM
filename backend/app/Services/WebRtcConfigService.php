@@ -23,9 +23,19 @@ class WebRtcConfigService
 
         $wssBinding = (string) ($enabledSettings['wss-binding'] ?? '');
         $wsBinding = (string) ($enabledSettings['ws-binding'] ?? '');
-        $webrtcEnabled = $wssBinding !== '' && (($enabledSettings['dtls-srtp'] ?? null) === 'true');
+        $sipPort = (string) ($enabledSettings['sip-port'] ?? '5060');
+        $tlsEnabled = ($enabledSettings['tls'] ?? null) === 'true';
+        $tlsSipPort = (string) ($enabledSettings['tls-sip-port'] ?? '');
+        $webrtcEnabled = ($wssBinding !== '' && (($enabledSettings['dtls-srtp'] ?? null) === 'true'))
+            || $wsBinding !== '';
         $wssPort = $this->extractPort($wssBinding) ?? ($webrtcConfig['wss_port'] ?? 7443);
         $host = parse_url($appUrl, PHP_URL_HOST) ?: 'localhost';
+
+        // Derive available SIP transports from profile settings
+        $transports = ['UDP', 'TCP'];
+        if ($tlsEnabled && $tlsSipPort !== '') {
+            $transports[] = 'TLS';
+        }
 
         $iceServers = [];
 
@@ -49,7 +59,12 @@ class WebRtcConfigService
 
         return [
             'enabled' => $webrtcEnabled,
-            'websocket_url' => sprintf('wss://%s:%s', $host, $wssPort),
+            'websocket_url' => $webrtcEnabled ? sprintf('wss://%s:%s', $host, $wssPort) : null,
+            'sip_server' => sprintf('%s:%s', $extension->tenant->domain, $sipPort),
+            'sip_transport' => implode(' / ', $transports),
+            'sip_tls_server' => ($tlsEnabled && $tlsSipPort !== '')
+                ? sprintf('%s:%s', $extension->tenant->domain, $tlsSipPort)
+                : null,
             'sip_uri' => sprintf('sip:%s@%s', $extension->extension, $extension->tenant->domain),
             'sip_username' => $extension->extension,
             'sip_password' => $extension->password,

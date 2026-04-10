@@ -76,6 +76,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Fail-safe to prevent tests from wiping the production/development database.
+        // Even if putenv() fails, or env variables drift, this stops execution
+        // if RefreshDatabase tries to run on postgres during tests.
+        if ($this->app->environment('testing') && config('database.default') !== 'sqlite') {
+            throw new \RuntimeException(sprintf(
+                'Tests are configured to use %s instead of sqlite. ' .
+                'Aborting to protect the database.',
+                config('database.default')
+            ));
+        }
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });

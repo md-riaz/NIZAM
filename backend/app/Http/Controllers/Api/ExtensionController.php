@@ -115,12 +115,12 @@ class ExtensionController extends Controller
     }
 
     /**
-     * Get WebRTC connection configuration for an extension.
+     * Get SIP connection configuration for an extension.
      *
-     * Returns everything a SIP.js or similar WebRTC client needs to register
-     * and make calls via WebSocket. Settings are read from the internal SIP profile.
+     * Returns standard SIP client credentials and a WebRTC status indicator.
+     * Settings are derived from the internal SIP profile.
      */
-    public function webRtcConfig(Tenant $tenant, Extension $extension): JsonResponse
+    public function sipConfig(Tenant $tenant, Extension $extension): JsonResponse
     {
         if ($extension->tenant_id !== $tenant->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
@@ -129,12 +129,6 @@ class ExtensionController extends Controller
         $this->authorize('view', $extension);
 
         $config = $this->webRtcConfigService->forExtension($extension->loadMissing('tenant'), config('app.url'));
-
-        if (! $config['enabled']) {
-            return response()->json([
-                'message' => 'WebRTC is not enabled on this system.',
-            ], 403);
-        }
 
         return response()->json(['data' => $config]);
     }

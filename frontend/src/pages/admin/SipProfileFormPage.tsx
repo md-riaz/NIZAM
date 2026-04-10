@@ -65,17 +65,23 @@ type SipProfile = {
     is_active: boolean;
 };
 
-const WEBRTC_SETTING_FIELDS = [
+const WS_SETTING_FIELDS = [
     { name: 'ws-binding', label: 'WS binding', placeholder: ':5066' },
+] as const;
+
+const WSS_SETTING_FIELDS = [
     { name: 'wss-binding', label: 'WSS binding', placeholder: ':7443' },
     { name: 'tls-cert-dir', label: 'TLS certificate directory', placeholder: '/usr/local/freeswitch/certs' },
     { name: 'tls-sip-port', label: 'TLS SIP port', placeholder: '7443' },
     { name: 'tls-version', label: 'TLS version', placeholder: 'tlsv1.2' },
 ] as const;
 
-const WEBRTC_BOOLEAN_FIELDS = [
-    { name: 'dtls-srtp', label: 'Enable DTLS-SRTP' },
+const SHARED_BOOLEAN_FIELDS = [
     { name: 'enable-ice', label: 'Enable ICE' },
+] as const;
+
+const WSS_BOOLEAN_FIELDS = [
+    { name: 'dtls-srtp', label: 'Enable DTLS-SRTP' },
     { name: 'tls-only', label: 'TLS only' },
     { name: 'tls-verify-date', label: 'Verify TLS date' },
 ] as const;
@@ -97,19 +103,40 @@ const WEBRTC_HIDDEN_SETTINGS = new Set([
     'dtls-verify-policy',
 ]);
 
+function getDefaultWebRtcValue(name: string): string {
+    switch (name) {
+        case 'ws-binding': return ':5066';
+        case 'wss-binding': return ':7443';
+        case 'tls': return 'true';
+        case 'tls-bind-params': return 'transport=wss';
+        case 'tls-sip-port': return '7443';
+        case 'tls-cert-dir': return '/usr/local/freeswitch/certs';
+        case 'tls-version': return 'tlsv1.2';
+        case 'tls-verify-date': return 'true';
+        case 'tls-verify-policy': return 'none';
+        case 'tls-verify-depth': return '2';
+        case 'dtls-srtp': return 'true';
+        case 'dtls-verify-policy': return 'fingerprint';
+        case 'enable-ice': return 'true';
+        default: return 'true';
+    }
+}
+
 function normalizeProfile(raw: any): SipProfile {
     return {
         id: String(raw.id),
         name: raw.name,
         hostname: raw.hostname ?? null,
         description: raw.description ?? null,
-        settings: (raw.settings || []).map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            value: s.value,
-            is_enabled: Boolean(s.is_enabled),
-            description: s.description ?? null,
-        })),
+        settings: (Array.isArray(raw.settings) ? raw.settings : [])
+            .filter((setting: any) => setting && typeof setting === 'object')
+            .map((setting: any) => ({
+                id: setting.id,
+                name: setting.name,
+                value: setting.value,
+                is_enabled: Boolean(setting.is_enabled),
+                description: setting.description ?? null,
+            })),
         is_active: Boolean(raw.is_active),
     };
 }
@@ -134,6 +161,7 @@ export default function SipProfileFormPage() {
     const [settings, setSettings] = useState<SipProfileSetting[]>([]);
     const [activeTab, setActiveTab] = useState('general');
     const [formError, setFormError] = useState<string | null>(null);
+    const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
     const initialSnapshotRef = useRef<string>('');
 
     const form = useForm<SipProfileFormValues>({
@@ -184,7 +212,7 @@ export default function SipProfileFormPage() {
     }, [form, profile]);
 
     const watchedValues = form.watch();
-    const currentName = watchedValues.name;
+    const currentName = watchedValues.name ?? '';
     const isInternalProfile = currentName.trim().toLowerCase() === 'internal';
 
     const visibleSettings = useMemo(
@@ -201,7 +229,9 @@ export default function SipProfileFormPage() {
 
     const getSetting = (name: string) => settings.find((setting) => setting.name === name && !setting.is_deleted);
 
-    const isWebRtcEnabled = Boolean(getSetting('wss-binding')?.is_enabled);
+    const isWsEnabled = Boolean(getSetting('ws-binding')?.is_enabled);
+    const isWssEnabled = Boolean(getSetting('wss-binding')?.is_enabled);
+    const isAnyTransportEnabled = isWsEnabled || isWssEnabled;
 
     const updateSetting = (index: number, field: keyof SipProfileSetting, value: string | boolean | null) => {
         setSettings((current) => {
@@ -247,78 +277,79 @@ export default function SipProfileFormPage() {
         });
     };
 
-    const setWebRtcEnabled = (enabled: boolean) => {
-        const managedSettings = [
-            'ws-binding',
-            'wss-binding',
-            'tls',
-            'tls-bind-params',
-            'tls-sip-port',
-            'tls-cert-dir',
-            'tls-version',
-            'tls-verify-date',
-            'tls-verify-policy',
-            'tls-verify-depth',
-            'dtls-srtp',
-            'dtls-verify-policy',
-            'enable-ice',
-        ];
+    const setTransportEnabled = (transport: 'ws' | 'wss', enabled: boolean) => {
+        const managedSettings = transport === 'ws'
+            ? ['ws-binding']
+            : [
+                'wss-binding',
+                'tls',
+                'tls-bind-params',
+                'tls-sip-port',
+                'tls-cert-dir',
+                'tls-version',
+                'tls-verify-date',
+                'tls-verify-policy',
+                'tls-verify-depth',
+                'dtls-srtp',
+                'dtls-verify-policy',
+            ];
 
         managedSettings.forEach((name) => {
             upsertSettingByName(name, (current) => ({
                 id: current?.id,
                 name,
-                value:
-                    current?.value ??
-                    (name === 'ws-binding'
-                        ? ':5066'
-                        : name === 'wss-binding'
-                          ? ':7443'
-                          : name === 'tls'
-                            ? 'true'
-                            : name === 'tls-bind-params'
-                              ? 'transport=wss'
-                              : name === 'tls-sip-port'
-                                ? '7443'
-                                : name === 'tls-cert-dir'
-                                  ? '/usr/local/freeswitch/certs'
-                                  : name === 'tls-version'
-                                    ? 'tlsv1.2'
-                                    : name === 'tls-verify-date'
-                                      ? 'true'
-                                      : name === 'tls-verify-policy'
-                                        ? 'none'
-                                        : name === 'tls-verify-depth'
-                                          ? '2'
-                                          : name === 'dtls-srtp'
-                                            ? 'true'
-                                            : name === 'dtls-verify-policy'
-                                              ? 'fingerprint'
-                                              : 'true'),
+                value: current?.value ?? getDefaultWebRtcValue(name),
                 is_enabled: enabled,
                 description: current?.description ?? null,
             }));
         });
+
+        // Handle shared ICE setting: it should be enabled if ANY transport is enabled after this update
+        const willWsBeEnabled = transport === 'ws' ? enabled : isWsEnabled;
+        const willWssBeEnabled = transport === 'wss' ? enabled : isWssEnabled;
+        const willAnyBeEnabled = willWsBeEnabled || willWssBeEnabled;
+
+        upsertSettingByName('enable-ice', (current) => ({
+            id: current?.id,
+            name: 'enable-ice',
+            value: current?.value ?? getDefaultWebRtcValue('enable-ice'),
+            is_enabled: willAnyBeEnabled,
+            description: current?.description ?? null,
+        }));
     };
 
     const setWebRtcTextSetting = (name: string, value: string) => {
-        upsertSettingByName(name, (current) => ({
-            id: current?.id,
-            name,
-            value,
-            is_enabled: current?.is_enabled ?? isWebRtcEnabled,
-            description: current?.description ?? null,
-        }));
+        upsertSettingByName(name, (current) => {
+            const defaultEnabled = WS_SETTING_FIELDS.some(f => f.name === name)
+                ? isWsEnabled
+                : WSS_SETTING_FIELDS.some(f => f.name === name)
+                    ? isWssEnabled
+                    : isAnyTransportEnabled;
+
+            return {
+                id: current?.id,
+                name,
+                value,
+                is_enabled: current?.is_enabled ?? defaultEnabled,
+                description: current?.description ?? null,
+            };
+        });
     };
 
     const setWebRtcBooleanSetting = (name: string, checked: boolean) => {
-        upsertSettingByName(name, (current) => ({
-            id: current?.id,
-            name,
-            value: checked ? 'true' : 'false',
-            is_enabled: current?.is_enabled ?? isWebRtcEnabled,
-            description: current?.description ?? null,
-        }));
+        upsertSettingByName(name, (current) => {
+            const defaultEnabled = WSS_BOOLEAN_FIELDS.some(f => f.name === name)
+                ? isWssEnabled
+                : isAnyTransportEnabled;
+
+            return {
+                id: current?.id,
+                name,
+                value: checked ? 'true' : 'false',
+                is_enabled: current?.is_enabled ?? defaultEnabled,
+                description: current?.description ?? null,
+            };
+        });
     };
 
     const mutation = useApiMutation({
@@ -327,6 +358,31 @@ export default function SipProfileFormPage() {
             const deletedSettingsIds = settings
                 .filter((setting) => setting.is_deleted && setting.id)
                 .map((setting) => setting.id as string);
+
+            const invalidSettingIndex = activeSettings.findIndex(
+                (setting) => !setting.name.trim() || !setting.value.trim(),
+            );
+
+            if (invalidSettingIndex >= 0) {
+                const invalidSetting = activeSettings[invalidSettingIndex];
+                if (!invalidSetting.name.trim() && !invalidSetting.value.trim()) {
+                    throw new Error(`Setting #${invalidSettingIndex + 1} is missing both name and value.`);
+                }
+                if (!invalidSetting.name.trim()) {
+                    throw new Error(`Setting #${invalidSettingIndex + 1} is missing a name.`);
+                }
+                throw new Error(`Setting #${invalidSettingIndex + 1} is missing a value.`);
+            }
+
+            // Transport-specific required-field validation
+            const wsBinding = activeSettings.find((s) => s.name === 'ws-binding' && s.is_enabled);
+            if (wsBinding && !wsBinding.value.trim()) {
+                throw new Error('WS binding is required when WS transport is enabled.');
+            }
+            const wssBinding = activeSettings.find((s) => s.name === 'wss-binding' && s.is_enabled);
+            if (wssBinding && !wssBinding.value.trim()) {
+                throw new Error('WSS binding is required when WSS transport is enabled.');
+            }
 
             const payload = {
                 name: values.name.trim(),
@@ -361,6 +417,7 @@ export default function SipProfileFormPage() {
                 settings: serializeSettings(savedProfile.settings),
             });
             setFormError(null);
+            setHasAttemptedSubmit(false);
         },
         onError: (error) => {
             setFormError(getErrorMessage(error));
@@ -376,11 +433,13 @@ export default function SipProfileFormPage() {
     };
 
     const handleSubmit = form.handleSubmit(async (values) => {
+        setHasAttemptedSubmit(true);
         setFormError(null);
         await mutation.mutateAsync({ values });
     });
 
     const handleSaveAndClose = form.handleSubmit(async (values) => {
+        setHasAttemptedSubmit(true);
         setFormError(null);
         const savedProfile = await mutation.mutateAsync({ values });
         initialSnapshotRef.current = JSON.stringify({
@@ -488,7 +547,7 @@ export default function SipProfileFormPage() {
                                                 name="name"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Name</FormLabel>
+                                                        <FormLabel required>Name</FormLabel>
                                                         <FormControl>
                                                             <Input placeholder="e.g. internal" {...field} />
                                                         </FormControl>
@@ -547,46 +606,93 @@ export default function SipProfileFormPage() {
                                 {isInternalProfile && (
                                     <Card className="max-w-5xl">
                                         <CardHeader>
-                                            <CardTitle>WebRTC / WSS</CardTitle>
+                                            <CardTitle>WebRTC Transport</CardTitle>
                                             <CardDescription>
-                                                Manage browser-facing transport on the internal profile only.
+                                                Enable WS and/or WSS transports independently. Use WS only when proxying through NGINX.
                                             </CardDescription>
                                         </CardHeader>
-                                        <CardContent className="space-y-4">
-                                            <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
-                                                <div className="space-y-1">
-                                                    <FormLabel>Enable WebRTC transport</FormLabel>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        Turns on WSS, DTLS-SRTP, and ICE-related settings.
-                                                    </p>
-                                                </div>
-                                                <Checkbox
-                                                    checked={isWebRtcEnabled}
-                                                    onCheckedChange={(checked) => setWebRtcEnabled(checked === true)}
-                                                />
-                                            </div>
-
-                                            <div className="grid gap-4 md:grid-cols-2">
-                                                {WEBRTC_SETTING_FIELDS.map((field) => (
-                                                    <div key={field.name} className="space-y-2">
-                                                        <FormLabel>{field.label}</FormLabel>
-                                                        <Input
-                                                            value={getSetting(field.name)?.value ?? ''}
-                                                            placeholder={field.placeholder}
-                                                            disabled={!isWebRtcEnabled}
-                                                            onChange={(event) => setWebRtcTextSetting(field.name, event.target.value)}
-                                                        />
+                                        <CardContent className="space-y-6">
+                                            {/* WS Transport */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
+                                                    <div className="space-y-1">
+                                                        <FormLabel>Enable WS transport</FormLabel>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Unencrypted WebSocket binding. Useful when TLS is terminated at a reverse proxy (e.g. NGINX).
+                                                        </p>
                                                     </div>
-                                                ))}
+                                                    <Checkbox
+                                                        checked={isWsEnabled}
+                                                        onCheckedChange={(checked) => setTransportEnabled('ws', checked === true)}
+                                                    />
+                                                </div>
+
+                                                <div className="grid gap-4 md:grid-cols-2">
+                                                    {WS_SETTING_FIELDS.map((field) => (
+                                                        <div key={field.name} className="space-y-2">
+                                                            <FormLabel required={isWsEnabled}>{field.label}</FormLabel>
+                                                            <Input
+                                                                value={getSetting(field.name)?.value ?? ''}
+                                                                placeholder={field.placeholder}
+                                                                disabled={!isWsEnabled}
+                                                                onChange={(event) => setWebRtcTextSetting(field.name, event.target.value)}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
 
+                                            {/* WSS Transport */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
+                                                    <div className="space-y-1">
+                                                        <FormLabel>Enable WSS transport</FormLabel>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Secure WebSocket with TLS, DTLS-SRTP, and related certificate settings.
+                                                        </p>
+                                                    </div>
+                                                    <Checkbox
+                                                        checked={isWssEnabled}
+                                                        onCheckedChange={(checked) => setTransportEnabled('wss', checked === true)}
+                                                    />
+                                                </div>
+
+                                                <div className="grid gap-4 md:grid-cols-2">
+                                                    {WSS_SETTING_FIELDS.map((field) => (
+                                                        <div key={field.name} className="space-y-2">
+                                                            <FormLabel required={isWssEnabled && field.name === 'wss-binding'}>{field.label}</FormLabel>
+                                                            <Input
+                                                                value={getSetting(field.name)?.value ?? ''}
+                                                                placeholder={field.placeholder}
+                                                                disabled={!isWssEnabled}
+                                                                onChange={(event) => setWebRtcTextSetting(field.name, event.target.value)}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className="grid gap-4 md:grid-cols-2">
+                                                    {WSS_BOOLEAN_FIELDS.map((field) => (
+                                                        <div key={field.name} className="flex items-center justify-between rounded-lg border p-4">
+                                                            <FormLabel>{field.label}</FormLabel>
+                                                            <Checkbox
+                                                                checked={(getSetting(field.name)?.value ?? 'false') === 'true'}
+                                                                disabled={!isWssEnabled}
+                                                                onCheckedChange={(checked) => setWebRtcBooleanSetting(field.name, checked === true)}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Shared settings */}
                                             <div className="grid gap-4 md:grid-cols-2">
-                                                {WEBRTC_BOOLEAN_FIELDS.map((field) => (
+                                                {SHARED_BOOLEAN_FIELDS.map((field) => (
                                                     <div key={field.name} className="flex items-center justify-between rounded-lg border p-4">
                                                         <FormLabel>{field.label}</FormLabel>
                                                         <Checkbox
                                                             checked={(getSetting(field.name)?.value ?? 'false') === 'true'}
-                                                            disabled={!isWebRtcEnabled}
+                                                            disabled={!isAnyTransportEnabled}
                                                             onCheckedChange={(checked) => setWebRtcBooleanSetting(field.name, checked === true)}
                                                         />
                                                     </div>
@@ -610,8 +716,8 @@ export default function SipProfileFormPage() {
                                             <Table>
                                                 <TableHeader className="bg-muted/50">
                                                     <TableRow>
-                                                        <TableHead className="w-[220px]">Name</TableHead>
-                                                        <TableHead>Value</TableHead>
+                                                        <TableHead className="w-[220px]">Name <span className="text-destructive">*</span></TableHead>
+                                                        <TableHead>Value <span className="text-destructive">*</span></TableHead>
                                                         <TableHead className="w-[100px] text-center">Enabled</TableHead>
                                                         <TableHead>Description</TableHead>
                                                         <TableHead className="w-[56px]" />
@@ -620,12 +726,15 @@ export default function SipProfileFormPage() {
                                                 <TableBody>
                                                     {visibleSettings.map((setting) => {
                                                         const index = settings.findIndex((candidate) => candidate === setting);
+                                                        const isNameMissing = hasAttemptedSubmit && !setting.name.trim();
+                                                        const isValueMissing = hasAttemptedSubmit && !setting.value.trim();
+
                                                         return (
                                                             <TableRow key={setting.id ?? `${setting.name}-${index}`}>
                                                                 <TableCell className="p-2">
                                                                     <Input
                                                                         value={setting.name}
-                                                                        className="h-8 font-mono text-sm"
+                                                                        className={`h-8 font-mono text-sm ${isNameMissing ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                                                         placeholder="e.g. sip-port"
                                                                         onChange={(event) => updateSetting(index, 'name', event.target.value)}
                                                                     />
@@ -633,7 +742,7 @@ export default function SipProfileFormPage() {
                                                                 <TableCell className="p-2">
                                                                     <Input
                                                                         value={setting.value}
-                                                                        className="h-8 font-mono text-sm"
+                                                                        className={`h-8 font-mono text-sm ${isValueMissing ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                                                         placeholder="5060"
                                                                         onChange={(event) => updateSetting(index, 'value', event.target.value)}
                                                                     />
@@ -681,9 +790,9 @@ export default function SipProfileFormPage() {
                         </Tabs>
 
                         {formError && (
-                            <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive max-w-5xl">
-                                <AlertTriangle className="size-4" />
-                                {formError}
+                            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive max-w-5xl">
+                                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                                <div className="whitespace-pre-wrap">{formError}</div>
                             </div>
                         )}
 
