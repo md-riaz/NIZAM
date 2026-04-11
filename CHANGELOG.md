@@ -72,10 +72,23 @@ See [docs/v1-scope.md](docs/v1-scope.md#known-limitations-v10) for the full list
 
 ---
 
-## [Unreleased]
+## [1.0.2] - 2026-04-11
 
 ### Added
+- **SIP Credentials UI**: Added "Domain / Realm" to the SIP Credentials display on the extension detail page and included it in the "Copy credentials" action.
 
+### Changed
+- **SIP Configuration**: Updated the extension SIP configuration endpoint to return the current application host for the SIP server instead of the tenant domain, improving compatibility with softphones registering from external networks.
+- **Seeding:** Updated `DatabaseSeeder` to use the `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` from `.env` consistently across all seeded admin records.
+
+### Fixed
+- **Database Seeding**: Resolved a unique constraint conflict where the platform admin and tenant admin were assigned the same email address. The platform admin now uses a `system@` prefix.
+- **Test Isolation**: Isolated FreeSWITCH gateway provisioning during tests. Tests now write XML profiles to a temporary directory (`storage/framework/testing/gateways`) instead of the real configuration, preventing "orphan" registrations and "fail wait" loops in development.
+- **Gateway Sync**: Corrected the configuration key used in `GatewayProvisioningServiceTest` and `GatewayCodecRenderingTest` to correctly redirect filesystem output during unit tests.
+
+---
+
+## [1.0.1] - 2026-04-09
 #### Infrastructure
 - Docker Compose baseline with 6 services: app, nginx, postgres, redis, freeswitch, queue worker
 - `GET /api/v1/health` — unauthenticated endpoint reporting app, ESL, and FreeSWITCH status
