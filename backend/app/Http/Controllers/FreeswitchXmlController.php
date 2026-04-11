@@ -53,7 +53,9 @@ class FreeswitchXmlController extends Controller
 
     protected function handleDirectory(string $domain): Response
     {
-        $xml = $this->compiler->compileDirectory($domain);
+        // mod_xml_curl passes 'user' or 'id' for specific user lookups
+        $user = request()->input('user', request()->input('id'));
+        $xml = $this->compiler->compileDirectory($domain, $user);
 
         return response($xml, 200, ['Content-Type' => 'text/xml']);
     }

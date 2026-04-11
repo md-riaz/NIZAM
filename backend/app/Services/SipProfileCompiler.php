@@ -33,6 +33,11 @@ class SipProfileCompiler
             $xml = $this->compileProfileXml($profile);
             File::put($storagePath . '/' . $profile->name . '.xml', $xml);
         }
+
+        $externalGatewayPath = $storagePath . '/external';
+        if (!File::exists($externalGatewayPath)) {
+            File::makeDirectory($externalGatewayPath, 0755, true);
+        }
     }
 
     /**
@@ -46,9 +51,11 @@ class SipProfileCompiler
         $xml .= '  <aliases>'."\n";
         $xml .= '  </aliases>'."\n";
 
-        $xml .= '  <gateways>'."\n";
-        $xml .= '    <X-PRE-PROCESS cmd="include" data="'.$safeName.'/*.xml"/>'."\n";
-        $xml .= '  </gateways>'."\n";
+        if ($profile->name === 'external') {
+            $xml .= '  <gateways>'."\n";
+            $xml .= '    <X-PRE-PROCESS cmd="include" data="'.$safeName.'/*.xml"/>'."\n";
+            $xml .= '  </gateways>'."\n";
+        }
 
         $xml .= '  <domains>'."\n";
         $xml .= '    <domain name="all" alias="true" parse="false"/>'."\n";

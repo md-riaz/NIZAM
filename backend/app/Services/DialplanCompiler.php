@@ -31,7 +31,7 @@ class DialplanCompiler
     /**
      * Compile the SIP directory XML for a given domain.
      */
-    public function compileDirectory(string $domain): string
+    public function compileDirectory(string $domain, ?string $user = null): string
     {
         $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
 
@@ -39,14 +39,20 @@ class DialplanCompiler
             return $this->emptyDirectoryResponse();
         }
 
-        $extensions = $tenant->extensions()->where('is_active', true)->get();
+        $query = $tenant->extensions()->where('is_active', true);
+
+        if ($user) {
+            $query->where('extension', $user);
+        }
+
+        $extensions = $query->get();
 
         $xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'."\n";
         $xml .= '<document type="freeswitch/xml">'."\n";
         $xml .= '  <section name="directory">'."\n";
         $xml .= '    <domain name="'.htmlspecialchars($domain, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '      <params>'."\n";
-        $xml .= '        <param name="dial-string" value="{^^:sip_invite_domain=${dialed_domain}:presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(*/${dialed_user}@${dialed_domain})},${verto_contact(${dialed_user}@${dialed_domain})}"/>'."\n";
+        $xml .= '        <param name="dial-string" value="{^^:sip_invite_domain=${dialed_domain}:presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(internal/${dialed_user}@${dialed_domain})},${verto_contact(${dialed_user}@${dialed_domain})}"/>'."\n";
         $xml .= '      </params>'."\n";
         $xml .= '      <groups>'."\n";
         $xml .= '        <group name="default">'."\n";
@@ -196,6 +202,11 @@ class DialplanCompiler
             ->first();
 
         if ($extension) {
+            // Check for self-call (caller calling their own extension)
+            if ($callerIdNumber === $destinationNumber) {
+                return $this->compileSelfCallDialplan($tenant, $extension);
+            }
+
             return $this->compileExtensionDialplan($tenant, $extension);
         }
 
@@ -459,6 +470,19 @@ class DialplanCompiler
         $xml .= $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $extension->id);
         $xml .= '          </condition>'."\n";
         $xml .= '        </extension>'."\n";
+
+        return $xml;
+    }
+
+    protected function compileSelfCallDialplan(Tenant $tenant, Extension $extension): string
+    {
+        $xml = $this->dialplanHeader($tenant->domain);
+        $xml .= '        <extension name="self-call-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
+        $xml .= '            <action application="bridge" data="user/'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+        $xml .= $this->dialplanFooter();
 
         return $xml;
     }
