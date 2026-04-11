@@ -169,7 +169,10 @@ class GatewayProvisioningService
     protected function reloadProfile(?Gateway $gateway = null): void
     {
         $profile = $this->profile();
-        $reload = $this->freeSwitch->execute('reloadxml');
+        $this->freeSwitch->execute('reloadxml');
+
+        // Note: FreeSWITCH applies global vars from vars.xml/switch.conf.xml only on full restart.
+        // For gateway-specific changes, rescan is sufficient.
         $rescan = $this->freeSwitch->execute('sofia', ['profile', $profile, 'rescan']);
 
         if (($gateway?->is_active ?? false) && $gateway) {

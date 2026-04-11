@@ -511,8 +511,8 @@ FREESWITCH_XML_CURL_URL=http://127.0.0.1/freeswitch/xml-curl
 FREESWITCH_XML_CURL_ENDPOINT_INTERNAL=http://127.0.0.1/freeswitch/xml-curl
 FREESWITCH_LOG_PATH=/var/log/freeswitch/freeswitch.log
 
-EXT_RTP_IP=${SERVER_IP}
-EXT_SIP_IP=${SERVER_IP}
+EXT_RTP_IP=auto-nat
+EXT_SIP_IP=auto-nat
 RTP_PORT_RANGE_START=${RTP_START}
 RTP_PORT_RANGE_END=${RTP_END}
 DTMF_TYPE=rfc2833
