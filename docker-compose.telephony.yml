@@ -46,7 +46,7 @@ services:
       - "${FREESWITCH_EXTERNAL_SIP_PORT:-5080}:5080/udp"
       - "${FREESWITCH_EXTERNAL_SIP_PORT:-5080}:5080/tcp"
       - "${FREESWITCH_WSS_PORT:-7443}:7443/tcp"
-      - "${FREESWITCH_RTP_PORT_RANGE:-16384-16484}:16384-16484/udp"
+      - "${FREESWITCH_RTP_PORT_RANGE:-16384-32768}:16384-32768/udp"
     volumes:
       - freeswitch_data:/var/lib/freeswitch
       - freeswitch_logs:/var/log/freeswitch
