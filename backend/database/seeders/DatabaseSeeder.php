@@ -28,10 +28,11 @@ class DatabaseSeeder extends Seeder
         // ──────────────────────────────────────────────
         // 1. Platform Superadmin (tenant-agnostic)
         // ──────────────────────────────────────────────
+        $systemDomain = env('ADMIN_TENANT_DOMAIN', 'nizam.io');
         User::updateOrCreate(
-            ['email' => env('ADMIN_EMAIL', 'admin@nizam.io')],
+            ['email' => "system@{$systemDomain}"],
             [
-                'name'      => env('ADMIN_NAME', 'NIZAM Administrator'),
+                'name'      => 'Platform Administrator',
                 'password'  => env('ADMIN_PASSWORD', 'password'),
                 'tenant_id' => null,          // Platform-level — not scoped to any tenant
                 'role'      => 'admin',       // Full cross-tenant access
