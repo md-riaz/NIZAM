@@ -94,27 +94,86 @@ class SipStatusController extends Controller
     }
 
     /**
-     * Get all registrations across all profiles.
+     * Get all registrations across all active SIP profiles.
      */
     public function registrations(): JsonResponse
     {
         Gate::authorize('platform-admin');
 
-        $response = $this->esl->api('show registrations as json');
+        $activeProfiles = \App\Models\SipProfile::where('is_active', true)->get();
+        $allRegistrations = [];
 
-        if (! $response) {
-            return response()->json([
-                'data' => [],
-                'meta' => ['source' => 'esl', 'error' => 'FreeSWITCH unreachable'],
-            ], 503);
+        foreach ($activeProfiles as $profile) {
+            $registrations = $this->getRegistrationsForProfile($profile->name);
+            $allRegistrations = array_merge($allRegistrations, $registrations);
         }
 
-        $registrations = $this->parseJsonResponse($response);
-
         return response()->json([
-            'data' => $registrations,
-            'meta' => ['source' => 'esl', 'live' => true],
+            'data' => $allRegistrations,
+            'meta' => [
+                'source' => 'esl',
+                'live' => true,
+                'profiles_scanned' => $activeProfiles->pluck('name'),
+            ],
         ]);
+    }
+
+    /**
+     * Fetch registrations for a specific profile using XML status.
+     */
+    protected function getRegistrationsForProfile(string $profileName): array
+    {
+        $response = $this->esl->api("sofia xmlstatus profile {$profileName} reg");
+
+        if (!$response || str_contains($response, 'Invalid Profile!')) {
+            return [];
+        }
+
+        return $this->parseXmlRegistrations($response, $profileName);
+    }
+
+    /**
+     * Parse FreeSWITCH XML registrations into a normalized array.
+     */
+    protected function parseXmlRegistrations(string $xmlRaw, string $profileName): array
+    {
+        // Extract the XML part after ESL headers
+        $xmlStart = strpos($xmlRaw, '<profile');
+        if ($xmlStart === false) {
+            return [];
+        }
+
+        $xmlString = substr($xmlRaw, $xmlStart);
+
+        try {
+            $xml = new \SimpleXMLElement($xmlString);
+        } catch (\Exception $e) {
+            return [];
+        }
+
+        $registrations = [];
+
+        if (!isset($xml->registrations->registration)) {
+            return [];
+        }
+
+        foreach ($xml->registrations->registration as $reg) {
+            $registrations[] = [
+                'user' => (string) $reg->user,
+                'agent' => (string) $reg->agent,
+                'contact' => (string) $reg->contact,
+                'host' => (string) $reg->host,
+                'network_ip' => (string) $reg->{'network-ip'},
+                'network_port' => (string) $reg->{'network-port'},
+                'sip_auth_user' => (string) $reg->{'sip-auth-user'},
+                'sip_auth_realm' => (string) $reg->{'sip-auth-realm'},
+                'status' => (string) $reg->status,
+                'ping_time' => (string) $reg->{'ping-time'},
+                'sip_profile_name' => $profileName,
+            ];
+        }
+
+        return $registrations;
     }
 
     /**
@@ -234,14 +293,19 @@ class SipStatusController extends Controller
 
         foreach ($lines as $line) {
             $line = trim($line);
-            
-            // Match profile lines like: "internal                 profile  sip:mod_sofia@192.168.1.100:5060  RUNNING (0)"
-            if (preg_match('/^(\S+)\s+(profile|gateway|alias)\s+(\S+)\s+(\S+)(?:\s+\((\d+)\))?/', $line, $matches)) {
+
+            if ($line === '' || str_contains($line, '===') || str_contains($line, 'Name') && str_contains($line, 'Type')) {
+                continue;
+            }
+
+            // Match profile lines like:
+            // internal profile sip:mod_sofia@172.20.0.8:5060 RUNNING (0)
+            if (preg_match('/^(\S+)\s+(profile|gateway|alias)\s+(\S+)\s+(.+?)(?:\s+\((\d+)\))?$/', $line, $matches)) {
                 $profiles[] = [
                     'name' => $matches[1],
                     'type' => $matches[2],
                     'uri' => $matches[3] ?? null,
-                    'status' => $matches[4] ?? 'unknown',
+                    'status' => trim($matches[4] ?? 'unknown'),
                     'calls' => isset($matches[5]) ? (int) $matches[5] : 0,
                 ];
             }

@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Database Seeding**: Resolved a unique constraint conflict where the platform admin and tenant admin were assigned the same email address. The platform admin now uses a `system@` prefix.
 - **Test Isolation**: Isolated FreeSWITCH gateway provisioning during tests. Tests now write XML profiles to a temporary directory (`storage/framework/testing/gateways`) instead of the real configuration, preventing "orphan" registrations and "fail wait" loops in development.
 - **Gateway Sync**: Corrected the configuration key used in `GatewayProvisioningServiceTest` and `GatewayCodecRenderingTest` to correctly redirect filesystem output during unit tests.
+- **Registration Visibility**: Switched active registration lookups to `sofia xmlstatus profile <profile> reg` so the SIP status APIs now expose the real extension user agent and preserve correct profile names like `internal` and `external`.
 
 ---
 

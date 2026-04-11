@@ -21,21 +21,21 @@ class RegistrationStatusController extends Controller
     /**
      * Get bulk registration status for all extensions in a tenant.
      *
-     * Queries FreeSWITCH `show registrations as json` and filters for
-     * the tenant's domain, returning a map of extension => status.
+     * Queries FreeSWITCH each active SIP profile using XML status
+     * and filters for the tenant's domain, returning a map of extension => status.
      */
     public function bulkExtensionStatus(Tenant $tenant): JsonResponse
     {
-        $response = $this->esl->api('show registrations as json');
+        $activeProfiles = \App\Models\SipProfile::where('is_active', true)->get();
+        $allRegistrations = [];
 
-        if (! $response) {
-            return response()->json([
-                'data' => [],
-                'meta' => ['source' => 'esl', 'error' => 'FreeSWITCH unreachable'],
-            ], 503);
+        foreach ($activeProfiles as $profile) {
+            $response = $this->esl->api("sofia xmlstatus profile {$profile->name} reg");
+            if ($response && !str_contains($response, 'Invalid Profile!')) {
+                $allRegistrations = array_merge($allRegistrations, $this->parseXmlRegistrations($response));
+            }
         }
 
-        $registrations = $this->parseJsonResponse($response);
         $domain = $tenant->domain;
 
         $statusMap = [];
@@ -49,9 +49,10 @@ class RegistrationStatusController extends Controller
             ];
         }
 
-        foreach ($registrations as $reg) {
-            $regUser = $reg['reg_user'] ?? '';
-            $regHost = $reg['realm'] ?? ($reg['hostname'] ?? '');
+        foreach ($allRegistrations as $reg) {
+            $regUserParts = explode('@', $reg['user'] ?? '');
+            $regUser = $regUserParts[0] ?? '';
+            $regHost = $regUserParts[1] ?? '';
 
             if ($regHost === $domain && isset($statusMap[$regUser])) {
                 $statusMap[$regUser]['registered'] = true;
@@ -65,6 +66,42 @@ class RegistrationStatusController extends Controller
             'data' => array_values($statusMap),
             'meta' => ['source' => 'esl', 'domain' => $domain],
         ]);
+    }
+
+    /**
+     * Parse FreeSWITCH XML registrations into a normalized array.
+     */
+    protected function parseXmlRegistrations(string $xmlRaw): array
+    {
+        $xmlStart = strpos($xmlRaw, '<profile');
+        if ($xmlStart === false) {
+            return [];
+        }
+
+        $xmlString = substr($xmlRaw, $xmlStart);
+
+        try {
+            $xml = new \SimpleXMLElement($xmlString);
+        } catch (\Exception $e) {
+            return [];
+        }
+
+        $registrations = [];
+
+        if (!isset($xml->registrations->registration)) {
+            return [];
+        }
+
+        foreach ($xml->registrations->registration as $reg) {
+            $registrations[] = [
+                'user' => (string) $reg->user,
+                'agent' => (string) $reg->agent,
+                'network_ip' => (string) $reg->{'network-ip'},
+                'network_port' => (string) $reg->{'network-port'},
+            ];
+        }
+
+        return $registrations;
     }
 
     /**
