@@ -36,7 +36,16 @@ class SipProfileSetting extends Model
         $compilerHook = function () {
             app(\App\Services\SipProfileCompiler::class)->compileAllToDisk();
             try {
-                app(\App\Services\EslConnectionManager::class)->bgapi('reloadxml');
+                $esl = app(\App\Services\EslConnectionManager::class);
+                $esl->bgapi('reloadxml');
+
+                $profile = $this->relationLoaded('profile')
+                    ? $this->getRelation('profile')
+                    : $this->profile()->first();
+
+                if ($profile?->name) {
+                    $esl->bgapi('sofia profile '.$profile->name.' restart');
+                }
             } catch (\Exception $e) {
                 // Ignore if ESL is down
             }

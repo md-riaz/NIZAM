@@ -183,7 +183,6 @@ class GatewayProvisioningService
         Log::info('Gateway profile reloaded', [
             'gateway_id' => $gateway?->id,
             'profile' => $profile,
-            'reload' => $reload,
             'rescan' => $rescan,
         ]);
     }

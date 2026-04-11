@@ -18,7 +18,9 @@
       "Bash(C:/laragon/bin/php/php-8.2.30-Win32-vs16-x64/php.exe:*)",
       "Bash(npm:*)",
       "Bash(APP_ENV=testing C:/laragon/bin/php/php-8.2.30-Win32-vs16-x64/php.exe:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(mkdir -p C:\\\\\\\\Users\\\\\\\\mdriaz\\\\\\\\.claude\\\\\\\\plans)",
+      "Bash(touch C:\\\\\\\\Users\\\\\\\\mdriaz\\\\\\\\.claude\\\\\\\\plans\\\\\\\\replicated-munching-music-agent-a5e9831235295a3dc.md)"
     ]
   }
 }

@@ -113,6 +113,12 @@ class SipProfileController extends Controller
         $booleans = ['tls', 'tls-only', 'dtls-srtp', 'enable-ice', 'tls-verify-date'];
         $ports = ['tls-sip-port'];
 
+        $indexedSettings = collect($settings)
+            ->keyBy(fn (array $setting) => $setting['name'] ?? null)
+            ->all();
+
+        $wssEnabled = (bool) ($indexedSettings['wss-binding']['is_enabled'] ?? false);
+
         foreach ($settings as $setting) {
             $name = $setting['name'] ?? null;
             $value = (string) ($setting['value'] ?? '');
@@ -143,12 +149,37 @@ class SipProfileController extends Controller
                 ], 422));
             }
 
-            if ($name === 'tls-cert-dir' && $isEnabled && trim($value) === '') {
+            if ($name === 'tls-cert-dir' && $wssEnabled && trim($value) === '') {
                 abort(response()->json([
-                    'message' => 'The tls-cert-dir value is required when WebRTC is enabled.',
-                    'errors' => ['tls-cert-dir' => ['The tls-cert-dir value is required when WebRTC is enabled.']],
+                    'message' => 'The tls-cert-dir value is required when WSS is enabled.',
+                    'errors' => ['tls-cert-dir' => ['The tls-cert-dir value is required when WSS is enabled.']],
                 ], 422));
             }
+        }
+
+        if (! $wssEnabled) {
+            return;
+        }
+
+        foreach (['tls', 'dtls-srtp'] as $requiredSetting) {
+            $setting = $indexedSettings[$requiredSetting] ?? null;
+            $value = (string) ($setting['value'] ?? 'false');
+            $isEnabled = (bool) ($setting['is_enabled'] ?? false);
+
+            if (! $isEnabled || $value !== 'true') {
+                abort(response()->json([
+                    'message' => sprintf('The %s setting must be enabled and set to true when WSS is enabled.', $requiredSetting),
+                    'errors' => [$requiredSetting => [sprintf('The %s setting must be enabled and set to true when WSS is enabled.', $requiredSetting)]],
+                ], 422));
+            }
+        }
+
+        $tlsCertDir = (string) ($indexedSettings['tls-cert-dir']['value'] ?? '');
+        if (trim($tlsCertDir) === '') {
+            abort(response()->json([
+                'message' => 'The tls-cert-dir value is required when WSS is enabled.',
+                'errors' => ['tls-cert-dir' => ['The tls-cert-dir value is required when WSS is enabled.']],
+            ], 422));
         }
     }
 }

@@ -51,6 +51,7 @@ class SipProfileSeeder extends Seeder
                     ['name' => 'dtls-srtp', 'value' => 'true', 'is_enabled' => false],
                     ['name' => 'dtls-verify-policy', 'value' => 'fingerprint', 'is_enabled' => false],
                     ['name' => 'enable-ice', 'value' => 'true', 'is_enabled' => false],
+                    ['name' => 'ws-only', 'value' => 'true', 'is_enabled' => false],
                 ],
             ],
             'external' => [

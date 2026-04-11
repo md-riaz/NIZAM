@@ -33,10 +33,14 @@ class WebRtcConfigService
 
         $tlsEnabled = ($enabledSettings['tls'] ?? null) === 'true';
         $tlsSipPort = (string) ($enabledSettings['tls-sip-port'] ?? '');
+
+        // WebRTC is enabled if WSS is active (requires TLS/certs) OR if plain WS is active.
+        // If only plain WS is enabled, we don't force a WSS/TLS requirement.
         $webrtcEnabled = ($wssBinding !== '' && (($enabledSettings['dtls-srtp'] ?? null) === 'true'))
             || $wsBinding !== '';
 
         $wssPort = $this->extractPort($wssBinding) ?? ($webrtcConfig['wss_port'] ?? 7443);
+        $wsPort = $this->extractPort($wsBinding) ?? 5066;
 
         // Override WSS port if explicitly defined in telephony config (e.g., Docker port mapping)
         $externalWssPort = config('telephony.freeswitch.wss_port');
@@ -45,6 +49,14 @@ class WebRtcConfigService
         }
 
         $host = parse_url($appUrl, PHP_URL_HOST) ?: 'localhost';
+
+        // Protocol determination: prefer WSS if available, fallback to WS
+        $wsUrl = null;
+        if ($webrtcEnabled) {
+            $wsUrl = ($wssBinding !== '')
+                ? sprintf('wss://%s:%s', $host, $wssPort)
+                : sprintf('ws://%s:%s', $host, $wsPort);
+        }
 
         // Derive available SIP transports from profile settings
         $transports = ['UDP', 'TCP'];
@@ -74,7 +86,7 @@ class WebRtcConfigService
 
         return [
             'enabled' => $webrtcEnabled,
-            'websocket_url' => $webrtcEnabled ? sprintf('wss://%s:%s', $host, $wssPort) : null,
+            'websocket_url' => $wsUrl,
             'sip_server' => sprintf('%s:%s', $host, $sipPort),
             'sip_transport' => implode(' / ', $transports),
             'sip_tls_server' => ($tlsEnabled && $tlsSipPort !== '')
