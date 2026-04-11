@@ -33,15 +33,15 @@ class SipProfileSetting extends Model
 
     protected static function booted(): void
     {
-        $compilerHook = function () {
+        $compilerHook = function (SipProfileSetting $setting) {
             app(\App\Services\SipProfileCompiler::class)->compileAllToDisk();
             try {
                 $esl = app(\App\Services\EslConnectionManager::class);
                 $esl->bgapi('reloadxml');
 
-                $profile = $this->relationLoaded('profile')
-                    ? $this->getRelation('profile')
-                    : $this->profile()->first();
+                $profile = $setting->relationLoaded('profile')
+                    ? $setting->getRelation('profile')
+                    : $setting->profile()->first();
 
                 if ($profile?->name) {
                     $esl->bgapi('sofia profile '.$profile->name.' restart');

@@ -320,65 +320,7 @@ class FreeswitchXmlTest extends TestCase
         $this->assertStringContainsString('call_delivery_entrypoint XML test.example.com', $response->getContent());
     }
 
-    public function test_returns_xml_for_dialplan_section_request(): void
-    {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
-            'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
-            'is_active' => true,
-        ]);
 
-        $tenant->extensions()->create([
-            'extension' => '1001',
-            'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
-            'is_active' => true,
-        ]);
-
-        $response = $this->post('/freeswitch/xml-curl', [
-            'section' => 'dialplan',
-            'domain' => 'test.example.com',
-            'Caller-Destination-Number' => '1001',
-        ]);
-
-        $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
-        $this->assertStringContainsString('<section name="dialplan">', $response->getContent());
-        $this->assertStringContainsString('nizam_delivery_target_type=extension', $response->getContent());
-        $this->assertStringContainsString('call_delivery_entrypoint XML test.example.com', $response->getContent());
-    }
-
-    public function test_returns_xml_for_dialplan_section_request(): void
-    {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
-            'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
-            'is_active' => true,
-        ]);
-
-        $tenant->extensions()->create([
-            'extension' => '1001',
-            'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
-            'is_active' => true,
-        ]);
-
-        $response = $this->post('/freeswitch/xml-curl', [
-            'section' => 'dialplan',
-            'domain' => 'test.example.com',
-            'Caller-Destination-Number' => '1001',
-        ]);
-
-        $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
-        $this->assertStringContainsString('<section name="dialplan">', $response->getContent());
-        $this->assertStringContainsString('nizam_delivery_target_type=extension', $response->getContent());
-        $this->assertStringContainsString('call_delivery_entrypoint XML test.example.com', $response->getContent());
-    }
 
     public function test_returns_not_found_for_unknown_section(): void
     {
