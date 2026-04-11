@@ -28,6 +28,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Gateway Sync**: Corrected the configuration key used in `GatewayProvisioningServiceTest` and `GatewayCodecRenderingTest` to correctly redirect filesystem output during unit tests.
 - **Registration Visibility**: Switched active registration lookups to `sofia xmlstatus profile <profile> reg` so the SIP status APIs now expose the real extension user agent and preserve correct profile names like `internal` and `external`.
 - **FusionPBX Registration Parity**: Added a shared `SipRegistrationService` that centralizes FreeSWITCH registration parsing and applies FusionPBX-style normalization, including LAN IP derivation, `expsecs(...)` expiry parsing, and cleaner registration status output across the SIP status APIs.
+- **Self-Call Routing**: Internal self-extension calls now bypass the external delivery orchestrator and bridge directly with FusionPBX-style `user/<extension>@<domain>` routing, while non-self extension calls continue to use orchestrated delivery for push-notification wake-up scenarios.
+- **Directory Lookups**: XML-CURL directory responses now honor specific `user` and `id` lookups so SIP authentication and registration requests do not fetch the entire tenant directory unnecessarily.
+- **SIP Profile Includes**: Stopped emitting gateway include directives for the `internal` Sofia profile; only the `external` profile now owns gateway include trees, eliminating the `No files to include .../sip_profiles/internal/*.xml` warning.
+- **Local Dev NAT Compatibility**: Enabled `aggressive-nat-detection` on the seeded internal SIP profile for better softphone behavior in local Docker environments.
+- **SIP Profile Setting Hooks**: Fixed the `SipProfileSetting` model event hook to use the saved/deleted model instance correctly instead of referencing `$this` from static context.
 
 ---
 
