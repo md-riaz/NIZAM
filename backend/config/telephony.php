@@ -7,6 +7,9 @@ return [
         'esl_password' => env('FREESWITCH_ESL_PASSWORD', 'ClueCon'),
         'xml_curl_url' => env('FREESWITCH_XML_CURL_URL', '/freeswitch/xml-curl'),
         'log_path' => env('FREESWITCH_LOG_PATH', '/var/log/freeswitch/freeswitch.log'),
+        'sip_port' => env('FREESWITCH_SIP_PORT'),
+        'external_sip_port' => env('FREESWITCH_EXTERNAL_SIP_PORT'),
+        'wss_port' => env('FREESWITCH_WSS_PORT'),
     ],
 
     /*

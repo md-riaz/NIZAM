@@ -24,11 +24,26 @@ class WebRtcConfigService
         $wssBinding = (string) ($enabledSettings['wss-binding'] ?? '');
         $wsBinding = (string) ($enabledSettings['ws-binding'] ?? '');
         $sipPort = (string) ($enabledSettings['sip-port'] ?? '5060');
+
+        // Override ports if explicitly defined in telephony config (e.g., Docker port mapping)
+        $externalSipPort = config('telephony.freeswitch.sip_port');
+        if ($externalSipPort && $externalSipPort !== 5060) {
+            $sipPort = (string) $externalSipPort;
+        }
+
         $tlsEnabled = ($enabledSettings['tls'] ?? null) === 'true';
         $tlsSipPort = (string) ($enabledSettings['tls-sip-port'] ?? '');
         $webrtcEnabled = ($wssBinding !== '' && (($enabledSettings['dtls-srtp'] ?? null) === 'true'))
             || $wsBinding !== '';
+
         $wssPort = $this->extractPort($wssBinding) ?? ($webrtcConfig['wss_port'] ?? 7443);
+
+        // Override WSS port if explicitly defined in telephony config (e.g., Docker port mapping)
+        $externalWssPort = config('telephony.freeswitch.wss_port');
+        if ($externalWssPort && $externalWssPort !== 7443) {
+            $wssPort = $externalWssPort;
+        }
+
         $host = parse_url($appUrl, PHP_URL_HOST) ?: 'localhost';
 
         // Derive available SIP transports from profile settings

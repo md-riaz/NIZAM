@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **SIP Credentials UI**: Added "Domain / Realm" to the SIP Credentials display on the extension detail page and included it in the "Copy credentials" action.
 - **SIP Configuration**: Updated the extension SIP configuration endpoint to return the current application host for the SIP server instead of the tenant domain, improving compatibility with softphones registering from external networks.
+- **SIP Port Mapping**: Refactored `WebRtcConfigService` to prioritize SIP Profile database settings while allowing optional environment variable overrides (`FREESWITCH_SIP_PORT`, `FREESWITCH_WSS_PORT`) for Docker port-mapped environments.
 - **VPS Installer**: Defaulted to `auto-nat` for external IP detection, ensuring robustness against VPS IP changes.
 - **Seeding:** Updated `DatabaseSeeder` to use the `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` from `.env` consistently across all seeded admin records.
 
