@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\SipStatusController;
 use App\Models\SipProfile;
 use App\Models\User;
 use App\Services\EslConnectionManager;
+use App\Services\SipRegistrationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -41,7 +42,7 @@ Content-Type: api/response
       <network-port>48116</network-port>
       <sip-auth-user>1001</sip-auth-user>
       <sip-auth-realm>app.local</sip-auth-realm>
-      <status>Registered(UDP-NAT)</status>
+      <status>Registered(UDP-NAT) expsecs(298)</status>
       <ping-time>0.00</ping-time>
     </registration>
   </registrations>
@@ -60,13 +61,19 @@ XML;
 
         $response->assertOk()
             ->assertJsonPath('data.0.user', '1001@app.local')
+            ->assertJsonPath('data.0.reg_user', '1001')
+            ->assertJsonPath('data.0.realm', 'app.local')
             ->assertJsonPath('data.0.agent', 'MicroSIP/3.21.6')
+            ->assertJsonPath('data.0.expires', 298)
             ->assertJsonPath('data.0.sip_profile_name', 'internal');
     }
 
     public function test_parse_profiles_keeps_real_profile_names(): void
     {
-        $controller = new SipStatusController(Mockery::mock(EslConnectionManager::class));
+        $controller = new SipStatusController(
+            Mockery::mock(EslConnectionManager::class),
+            Mockery::mock(SipRegistrationService::class)
+        );
 
         $raw = <<<'TEXT'
                      Name      Type                                      Data State

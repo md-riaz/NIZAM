@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Gateway;
 use App\Services\EslConnectionManager;
+use App\Services\SipRegistrationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +16,8 @@ use Illuminate\Support\Facades\Gate;
 class SipStatusController extends Controller
 {
     public function __construct(
-        protected EslConnectionManager $esl
+        protected EslConnectionManager $esl,
+        protected SipRegistrationService $registrationService
     ) {}
 
     /**
@@ -100,80 +102,17 @@ class SipStatusController extends Controller
     {
         Gate::authorize('platform-admin');
 
-        $activeProfiles = \App\Models\SipProfile::where('is_active', true)->get();
-        $allRegistrations = [];
-
-        foreach ($activeProfiles as $profile) {
-            $registrations = $this->getRegistrationsForProfile($profile->name);
-            $allRegistrations = array_merge($allRegistrations, $registrations);
-        }
+        $registrations = $this->registrationService->getAllRegistrations();
+        $profilesScanned = \App\Models\SipProfile::where('is_active', true)->pluck('name');
 
         return response()->json([
-            'data' => $allRegistrations,
+            'data' => $registrations,
             'meta' => [
                 'source' => 'esl',
                 'live' => true,
-                'profiles_scanned' => $activeProfiles->pluck('name'),
+                'profiles_scanned' => $profilesScanned,
             ],
         ]);
-    }
-
-    /**
-     * Fetch registrations for a specific profile using XML status.
-     */
-    protected function getRegistrationsForProfile(string $profileName): array
-    {
-        $response = $this->esl->api("sofia xmlstatus profile {$profileName} reg");
-
-        if (!$response || str_contains($response, 'Invalid Profile!')) {
-            return [];
-        }
-
-        return $this->parseXmlRegistrations($response, $profileName);
-    }
-
-    /**
-     * Parse FreeSWITCH XML registrations into a normalized array.
-     */
-    protected function parseXmlRegistrations(string $xmlRaw, string $profileName): array
-    {
-        // Extract the XML part after ESL headers
-        $xmlStart = strpos($xmlRaw, '<profile');
-        if ($xmlStart === false) {
-            return [];
-        }
-
-        $xmlString = substr($xmlRaw, $xmlStart);
-
-        try {
-            $xml = new \SimpleXMLElement($xmlString);
-        } catch (\Exception $e) {
-            return [];
-        }
-
-        $registrations = [];
-
-        if (!isset($xml->registrations->registration)) {
-            return [];
-        }
-
-        foreach ($xml->registrations->registration as $reg) {
-            $registrations[] = [
-                'user' => (string) $reg->user,
-                'agent' => (string) $reg->agent,
-                'contact' => (string) $reg->contact,
-                'host' => (string) $reg->host,
-                'network_ip' => (string) $reg->{'network-ip'},
-                'network_port' => (string) $reg->{'network-port'},
-                'sip_auth_user' => (string) $reg->{'sip-auth-user'},
-                'sip_auth_realm' => (string) $reg->{'sip-auth-realm'},
-                'status' => (string) $reg->status,
-                'ping_time' => (string) $reg->{'ping-time'},
-                'sip_profile_name' => $profileName,
-            ];
-        }
-
-        return $registrations;
     }
 
     /**

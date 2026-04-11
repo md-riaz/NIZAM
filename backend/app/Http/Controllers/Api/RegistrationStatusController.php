@@ -7,6 +7,7 @@ use App\Models\Extension;
 use App\Models\Gateway;
 use App\Models\Tenant;
 use App\Services\EslConnectionManager;
+use App\Services\SipRegistrationService;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -15,7 +16,8 @@ use Illuminate\Http\JsonResponse;
 class RegistrationStatusController extends Controller
 {
     public function __construct(
-        protected EslConnectionManager $esl
+        protected EslConnectionManager $esl,
+        protected SipRegistrationService $registrationService
     ) {}
 
     /**
@@ -26,16 +28,7 @@ class RegistrationStatusController extends Controller
      */
     public function bulkExtensionStatus(Tenant $tenant): JsonResponse
     {
-        $activeProfiles = \App\Models\SipProfile::where('is_active', true)->get();
-        $allRegistrations = [];
-
-        foreach ($activeProfiles as $profile) {
-            $response = $this->esl->api("sofia xmlstatus profile {$profile->name} reg");
-            if ($response && !str_contains($response, 'Invalid Profile!')) {
-                $allRegistrations = array_merge($allRegistrations, $this->parseXmlRegistrations($response));
-            }
-        }
-
+        $allRegistrations = $this->registrationService->getAllRegistrations();
         $domain = $tenant->domain;
 
         $statusMap = [];
@@ -50,9 +43,8 @@ class RegistrationStatusController extends Controller
         }
 
         foreach ($allRegistrations as $reg) {
-            $regUserParts = explode('@', $reg['user'] ?? '');
-            $regUser = $regUserParts[0] ?? '';
-            $regHost = $regUserParts[1] ?? '';
+            $regUser = $reg['reg_user'] ?? '';
+            $regHost = $reg['sip_auth_realm'] ?? '';
 
             if ($regHost === $domain && isset($statusMap[$regUser])) {
                 $statusMap[$regUser]['registered'] = true;
@@ -66,42 +58,6 @@ class RegistrationStatusController extends Controller
             'data' => array_values($statusMap),
             'meta' => ['source' => 'esl', 'domain' => $domain],
         ]);
-    }
-
-    /**
-     * Parse FreeSWITCH XML registrations into a normalized array.
-     */
-    protected function parseXmlRegistrations(string $xmlRaw): array
-    {
-        $xmlStart = strpos($xmlRaw, '<profile');
-        if ($xmlStart === false) {
-            return [];
-        }
-
-        $xmlString = substr($xmlRaw, $xmlStart);
-
-        try {
-            $xml = new \SimpleXMLElement($xmlString);
-        } catch (\Exception $e) {
-            return [];
-        }
-
-        $registrations = [];
-
-        if (!isset($xml->registrations->registration)) {
-            return [];
-        }
-
-        foreach ($xml->registrations->registration as $reg) {
-            $registrations[] = [
-                'user' => (string) $reg->user,
-                'agent' => (string) $reg->agent,
-                'network_ip' => (string) $reg->{'network-ip'},
-                'network_port' => (string) $reg->{'network-port'},
-            ];
-        }
-
-        return $registrations;
     }
 
     /**

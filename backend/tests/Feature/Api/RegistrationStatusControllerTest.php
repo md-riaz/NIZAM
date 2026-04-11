@@ -4,9 +4,8 @@ namespace Tests\Feature\Api;
 
 use App\Models\Tenant;
 use App\Models\Extension;
-use App\Models\SipProfile;
 use App\Models\User;
-use App\Services\EslConnectionManager;
+use App\Services\SipRegistrationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -28,34 +27,22 @@ class RegistrationStatusControllerTest extends TestCase
             'extension' => '1001',
         ]);
 
-        SipProfile::create([
-            'name' => 'internal',
-            'description' => 'Internal',
-            'is_active' => true,
-        ]);
+        $registrations = [
+            [
+                'reg_user' => '1001',
+                'sip_auth_realm' => 'app.local',
+                'agent' => 'MicroSIP/3.21.6',
+                'network_ip' => '172.20.0.1',
+                'network_port' => '48116',
+            ]
+        ];
 
-        $xml = <<<'XML'
-Content-Type: api/response
-
-<profile>
-  <registrations>
-    <registration>
-      <user>1001@app.local</user>
-      <agent>MicroSIP/3.21.6</agent>
-      <network-ip>172.20.0.1</network-ip>
-      <network-port>48116</network-port>
-    </registration>
-  </registrations>
-</profile>
-XML;
-
-        $esl = Mockery::mock(EslConnectionManager::class);
-        $esl->shouldReceive('api')
+        $service = Mockery::mock(SipRegistrationService::class);
+        $service->shouldReceive('getAllRegistrations')
             ->once()
-            ->with('sofia xmlstatus profile internal reg')
-            ->andReturn($xml);
+            ->andReturn($registrations);
 
-        $this->app->instance(EslConnectionManager::class, $esl);
+        $this->app->instance(SipRegistrationService::class, $service);
 
         $response = $this->actingAs($admin, 'sanctum')->getJson("/api/v1/tenants/{$tenant->id}/extensions/status/all");
 

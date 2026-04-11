@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Test Isolation**: Isolated FreeSWITCH gateway provisioning during tests. Tests now write XML profiles to a temporary directory (`storage/framework/testing/gateways`) instead of the real configuration, preventing "orphan" registrations and "fail wait" loops in development.
 - **Gateway Sync**: Corrected the configuration key used in `GatewayProvisioningServiceTest` and `GatewayCodecRenderingTest` to correctly redirect filesystem output during unit tests.
 - **Registration Visibility**: Switched active registration lookups to `sofia xmlstatus profile <profile> reg` so the SIP status APIs now expose the real extension user agent and preserve correct profile names like `internal` and `external`.
+- **FusionPBX Registration Parity**: Added a shared `SipRegistrationService` that centralizes FreeSWITCH registration parsing and applies FusionPBX-style normalization, including LAN IP derivation, `expsecs(...)` expiry parsing, and cleaner registration status output across the SIP status APIs.
 
 ---
 
