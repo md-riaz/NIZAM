@@ -56,10 +56,10 @@ class DatabaseSeeder extends Seeder
         // 3. Tenant Admin User
         // ──────────────────────────────────────────────
         User::updateOrCreate(
-            ['email' => 'admin@nizam.local'],
+            ['email' => env('ADMIN_EMAIL', 'admin@nizam.io')],
             [
-                'name'      => 'Tenant Administrator',
-                'password'  => 'password',
+                'name'      => env('ADMIN_NAME', 'App Administrator'),
+                'password'  => env('ADMIN_PASSWORD', 'password'),
                 'tenant_id' => $tenant->id,
                 'role'      => 'admin',
             ]
