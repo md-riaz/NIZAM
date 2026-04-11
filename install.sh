@@ -36,6 +36,8 @@ readonly NIZAM_USER="www-data"
 readonly LOG_FILE="/var/log/nizam_install.log"
 readonly CREDS_FILE="/root/nizam_credentials.txt"
 readonly FS_CONF_DIR="/etc/freeswitch"        # valid for both pkg and src installs
+readonly RTP_START=16384
+readonly RTP_END=32768
 
 # ── Terminal colours ──────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -511,8 +513,8 @@ FREESWITCH_LOG_PATH=/var/log/freeswitch/freeswitch.log
 
 EXT_RTP_IP=${SERVER_IP}
 EXT_SIP_IP=${SERVER_IP}
-RTP_PORT_RANGE_START=16384
-RTP_PORT_RANGE_END=32768
+RTP_PORT_RANGE_START=${RTP_START}
+RTP_PORT_RANGE_END=${RTP_END}
 DTMF_TYPE=rfc2833
 SRTP_POLICY=optional
 
@@ -690,6 +692,16 @@ FSEOF
 </configuration>
 FSEOF
 
+    # switch.conf.xml — RTP range
+    cat > "${conf}/switch.conf.xml" << FSEOF
+<configuration name="switch.conf" description="Core Configuration">
+  <settings>
+    <param name="rtp-start-port" value="${RTP_START}"/>
+    <param name="rtp-end-port" value="${RTP_END}"/>
+  </settings>
+</configuration>
+FSEOF
+
     # Link sip_profiles to Laravels storage directory
     rm -rf "${FS_CONF_DIR}/sip_profiles"
     ln -sfn "${NIZAM_DIR}/storage/app/freeswitch/sip_profiles" "${FS_CONF_DIR}/sip_profiles"
@@ -794,7 +806,7 @@ configure_firewall() {
     ufw allow 5060/udp  comment 'SIP UDP'
     ufw allow 5080/tcp  comment 'SIP external TCP'
     ufw allow 5080/udp  comment 'SIP external UDP'
-    ufw allow 16384:32768/udp comment 'RTP media'
+    ufw allow ${RTP_START}:${RTP_END}/udp comment 'RTP media'
     ufw --force enable  > /dev/null
     log "Firewall enabled"
 }

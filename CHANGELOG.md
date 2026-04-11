@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [2026-04-11]
 
 ### Added
+- **Deployment Automation**: Automated FreeSWITCH NAT detection and RTP range configuration for both Docker and VPS environments.
+- **SIP Configuration**: Added `switch.conf.xml` template to allow dynamic RTP port range adjustment via environment variables.
+
+### Changed
 - **SIP Credentials UI**: Added "Domain / Realm" to the SIP Credentials display on the extension detail page and included it in the "Copy credentials" action.
 
 ### Changed

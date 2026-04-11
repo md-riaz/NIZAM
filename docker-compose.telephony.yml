@@ -54,11 +54,16 @@ services:
       - ./backend/storage/app/freeswitch/sip_profiles:/usr/local/freeswitch/conf/sip_profiles
       - ./backend/docker/freeswitch/conf/autoload_configs/xml_curl.conf.xml:/usr/local/freeswitch/conf/autoload_configs/xml_curl.conf.xml
       - ./backend/docker/freeswitch/conf/autoload_configs/sofia.conf.xml:/usr/local/freeswitch/conf/autoload_configs/sofia.conf.xml
+      - ./backend/docker/freeswitch/conf/autoload_configs/switch.conf.xml:/usr/local/freeswitch/conf/autoload_configs/switch.conf.xml
       - ./backend/docker/freeswitch/entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
     networks:
       - app_net
     environment:
       - FREESWITCH_XML_CURL_ENDPOINT_INTERNAL=${FREESWITCH_XML_CURL_ENDPOINT_INTERNAL:-http://nginx/freeswitch/xml-curl}
+      - EXT_RTP_IP=${EXT_RTP_IP:-auto-nat}
+      - EXT_SIP_IP=${EXT_SIP_IP:-auto-nat}
+      - RTP_PORT_RANGE_START=${RTP_PORT_RANGE_START:-16384}
+      - RTP_PORT_RANGE_END=${RTP_PORT_RANGE_END:-32768}
 
 volumes:
   freeswitch_data:
