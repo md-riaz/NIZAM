@@ -22,7 +22,7 @@ class GatewayProvisioningServiceTest extends TestCase
         $this->directory = storage_path('framework/testing/gateway-provisioning');
         File::deleteDirectory($this->directory);
         File::ensureDirectoryExists($this->directory);
-        config()->set('nizam.gateway_provisioning.external_directory', $this->directory);
+        config()->set('telephony.gateway_provisioning.external_directory', $this->directory);
     }
 
     public function test_remove_deletes_gateway_xml_file(): void
