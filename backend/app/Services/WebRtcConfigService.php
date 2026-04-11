@@ -60,15 +60,16 @@ class WebRtcConfigService
         return [
             'enabled' => $webrtcEnabled,
             'websocket_url' => $webrtcEnabled ? sprintf('wss://%s:%s', $host, $wssPort) : null,
-            'sip_server' => sprintf('%s:%s', $extension->tenant->domain, $sipPort),
+            'sip_server' => sprintf('%s:%s', $host, $sipPort),
             'sip_transport' => implode(' / ', $transports),
             'sip_tls_server' => ($tlsEnabled && $tlsSipPort !== '')
-                ? sprintf('%s:%s', $extension->tenant->domain, $tlsSipPort)
+                ? sprintf('%s:%s', $host, $tlsSipPort)
                 : null,
             'sip_uri' => sprintf('sip:%s@%s', $extension->extension, $extension->tenant->domain),
             'sip_username' => $extension->extension,
             'sip_password' => $extension->password,
             'sip_domain' => $extension->tenant->domain,
+            'sip_realm' => $extension->tenant->domain,
             'display_name' => trim(($extension->directory_first_name ?? '').' '.($extension->directory_last_name ?? '')),
             'ice_servers' => $iceServers,
             'codec_prefs' => explode(',', $enabledSettings['inbound-codec-prefs'] ?? ($webrtcConfig['codec_prefs'] ?? 'OPUS,PCMU,PCMA,G722')),

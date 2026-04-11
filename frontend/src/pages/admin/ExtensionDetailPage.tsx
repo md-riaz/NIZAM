@@ -132,6 +132,10 @@ export default function ExtensionDetailPage() {
                                         <p className="text-muted-foreground">SIP Server</p>
                                         <p className="mt-1 break-all font-mono">{sipConfig.sip_server}</p>
                                     </div>
+                                    <div>
+                                        <p className="text-muted-foreground">Domain / Realm</p>
+                                        <p className="mt-1 break-all font-mono">{sipConfig.sip_domain}</p>
+                                    </div>
                                     {sipConfig.sip_tls_server && (
                                         <div>
                                             <p className="text-muted-foreground">TLS Server</p>
@@ -164,7 +168,8 @@ export default function ExtensionDetailPage() {
                                             variant="outline"
                                             onClick={() => {
                                                 const lines = [
-                                                    `SIP Server: ${sipConfig.sip_server || sipConfig.sip_domain || ''}`,
+                                                    `SIP Server: ${sipConfig.sip_server || ''}`,
+                                                    `Domain / Realm: ${sipConfig.sip_domain || ''}`,
                                                     `Transport: ${sipConfig.sip_transport || 'UDP/TCP'}`,
                                                     `Username: ${sipConfig.sip_username || extension.extension}`,
                                                     `Password: ${sipConfig.sip_password || 'Hidden'}`,
