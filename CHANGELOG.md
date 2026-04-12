@@ -9,10 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [2026-04-11]
 
 ### Added
+- **Platform Capabilities Dashboard**: Added a dedicated superadmin page at `/admin/capabilities` that surfaces advanced PBX enhancements (FusionPBX parity, multi-registration, optimized directory) and their live status.
 - **Deployment Automation**: Automated FreeSWITCH NAT detection and RTP range configuration for both Docker and VPS environments.
 - **SIP Configuration**: Added `switch.conf.xml` template to allow dynamic RTP port range adjustment via environment variables.
 
 ### Changed
+- **Self-Call Parity**: Updated self-call behavior to match FusionPBX; calling your own extension now correctly answers and enters the voicemail management (check) menu instead of attempting a redundant local bridge.
 - **SIP Credentials UI**: Added "Domain / Realm" to the SIP Credentials display on the extension detail page and included it in the "Copy credentials" action.
 - **SIP Configuration**: Updated the extension SIP configuration endpoint to return the current application host for the SIP server instead of the tenant domain, improving compatibility with softphones registering from external networks.
 - **SIP Port Mapping**: Refactored `WebRtcConfigService` to prioritize SIP Profile database settings while allowing optional environment variable overrides (`FREESWITCH_SIP_PORT`, `FREESWITCH_WSS_PORT`) for Docker port-mapped environments.
