@@ -25,12 +25,17 @@ if (function_exists('app')) {
 $app->setBasePath(dirname(__DIR__, 2));
 
 if (! function_exists('sip_test_resolve_extension')) {
-    function sip_test_resolve_extension(string $extensionNumber): array
+    function sip_test_resolve_extension(string $extensionNumber, ?string $domain = null): array
     {
-        $extension = Extension::with('tenant')
+        $extensionQuery = Extension::with('tenant')
             ->where('extension', $extensionNumber)
-            ->where('is_active', true)
-            ->firstOrFail();
+            ->where('is_active', true);
+
+        if ($domain !== null) {
+            $extensionQuery->whereHas('tenant', fn ($query) => $query->where('domain', $domain));
+        }
+
+        $extension = $extensionQuery->firstOrFail();
 
         $internalPort = SipProfileSetting::query()
             ->whereHas('profile', fn ($query) => $query->where('name', 'internal'))
