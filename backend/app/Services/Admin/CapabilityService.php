@@ -42,7 +42,15 @@ class CapabilityService
 
     protected function checkMultiRegStatus(): string
     {
-        return SipProfileSetting::where('name', 'multiple-registrations')->where('value', 'contact')->exists()
-            ? 'active' : 'inactive';
+        return SipProfileSetting::query()
+            ->where('name', 'multiple-registrations')
+            ->where('value', 'contact')
+            ->where('is_enabled', true)
+            ->whereHas('profile', function ($query) {
+                $query->where('name', 'internal');
+            })
+            ->exists()
+                ? 'active'
+                : 'inactive';
     }
 }
