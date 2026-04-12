@@ -37,6 +37,7 @@ const AuthTokensPage = lazy(() => import('@/pages/admin/AuthTokensPage'));
 const SipProfilesPage = lazy(() => import('@/pages/admin/SipProfilesPage'));
 const SipProfileFormPage = lazy(() => import('@/pages/admin/SipProfileFormPage'));
 const BlockedDestinationsPage = lazy(() => import('@/pages/admin/BlockedDestinationsPage'));
+const CapabilitiesPage = lazy(() => import('@/pages/admin/CapabilitiesPage'));
 
 // ─── Phase 2 (Contact Center) ────────────────────────────────
 const TeamsPage = lazy(() => import('@/pages/admin/TeamsPage'));
@@ -164,6 +165,7 @@ const router = createBrowserRouter(
                 <Route path="cdrs" element={<CdrsPage />} />
 
                 {/* System */}
+                <Route path="capabilities" element={<CapabilitiesPage />} />
                 <Route path="logs" element={<AuditLogsPage />} />
                 <Route path="system-logs" element={<LogViewerPage />} />
                 <Route path="auth-tokens" element={<AuthTokensPage />} />

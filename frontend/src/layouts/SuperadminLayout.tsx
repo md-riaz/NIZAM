@@ -20,6 +20,7 @@ import {
     Shield,
     ShieldAlert,
     ShieldCheck,
+    Sparkles,
     Sun,
     Users,
     X,
@@ -107,6 +108,7 @@ const NAV_SECTIONS: NavSection[] = [
     {
         title: 'System',
         items: [
+            { label: 'Capabilities', icon: Sparkles, href: '/admin/capabilities', superadminOnly: true },
             { label: 'Audit Logs', icon: ScrollText, href: '/admin/logs', adminOnly: true, tenantRequired: true },
             { label: 'System Logs', icon: FileText, href: '/admin/system-logs', superadminOnly: true },
             { label: 'SIP Status', icon: Radio, href: '/admin/sip-status', superadminOnly: true },
