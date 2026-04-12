@@ -20,7 +20,7 @@ class SipProfileSeeder extends Seeder
                     ['name' => 'rfc2833-pt', 'value' => '101', 'is_enabled' => true],
                     ['name' => 'sip-port', 'value' => '5060', 'is_enabled' => true],
                     ['name' => 'dialplan', 'value' => 'XML', 'is_enabled' => true],
-                    ['name' => 'context', 'value' => 'public', 'is_enabled' => true],
+                    ['name' => 'context', 'value' => '${domain_name}', 'is_enabled' => true],
                     ['name' => 'dtmf-duration', 'value' => '2000', 'is_enabled' => true],
                     ['name' => 'inbound-codec-prefs', 'value' => 'PCMU,PCMA', 'is_enabled' => true],
                     ['name' => 'outbound-codec-prefs', 'value' => 'PCMU,PCMA', 'is_enabled' => true],

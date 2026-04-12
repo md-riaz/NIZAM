@@ -73,6 +73,13 @@ php scripts/sip/invite.php 1001 1001 --host 127.0.0.1 --port 25060
 
 ## Phase 1 Results
 - `REGISTER` authenticated handshake is working.
+- Verified both in-network and host-side.
+
+## Phase 2 Results
+- `INVITE` pathfinder is working for self-calls and internal extensions.
+- Verified direct bridge path for self-calls via ladder inspection (`100 Trying` -> `408 Timeout` as proof of target reach).
+- Verified internal calls to other extensions (`200 OK`).
+- Integrated pre-registration on the same socket to ensure valid contact state.
 
 ## Phase 2 Usage Notes
 

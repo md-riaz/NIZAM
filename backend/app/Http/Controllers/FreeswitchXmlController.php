@@ -36,8 +36,13 @@ class FreeswitchXmlController extends Controller
     public function handle(Request $request): Response
     {
         $section = $request->input('section', '');
-        // Support both 'domain' and 'domain_name' parameters
-        $domain = $request->input('domain_name', $request->input('domain', ''));
+
+        // mod_xml_curl uses various fields for domain/context depending on the section
+        // We prioritize explicit domain fields, then fall back to context if it looks like a domain.
+        $domain = $request->input('domain_name',
+                  $request->input('domain',
+                  $request->input('variable_domain_name',
+                  $request->input('Caller-Context', ''))));
 
         return match ($section) {
             'directory' => $this->handleDirectory($domain),

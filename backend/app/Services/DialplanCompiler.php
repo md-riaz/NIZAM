@@ -54,17 +54,13 @@ class DialplanCompiler
         $xml .= '      <params>'."\n";
         $xml .= '        <param name="dial-string" value="{^^:sip_invite_domain=${dialed_domain}:presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(internal/${dialed_user}@${dialed_domain})},${verto_contact(${dialed_user}@${dialed_domain})}"/>'."\n";
         $xml .= '      </params>'."\n";
-        $xml .= '      <groups>'."\n";
-        $xml .= '        <group name="default">'."\n";
-        $xml .= '          <users>'."\n";
+        $xml .= '      <users>'."\n";
 
         foreach ($extensions as $ext) {
             $xml .= $this->compileExtensionEntry($ext);
         }
 
-        $xml .= '          </users>'."\n";
-        $xml .= '        </group>'."\n";
-        $xml .= '      </groups>'."\n";
+        $xml .= '      </users>'."\n";
         $xml .= '    </domain>'."\n";
         $xml .= '  </section>'."\n";
         $xml .= '</document>';
@@ -81,6 +77,9 @@ class DialplanCompiler
         $xml .= '              <params>'."\n";
         $xml .= '                <param name="password" value="'.htmlspecialchars($extension->password, ENT_QUOTES | ENT_XML1).'"/>'."\n";
 
+        // FusionPBX parity: dial-string at the user level for more reliable lookup
+        $xml .= '                <param name="dial-string" value="{^^:sip_invite_domain=${dialed_domain}:presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(internal/${dialed_user}@${dialed_domain})},${verto_contact(${dialed_user}@${dialed_domain})}"/>'."\n";
+
         if ($extension->voicemail_enabled && $extension->voicemail_pin) {
             $xml .= '                <param name="vm-password" value="'.htmlspecialchars($extension->voicemail_pin, ENT_QUOTES | ENT_XML1).'"/>'."\n";
             $xml .= '                <param name="vm-enabled" value="true"/>'."\n";
@@ -89,11 +88,14 @@ class DialplanCompiler
         $xml .= '              </params>'."\n";
         $xml .= '              <variables>'."\n";
 
+        // FusionPBX parity: essential variables for routing and accounting
+        $xml .= '                <variable name="user_context" value="'.htmlspecialchars($extension->tenant?->domain ?? 'default', ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '                <variable name="accountcode" value="'.htmlspecialchars($extension->tenant?->slug ?? 'default', ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '                <variable name="effective_caller_id_name" value="'.htmlspecialchars($extension->effective_caller_id_name ?? '', ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '                <variable name="effective_caller_id_number" value="'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+
         $defaultCountryCode = (string) data_get($extension->tenant?->settings, 'default_country_code', '1');
-        
-        if ($extension->effective_caller_id_name) {
-            $xml .= '                <variable name="effective_caller_id_name" value="'.htmlspecialchars($extension->effective_caller_id_name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-        }
+
         if ($extension->effective_caller_id_number) {
             $normalizedEffective = ltrim(DidNormalizationService::toE164($extension->effective_caller_id_number, $defaultCountryCode), '+');
             $xml .= '                <variable name="effective_caller_id_number" value="'.htmlspecialchars($normalizedEffective, ENT_QUOTES | ENT_XML1).'"/>'."\n";
@@ -824,6 +826,8 @@ class DialplanCompiler
         $xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'."\n";
         $xml .= '<document type="freeswitch/xml">'."\n";
         $xml .= '  <section name="dialplan">'."\n";
+        // FusionPBX parity: The context name must match the domain requested
+        // to prevent falling through to the FreeSWITCH stock 'public' or 'default' contexts.
         $xml .= '    <context name="'.htmlspecialchars($domain, ENT_QUOTES | ENT_XML1).'">'."\n";
 
         return $xml;
