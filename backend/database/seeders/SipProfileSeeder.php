@@ -27,6 +27,8 @@ class SipProfileSeeder extends Seeder
                     ['name' => 'rtp-timer-name', 'value' => 'soft', 'is_enabled' => true],
                     ['name' => 'local-network-acl', 'value' => 'localnet.auto', 'is_enabled' => true],
                     ['name' => 'aggressive-nat-detection', 'value' => 'true', 'is_enabled' => true],
+                    ['name' => 'multiple-registrations', 'value' => 'contact', 'is_enabled' => true],
+                    ['name' => 'max-registrations-per-extension', 'value' => '5', 'is_enabled' => true],
                     ['name' => 'manage-presence', 'value' => 'true', 'is_enabled' => true],
                     ['name' => 'inbound-codec-negotiation', 'value' => 'generous', 'is_enabled' => true],
                     ['name' => 'nonce-ttl', 'value' => '60', 'is_enabled' => true],
