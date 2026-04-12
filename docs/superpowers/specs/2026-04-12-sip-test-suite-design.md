@@ -127,3 +127,20 @@ Proceed with:
 3. `scripts/sip/invite.php`
 4. shared helpers in `common.php`
 5. local-only usage first
+
+## Phase 1 Usage Notes
+
+### In-network verification
+```bash
+docker exec app php /var/www/html/scripts/sip/register.php 1001
+```
+
+### Host-side verification
+```bash
+cd backend && php scripts/sip/register.php 1001 --host
+```
+
+### Expected result
+- First response: `401 Unauthorized`
+- Second response: `200 OK`
+- Final line: `REGISTER verification passed`
