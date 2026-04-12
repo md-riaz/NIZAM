@@ -479,9 +479,11 @@ class DialplanCompiler
     protected function compileSelfCallDialplan(Tenant $tenant, Extension $extension): string
     {
         $xml = $this->dialplanHeader($tenant->domain);
-        $xml .= '        <extension name="self-call-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '        <extension name="self-call-voicemail-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
-        $xml .= '            <action application="bridge" data="user/'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'@'.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="answer"/>'."\n";
+        $xml .= '            <action application="sleep" data="1000"/>'."\n";
+        $xml .= '            <action application="voicemail" data="check default '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
         $xml .= '          </condition>'."\n";
         $xml .= '        </extension>'."\n";
         $xml .= $this->dialplanFooter();

@@ -181,8 +181,36 @@ class FreeswitchXmlTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
         $this->assertStringContainsString('<section name="dialplan">', $response->getContent());
-        $this->assertStringContainsString('application="bridge" data="user/1001@selfcall.example.com"', $response->getContent());
         $this->assertStringNotContainsString('call_delivery_entrypoint XML selfcall.example.com', $response->getContent());
+    }
+
+    public function test_dialplan_routes_self_call_to_voicemail_check(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Self Call Parity Tenant',
+            'domain' => 'parity.example.com',
+            'slug' => 'parity-tenant',
+            'is_active' => true,
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Self',
+            'directory_last_name' => 'Caller',
+            'is_active' => true,
+        ]);
+
+        $response = $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'parity.example.com',
+            'Caller-Destination-Number' => '1001',
+            'Caller-Caller-ID-Number' => '1001',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application="answer"', $response->getContent());
+        $this->assertStringContainsString('application="voicemail" data="check default parity.example.com 1001"', $response->getContent());
     }
 
     public function test_dialplan_keeps_orchestrator_for_non_self_extension_calls(): void
