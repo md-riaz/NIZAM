@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\AdminCapabilityController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\AuditLogController;
@@ -73,6 +74,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     // Admin observability dashboard
     Route::get('admin/dashboard', AdminDashboardController::class)->name('admin.dashboard');
+    Route::get('admin/capabilities', [AdminCapabilityController::class, 'index'])->name('admin.capabilities');
 
     // User management (admin-only)
     Route::apiResource('users', UserController::class);
