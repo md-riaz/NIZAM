@@ -2,6 +2,9 @@
 
 namespace Tests\Unit\Modules;
 
+use App\Modules\Media\MediaArchiveModule;
+use App\Modules\Messaging\MessagingModule;
+use App\Modules\Voicemail\VoicemailModule;
 use Modules\PbxAnalytics\PbxAnalyticsModule;
 use Modules\PbxAutomation\PbxAutomationModule;
 use Modules\PbxContactCenter\PbxContactCenterModule;
@@ -72,6 +75,35 @@ class ConcreteModulesTest extends TestCase
         $this->assertFileExists($module->routesFile());
     }
 
+    public function test_media_archive_module_manifest(): void
+    {
+        $module = new MediaArchiveModule;
+
+        $this->assertEquals('media-archive', $module->name());
+        $this->assertEquals('1.0.0', $module->version());
+        $this->assertContains('call.end', $module->subscribedEvents());
+        $this->assertContains('recordings.download', $module->permissions());
+    }
+
+    public function test_voicemail_module_manifest(): void
+    {
+        $module = new VoicemailModule;
+
+        $this->assertEquals('voicemail', $module->name());
+        $this->assertEquals('1.0.0', $module->version());
+        $this->assertContains('voicemail.received', $module->subscribedEvents());
+    }
+
+    public function test_messaging_module_manifest(): void
+    {
+        $module = new MessagingModule;
+
+        $this->assertEquals('messaging', $module->name());
+        $this->assertEquals('1.0.0', $module->version());
+        $this->assertContains('messaging.sms.send', $module->permissions());
+        $this->assertContains('messaging.sms.outbound.requested', $module->subscribedEvents());
+    }
+
     public function test_all_modules_have_unique_names(): void
     {
         $modules = [
@@ -80,6 +112,9 @@ class ConcreteModulesTest extends TestCase
             new PbxAutomationModule,
             new PbxAnalyticsModule,
             new PbxProvisioningModule,
+            new MediaArchiveModule,
+            new VoicemailModule,
+            new MessagingModule,
         ];
 
         $names = array_map(fn ($m) => $m->name(), $modules);

@@ -25,7 +25,6 @@ class QueueApiTest extends TestCase
         $this->tenant = Tenant::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
-            'slug' => 'test-corp',
             'max_extensions' => 50,
         ]);
 
@@ -251,7 +250,6 @@ class QueueApiTest extends TestCase
         $otherTenant = Tenant::create([
             'name' => 'Other Corp',
             'domain' => 'other.example.com',
-            'slug' => 'other-corp',
             'max_extensions' => 50,
         ]);
 

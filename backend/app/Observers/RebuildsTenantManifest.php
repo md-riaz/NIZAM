@@ -2,13 +2,18 @@
 
 namespace App\Observers;
 
+use App\Models\CallRoutingPolicy;
+use App\Models\Did;
 use App\Models\Holiday;
 use App\Models\HolidayCalendar;
+use App\Models\Ivr;
+use App\Models\RingGroup;
 use App\Models\Schedule;
 use App\Models\ScheduleBreak;
 use App\Models\ScheduleException;
 use App\Models\ScheduleRule;
 use App\Models\Tenant;
+use App\Models\TimeCondition;
 use App\Services\TenantManifestBuilder;
 
 trait RebuildsTenantManifest
@@ -30,6 +35,11 @@ trait RebuildsTenantManifest
             $model instanceof Tenant => $model,
             $model instanceof Schedule => $model->tenant,
             $model instanceof HolidayCalendar => $model->tenant,
+            $model instanceof Did => $model->tenant,
+            $model instanceof RingGroup => $model->tenant,
+            $model instanceof Ivr => $model->tenant,
+            $model instanceof TimeCondition => $model->tenant,
+            $model instanceof CallRoutingPolicy => $model->tenant,
             $model instanceof ScheduleRule,
             $model instanceof ScheduleBreak,
             $model instanceof ScheduleException => $model->schedule?->tenant,

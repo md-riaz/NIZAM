@@ -16,7 +16,6 @@ class RecordingEnrichmentTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
-            'slug' => 'test-corp',
             'max_extensions' => 50,
         ]);
 
@@ -47,7 +46,6 @@ class RecordingEnrichmentTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
-            'slug' => 'test-corp',
             'max_extensions' => 50,
         ]);
 
@@ -69,7 +67,6 @@ class RecordingEnrichmentTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
-            'slug' => 'test-corp',
             'max_extensions' => 50,
         ]);
 

@@ -9,6 +9,7 @@ RUN apk add --no-cache \
     oniguruma-dev \
     linux-headers \
     supervisor \
+    inotify-tools \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
@@ -28,10 +29,10 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     exif \
     gd
 
-# Install Redis extension
+# Install PECL extensions used by background workers
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
+    && pecl install redis inotify \
+    && docker-php-ext-enable redis inotify \
     && apk del .build-deps
 
 # Install Composer (pin exact image digest for reproducible builds)

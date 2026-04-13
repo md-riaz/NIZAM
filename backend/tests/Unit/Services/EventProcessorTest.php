@@ -2,13 +2,22 @@
 
 namespace Tests\Unit\Services;
 
+use App\Events\CallDetailRecordCreated;
 use App\Events\CallEvent;
+use App\Listeners\ArchiveCallRecording;
+use App\Models\CallDetailRecord;
 use App\Models\Extension;
+use App\Models\Recording;
 use App\Models\Tenant;
+use App\Modules\Media\MediaArchiveModule;
+use App\Modules\ModuleRegistry;
 use App\Services\EventProcessor;
+use App\Services\Storage\LocalFileSystemDriver;
 use App\Services\WebhookDispatcher;
+use Mockery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class EventProcessorTest extends TestCase
@@ -20,6 +29,11 @@ class EventProcessorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        config([
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+        ]);
+
         $dispatcher = $this->createMock(WebhookDispatcher::class);
         $this->processor = new EventProcessor($dispatcher);
     }
@@ -29,6 +43,7 @@ class EventProcessorTest extends TestCase
         $tenant = Tenant::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
+            'status' => Tenant::STATUS_ACTIVE,
         ]);
 
         $extension = Extension::factory()->create([
@@ -117,6 +132,43 @@ class EventProcessorTest extends TestCase
         });
     }
 
+    public function test_call_end_archive_listener_archives_recording_from_created_cdr(): void
+    {
+        Storage::fake('recordings');
+
+        $tenant = Tenant::factory()->create();
+        $sourcePath = storage_path('framework/testing/archive-listener/call-end-archive.wav');
+        @mkdir(dirname($sourcePath), 0777, true);
+        file_put_contents($sourcePath, 'listener-audio');
+
+        $cdr = CallDetailRecord::factory()->create([
+            'tenant_id' => $tenant->id,
+            'uuid' => 'call-end-archive',
+            'recording_path' => $sourcePath,
+            'direction' => 'inbound',
+            'caller_id_number' => '1001',
+            'destination_number' => '1002',
+            'duration' => 33,
+        ]);
+
+        $registry = new ModuleRegistry;
+        $module = new MediaArchiveModule(new LocalFileSystemDriver(Storage::disk('recordings')));
+        $registry->register($module);
+
+        $listener = new ArchiveCallRecording($registry);
+        $listener->handle(new CallDetailRecordCreated($cdr));
+
+        $this->assertDatabaseHas('recordings', [
+            'tenant_id' => $tenant->id,
+            'call_uuid' => 'call-end-archive',
+            'storage_driver' => 'local',
+        ]);
+
+        $recording = Recording::query()->where('call_uuid', 'call-end-archive')->firstOrFail();
+        Storage::disk('recordings')->assertExists($recording->file_path);
+        $this->assertFalse(is_file($sourcePath));
+    }
+
     public function test_dispatches_missed_call_webhook_on_no_answer(): void
     {
         [$tenant, $extension] = $this->createTenantWithExtension();
@@ -164,6 +216,61 @@ class EventProcessorTest extends TestCase
         $this->processor->process($event);
 
         Event::assertNotDispatched(CallEvent::class);
+    }
+
+    public function test_processes_voicemail_received_through_module_hook_and_webhook(): void
+    {
+        [$tenant, $extension] = $this->createTenantWithExtension();
+
+        $dispatcher = $this->createMock(WebhookDispatcher::class);
+        $dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with(
+                $tenant->id,
+                'voicemail.received',
+                $this->callback(function (array $payload): bool {
+                    return ($payload['event_type'] ?? null) === 'voicemail.received'
+                        && ($payload['metadata']['storage_disk'] ?? null) === 'local'
+                        && ($payload['metadata']['storage_driver'] ?? null) === 'local-first';
+                })
+            );
+
+        $registry = Mockery::mock(ModuleRegistry::class);
+        $registry->shouldReceive('dispatchEvent')
+            ->once()
+            ->with(
+                'voicemail.received',
+                Mockery::on(function (array $payload) use ($tenant): bool {
+                    return ($payload['tenant_id'] ?? null) === $tenant->id
+                        && ($payload['metadata']['user'] ?? null) === '1001';
+                })
+            );
+
+        $processor = new EventProcessor($dispatcher, null, null, null, null, null, null, $registry);
+
+        $processor->process([
+            'Event-Name' => 'CUSTOM',
+            'Event-Subclass' => 'vm::maintenance',
+            'VM-Action' => 'leave-message',
+            'VM-Domain' => 'test.example.com',
+            'VM-User' => '1001',
+            'VM-Caller-ID-Number' => '5551234567',
+            'VM-Caller-ID-Name' => 'Voicemail Caller',
+            'VM-Message-Len' => '37',
+        ]);
+
+        $this->assertDatabaseHas('call_events', [
+            'tenant_id' => $tenant->id,
+            'event_type' => 'voicemail.received',
+            'call_uuid' => '1001',
+        ]);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+
+        parent::tearDown();
     }
 
     public function test_handles_unknown_event_types_gracefully(): void

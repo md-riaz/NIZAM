@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Save } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -39,14 +40,47 @@ const tenantStatuses = ['trial', 'active', 'suspended', 'terminated'] as const;
 const tenantSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     domain: z.string().min(1, 'Domain is required'),
-    slug: z.string().min(1, 'Slug is required'),
-    status: z.enum(tenantStatuses),
+    status: z.string().min(1, 'Status is required'),
     max_extensions: z.coerce.number().min(0),
     max_concurrent_calls: z.coerce.number().min(0),
     max_dids: z.coerce.number().min(0),
     max_ring_groups: z.coerce.number().min(0),
     is_active: z.boolean(),
 });
+
+const normalizeTenantStatus = (status: string | null | undefined): string => {
+    if (!status) return 'active';
+
+    return tenantStatuses.includes(status as (typeof tenantStatuses)[number])
+        ? status
+        : 'active';
+};
+
+const serializeTenantPayload = (values: TenantFormValues) => ({
+    name: values.name,
+    domain: values.domain,
+    status: values.status,
+    max_extensions: values.max_extensions,
+    max_concurrent_calls: values.max_concurrent_calls,
+    max_dids: values.max_dids,
+    max_ring_groups: values.max_ring_groups,
+    is_active: values.is_active,
+});
+
+const getTenantStatusOptions = (currentStatus?: string | null): string[] => {
+    const options = [...tenantStatuses];
+
+    if (currentStatus && !options.includes(currentStatus as (typeof tenantStatuses)[number])) {
+        return [currentStatus, ...options];
+    }
+
+    return options;
+};
+
+const formatStatusLabel = (status: string) =>
+    status
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
 
@@ -61,7 +95,6 @@ export default function TenantFormPage() {
         defaultValues: {
             name: '',
             domain: '',
-            slug: '',
             status: 'active',
             max_extensions: 0,
             max_concurrent_calls: 0,
@@ -85,8 +118,7 @@ export default function TenantFormPage() {
             form.reset({
                 name: tenant.name ?? '',
                 domain: tenant.domain ?? '',
-                slug: tenant.slug ?? '',
-                status: tenant.status ?? 'active',
+                status: normalizeTenantStatus(tenant.status),
                 max_extensions: tenant.max_extensions ?? 0,
                 max_concurrent_calls: tenant.max_concurrent_calls ?? 0,
                 max_dids: tenant.max_dids ?? 0,
@@ -98,11 +130,13 @@ export default function TenantFormPage() {
 
     const mutation = useMutation({
         mutationFn: async (values: TenantFormValues) => {
+            const payload = serializeTenantPayload(values);
+
             if (isEdit) {
-                return api.put(`tenants/${id}`, values);
+                return api.put(`tenants/${id}`, payload);
             }
 
-            return api.post('tenants', values);
+            return api.post('tenants', payload);
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['tenants'] });
@@ -133,6 +167,41 @@ export default function TenantFormPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    {isEdit && tenant ? (
+                        <div className="mb-6 rounded-lg border border-border/70 bg-muted/30 p-4">
+                            <div className="flex items-start gap-3">
+                                <div className="rounded-md bg-background p-2 text-primary shadow-sm">
+                                    <CalendarDays className="size-4" />
+                                </div>
+                                <div className="space-y-3">
+                                    <div>
+                                        <p className="text-sm font-medium">Business phone defaults</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Default schedule and holiday calendar are provisioned by backend business-phone setup.
+                                        </p>
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                                Default schedule
+                                            </p>
+                                            <Badge variant="outline" className="font-mono text-xs">
+                                                {tenant.default_schedule_id ?? 'Not provisioned'}
+                                            </Badge>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                                Default holiday calendar
+                                            </p>
+                                            <Badge variant="outline" className="font-mono text-xs">
+                                                {tenant.default_holiday_calendar_id ?? 'Not provisioned'}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : null}
                     {isFetching ? (
                         <div className="flex h-32 items-center justify-center">
                             <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -177,20 +246,6 @@ export default function TenantFormPage() {
 
                                     <FormField
                                         control={form.control}
-                                        name="slug"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Slug</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="acme" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
                                         name="status"
                                         render={({ field }) => (
                                             <FormItem>
@@ -202,9 +257,9 @@ export default function TenantFormPage() {
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {tenantStatuses.map((status) => (
+                                                        {getTenantStatusOptions(tenant?.status).map((status) => (
                                                             <SelectItem key={status} value={status}>
-                                                                {status}
+                                                                {formatStatusLabel(status)}
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>

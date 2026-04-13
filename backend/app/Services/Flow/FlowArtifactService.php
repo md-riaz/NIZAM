@@ -6,13 +6,21 @@ use App\Models\FlowCompiledArtifact;
 use App\Models\FlowVersion;
 use App\Models\TenantDialplanManifest;
 use App\Services\Flow\Compile\FlowToIrCompiler;
+use App\Services\Routing\RoutingGraphCompiler;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class FlowArtifactService
 {
     public function __construct(
         protected FlowToIrCompiler $flowToIrCompiler,
+        protected RoutingGraphCompiler $routingGraphCompiler,
     ) {}
+
+    public function getRoutingGraphCompiler(): RoutingGraphCompiler
+    {
+        return $this->routingGraphCompiler;
+    }
 
     public function getFlowToIrCompiler(): FlowToIrCompiler
     {
@@ -36,6 +44,15 @@ class FlowArtifactService
             ];
         }
 
+        try {
+            $routingGraphArtifact = $this->routingGraphCompiler->store($flowVersion);
+        } catch (InvalidArgumentException $exception) {
+            return [
+                'success' => false,
+                'error' => $exception->getMessage(),
+            ];
+        }
+
         // Generate IR instructions
         $irInstructions = $this->flowToIrCompiler->compile($flowVersion);
 
@@ -46,7 +63,7 @@ class FlowArtifactService
         $artifact = FlowCompiledArtifact::updateOrCreate(
             [
                 'flow_version_id' => $flowVersion->id,
-                'artifact_type' => 'dialplan_xml',
+                'artifact_type' => FlowCompiledArtifact::ARTIFACT_TYPE_DIALPLAN_XML,
             ],
             [
                 'tenant_id' => $flowVersion->flow->tenant_id,
@@ -59,6 +76,8 @@ class FlowArtifactService
             'success' => true,
             'artifact_id' => $artifact->id,
             'checksum' => $artifact->checksum,
+            'routing_graph_artifact_id' => $routingGraphArtifact->id,
+            'routing_graph_checksum' => $routingGraphArtifact->checksum,
         ];
     }
 

@@ -29,10 +29,12 @@ const DidsPage = lazy(() => import('@/pages/admin/DidsPage'));
 const DidFormPage = lazy(() => import('@/pages/admin/DidFormPage'));
 const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
 const RingGroupFormPage = lazy(() => import('@/pages/admin/RingGroupFormPage'));
-const CdrsPage = lazy(() => import('@/pages/admin/CdrsPage'));
+const CallHistoryPage = lazy(() => import('@/pages/admin/CallHistoryPage'));
+const InteractionDetailPage = lazy(() => import('@/pages/admin/InteractionDetailPage'));
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
 const LogViewerPage = lazy(() => import('@/pages/admin/LogViewerPage'));
 const SipStatusPage = lazy(() => import('@/pages/admin/SipStatusPage'));
+const FreeSwitchModulesPage = lazy(() => import('@/pages/admin/FreeSwitchModulesPage'));
 const AuthTokensPage = lazy(() => import('@/pages/admin/AuthTokensPage'));
 const SipProfilesPage = lazy(() => import('@/pages/admin/SipProfilesPage'));
 const SipProfileFormPage = lazy(() => import('@/pages/admin/SipProfileFormPage'));
@@ -76,6 +78,20 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
 
     if (isLoading) return null;
     if (isAuthenticated) return <Navigate to="/admin" replace />;
+
+    return <>{children}</>;
+}
+
+function SuperadminOnlyRoute({ children }: { children: React.ReactNode }) {
+    const { user, isLoading } = useAuth();
+
+    if (isLoading) return null;
+
+    const isSuperadmin = user?.role === 'admin' && !user?.tenant_id;
+
+    if (!isSuperadmin) {
+        return <Navigate to="/admin" replace />;
+    }
 
     return <>{children}</>;
 }
@@ -161,15 +177,17 @@ const router = createBrowserRouter(
                 <Route path="gateways/create" element={<GatewayFormPage />} />
                 <Route path="gateways/:id/edit" element={<GatewayFormPage />} />
 
-                {/* Calls (tenant-scoped) */}
-                <Route path="cdrs" element={<CdrsPage />} />
+                {/* Call History (tenant-scoped) */}
+                <Route path="call-history" element={<CallHistoryPage />} />
+                <Route path="interactions/:id" element={<InteractionDetailPage />} />
 
                 {/* System */}
-                <Route path="capabilities" element={<CapabilitiesPage />} />
+                <Route path="capabilities" element={<SuperadminOnlyRoute><CapabilitiesPage /></SuperadminOnlyRoute>} />
                 <Route path="logs" element={<AuditLogsPage />} />
                 <Route path="system-logs" element={<LogViewerPage />} />
                 <Route path="auth-tokens" element={<AuthTokensPage />} />
                 <Route path="sip-status" element={<SipStatusPage />} />
+                <Route path="freeswitch/modules" element={<SuperadminOnlyRoute><FreeSwitchModulesPage /></SuperadminOnlyRoute>} />
                 <Route path="sip-profiles" element={<SipProfilesPage />} />
                 <Route path="sip-profiles/create" element={<SipProfileFormPage />} />
                 <Route path="sip-profiles/:id/edit" element={<SipProfileFormPage />} />

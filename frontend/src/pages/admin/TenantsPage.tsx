@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, Globe, Plus, Settings, SquarePen, Trash2, Users } from 'lucide-react';
+import { Building2, CalendarDays, Globe, Plus, Settings, SquarePen, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -137,6 +137,7 @@ export default function TenantsPage() {
                                 <TableRow>
                                     <TableHead>Name</TableHead>
                                     <TableHead>Domain</TableHead>
+                                    <TableHead>Tenant defaults</TableHead>
                                     <TableHead>Created</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
@@ -148,6 +149,24 @@ export default function TenantsPage() {
                                         <TableCell className="font-medium">{tenant.name}</TableCell>
                                         <TableCell className="font-mono text-sm text-muted-foreground">
                                             {tenant.domain}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="space-y-1 text-sm text-muted-foreground">
+                                                <div className="flex items-center gap-2">
+                                                    <CalendarDays className="size-4" />
+                                                    <span>Schedule:</span>
+                                                    <span className="font-mono text-xs text-foreground">
+                                                        {tenant.default_schedule_id ?? 'Not provisioned'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <CalendarDays className="size-4" />
+                                                    <span>Holiday calendar:</span>
+                                                    <span className="font-mono text-xs text-foreground">
+                                                        {tenant.default_holiday_calendar_id ?? 'Not provisioned'}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">
                                             {new Date(tenant.created_at).toLocaleDateString()}
@@ -200,7 +219,7 @@ export default function TenantsPage() {
                                 ))}
                                 {tenants.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                             No tenants provisioned yet.
                                         </TableCell>
                                     </TableRow>

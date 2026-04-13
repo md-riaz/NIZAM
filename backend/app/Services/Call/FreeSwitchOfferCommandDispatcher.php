@@ -65,6 +65,12 @@ class FreeSwitchOfferCommandDispatcher implements OfferCommandDispatcher
             $variables[] = 'origination_caller_channel_name='.$this->escapeValue((string) data_get($context, 'caller_leg_uuid'));
         }
 
+        if ((bool) data_get($context, 'auto_answer_enabled', false)) {
+            $variables[] = 'sip_auto_answer=true';
+            $variables[] = 'sip_h_Call-Info='.$this->escapeValue((string) data_get($context, 'auto_answer_call_info', 'answer-after=0'));
+            $variables[] = 'sip_h_Alert-Info='.$this->escapeValue((string) data_get($context, 'auto_answer_alert_info', 'intercom'));
+        }
+
         return sprintf(
             'originate {%s}%s &park()',
             implode(',', $variables),

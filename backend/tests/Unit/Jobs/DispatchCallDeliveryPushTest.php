@@ -93,6 +93,29 @@ class DispatchCallDeliveryPushTest extends TestCase
         $this->assertSame('fcm', data_get($log->response_payload, 'channel'));
     }
 
+    public function test_ios_binding_with_only_data_push_token_uses_fcm_driver(): void
+    {
+        [$binding, $session] = $this->makeTenantAndBinding('ios-fcm.test', '4007', EndpointBinding::PLATFORM_IOS, [
+            'push_token' => 'fcm-ios-token', 'voip_push_token' => null,
+        ]);
+        $log = $this->makeLog($session, $binding);
+
+        $fcm = $this->createMock(FcmPushDriver::class);
+        $fcm->expects($this->once())->method('send')
+            ->willReturn(PushDeliveryResult::sent('fcm', 'projects/p/messages/y'));
+        app()->instance(FcmPushDriver::class, $fcm);
+
+        $apns = $this->createMock(ApnsPushDriver::class);
+        $apns->expects($this->never())->method('send');
+        app()->instance(ApnsPushDriver::class, $apns);
+
+        (new DispatchCallDeliveryPush($log->id, $session->id, $binding->id, []))->handle(app(PushDriverManager::class));
+
+        $log->refresh();
+        $this->assertSame('sent', $log->status);
+        $this->assertSame('fcm', data_get($log->response_payload, 'channel'));
+    }
+
     public function test_driver_failure_marks_log_failed(): void
     {
         [$binding, $session] = $this->makeTenantAndBinding('fail.test', '4003', EndpointBinding::PLATFORM_IOS, [

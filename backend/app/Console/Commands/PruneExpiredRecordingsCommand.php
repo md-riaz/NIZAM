@@ -4,12 +4,19 @@ namespace App\Console\Commands;
 
 use App\Models\Recording;
 use App\Models\Tenant;
+use App\Services\Storage\StorageDriver;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PruneExpiredRecordingsCommand extends Command
 {
+    public function __construct(
+        protected ?StorageDriver $storageDriver = null,
+    ) {
+        parent::__construct();
+    }
+
     protected $signature = 'nizam:prune-recordings
                             {--dry-run : List expired recordings without deleting them}
                             {--tenant= : Restrict pruning to a specific tenant UUID}';
@@ -84,9 +91,12 @@ class PruneExpiredRecordingsCommand extends Command
             }
 
             try {
-                // Remove the file from the recordings disk (same disk used by RecordingController)
-                if ($recording->file_path && Storage::disk('recordings')->exists($recording->file_path)) {
-                    Storage::disk('recordings')->delete($recording->file_path);
+                if ($recording->file_path) {
+                    if ($recording->storage_driver === 'local') {
+                        $this->storageDriver()->delete($recording->file_path);
+                    } elseif (Storage::disk('recordings')->exists($recording->file_path)) {
+                        Storage::disk('recordings')->delete($recording->file_path);
+                    }
                 }
 
                 $recording->delete();
@@ -111,5 +121,12 @@ class PruneExpiredRecordingsCommand extends Command
         }
 
         return [$deleted, $failed];
+    }
+
+    protected function storageDriver(): StorageDriver
+    {
+        $this->storageDriver ??= app(StorageDriver::class);
+
+        return $this->storageDriver;
     }
 }

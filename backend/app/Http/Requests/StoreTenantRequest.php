@@ -18,7 +18,6 @@ class StoreTenantRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'domain' => 'required|string|unique:tenants',
-            'slug' => 'required|string|unique:tenants|alpha_dash',
             'max_extensions' => 'integer|min:0',
             'max_concurrent_calls' => 'integer|min:0',
             'max_dids' => 'integer|min:0',

@@ -29,7 +29,8 @@ That installer is the automated version of this doc.
 - FreeSWITCH XML-cURL integration
 - FreeSWITCH ESL integration
 - generated gateway XML provisioning directory
-- queue worker, scheduler, ESL listener supervision
+- queue worker, scheduler, ESL listener, and XML CDR watcher supervision
+- XML CDR file output directory with inotify-first watcher runtime support
 - basic production hardening
 
 ---
@@ -318,6 +319,12 @@ FREESWITCH_ESL_PASSWORD=change_me_now
 FREESWITCH_XML_CURL_URL=http://127.0.0.1/freeswitch/xml-curl
 FREESWITCH_XML_CURL_ENDPOINT_INTERNAL=http://127.0.0.1/freeswitch/xml-curl
 FREESWITCH_LOG_PATH=/var/log/freeswitch/freeswitch.log
+FREESWITCH_XML_CDR_ENABLED=true
+FREESWITCH_XML_CDR_DIRECTORY=/var/log/freeswitch/xml_cdr
+FREESWITCH_XML_CDR_LOG_DIR=/var/log/freeswitch/xml_cdr
+FREESWITCH_XML_CDR_WATCHER=inotify
+FREESWITCH_XML_CDR_POLL_INTERVAL=5
+FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=true
 
 # Gateway XML provisioning directory on bare metal
 FREESWITCH_GATEWAY_DIRECTORY=/etc/freeswitch/sip_profiles/external
@@ -486,7 +493,31 @@ Use this if:
 - filesystem and DB drifted
 - you want a safety cleanup pass after manual recovery work
 
-## 10.4 Restart FreeSWITCH
+## 10.4 XML CDR output directory
+
+Enable a single-tier file-based XML CDR pipeline by giving FreeSWITCH one writable XML CDR directory and having Laravel watch that same path.
+
+```bash
+sudo mkdir -p /var/log/freeswitch/xml_cdr/errors
+sudo chown -R freeswitch:freeswitch /var/log/freeswitch/xml_cdr
+```
+
+Create `/etc/freeswitch/autoload_configs/xml_cdr.conf.xml`:
+
+```xml
+<configuration name="xml_cdr.conf" description="XML CDR Logger">
+  <settings>
+    <param name="url" value="/var/log/freeswitch/xml_cdr"/>
+    <param name="log-dir" value="/var/log/freeswitch/xml_cdr"/>
+    <param name="err-log-dir" value="/var/log/freeswitch/xml_cdr/errors"/>
+    <param name="encode" value="true"/>
+  </settings>
+</configuration>
+```
+
+This keeps XML CDR ingestion separate from the live ESL/event pipeline and gives the watcher a stable directory to monitor with `inotify`.
+
+## 10.5 Restart FreeSWITCH
 
 ```bash
 sudo systemctl restart freeswitch
@@ -502,6 +533,7 @@ NIZAM needs these long-running processes:
 - queue worker
 - scheduler
 - ESL listener
+- XML CDR watcher
 
 Install Supervisor if not already installed:
 
@@ -571,7 +603,36 @@ stdout_logfile_backups=3
 EOF
 ```
 
-## 11.4 Load Supervisor config
+## 11.4 XML CDR watcher
+
+```bash
+sudo apt-get install -y inotify-tools php-pear php8.3-dev
+sudo pecl install inotify
+sudo sh -c 'echo extension=inotify.so > /etc/php/8.3/mods-available/inotify.ini'
+sudo phpenmod inotify
+sudo systemctl restart php8.3-fpm
+
+sudo tee /etc/supervisor/conf.d/nizam-xml-cdr.conf > /dev/null <<'EOF'
+[program:nizam-xml-cdr-watcher]
+command=/bin/bash -lc 'if php /var/www/nizam/artisan list --raw | grep -q "^cdr:ingest-xml$"; then exec php /var/www/nizam/artisan cdr:ingest-xml; else echo "cdr:ingest-xml command is not available yet"; exec tail -f /dev/null; fi'
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/nizam-xml-cdr.log
+stdout_logfile_maxbytes=10MB
+stdout_logfile_backups=3
+startsecs=5
+startretries=10
+EOF
+```
+
+Use one watcher process per XML CDR directory so the deployment stays single-tier and file-based.
+
+## 11.5 Load Supervisor config
 
 ```bash
 sudo supervisorctl reread
@@ -595,7 +656,7 @@ curl http://127.0.0.1/api/v1/health | python3 -m json.tool
 sudo fs_cli -p change_me_now -x "status"
 ```
 
-### Laravel queue/listener/scheduler
+### Laravel queue/listener/scheduler/XML CDR watcher
 
 ```bash
 sudo supervisorctl status

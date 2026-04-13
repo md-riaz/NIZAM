@@ -5,12 +5,22 @@ namespace Tests\Unit\Models;
 use App\Models\DeviceProfile;
 use App\Models\Extension;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class DeviceProfileTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+        ]);
+    }
 
     public function test_can_be_created_with_valid_attributes(): void
     {
@@ -56,7 +66,7 @@ class DeviceProfileTest extends TestCase
     public function test_has_correct_fillable_attributes(): void
     {
         $profile = new DeviceProfile;
-        $expected = ['tenant_id', 'name', 'vendor', 'mac_address', 'template', 'extension_id', 'is_active'];
+        $expected = ['tenant_id', 'user_id', 'name', 'vendor', 'mac_address', 'template', 'extension_id', 'is_active'];
 
         $this->assertEquals($expected, $profile->getFillable());
     }
@@ -66,5 +76,37 @@ class DeviceProfileTest extends TestCase
         $profile = DeviceProfile::factory()->create(['extension_id' => null]);
 
         $this->assertNull($profile->extension);
+    }
+
+    public function test_can_optionally_belong_to_a_user(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $profile = DeviceProfile::factory()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->assertTrue($profile->user->is($user));
+        $this->assertTrue($profile->resolvedUser()->is($user));
+    }
+
+    public function test_can_resolve_user_through_extension_mapping(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $extension = Extension::factory()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+        ]);
+        $profile = DeviceProfile::factory()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => null,
+            'extension_id' => $extension->id,
+        ]);
+
+        $this->assertNull($profile->user);
+        $this->assertTrue($profile->extension->is($extension));
+        $this->assertTrue($profile->resolvedUser()->is($user));
     }
 }

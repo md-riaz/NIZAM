@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Recording extends Model
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, HasUuids;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -31,6 +32,10 @@ class Recording extends Model
         'wait_time',
         'outcome',
         'abandon_reason',
+        'storage_driver',
+        'storage_reference',
+        'archived_at',
+        'archive_metadata',
         'sentiment',
         'keywords',
         'needs_review',
@@ -45,6 +50,8 @@ class Recording extends Model
             'file_size' => 'integer',
             'duration' => 'integer',
             'wait_time' => 'integer',
+            'archived_at' => 'datetime',
+            'archive_metadata' => 'array',
             'keywords' => 'array',
             'needs_review' => 'boolean',
             'review_reasons' => 'array',

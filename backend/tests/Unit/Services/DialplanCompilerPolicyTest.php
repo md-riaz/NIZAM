@@ -25,6 +25,7 @@ class DialplanCompilerPolicyTest extends TestCase
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
             app(\App\Services\Routing\BridgeCompiler::class),
+            app(\App\Services\Routing\RoutingGraphCompiler::class),
         );
     }
 

@@ -193,15 +193,20 @@ class CallOfferExecutor
      */
     protected function buildContext(CallSession $callSession, array $context, DeliveryPlanItem $item): array
     {
+        $sessionVariables = $callSession->variables ?? [];
+
         return [
             ...$context,
             'call_session_id' => $callSession->id,
             'call_uuid' => $callSession->call_uuid,
             'caller_leg_uuid' => data_get($context, 'caller_leg_uuid', $callSession->call_uuid),
-            'caller_id_name' => (string) data_get($context, 'caller_id_name', data_get($callSession->variables, 'caller_id_name', 'Inbound Call')),
-            'caller_id_number' => (string) data_get($context, 'caller_id_number', data_get($callSession->variables, 'caller_id_number', 'unknown')),
+            'caller_id_name' => (string) data_get($context, 'caller_id_name', data_get($sessionVariables, 'caller_id_name', 'Inbound Call')),
+            'caller_id_number' => (string) data_get($context, 'caller_id_number', data_get($sessionVariables, 'caller_id_number', 'unknown')),
             'tenant_domain' => data_get($callSession->tenant, 'domain'),
             'wave' => $item->wave,
+            'auto_answer_enabled' => (bool) data_get($sessionVariables, 'nizam_auto_answer_enabled', false),
+            'auto_answer_call_info' => data_get($sessionVariables, 'nizam_auto_answer_call_info'),
+            'auto_answer_alert_info' => data_get($sessionVariables, 'nizam_auto_answer_alert_info'),
         ];
     }
 

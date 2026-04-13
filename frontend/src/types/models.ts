@@ -8,6 +8,8 @@ export const TenantSchema = z.object({
     id: idSchema,
     name: z.string(),
     domain: z.string(),
+    default_schedule_id: idSchema.nullable().optional(),
+    default_holiday_calendar_id: idSchema.nullable().optional(),
     slug: z.string().nullable().optional(),
     settings: z.record(z.string(), z.unknown()).nullable().optional(),
     status: z.string().nullable().optional(),
@@ -106,7 +108,8 @@ export type Did = z.infer<typeof DidSchema>;
 export const CdrSchema = z.object({
     id: idSchema,
     tenant_id: idSchema,
-    call_uuid: z.string(),
+    uuid: z.string().nullable().optional(),
+    call_uuid: z.string().nullable().optional(),
     caller_id_name: z.string().nullable().optional(),
     caller_id_number: z.string().nullable().optional(),
     destination_number: z.string().nullable().optional(),
@@ -121,6 +124,102 @@ export const CdrSchema = z.object({
     updated_at: z.string(),
 });
 export type Cdr = z.infer<typeof CdrSchema>;
+
+// ─── Interaction Overview ────────────────────────────────────
+
+const interactionEndpointSchema = z.object({
+    id: idSchema.optional(),
+    type: z.string().nullable().optional(),
+    platform: z.string().nullable().optional(),
+}).passthrough();
+
+export const InteractionTimelineEventSchema = z.object({
+    type: z.string(),
+    occurred_at: z.string(),
+    details: z.object({
+        label: z.string().nullable().optional(),
+        source: z.string().nullable().optional(),
+        node_id: z.string().nullable().optional(),
+        node_type: z.string().nullable().optional(),
+    }).passthrough(),
+});
+export type InteractionTimelineEvent = z.infer<typeof InteractionTimelineEventSchema>;
+
+export const InteractionDeliveryAttemptSchema = z.object({
+    id: idSchema,
+    attempt_type: z.string(),
+    status: z.string(),
+    failure_reason: z.string().nullable().optional(),
+    started_at: z.string().nullable().optional(),
+    answered_at: z.string().nullable().optional(),
+    ended_at: z.string().nullable().optional(),
+    won_at: z.string().nullable().optional(),
+    endpoint: interactionEndpointSchema.nullable().optional(),
+}).passthrough();
+export type InteractionDeliveryAttempt = z.infer<typeof InteractionDeliveryAttemptSchema>;
+
+export const InteractionPushNotificationLogSchema = z.object({
+    id: idSchema,
+    push_type: z.string(),
+    status: z.string(),
+    sent_at: z.string().nullable().optional(),
+    endpoint: interactionEndpointSchema.nullable().optional(),
+    response_payload: z.record(z.string(), z.unknown()).nullable().optional(),
+}).passthrough();
+export type InteractionPushNotificationLog = z.infer<typeof InteractionPushNotificationLogSchema>;
+
+export const CallSessionSummarySchema = z.object({
+    id: idSchema,
+    tenant_id: idSchema,
+    call_uuid: z.string(),
+    state: z.string().nullable().optional(),
+    started_at: z.string().nullable().optional(),
+    ended_at: z.string().nullable().optional(),
+    winner: z.object({
+        attempt_id: idSchema.nullable().optional(),
+        leg_uuid: z.string().nullable().optional(),
+        committed_at: z.string().nullable().optional(),
+        attempt: InteractionDeliveryAttemptSchema.nullable().optional(),
+    }).nullable().optional(),
+    delivery_attempts: z.array(InteractionDeliveryAttemptSchema).default([]),
+    push_notification_logs: z.array(InteractionPushNotificationLogSchema).default([]),
+    created_at: z.string(),
+    updated_at: z.string(),
+});
+export type CallSessionSummary = z.infer<typeof CallSessionSummarySchema>;
+
+export const InteractionOverviewSchema = z.object({
+    id: idSchema,
+    call_uuid: z.string(),
+    state: z.string().nullable().optional(),
+    started_at: z.string().nullable().optional(),
+    ended_at: z.string().nullable().optional(),
+    summary: z.object({
+        status_label: z.string(),
+        outcome_label: z.string(),
+        delivery_attempt_count: z.number(),
+        push_notification_count: z.number(),
+        call_event_count: z.number(),
+        trace_event_count: z.number(),
+        timeline_event_count: z.number(),
+        has_errors: z.boolean(),
+        total_trace_duration_ms: z.number(),
+    }),
+    timeline: z.array(InteractionTimelineEventSchema),
+    delivery_attempts: z.array(InteractionDeliveryAttemptSchema),
+    push_notification_logs: z.array(InteractionPushNotificationLogSchema),
+    winning_attempt: z.object({
+        attempt_id: idSchema.nullable().optional(),
+        leg_uuid: z.string().nullable().optional(),
+        committed_at: z.string().nullable().optional(),
+        attempt: InteractionDeliveryAttemptSchema.nullable().optional(),
+    }).nullable().optional(),
+    trace_analysis: z.object({
+        errors: z.array(z.record(z.string(), z.unknown())),
+        node_metrics: z.array(z.record(z.string(), z.unknown())),
+    }),
+});
+export type InteractionOverview = z.infer<typeof InteractionOverviewSchema>;
 
 // ─── Audit Log ───────────────────────────────────────────────
 
@@ -160,3 +259,14 @@ export const UserSchema = z.object({
     updated_at: z.string(),
 });
 export type User = z.infer<typeof UserSchema>;
+
+// ─── FreeSWITCH Module Status ────────────────────────────────
+
+export const FreeSwitchModuleStatusSchema = z.object({
+    name: z.string(),
+    type: z.string(),
+    status: z.string(),
+    supports_start: z.boolean().optional(),
+    supports_stop: z.boolean().optional(),
+});
+export type FreeSwitchModuleStatus = z.infer<typeof FreeSwitchModuleStatusSchema>;

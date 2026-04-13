@@ -47,7 +47,6 @@ class SystemCheckpointAuditTest extends TestCase
         $this->tenantA = Tenant::create([
             'name' => 'Tenant Alpha',
             'domain' => 'alpha.example.com',
-            'slug' => 'tenant-alpha',
             'max_extensions' => 100,
             'status' => Tenant::STATUS_ACTIVE,
         ]);
@@ -55,7 +54,6 @@ class SystemCheckpointAuditTest extends TestCase
         $this->tenantB = Tenant::create([
             'name' => 'Tenant Beta',
             'domain' => 'beta.example.com',
-            'slug' => 'tenant-beta',
             'max_extensions' => 100,
             'status' => Tenant::STATUS_ACTIVE,
         ]);
@@ -398,7 +396,6 @@ class SystemCheckpointAuditTest extends TestCase
         $suspendedTenant = Tenant::create([
             'name' => 'Suspended Corp',
             'domain' => 'suspended.example.com',
-            'slug' => 'suspended-corp',
             'max_extensions' => 10,
             'status' => Tenant::STATUS_SUSPENDED,
             'is_active' => false,

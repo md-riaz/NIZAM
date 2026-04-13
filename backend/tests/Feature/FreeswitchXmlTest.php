@@ -6,6 +6,7 @@ use App\Models\CallSession;
 use App\Models\Did;
 use App\Models\SipProfile;
 use App\Models\Tenant;
+use App\Models\TenantDialplanManifest;
 use Database\Seeders\SipProfileSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -28,7 +29,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -56,7 +56,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Lookup Tenant',
             'domain' => 'lookup.example.com',
-            'slug' => 'lookup-tenant',
             'is_active' => true,
         ]);
 
@@ -93,7 +92,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'ID Lookup Tenant',
             'domain' => 'idlookup.example.com',
-            'slug' => 'idlookup-tenant',
             'is_active' => true,
         ]);
 
@@ -130,7 +128,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Missing Lookup Tenant',
             'domain' => 'missinglookup.example.com',
-            'slug' => 'missinglookup-tenant',
             'is_active' => true,
         ]);
 
@@ -159,7 +156,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Self Call Tenant',
             'domain' => 'selfcall.example.com',
-            'slug' => 'selfcall-tenant',
             'is_active' => true,
         ]);
 
@@ -189,7 +185,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Self Call Parity Tenant',
             'domain' => 'parity.example.com',
-            'slug' => 'parity-tenant',
             'is_active' => true,
         ]);
 
@@ -218,7 +213,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Internal Call Tenant',
             'domain' => 'internalcall.example.com',
-            'slug' => 'internalcall-tenant',
             'is_active' => true,
         ]);
 
@@ -249,6 +243,55 @@ class FreeswitchXmlTest extends TestCase
         $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
         $this->assertStringContainsString('nizam_delivery_target_type=extension', $response->getContent());
         $this->assertStringContainsString('call_delivery_entrypoint XML internalcall.example.com', $response->getContent());
+    }
+
+    public function test_dialplan_returns_directed_pickup_xml(): void
+    {
+        Tenant::create([
+            'name' => 'Pickup Tenant',
+            'domain' => 'pickup.example.com',
+            'is_active' => true,
+        ]);
+
+        $response = $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'pickup.example.com',
+            'Caller-Destination-Number' => '**1002',
+            'Caller-Caller-ID-Number' => '1001',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_intercept.lua $1"', $response->getContent());
+    }
+
+    public function test_dialplan_returns_parking_xml_for_auto_and_orbit_pickup(): void
+    {
+        Tenant::create([
+            'name' => 'Parking Tenant',
+            'domain' => 'parking.example.com',
+            'is_active' => true,
+        ]);
+
+        $autoResponse = $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'parking.example.com',
+            'Caller-Destination-Number' => '*5900',
+            'Caller-Caller-ID-Number' => '1001',
+        ]);
+
+        $autoResponse->assertStatus(200);
+        $this->assertStringContainsString('application="set" data="nizam_parking_lot=park"', $autoResponse->getContent());
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_valet_park.lua park *5900 5901 5999"', $autoResponse->getContent());
+
+        $orbitResponse = $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'parking.example.com',
+            'Caller-Destination-Number' => '5901',
+            'Caller-Caller-ID-Number' => '1001',
+        ]);
+
+        $orbitResponse->assertStatus(200);
+        $this->assertStringContainsString('application="valet_park" data="*5900@${context} $1"', $orbitResponse->getContent());
     }
 
     public function test_internal_profile_does_not_emit_gateway_include_directive(): void
@@ -295,7 +338,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Dial String Tenant',
             'domain' => 'dialstring.example.com',
-            'slug' => 'dialstring-tenant',
             'is_active' => true,
         ]);
 
@@ -323,7 +365,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -348,7 +389,130 @@ class FreeswitchXmlTest extends TestCase
         $this->assertStringContainsString('call_delivery_entrypoint XML test.example.com', $response->getContent());
     }
 
+    public function test_xml_curl_returns_convenience_service_route_dialplan(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Convenience XML Tenant',
+            'domain' => 'xml-convenience.example.com',
+            'is_active' => true,
+            'settings' => [
+                'business_phone' => [
+                    'operator' => ['extension' => '2000'],
+                    'voicemail' => ['main_extension' => '3000'],
+                ],
+            ],
+        ]);
 
+        $tenant->extensions()->create([
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Primary',
+            'directory_last_name' => 'User',
+            'is_active' => true,
+            'is_primary' => true,
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '2000',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Operator',
+            'directory_last_name' => 'User',
+            'is_active' => true,
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '3000',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Voicemail',
+            'directory_last_name' => 'User',
+            'is_active' => true,
+        ]);
+
+        $response = $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'xml-convenience.example.com',
+            'Caller-Destination-Number' => '*98',
+            'Caller-Caller-ID-Number' => '1001',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
+        $this->assertStringContainsString('extension name="voicemail-main"', $response->getContent());
+        $this->assertStringContainsString('voicemail" data="check default xml-convenience.example.com 3000"', $response->getContent());
+        $this->assertStringContainsString('destination_number" expression="^\*69$"', $response->getContent());
+        $this->assertStringContainsString('transfer" data="2000 XML xml-convenience.example.com"', $response->getContent());
+    }
+
+    public function test_xml_curl_returns_intercom_and_paging_convenience_dialplan(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Intercom XML Tenant',
+            'domain' => 'xml-intercom.example.com',
+            'is_active' => true,
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Primary',
+            'directory_last_name' => 'User',
+            'is_active' => true,
+            'is_primary' => true,
+        ]);
+
+        $response = $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'xml-intercom.example.com',
+            'Caller-Destination-Number' => '*81001',
+            'Caller-Caller-ID-Number' => '2000',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
+        $this->assertStringContainsString('extension name="intercom-prefix"', $response->getContent());
+        $this->assertStringContainsString('application="set" data="nizam_auto_answer_enabled=true"', $response->getContent());
+        $this->assertStringContainsString('application="export" data="sip_auto_answer=true"', $response->getContent());
+        $this->assertStringContainsString('application="export" data="sip_h_Call-Info=answer-after=0"', $response->getContent());
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML xml-intercom.example.com"', $response->getContent());
+        $this->assertStringContainsString('destination_number" expression="^\*80(\d{2,7})$"', $response->getContent());
+    }
+
+    public function test_manifest_builder_persists_convenience_routes_in_active_manifest(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Manifest Convenience Tenant',
+            'domain' => 'manifest-convenience.example.com',
+            'is_active' => true,
+            'settings' => [
+                'business_phone' => [
+                    'operator' => ['extension' => '6100'],
+                ],
+            ],
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '6100',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Front',
+            'directory_last_name' => 'Desk',
+            'is_active' => true,
+            'is_primary' => true,
+        ]);
+
+        app(\App\Services\TenantManifestBuilder::class)->buildAndActivate($tenant->fresh());
+
+        $manifest = TenantDialplanManifest::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
+
+        $this->assertNotNull($manifest);
+        $this->assertStringContainsString('extension name="voicemail-main"', $manifest->content);
+        $this->assertStringContainsString('destination_number" expression="^\*78$"', $manifest->content);
+        $this->assertStringContainsString('destination_number" expression="^\*79$"', $manifest->content);
+        $this->assertStringContainsString('transfer" data="6100 XML manifest-convenience.example.com"', $manifest->content);
+    }
 
     public function test_returns_not_found_for_unknown_section(): void
     {
@@ -401,7 +565,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant-endpoint',
             'is_active' => true,
         ]);
 
@@ -439,7 +602,6 @@ class FreeswitchXmlTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test2.example.com',
-            'slug' => 'test-tenant-sip',
             'is_active' => true,
         ]);
 

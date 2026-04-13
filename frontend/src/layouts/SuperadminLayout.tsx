@@ -16,6 +16,7 @@ import {
     Phone,
     PhoneCall,
     Radio,
+    Route,
     ScrollText,
     Shield,
     ShieldAlert,
@@ -94,7 +95,7 @@ const NAV_SECTIONS: NavSection[] = [
     {
         title: 'Calls',
         items: [
-            { label: 'CDRs', icon: PhoneCall, href: '/admin/cdrs', tenantRequired: true },
+            { label: 'Call History', icon: PhoneCall, href: '/admin/call-history', tenantRequired: true },
         ],
     },
     {
@@ -109,6 +110,7 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'System',
         items: [
             { label: 'Capabilities', icon: Sparkles, href: '/admin/capabilities', superadminOnly: true },
+            { label: 'FreeSWITCH Modules', icon: Radio, href: '/admin/freeswitch/modules', superadminOnly: true },
             { label: 'Audit Logs', icon: ScrollText, href: '/admin/logs', adminOnly: true, tenantRequired: true },
             { label: 'System Logs', icon: FileText, href: '/admin/system-logs', superadminOnly: true },
             { label: 'SIP Status', icon: Radio, href: '/admin/sip-status', superadminOnly: true },

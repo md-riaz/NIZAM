@@ -24,7 +24,6 @@ class TenantLifecycleTest extends TestCase
             ->postJson('/api/v1/tenants', [
                 'name' => 'Trial Tenant',
                 'domain' => 'trial.example.com',
-                'slug' => 'trial-tenant',
                 'status' => 'trial',
             ]);
 
@@ -41,7 +40,6 @@ class TenantLifecycleTest extends TestCase
             ->postJson('/api/v1/tenants', [
                 'name' => 'Default Status Tenant',
                 'domain' => 'default.example.com',
-                'slug' => 'default-tenant',
             ]);
 
         $response->assertStatus(201);
@@ -57,7 +55,6 @@ class TenantLifecycleTest extends TestCase
             ->putJson("/api/v1/tenants/{$tenant->id}", [
                 'name' => $tenant->name,
                 'domain' => $tenant->domain,
-                'slug' => $tenant->slug,
                 'status' => 'suspended',
             ]);
 
@@ -73,7 +70,6 @@ class TenantLifecycleTest extends TestCase
             ->postJson('/api/v1/tenants', [
                 'name' => 'Bad Status',
                 'domain' => 'bad.example.com',
-                'slug' => 'bad-tenant',
                 'status' => 'invalid_status',
             ]);
 

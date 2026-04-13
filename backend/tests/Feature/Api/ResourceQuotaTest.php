@@ -129,7 +129,6 @@ class ResourceQuotaTest extends TestCase
             ->postJson('/api/v1/tenants', [
                 'name' => 'Quota Tenant',
                 'domain' => 'quota.example.com',
-                'slug' => 'quota-tenant',
                 'max_extensions' => 50,
                 'max_concurrent_calls' => 20,
                 'max_dids' => 10,

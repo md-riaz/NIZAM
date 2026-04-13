@@ -35,7 +35,6 @@ class TenantApiTest extends TestCase
         Tenant::create([
             'name' => 'Tenant One',
             'domain' => 'one.example.com',
-            'slug' => 'tenant-one',
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -50,13 +49,11 @@ class TenantApiTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'My Tenant',
             'domain' => 'my.example.com',
-            'slug' => 'my-tenant',
         ]);
 
         Tenant::create([
             'name' => 'Other Tenant',
             'domain' => 'other.example.com',
-            'slug' => 'other-tenant',
         ]);
 
         $user = $this->tenantUser($tenant);
@@ -77,15 +74,29 @@ class TenantApiTest extends TestCase
             ->postJson('/api/v1/tenants', [
                 'name' => 'New Tenant',
                 'domain' => 'new.example.com',
-                'slug' => 'new-tenant',
                 'max_extensions' => 100,
                 'is_active' => true,
             ]);
 
         $response->assertStatus(201);
+        $tenantId = $response->json('data.id');
+
         $this->assertDatabaseHas('tenants', [
             'name' => 'New Tenant',
             'domain' => 'new.example.com',
+        ]);
+        $this->assertDatabaseHas('schedules', [
+            'tenant_id' => $tenantId,
+            'name' => 'Main Business Hours',
+        ]);
+        $this->assertDatabaseHas('flows', [
+            'tenant_id' => $tenantId,
+            'name' => 'Main Business Phone',
+        ]);
+        $this->assertDatabaseHas('dids', [
+            'tenant_id' => $tenantId,
+            'description' => 'Default Business Phone Entrypoint',
+            'destination_type' => 'flow',
         ]);
     }
 
@@ -94,7 +105,6 @@ class TenantApiTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Existing',
             'domain' => 'existing.example.com',
-            'slug' => 'existing',
         ]);
         $user = $this->tenantUser($tenant);
 
@@ -102,7 +112,6 @@ class TenantApiTest extends TestCase
             ->postJson('/api/v1/tenants', [
                 'name' => 'New Tenant',
                 'domain' => 'new.example.com',
-                'slug' => 'new-tenant',
             ]);
 
         $response->assertStatus(403);
@@ -115,7 +124,6 @@ class TenantApiTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Show Tenant',
             'domain' => 'show.example.com',
-            'slug' => 'show-tenant',
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -132,14 +140,12 @@ class TenantApiTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Old Name',
             'domain' => 'old.example.com',
-            'slug' => 'old-tenant',
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->putJson("/api/v1/tenants/{$tenant->id}", [
                 'name' => 'Updated Name',
                 'domain' => 'old.example.com',
-                'slug' => 'old-tenant',
             ]);
 
         $response->assertStatus(200);
@@ -153,7 +159,6 @@ class TenantApiTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Delete Me',
             'domain' => 'delete.example.com',
-            'slug' => 'delete-tenant',
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -171,6 +176,38 @@ class TenantApiTest extends TestCase
             ->postJson('/api/v1/tenants', []);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['name', 'domain', 'slug']);
+        $response->assertJsonValidationErrors(['name', 'domain']);
+    }
+
+    public function test_tenant_creation_provisions_default_business_phone_entrypoint(): void
+    {
+        $user = $this->adminUser();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/tenants', [
+                'name' => 'Provisioned Tenant',
+                'domain' => 'provisioned.example.com',
+            ]);
+
+        $response->assertStatus(201);
+
+        $tenant = Tenant::query()
+            ->with(['defaultSchedule', 'flows.activeVersion', 'dids'])
+            ->findOrFail($response->json('data.id'));
+
+        $this->assertNotNull($tenant->defaultSchedule);
+        $this->assertSame('Main Business Hours', $tenant->defaultSchedule->name);
+        $this->assertDatabaseCount('schedule_rules', 5);
+
+        $starterFlow = $tenant->flows->firstWhere('name', 'Main Business Phone');
+        $this->assertNotNull($starterFlow);
+        $this->assertNotNull($starterFlow->activeVersion);
+        $this->assertSame((string) $starterFlow->id, data_get($tenant->settings, 'business_phone.default_entrypoint.flow_id'));
+        $this->assertSame((string) $tenant->defaultSchedule->id, data_get($tenant->settings, 'business_phone.default_entrypoint.schedule_id'));
+
+        $starterDid = $tenant->dids->firstWhere('description', 'Default Business Phone Entrypoint');
+        $this->assertNotNull($starterDid);
+        $this->assertSame('flow', $starterDid->destination_type);
+        $this->assertSame((string) $starterFlow->id, (string) $starterDid->destination_id);
     }
 }

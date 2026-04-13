@@ -18,11 +18,13 @@ fi
 
 # Only substitute variables that are explicitly passed from the environment.
 # Add any new variables here when they are introduced in XML templates.
-SUBST_VARS='${FREESWITCH_XML_CURL_ENDPOINT_INTERNAL} ${EXT_RTP_IP} ${EXT_SIP_IP} ${RTP_PORT_RANGE_START} ${RTP_PORT_RANGE_END}'
+SUBST_VARS='${FREESWITCH_XML_CURL_ENDPOINT_INTERNAL} ${FREESWITCH_XML_CDR_LOG_DIR} ${EXT_RTP_IP} ${EXT_SIP_IP} ${RTP_PORT_RANGE_START} ${RTP_PORT_RANGE_END}'
 
-# Ensure gateway directories exist before FreeSWITCH starts to avoid include errors
+# Ensure gateway directories and XML CDR output directories exist before FreeSWITCH starts
+# to avoid include and write errors.
 mkdir -p /usr/local/freeswitch/conf/sip_profiles/external
 mkdir -p /usr/local/freeswitch/conf/sip_profiles/internal
+mkdir -p "${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}"
 
 find -L "$REAL_CONF_DIR" -name '*.xml' | while read -r f; do
     envsubst "$SUBST_VARS" < "$f" > "${f}.tmp" && cat "${f}.tmp" > "$f" && rm "${f}.tmp"

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class FlowVersion extends Model
 {
@@ -42,5 +43,11 @@ class FlowVersion extends Model
     public function edges(): HasMany
     {
         return $this->hasMany(FlowEdge::class);
+    }
+
+    public function routingGraphArtifact(): HasOne
+    {
+        return $this->hasOne(FlowCompiledArtifact::class)
+            ->where('artifact_type', FlowCompiledArtifact::ARTIFACT_TYPE_ROUTING_GRAPH);
     }
 }

@@ -28,7 +28,6 @@ class MetricsServiceTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
-            'slug' => 'test-corp',
             'max_extensions' => 50,
         ]);
 
@@ -284,7 +283,6 @@ class MetricsServiceTest extends TestCase
         $tenant2 = Tenant::create([
             'name' => 'Other Corp',
             'domain' => 'other.example.com',
-            'slug' => 'other-corp',
             'max_extensions' => 50,
         ]);
 

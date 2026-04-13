@@ -19,6 +19,8 @@ class DialplanCompilerIsolationTest extends TestCase
         $this->compiler = new DialplanCompiler(
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
+            app(\App\Services\Routing\BridgeCompiler::class),
+            app(\App\Services\Routing\RoutingGraphCompiler::class),
         );
     }
 
@@ -106,6 +108,8 @@ class DialplanCompilerIsolationTest extends TestCase
         $compiler = new DialplanCompiler(
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
+            app(\App\Services\Routing\BridgeCompiler::class),
+            app(\App\Services\Routing\RoutingGraphCompiler::class),
         );
         $method = new \ReflectionMethod($compiler, 'tenantRecordingPath');
 

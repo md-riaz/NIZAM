@@ -392,6 +392,25 @@ class ModuleRegistryTest extends TestCase
         $this->assertEquals('intercepted:1001', $results['late-enable']);
     }
 
+    public function test_disabled_registration_keeps_other_enabled_modules_active(): void
+    {
+        $registry = new ModuleRegistry;
+
+        $enabled = $this->createMockModuleWith('enabled-mod', '1.0.0', [
+            'permissions' => ['enabled.permission'],
+        ]);
+        $disabled = $this->createMockModuleWith('disabled-mod', '1.0.0', [
+            'permissions' => ['disabled.permission'],
+        ]);
+
+        $registry->register($enabled, enabled: true);
+        $registry->register($disabled, enabled: false);
+
+        $this->assertTrue($registry->isEnabled('enabled-mod'));
+        $this->assertFalse($registry->isEnabled('disabled-mod'));
+        $this->assertSame(['enabled.permission'], $registry->collectPermissions());
+    }
+
     private function createMockModule(string $name, string $version): NizamModule
     {
         return $this->createMockModuleWith($name, $version);

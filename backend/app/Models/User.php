@@ -6,6 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -25,6 +27,8 @@ class User extends Authenticatable
         'email',
         'password',
         'tenant_id',
+        'schedule_id',
+        'holiday_calendar_id',
         'role',
     ];
 
@@ -56,9 +60,44 @@ class User extends Authenticatable
         return $this->belongsTo(Tenant::class);
     }
 
+    public function schedule(): BelongsTo
+    {
+        return $this->belongsTo(Schedule::class);
+    }
+
+    public function holidayCalendar(): BelongsTo
+    {
+        return $this->belongsTo(HolidayCalendar::class);
+    }
+
+    public function effectiveSchedule(): ?Schedule
+    {
+        return $this->schedule ?: $this->tenant?->defaultSchedule;
+    }
+
+    public function effectiveHolidayCalendar(): ?HolidayCalendar
+    {
+        return $this->holidayCalendar ?: $this->effectiveSchedule()?->holidayCalendar ?: $this->tenant?->defaultHolidayCalendar;
+    }
+
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(Permission::class);
+    }
+
+    public function extensions(): HasMany
+    {
+        return $this->hasMany(Extension::class);
+    }
+
+    public function primaryExtension(): HasOne
+    {
+        return $this->hasOne(Extension::class)->where('is_primary', true);
+    }
+
+    public function deviceProfiles(): HasMany
+    {
+        return $this->hasMany(DeviceProfile::class);
     }
 
     public function isAdmin(): bool

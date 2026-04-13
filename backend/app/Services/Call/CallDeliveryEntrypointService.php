@@ -110,6 +110,9 @@ class CallDeliveryEntrypointService
             'caller_id_number' => data_get($context, 'caller_id_number'),
             'destination_number' => data_get($context, 'destination_number'),
             'domain' => data_get($context, 'domain'),
+            'nizam_auto_answer_enabled' => data_get($context, 'auto_answer_enabled'),
+            'nizam_auto_answer_call_info' => data_get($context, 'auto_answer_call_info'),
+            'nizam_auto_answer_alert_info' => data_get($context, 'auto_answer_alert_info'),
         ], static fn ($value) => $value !== null && $value !== '');
     }
 

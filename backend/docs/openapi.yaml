@@ -291,6 +291,36 @@ paths:
         '200':
           description: Dashboard data
 
+  /admin/freeswitch/modules:
+    get:
+      tags: [Admin]
+      summary: List live FreeSWITCH module status
+      description: |
+        Platform-admin only endpoint that queries FreeSWITCH live via ESL and returns normalized
+        module rows.
+
+        On success the response includes `meta.source = esl` and `meta.live = true`.
+        When FreeSWITCH cannot be reached, the endpoint returns HTTP 503 with an empty `data`
+        array and `meta.error` describing the failure.
+      operationId: listFreeSwitchModules
+      responses:
+        '200':
+          description: FreeSWITCH module status list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreeSwitchModulesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          description: FreeSWITCH is unreachable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreeSwitchModulesUnavailableResponse'
+
   /admin/sip-profiles:
     get:
       tags: [Admin]
@@ -2166,6 +2196,68 @@ paths:
         '200':
           description: Audit log details
 
+  /tenants/{tenantId}/supervisor-reports/call-summary:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Admin]
+      summary: Get supervisor call summary report
+      description: |
+        Returns aggregated tenant call totals for the requested inclusive date range.
+        Query parameters: `date_from` and `date_to` in YYYY-MM-DD format.
+      operationId: supervisorCallSummary
+      responses:
+        '200':
+          description: Supervisor call summary report
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /tenants/{tenantId}/supervisor-reports/missed-returned-calls:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Admin]
+      summary: Get supervisor missed and returned calls report
+      description: |
+        Returns inbound missed calls for the requested inclusive date range together with
+        any matched returned call data.
+
+        Query parameters:
+        - `date_from` and `date_to` in YYYY-MM-DD format
+        - optional `window_days` override for the returned-call lookup window
+      operationId: supervisorMissedReturnedCalls
+      responses:
+        '200':
+          description: Supervisor missed/returned calls report
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /tenants/{tenantId}/supervisor-reports/voicemails-needing-follow-up:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      tags: [Admin]
+      summary: Get supervisor voicemails needing follow-up report
+      description: |
+        Returns voicemail-received events for the requested inclusive date range, including
+        follow-up state, recording review flags, and matched returned call data.
+
+        Query parameters:
+        - `date_from` and `date_to` in YYYY-MM-DD format
+        - optional `window_days` override for the returned-call lookup window
+      operationId: supervisorVoicemailsNeedingFollowUp
+      responses:
+        '200':
+          description: Supervisor voicemail follow-up report
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2287,29 +2379,104 @@ components:
 
     TenantInput:
       type: object
-      required: [name]
+      required: [name, domain]
       properties:
         name: { type: string }
         domain: { type: string }
-        slug: { type: string }
         max_extensions: { type: integer }
         max_concurrent_calls: { type: integer }
         max_dids: { type: integer }
         max_ring_groups: { type: integer }
         is_active: { type: boolean }
+        status: { type: string }
         settings: { type: object }
 
     TenantProvisionRequest:
       type: object
-      required: [name]
+      required: [name, domain]
       properties:
         name: { type: string }
         domain: { type: string }
-        slug: { type: string }
         max_extensions: { type: integer }
         max_concurrent_calls: { type: integer }
         max_dids: { type: integer }
         max_ring_groups: { type: integer }
+        is_active: { type: boolean }
+        status: { type: string }
+        settings: { type: object }
+
+    Tenant:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        domain: { type: string }
+        default_schedule_id:
+          type: string
+          format: uuid
+          nullable: true
+        default_holiday_calendar_id:
+          type: string
+          format: uuid
+          nullable: true
+        settings: { type: object, nullable: true }
+        status: { type: string }
+        max_extensions: { type: integer, nullable: true }
+        max_concurrent_calls: { type: integer }
+        max_dids: { type: integer }
+        max_ring_groups: { type: integer }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time, nullable: true }
+        updated_at: { type: string, format: date-time, nullable: true }
+
+    FreeSwitchModule:
+      type: object
+      required: [name, type, status]
+      properties:
+        name: { type: string, example: mod_sofia }
+        type: { type: string, example: endpoint }
+        status: { type: string, example: running }
+
+    FreeSwitchModulesMeta:
+      type: object
+      required: [source, live]
+      properties:
+        source:
+          type: string
+          example: esl
+        live:
+          type: boolean
+          example: true
+        error:
+          type: string
+          nullable: true
+          example: Unable to connect to FreeSWITCH ESL.
+
+    FreeSwitchModulesResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FreeSwitchModule'
+        meta:
+          $ref: '#/components/schemas/FreeSwitchModulesMeta'
+
+    FreeSwitchModulesUnavailableResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          maxItems: 0
+          items:
+            $ref: '#/components/schemas/FreeSwitchModule'
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/FreeSwitchModulesMeta'
+            - type: object
+              required: [error]
 
     UserInput:
       type: object

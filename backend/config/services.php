@@ -41,4 +41,18 @@ return [
         'ws_jwt_ttl_minutes' => (int) env('NIZAM_WS_JWT_TTL_MINUTES', 5),
     ],
 
+    'transcription' => [
+        'mode' => env('TRANSCRIPTION_MODE', 'local-first'),
+        'provider' => env('TRANSCRIPTION_PROVIDER'),
+        'external_enabled' => (bool) env('TRANSCRIPTION_EXTERNAL_ENABLED', false),
+    ],
+
+    'messaging' => [
+        'store' => env('MESSAGING_SMS_STORE', 'database'),
+    ],
+
+    'supervisor_reports' => [
+        'returned_call_window_days' => (int) env('SUPERVISOR_REPORTS_RETURNED_CALL_WINDOW_DAYS', 7),
+    ],
+
 ];

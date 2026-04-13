@@ -24,6 +24,12 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
       - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
+      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
+      - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_WATCHER=${FREESWITCH_XML_CDR_WATCHER:-inotify}
+      - FREESWITCH_XML_CDR_POLL_INTERVAL=${FREESWITCH_XML_CDR_POLL_INTERVAL:-5}
+      - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=${FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS:-true}
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
       - CACHE_STORE=${CACHE_STORE:-database}
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
@@ -46,13 +52,16 @@ services:
       - "${FREESWITCH_EXTERNAL_SIP_PORT:-5080}:5080/udp"
       - "${FREESWITCH_EXTERNAL_SIP_PORT:-5080}:5080/tcp"
       - "${FREESWITCH_WSS_PORT:-7443}:7443/tcp"
+      - "127.0.0.1:${FREESWITCH_ESL_PORT:-8021}:8021"
       - "${FREESWITCH_RTP_PORT_RANGE:-16384-32768}:16384-32768/udp"
     volumes:
       - freeswitch_data:/var/lib/freeswitch
       - freeswitch_logs:/var/log/freeswitch
+      - freeswitch_xml_cdr:/var/log/freeswitch/xml_cdr
       - certs_data:/usr/local/freeswitch/certs
       - ./backend/storage/app/freeswitch/sip_profiles:/usr/local/freeswitch/conf/sip_profiles
       - ./backend/docker/freeswitch/conf/autoload_configs/xml_curl.conf.xml:/usr/local/freeswitch/conf/autoload_configs/xml_curl.conf.xml
+      - ./backend/docker/freeswitch/conf/autoload_configs/xml_cdr.conf.xml:/usr/local/freeswitch/conf/autoload_configs/xml_cdr.conf.xml
       - ./backend/docker/freeswitch/conf/autoload_configs/sofia.conf.xml:/usr/local/freeswitch/conf/autoload_configs/sofia.conf.xml
       - ./backend/docker/freeswitch/conf/autoload_configs/switch.conf.xml:/usr/local/freeswitch/conf/autoload_configs/switch.conf.xml
       - ./backend/docker/freeswitch/entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
@@ -60,6 +69,7 @@ services:
       - app_net
     environment:
       - FREESWITCH_XML_CURL_ENDPOINT_INTERNAL=${FREESWITCH_XML_CURL_ENDPOINT_INTERNAL:-http://nginx/freeswitch/xml-curl}
+      - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
       - EXT_RTP_IP=${EXT_RTP_IP:-auto-nat}
       - EXT_SIP_IP=${EXT_SIP_IP:-auto-nat}
       - RTP_PORT_RANGE_START=${RTP_PORT_RANGE_START:-16384}
@@ -70,6 +80,8 @@ volumes:
     name: freeswitch_data
   freeswitch_logs:
     name: freeswitch_logs
+  freeswitch_xml_cdr:
+    name: freeswitch_xml_cdr
   certs_data:
     name: certs_data
   vendor_data:

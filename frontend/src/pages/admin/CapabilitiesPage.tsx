@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Radio, Sparkles } from 'lucide-react';
+import { ArrowRight, Radio, Sparkles } from 'lucide-react';
 
 import CapabilityCard, { type Capability } from '@/components/admin/CapabilityCard';
 import { PageHeader } from '@/components/scaffolds/PageHeader';
@@ -10,7 +10,9 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
+import { Link } from 'react-router-dom';
 
 interface CapabilitiesResponse {
     data: Capability[];
@@ -57,6 +59,23 @@ export default function CapabilitiesPage() {
                         <span className="font-medium text-foreground">{activeCount}</span>
                         <span className="text-muted-foreground">active capabilities</span>
                     </div>
+                </CardHeader>
+            </Card>
+
+            <Card className="border-border/70">
+                <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-1">
+                        <CardTitle className="text-lg">FreeSWITCH runtime modules</CardTitle>
+                        <CardDescription className="max-w-2xl leading-6">
+                            Inspect platform-level module availability and runtime status from the dedicated FreeSWITCH modules page.
+                        </CardDescription>
+                    </div>
+                    <Button asChild variant="outline" className="w-full md:w-auto">
+                        <Link to="/admin/freeswitch/modules">
+                            Open modules page
+                            <ArrowRight className="size-4" />
+                        </Link>
+                    </Button>
                 </CardHeader>
             </Card>
 

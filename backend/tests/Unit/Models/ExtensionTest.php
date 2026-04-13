@@ -2,7 +2,9 @@
 
 namespace Tests\Unit\Models;
 
+use App\Models\DeviceProfile;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -10,12 +12,20 @@ class ExtensionTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+        ]);
+    }
+
     private function createTenant(): Tenant
     {
         return Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
         ]);
     }
 
@@ -145,5 +155,30 @@ class ExtensionTest extends TestCase
             ->where('id', $extension->id)
             ->value('voicemail_pin');
         $this->assertNotEquals('5678', $rawValue);
+    }
+
+    public function test_extension_optionally_belongs_to_a_user_and_can_resolve_primary_device_profile(): void
+    {
+        $tenant = $this->createTenant();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+        $extension = $tenant->extensions()->create([
+            'user_id' => $user->id,
+            'extension' => '1002',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Jane',
+            'directory_last_name' => 'Doe',
+            'is_primary' => true,
+        ]);
+
+        $deviceProfile = DeviceProfile::factory()->create([
+            'tenant_id' => $tenant->id,
+            'extension_id' => $extension->id,
+            'is_active' => true,
+        ]);
+
+        $this->assertTrue($extension->user->is($user));
+        $this->assertTrue($extension->primaryDeviceProfile->is($deviceProfile));
+        $this->assertTrue($extension->is_primary);
     }
 }

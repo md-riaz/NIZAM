@@ -33,7 +33,6 @@ class QueueStressTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Stress Corp',
             'domain' => 'stress.example.com',
-            'slug' => 'stress-corp',
             'max_extensions' => 500,
         ]);
 
@@ -302,7 +301,6 @@ class QueueStressTest extends TestCase
         $tenant2 = Tenant::create([
             'name' => 'Other Corp',
             'domain' => 'other.example.com',
-            'slug' => 'other-corp',
             'max_extensions' => 500,
         ]);
 

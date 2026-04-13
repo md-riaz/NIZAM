@@ -11,6 +11,8 @@ use App\Models\CallSession;
 use App\Models\EndpointBinding;
 use App\Models\Tenant;
 use App\Models\UsageRecord;
+use App\Modules\ModuleRegistry;
+use App\Modules\Voicemail\VoicemailEventService;
 use App\Services\Call\CallEventIngestionService;
 use App\Services\Call\CallOfferExecutor;
 use App\Services\Call\CallWinnerService;
@@ -31,6 +33,8 @@ class EventProcessor
         protected ?CallWinnerService $callWinnerService = null,
         protected ?ReachabilityCache $reachabilityCache = null,
         protected ?CallOfferExecutor $callOfferExecutor = null,
+        protected ?VoicemailEventService $voicemailEventService = null,
+        protected ?ModuleRegistry $moduleRegistry = null,
     ) {}
 
     /**
@@ -180,28 +184,22 @@ class EventProcessor
 
     protected function handleVoicemail(array $event): void
     {
-        $action = $event['VM-Action'] ?? '';
-        if ($action !== 'leave-message') {
+        $data = $this->voicemailEventService()->handleMaintenanceEvent($event);
+
+        if (! is_array($data)) {
             return;
         }
 
-        $tenantId = $this->resolveTenantId($event);
-        if (! $tenantId) {
+        $tenantId = (string) ($data['tenant_id'] ?? '');
+        if ($tenantId === '') {
             return;
         }
 
-        $vmData = [
-            'user' => $event['VM-User'] ?? '',
-            'domain' => $event['VM-Domain'] ?? '',
-            'caller_id_number' => $event['VM-Caller-ID-Number'] ?? '',
-            'caller_id_name' => $event['VM-Caller-ID-Name'] ?? '',
-            'message_len' => $event['VM-Message-Len'] ?? '0',
-        ];
+        $this->moduleRegistry()->dispatchEvent(CallEventLog::EVENT_VOICEMAIL_RECEIVED, $data);
+        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_VOICEMAIL_RECEIVED, $data);
+        $this->recordEvent($tenantId, CallEventLog::EVENT_VOICEMAIL_RECEIVED, $data);
 
-        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_VOICEMAIL_RECEIVED, $vmData);
-
-        $this->webhookDispatcher->dispatch($tenantId, 'voicemail.received', $data);
-        Log::debug('Voicemail received', $vmData);
+        Log::debug('Voicemail received', $data['metadata'] ?? []);
     }
 
     protected function handleRegistration(array $event, string $action): void
@@ -938,6 +936,16 @@ class EventProcessor
     protected function callOfferExecutor(): CallOfferExecutor
     {
         return $this->callOfferExecutor ??= app(CallOfferExecutor::class);
+    }
+
+    protected function voicemailEventService(): VoicemailEventService
+    {
+        return $this->voicemailEventService ??= app(VoicemailEventService::class);
+    }
+
+    protected function moduleRegistry(): ModuleRegistry
+    {
+        return $this->moduleRegistry ??= app(ModuleRegistry::class);
     }
 
     protected function recordCallMinutes(string $tenantId, int $billsec): void

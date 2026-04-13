@@ -20,6 +20,7 @@ class ExtensionFactory extends Factory
 
         return [
             'tenant_id' => Tenant::factory(),
+            'user_id' => null,
             'extension' => (string) fake()->numberBetween(1000, 9999),
             'password' => fake()->password(8, 20),
             'directory_first_name' => $firstName,
@@ -32,6 +33,7 @@ class ExtensionFactory extends Factory
             'voicemail_pin' => fake()->optional(0.6)->numerify(
                 str_repeat('#', fake()->numberBetween(4, 8))
             ),
+            'is_primary' => false,
             'is_active' => true,
         ];
     }

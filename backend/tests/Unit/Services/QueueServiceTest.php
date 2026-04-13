@@ -30,7 +30,6 @@ class QueueServiceTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
-            'slug' => 'test-corp',
             'max_extensions' => 50,
         ]);
 

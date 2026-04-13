@@ -107,6 +107,8 @@ CMD ["php-fpm"]
 
 ### Docker Compose (Production)
 
+For XML CDR ingestion, mount the same XML CDR directory into FreeSWITCH and exactly one watcher service. The watcher should prefer `inotify` and only fall back to polling when the extension is unavailable.
+
 ```yaml
 services:
   app:
@@ -154,6 +156,22 @@ services:
     deploy:
       replicas: 1
 
+  xml-cdr-watcher:
+    build:
+      context: .
+      target: production
+    command: php artisan cdr:ingest-xml
+    deploy:
+      replicas: 1
+    volumes:
+      - freeswitch_xml_cdr:/var/log/freeswitch/xml_cdr
+    environment:
+      - FREESWITCH_XML_CDR_ENABLED=true
+      - FREESWITCH_XML_CDR_DIRECTORY=/var/log/freeswitch/xml_cdr
+      - FREESWITCH_XML_CDR_WATCHER=inotify
+      - FREESWITCH_XML_CDR_POLL_INTERVAL=5
+      - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=true
+
   postgres:
     image: postgres:16-alpine
     volumes:
@@ -172,6 +190,7 @@ services:
 volumes:
   pgdata:
   redisdata:
+  freeswitch_xml_cdr:
 ```
 
 ## Horizontal Scaling
@@ -319,6 +338,8 @@ PUSHER_APP_CLUSTER=us2
 ### Single-Node (Current)
 
 The current architecture uses a single FreeSWITCH instance per deployment. This supports ~1000 concurrent calls on modest hardware.
+
+For XML CDR ingestion, keep the runtime single-tier as well: FreeSWITCH writes XML CDR files into one shared filesystem path, and one app-side watcher process consumes that directory using `inotify` first with the same file-based pipeline as the polling fallback. Do not split XML CDR discovery across multiple watcher instances unless you also add explicit filesystem coordination.
 
 ### Multi-Node (Future)
 

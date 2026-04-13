@@ -18,6 +18,7 @@ class ProvisioningServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
         $this->service = new ProvisioningService;
     }
 
@@ -37,7 +38,7 @@ class ProvisioningServiceTest extends TestCase
             'extension_id' => $extension->id,
             'vendor' => 'yealink',
             'mac_address' => '00:11:22:33:44:55',
-            'template' => 'user={{EXTENSION}} pass={{PASSWORD}} domain={{DOMAIN}} name={{DISPLAY_NAME}}',
+            'template' => 'user={{EXTENSION}} pass={{PASSWORD}} domain={{DOMAIN}} name={{DISPLAY_NAME}} strategy={{ENDPOINT_STRATEGY}} mode={{PROVISIONING_MODE}} transport={{SOFTPHONE_TRANSPORT}}',
         ]);
 
         $config = $this->service->renderConfig($profile);
@@ -46,6 +47,8 @@ class ProvisioningServiceTest extends TestCase
         $this->assertStringContainsString('pass=secret1234', $config);
         $this->assertStringContainsString('domain=test.example.com', $config);
         $this->assertStringContainsString('name=John Doe', $config);
+        $this->assertStringContainsString('strategy=softphone_first', $config);
+        $this->assertStringContainsString('mode=optional_hardware', $config);
     }
 
     public function test_returns_default_template_when_device_has_no_custom_template(): void
@@ -71,6 +74,27 @@ class ProvisioningServiceTest extends TestCase
 
         $this->assertStringContainsString('account.1.enable = 1', $config);
         $this->assertStringContainsString('1001', $config);
+        $this->assertStringContainsString('endpoint_strategy = softphone_first', $config);
+        $this->assertStringContainsString('provisioning_mode = optional_hardware', $config);
+    }
+
+    public function test_reports_softphone_first_endpoint_strategy(): void
+    {
+        config([
+            'app.url' => 'https://portal.example.test',
+            'telephony.freeswitch.sip_port' => 5060,
+            'telephony.freeswitch.external_sip_port' => 5061,
+            'telephony.freeswitch.wss_port' => 7443,
+        ]);
+
+        $strategy = $this->service->endpointStrategy('tenant-softphone.example.com');
+
+        $this->assertSame('softphone', $strategy['default_endpoint']);
+        $this->assertSame('optional', $strategy['hardware_provisioning']);
+        $this->assertTrue($strategy['softphone']['recommended']);
+        $this->assertFalse($strategy['hardware']['recommended']);
+        $this->assertSame('tenant-softphone.example.com:5060', $strategy['softphone']['sip_server']);
+        $this->assertSame('wss://tenant-softphone.example.com:7443', $strategy['softphone']['websocket_url']);
     }
 
     public function test_finds_device_by_mac_address_normalized(): void

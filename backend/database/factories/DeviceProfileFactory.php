@@ -31,6 +31,7 @@ class DeviceProfileFactory extends Factory
 
         return [
             'tenant_id' => Tenant::factory(),
+            'user_id' => null,
             'name' => ucfirst($vendor).' '.$model.' - '.$location,
             'vendor' => $vendor,
             'mac_address' => fake()->unique()->macAddress(),

@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\Models;
 
+use App\Models\DeviceProfile;
+use App\Models\Extension;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -10,6 +12,15 @@ use Tests\TestCase;
 class UserTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+        ]);
+    }
 
     public function test_can_be_created_with_factory(): void
     {
@@ -65,5 +76,24 @@ class UserTest extends TestCase
         ]);
 
         $this->assertNotEquals('plaintext-password', $user->getAttributes()['password']);
+    }
+
+    public function test_has_extensions_and_device_profiles_relationships(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $extension = Extension::factory()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'is_primary' => true,
+        ]);
+        $deviceProfile = DeviceProfile::factory()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->assertTrue($user->extensions->first()->is($extension));
+        $this->assertTrue($user->primaryExtension->is($extension));
+        $this->assertTrue($user->deviceProfiles->first()->is($deviceProfile));
     }
 }

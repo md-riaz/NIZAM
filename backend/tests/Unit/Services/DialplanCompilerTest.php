@@ -20,6 +20,7 @@ class DialplanCompilerTest extends TestCase
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
             app(\App\Services\Routing\BridgeCompiler::class),
+            app(\App\Services\Routing\RoutingGraphCompiler::class),
         );
     }
 
@@ -28,7 +29,6 @@ class DialplanCompilerTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 

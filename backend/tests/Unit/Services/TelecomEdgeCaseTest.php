@@ -17,7 +17,6 @@ class TelecomEdgeCaseTest extends TestCase
         return Tenant::create(array_merge([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
-            'slug' => 'test-corp',
             'max_extensions' => 50,
         ], $overrides));
     }

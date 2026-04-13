@@ -11,12 +11,20 @@ class TenantTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+        ]);
+    }
+
     public function test_can_be_created_with_valid_attributes(): void
     {
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'max_extensions' => 50,
             'is_active' => true,
         ]);
@@ -24,7 +32,6 @@ class TenantTest extends TestCase
         $this->assertDatabaseHas('tenants', [
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
         ]);
         $this->assertNotNull($tenant->id);
     }
@@ -36,7 +43,8 @@ class TenantTest extends TestCase
         $this->assertEquals([
             'name',
             'domain',
-            'slug',
+            'default_schedule_id',
+            'default_holiday_calendar_id',
             'settings',
             'codec_policy',
             'max_extensions',
@@ -55,7 +63,6 @@ class TenantTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
         ]);
 
         $tenant->extensions()->create([
@@ -74,7 +81,6 @@ class TenantTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
         ]);
 
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $tenant->dids());
@@ -85,7 +91,6 @@ class TenantTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
         ]);
 
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $tenant->ringGroups());
@@ -96,7 +101,6 @@ class TenantTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
         ]);
 
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $tenant->ivrs());
@@ -107,7 +111,6 @@ class TenantTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
         ]);
 
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $tenant->timeConditions());
@@ -118,7 +121,6 @@ class TenantTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
         ]);
 
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $tenant->cdrs());
@@ -129,7 +131,6 @@ class TenantTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'settings' => ['key' => 'value'],
         ]);
 
@@ -143,7 +144,6 @@ class TenantTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => 1,
         ]);
 

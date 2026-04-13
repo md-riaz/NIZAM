@@ -9,15 +9,19 @@ use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Flow;
+use App\Models\FlowCompiledArtifact;
 use App\Models\Ivr;
 use App\Models\Queue;
 use App\Models\RingGroup;
+use App\Models\Schedule;
 use App\Models\Tenant;
 use App\Models\TimeCondition;
 use App\Services\DidNormalizationService;
 use App\Services\Routing\BridgeCompiler;
 use App\Services\Routing\GatewayResolutionService;
 use App\Services\Routing\NumberRoutingService;
+use App\Models\EndpointBinding;
+use App\Services\Routing\RoutingGraphCompiler;
 
 class DialplanCompiler
 {
@@ -27,6 +31,7 @@ class DialplanCompiler
         protected NumberRoutingService $numberRoutingService,
         protected GatewayResolutionService $gatewayResolutionService,
         protected BridgeCompiler $bridgeCompiler,
+        protected RoutingGraphCompiler $routingGraphCompiler,
     ) {}
     /**
      * Compile the SIP directory XML for a given domain.
@@ -90,7 +95,7 @@ class DialplanCompiler
 
         // FusionPBX parity: essential variables for routing and accounting
         $xml .= '                <variable name="user_context" value="'.htmlspecialchars($extension->tenant?->domain ?? 'default', ENT_QUOTES | ENT_XML1).'"/>'."\n";
-        $xml .= '                <variable name="accountcode" value="'.htmlspecialchars($extension->tenant?->slug ?? 'default', ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '                <variable name="accountcode" value="'.htmlspecialchars($extension->tenant?->domain ?? 'default', ENT_QUOTES | ENT_XML1).'"/>'."\n";
         $xml .= '                <variable name="effective_caller_id_name" value="'.htmlspecialchars($extension->effective_caller_id_name ?? '', ENT_QUOTES | ENT_XML1).'"/>'."\n";
         $xml .= '                <variable name="effective_caller_id_number" value="'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
 
@@ -193,8 +198,48 @@ class DialplanCompiler
             return $this->compileDeliveryEntrypointDialplan($tenant);
         }
 
+        if (str_starts_with($destinationNumber, 'flow_')) {
+            $flow = $tenant->flows()
+                ->whereKey(substr($destinationNumber, 5))
+                ->first();
+
+            if ($flow) {
+                $entrypoint = $this->resolveFlowEntrypoint($tenant, $flow);
+
+                if ($entrypoint) {
+                    return $this->compileDirectFlowEntrypointDialplan($tenant, $entrypoint);
+                }
+            }
+        }
+
+        if ($this->matchesConvenienceServiceCode($tenant, $destinationNumber)) {
+            return $this->compileConvenienceDialplan($tenant);
+        }
+
         if ($did) {
+            $entrypoint = $this->resolveInboundEntrypoint($tenant, $did);
+
+            if ($entrypoint) {
+                if (($entrypoint['route_type'] ?? null) === 'flow') {
+                    return $this->compileDirectFlowEntrypointDialplan($tenant, $entrypoint);
+                }
+
+                return $this->compileDidRoutingWithResolvedEntrypoint($tenant, $did, $entrypoint);
+            }
+
             return $this->compileDidRouting($tenant, $did);
+        }
+
+        if (str_starts_with($destinationNumber, 'did_preset_')) {
+            $did = $tenant->dids()->whereKey(substr($destinationNumber, 11))->where('is_active', true)->first();
+
+            if ($did) {
+                $entrypoint = $this->resolveInboundEntrypoint($tenant, $did);
+
+                if ($entrypoint && ($entrypoint['route_type'] ?? null) === 'preset') {
+                    return $this->compileResolvedEntrypointDialplan($tenant, $did, $entrypoint);
+                }
+            }
         }
 
         // Check if it's an internal extension call
@@ -373,7 +418,7 @@ class DialplanCompiler
             case 'extension':
                 $ext = $tenant->extensions()->find($did->destination_id);
                 if ($ext) {
-                    $xml .= $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $ext->id);
+                    $xml .= $this->compileExtensionDestinationAction($tenant, $ext);
                 }
                 break;
             case 'agent':
@@ -448,6 +493,211 @@ class DialplanCompiler
         return $xml;
     }
 
+    /**
+     * @return array{entrypoint:string, route_type:string, route_id:string, route_name:string|null, metadata:array<string, mixed>}|null
+     */
+    protected function resolveInboundEntrypoint(Tenant $tenant, Did $did): ?array
+    {
+        if ($did->destination_type === 'flow') {
+            $flow = $tenant->flows()->with(['activeVersion.routingGraphArtifact'])->find($did->destination_id);
+
+            if (! $flow || ! $flow->activeVersion) {
+                return null;
+            }
+
+            $artifact = $flow->activeVersion->routingGraphArtifact;
+
+            if (! $artifact) {
+                $artifact = $this->routingGraphCompiler->store($flow->activeVersion);
+            }
+
+            $graph = $artifact->decodedContent() ?? [];
+            $entryExtension = (string) data_get($graph, 'entrypoint.extension', '');
+
+            if ($entryExtension === '') {
+                return null;
+            }
+
+            return [
+                'entrypoint' => $entryExtension,
+                'route_type' => 'flow',
+                'route_id' => (string) $flow->id,
+                'route_name' => $flow->name,
+                'metadata' => [
+                    'artifact_id' => $artifact->id,
+                    'artifact_checksum' => $artifact->checksum,
+                    'flow_version_id' => $flow->activeVersion->id,
+                    'entry_node_id' => data_get($graph, 'entrypoint.node_id'),
+                ],
+            ];
+        }
+
+        $presetMap = [
+            'extension' => fn () => $tenant->extensions()->find($did->destination_id),
+            'agent' => fn () => $tenant->agents()->find($did->destination_id),
+            'ivr' => fn () => $tenant->ivrs()->find($did->destination_id),
+            'ring_group' => fn () => $tenant->ringGroups()->find($did->destination_id),
+            'queue' => fn () => $tenant->queues()->find($did->destination_id),
+            'voicemail' => fn () => $tenant->extensions()->find($did->destination_id),
+            'time_condition' => fn () => $tenant->timeConditions()->find($did->destination_id),
+            'call_routing_policy' => fn () => $tenant->callRoutingPolicies()->find($did->destination_id),
+            'bridge' => fn () => $tenant->bridges()->where('is_active', true)->find($did->destination_id),
+        ];
+
+        $resolver = $presetMap[$did->destination_type] ?? null;
+
+        if (! $resolver) {
+            return null;
+        }
+
+        $target = $resolver();
+
+        if (! $target) {
+            return null;
+        }
+
+        return [
+            'entrypoint' => $this->didPresetEntrypointName($did),
+            'route_type' => 'preset',
+            'route_id' => (string) $did->id,
+            'route_name' => method_exists($target, 'getAttribute') ? ($target->getAttribute('name') ?? $target->getAttribute('extension')) : null,
+            'metadata' => [
+                'destination_type' => $did->destination_type,
+                'destination_id' => (string) $did->destination_id,
+            ],
+        ];
+    }
+
+    protected function didPresetEntrypointName(Did $did): string
+    {
+        return 'did_preset_'.$did->id;
+    }
+
+    protected function compileResolvedEntrypointExtension(Tenant $tenant, Did $did, array $entrypoint): string
+    {
+        $entrypointName = (string) $entrypoint['entrypoint'];
+        $routeType = (string) $entrypoint['route_type'];
+        $routeId = (string) $entrypoint['route_id'];
+        $routeName = $entrypoint['route_name'] ?? null;
+
+        $xml = '        <extension name="did-entrypoint-'.htmlspecialchars($did->id, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($entrypointName, '/').'$">'."\n";
+        $xml .= '            <action application="set" data="nizam_entrypoint_route_type='.htmlspecialchars($routeType, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_entrypoint_route_id='.htmlspecialchars($routeId, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+
+        if (filled($routeName)) {
+            $xml .= '            <action application="set" data="nizam_entrypoint_route_name='.htmlspecialchars((string) $routeName, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        }
+
+        foreach (($entrypoint['metadata'] ?? []) as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $xml .= '            <action application="set" data="nizam_entrypoint_'.htmlspecialchars((string) $key, ENT_QUOTES | ENT_XML1).'='.htmlspecialchars((string) $value, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        }
+
+        if ($routeType === 'flow') {
+            $xml .= '            <action application="transfer" data="'.htmlspecialchars($entrypointName, ENT_QUOTES | ENT_XML1).' XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        } else {
+            $xml .= $this->compileDestinationAction($tenant, (string) data_get($entrypoint, 'metadata.destination_type', ''), (string) data_get($entrypoint, 'metadata.destination_id', ''));
+        }
+
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+
+        return $xml;
+    }
+
+    protected function compileDidRoutingWithResolvedEntrypoint(Tenant $tenant, Did $did, array $entrypoint): string
+    {
+        $xml = $this->dialplanHeader($tenant->domain);
+        $xml .= $this->compileDidExtension($tenant, $did);
+
+        if (($entrypoint['route_type'] ?? null) === 'preset') {
+            $xml .= $this->compileResolvedEntrypointExtension($tenant, $did, $entrypoint);
+        }
+
+        $xml .= $this->dialplanFooter();
+
+        return $xml;
+    }
+
+    protected function compileResolvedEntrypointDialplan(Tenant $tenant, Did $did, array $entrypoint): string
+    {
+        $xml = $this->dialplanHeader($tenant->domain);
+        $xml .= $this->compileResolvedEntrypointExtension($tenant, $did, $entrypoint);
+        $xml .= $this->dialplanFooter();
+
+        return $xml;
+    }
+
+    protected function compileDirectFlowEntrypointDialplan(Tenant $tenant, array $entrypoint): string
+    {
+        $xml = $this->dialplanHeader($tenant->domain);
+        $xml .= '        <extension name="flow-entrypoint-'.htmlspecialchars((string) $entrypoint['route_id'], ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote((string) $entrypoint['entrypoint'], '/').'">'."\n";
+        $xml .= '            <action application="set" data="nizam_entrypoint_route_type=flow"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_entrypoint_route_id='.htmlspecialchars((string) $entrypoint['route_id'], ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="transfer" data="'.htmlspecialchars((string) $entrypoint['entrypoint'], ENT_QUOTES | ENT_XML1).' XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+        $xml .= $this->dialplanFooter();
+
+        return $xml;
+    }
+
+    protected function compileFlowEntrypointTransfer(Tenant $tenant, Flow $flow): ?string
+    {
+        $entrypoint = $this->resolveFlowEntrypoint($tenant, $flow);
+
+        if (! $entrypoint) {
+            return null;
+        }
+
+        return '            <action application="set" data="nizam_entrypoint_route_type=flow"/>'."\n"
+            .'            <action application="set" data="nizam_entrypoint_route_id='.htmlspecialchars((string) $flow->id, ENT_QUOTES | ENT_XML1).'"/>'."\n"
+            .'            <action application="transfer" data="'.htmlspecialchars($entrypoint['entrypoint'], ENT_QUOTES | ENT_XML1).' XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+    }
+
+    /**
+     * @return array{entrypoint:string, route_type:string, route_id:string, route_name:string|null, metadata:array<string,mixed>}|null
+     */
+    protected function resolveFlowEntrypoint(Tenant $tenant, Flow $flow): ?array
+    {
+        $flow->loadMissing(['activeVersion.routingGraphArtifact']);
+
+        if (! $flow->activeVersion) {
+            return null;
+        }
+
+        $artifact = $flow->activeVersion->routingGraphArtifact;
+
+        if (! $artifact) {
+            $artifact = $this->routingGraphCompiler->store($flow->activeVersion);
+        }
+
+        $graph = $artifact->decodedContent() ?? [];
+        $entryExtension = (string) data_get($graph, 'entrypoint.extension', '');
+
+        if ($entryExtension === '') {
+            return null;
+        }
+
+        return [
+            'entrypoint' => $entryExtension,
+            'route_type' => 'flow',
+            'route_id' => (string) $flow->id,
+            'route_name' => $flow->name,
+            'metadata' => [
+                'artifact_id' => $artifact->id,
+                'artifact_checksum' => $artifact->checksum,
+                'flow_version_id' => $flow->activeVersion->id,
+                'entry_node_id' => data_get($graph, 'entrypoint.node_id'),
+            ],
+        ];
+    }
+
     protected function compileDeliveryEntrypointDialplan(Tenant $tenant): string
     {
         $xml = $this->dialplanHeader($tenant->domain);
@@ -463,17 +713,465 @@ class DialplanCompiler
         return $xml;
     }
 
+    public function compileConvenienceExtensions(Tenant $tenant): string
+    {
+        $xml = '';
+
+        foreach ($this->convenienceServiceCodeMap($tenant) as $route) {
+            $xml .= $this->compileConvenienceRouteExtension($tenant, $route);
+        }
+
+        return $xml;
+    }
+
+    protected function compileConvenienceDialplan(Tenant $tenant): string
+    {
+        $xml = $this->dialplanHeader($tenant->domain);
+        $xml .= $this->compileConvenienceExtensions($tenant);
+        $xml .= $this->dialplanFooter();
+
+        return $xml;
+    }
+
+    protected function matchesConvenienceServiceCode(Tenant $tenant, string $destinationNumber): bool
+    {
+        foreach ($this->convenienceServiceCodeMap($tenant) as $route) {
+            $code = (string) ($route['code'] ?? '');
+            $action = (string) ($route['action'] ?? '');
+
+            if ($code === '') {
+                continue;
+            }
+
+            if ($destinationNumber === $code) {
+                return true;
+            }
+
+            if (in_array($action, ['pickup_direct', 'intercom_prefix', 'paging_prefix'], true)
+                && str_starts_with($destinationNumber, $code)
+                && strlen($destinationNumber) > strlen($code)) {
+                return true;
+            }
+
+            if ($action === 'park_auto') {
+                $start = (int) config('telephony.bootstrap.parking.orbit_start', 5901);
+                $end = (int) config('telephony.bootstrap.parking.orbit_end', 5999);
+                if (preg_match('/^'.$this->parkingOrbitRegex($start, $end).'$/', $destinationNumber) === 1) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<int, array{name:string, code:string, action:string, target_extension:?string}>
+     */
+    protected function convenienceServiceCodeMap(Tenant $tenant): array
+    {
+        $codes = config('telephony.bootstrap.service_codes', []);
+        $operatorTarget = $this->resolveOperatorTargetExtension($tenant);
+        $voicemailTarget = $this->resolveVoicemailMainExtension($tenant);
+        $sendToVoicemailTarget = $this->resolveSendToVoicemailExtension($tenant);
+
+        $routes = [];
+
+        foreach ([
+            'voicemail_main' => [
+                'name' => 'voicemail-main',
+                'action' => 'voicemail_main',
+                'target_extension' => $voicemailTarget,
+            ],
+            'send_to_voicemail_prefix' => [
+                'name' => 'send-to-voicemail',
+                'action' => 'send_to_voicemail',
+                'target_extension' => $sendToVoicemailTarget,
+            ],
+            'dnd_on' => [
+                'name' => 'dnd-on',
+                'action' => 'dnd_on',
+                'target_extension' => null,
+            ],
+            'dnd_off' => [
+                'name' => 'dnd-off',
+                'action' => 'dnd_off',
+                'target_extension' => null,
+            ],
+            'call_return' => [
+                'name' => 'call-return',
+                'action' => 'call_return',
+                'target_extension' => null,
+            ],
+            'pickup_direct_prefix' => [
+                'name' => 'pickup-direct',
+                'action' => 'pickup_direct',
+                'target_extension' => null,
+            ],
+            'pickup_group' => [
+                'name' => 'pickup-group',
+                'action' => 'pickup_group',
+                'target_extension' => null,
+            ],
+            'intercom_prefix' => [
+                'name' => 'intercom-prefix',
+                'action' => 'intercom_prefix',
+                'target_extension' => null,
+            ],
+            'paging_prefix' => [
+                'name' => 'paging-prefix',
+                'action' => 'paging_prefix',
+                'target_extension' => null,
+            ],
+            'park_auto' => [
+                'name' => 'park-auto',
+                'action' => 'park_auto',
+                'target_extension' => null,
+            ],
+            'operator' => [
+                'name' => 'operator-shortcut',
+                'action' => 'operator',
+                'target_extension' => $operatorTarget,
+            ],
+        ] as $configKey => $route) {
+            $code = (string) ($codes[$configKey] ?? '');
+
+            if ($code === '') {
+                continue;
+            }
+
+            $routes[] = [
+                'name' => $route['name'],
+                'code' => $code,
+                'action' => $route['action'],
+                'target_extension' => $route['target_extension'],
+            ];
+        }
+
+        return $routes;
+    }
+
+    /**
+     * @param array{name:string, code:string, action:string, target_extension:?string} $route
+     */
+    protected function compileConvenienceRouteExtension(Tenant $tenant, array $route): string
+    {
+        $name = (string) $route['name'];
+        $code = (string) $route['code'];
+        $action = (string) $route['action'];
+        $targetExtension = $route['target_extension'] ?? null;
+
+        if ($action === 'pickup_direct') {
+            return $this->compileDirectedPickupExtension($tenant, $name, $code);
+        }
+
+        if ($action === 'intercom_prefix') {
+            return $this->compileIntercomExtension($tenant, $name, $code);
+        }
+
+        if ($action === 'paging_prefix') {
+            return $this->compilePagingExtension($tenant, $name, $code);
+        }
+
+        if ($action === 'park_auto') {
+            return $this->compileValetParkingExtension($tenant, $name, $code);
+        }
+
+        $xml = '        <extension name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($code, '/').'$">'."\n";
+        $xml .= '            <action application="answer"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_route='.htmlspecialchars($action, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_code='.htmlspecialchars($code, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+
+        switch ($action) {
+            case 'voicemail_main':
+                $mailbox = $targetExtension ?: '${caller_id_number}';
+                $xml .= '            <action application="voicemail" data="check default '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($mailbox, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                break;
+            case 'send_to_voicemail':
+                $mailbox = $targetExtension ?: '${caller_id_number}';
+                $xml .= '            <action application="voicemail" data="default '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($mailbox, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                break;
+            case 'dnd_on':
+                $xml .= '            <action application="set" data="nizam_dnd_enabled=true"/>'."\n";
+                $xml .= '            <action application="log" data="INFO DND starter route requested by ${caller_id_number}; persistent DND is not configured yet"/>'."\n";
+                $xml .= '            <action application="playback" data="ivr/ivr-that_was_an_invalid_entry.wav"/>'."\n";
+                $xml .= '            <action application="respond" data="404"/>'."\n";
+                break;
+            case 'dnd_off':
+                $xml .= '            <action application="set" data="nizam_dnd_enabled=false"/>'."\n";
+                $xml .= '            <action application="log" data="INFO DND clear starter route requested by ${caller_id_number}; persistent DND is not configured yet"/>'."\n";
+                $xml .= '            <action application="playback" data="ivr/ivr-that_was_an_invalid_entry.wav"/>'."\n";
+                $xml .= '            <action application="respond" data="404"/>'."\n";
+                break;
+            case 'call_return':
+                $xml .= '            <action application="log" data="INFO Call return starter route requested by ${caller_id_number}; call return is not configured yet"/>'."\n";
+                $xml .= '            <action application="respond" data="404"/>'."\n";
+                break;
+            case 'pickup_group':
+                $xml .= '            <action application="set" data="call_direction=inbound"/>'."\n";
+                $xml .= '            <action application="answer"/>'."\n";
+                $xml .= '            <action application="lua" data="/usr/local/freeswitch/scripts/nizam_intercept_group.lua inbound"/>'."\n";
+                break;
+            case 'intercom_prefix':
+                $xml .= '            <action application="respond" data="404"/>'."\n";
+                break;
+            case 'paging_prefix':
+                $xml .= '            <action application="respond" data="404"/>'."\n";
+                break;
+            case 'operator':
+                if ($targetExtension !== null && $targetExtension !== '') {
+                    $xml .= '            <action application="transfer" data="'.htmlspecialchars($targetExtension, ENT_QUOTES | ENT_XML1).' XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+                } else {
+                    $xml .= '            <action application="respond" data="404"/>'."\n";
+                }
+                break;
+            default:
+                $xml .= '            <action application="respond" data="404"/>'."\n";
+                break;
+        }
+
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+
+        return $xml;
+    }
+
+    protected function compileDirectedPickupExtension(Tenant $tenant, string $name, string $code): string
+    {
+        $xml = '        <extension name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($code, '/').'(.+)$">'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_route=pickup_direct"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_code='.htmlspecialchars($code, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="set" data="call_direction=inbound"/>'."\n";
+        $xml .= '            <action application="answer"/>'."\n";
+        $xml .= '            <action application="lua" data="/usr/local/freeswitch/scripts/nizam_intercept.lua $1"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+
+        return $xml;
+    }
+
+    protected function compileIntercomExtension(Tenant $tenant, string $name, string $code): string
+    {
+        $xml = '        <extension name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($code, '/').'(\d{2,7})$">'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_route=intercom_prefix"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_code='.htmlspecialchars($code, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_intercom_target_extension=$1"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_auto_answer_enabled=true"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_auto_answer_call_info=answer-after=0"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_auto_answer_alert_info=intercom"/>'."\n";
+        $xml .= '            <action application="export" data="sip_auto_answer=true"/>'."\n";
+        $xml .= '            <action application="export" data="sip_h_Call-Info=answer-after=0"/>'."\n";
+        $xml .= '            <action application="export" data="sip_h_Alert-Info=intercom"/>'."\n";
+        $xml .= '            <action application="transfer" data="call_delivery_entrypoint XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+
+        return $xml;
+    }
+
+    protected function compilePagingExtension(Tenant $tenant, string $name, string $code): string
+    {
+        $xml = '        <extension name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($code, '/').'(\d{2,7})$">'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_route=paging_prefix"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_code='.htmlspecialchars($code, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_paging_target_extension=$1"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_auto_answer_enabled=true"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_auto_answer_call_info=answer-after=0"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_auto_answer_alert_info=intercom"/>'."\n";
+        $xml .= '            <action application="export" data="sip_auto_answer=true"/>'."\n";
+        $xml .= '            <action application="export" data="sip_h_Call-Info=answer-after=0"/>'."\n";
+        $xml .= '            <action application="export" data="sip_h_Alert-Info=intercom"/>'."\n";
+        $xml .= '            <action application="transfer" data="call_delivery_entrypoint XML '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+
+        return $xml;
+    }
+
+    protected function compileValetParkingExtension(Tenant $tenant, string $name, string $code): string
+    {
+        $xml = '        <extension name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^(park\\+)?'.preg_quote($code, '/').'$">'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_route=park_auto"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_code='.htmlspecialchars($code, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= $this->compileValetParkingActions($tenant, null, true);
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+
+        $start = (int) config('telephony.bootstrap.parking.orbit_start', 5901);
+        $end = (int) config('telephony.bootstrap.parking.orbit_end', 5999);
+
+        $xml .= '        <extension name="'.htmlspecialchars($name.'-orbit', ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^(?:park\\+)?('.$this->parkingOrbitRegex($start, $end).')$">'."\n";
+        $xml .= '            <action application="answer"/>'."\n";
+        $xml .= '            <action application="valet_park" data="'.htmlspecialchars($code, ENT_QUOTES | ENT_XML1).'@${context} $1"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+
+        return $xml;
+    }
+
+    protected function compileValetParkingActions(Tenant $tenant, ?string $orbitExtension = null, bool $includeMetadata = false): string
+    {
+        $parkCode = (string) config('telephony.bootstrap.service_codes.park_auto', '*5900');
+        $timeout = (int) config('telephony.bootstrap.parking.timeout', 900);
+        $orbitStart = (int) config('telephony.bootstrap.parking.orbit_start', 5901);
+        $orbitEnd = (int) config('telephony.bootstrap.parking.orbit_end', 5999);
+        $lot = (string) config('telephony.bootstrap.parking.lot', 'park');
+        $resolvedOrbit = $orbitExtension ?? $parkCode;
+
+        $xml = '';
+        if (! $includeMetadata) {
+            $xml .= '            <action application="answer"/>'."\n";
+        }
+        $xml .= '            <action application="set" data="valet_hold_music=${hold_music}"/>'."\n";
+        $xml .= '            <action application="set" data="valet_parking_orbit_exten=${referred_by_user}"/>'."\n";
+        $xml .= '            <action application="set" data="valet_parking_timeout='.$timeout.'"/>'."\n";
+        $xml .= '            <action application="set" data="valet_parking_direction=in"/>'."\n";
+        $xml .= '            <action application="set" data="valet_parking_display=enable"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_parking_lot='.htmlspecialchars($lot, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="lua" data="/usr/local/freeswitch/scripts/nizam_valet_park.lua '.htmlspecialchars($lot, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($resolvedOrbit, ENT_QUOTES | ENT_XML1).' '.$orbitStart.' '.$orbitEnd.'"/>'."\n";
+
+        return $xml;
+    }
+
+    protected function parkingOrbitRegex(int $start, int $end): string
+    {
+        if ($start === 5901 && $end === 5999) {
+            return '59(0[1-9]|[1-9][0-9])';
+        }
+
+        return '(?:'.implode('|', range($start, $end)).')';
+    }
+
+    protected function resolveVoicemailMainExtension(Tenant $tenant): ?string
+    {
+        $configuredExtension = data_get($tenant->settings, 'business_phone.voicemail.main_extension');
+
+        if (is_string($configuredExtension) && $configuredExtension !== '') {
+            return $this->resolveActiveExtensionNumber($tenant, $configuredExtension);
+        }
+
+        return null;
+    }
+
+    protected function resolveOperatorTargetExtension(Tenant $tenant): ?string
+    {
+        $configuredExtension = data_get($tenant->settings, 'business_phone.operator.extension')
+            ?? data_get($tenant->settings, 'business_phone.default_entrypoint.operator_extension');
+
+        if (is_string($configuredExtension) && $configuredExtension !== '') {
+            $resolved = $this->resolveActiveExtensionNumber($tenant, $configuredExtension);
+            if ($resolved !== null) {
+                return $resolved;
+            }
+        }
+
+        $primaryExtension = $tenant->extensions()
+            ->where('is_active', true)
+            ->orderByDesc('is_primary')
+            ->orderBy('extension')
+            ->first();
+
+        return $primaryExtension?->extension;
+    }
+
+    protected function resolveActiveExtensionNumber(Tenant $tenant, string $extensionNumber): ?string
+    {
+        $extension = $tenant->extensions()
+            ->where('extension', $extensionNumber)
+            ->where('is_active', true)
+            ->first();
+
+        return $extension?->extension;
+    }
+
+    protected function resolveSendToVoicemailExtension(Tenant $tenant): ?string
+    {
+        return $this->resolveVoicemailMainExtension($tenant)
+            ?? $this->resolveOperatorTargetExtension($tenant);
+    }
+
     public function compileLocalExtension(Tenant $tenant, Extension $extension): string
     {
         $xml = '        <extension name="local-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
         $xml .= $this->compileSecurityChecks($tenant, $extension->extension);
         $xml .= $this->compileConcurrentCallLimit($tenant);
-        $xml .= $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $extension->id);
+        $xml .= $this->compileExtensionRoutingActions($tenant, $extension);
         $xml .= '          </condition>'."\n";
         $xml .= '        </extension>'."\n";
 
         return $xml;
+    }
+
+    protected function compileExtensionRoutingActions(Tenant $tenant, Extension $extension): string
+    {
+        return $this->compileExtensionDestinationAction($tenant, $extension);
+    }
+
+    protected function compileExtensionDestinationAction(Tenant $tenant, Extension $extension, bool $antiAction = false): string
+    {
+        $action = $antiAction ? 'anti-action' : 'action';
+
+        if ((bool) $extension->dnd_enabled) {
+            return '            <'.$action.' application="respond" data="486"/>'."\n";
+        }
+
+        $xml = '';
+        $followMeDestination = $this->resolveExtensionFollowMeDestination($extension);
+
+        if ($followMeDestination !== null) {
+            $xml .= '            <'.$action.' application="set" data="call_timeout='.(int) $this->extensionRoutingRingTimeout($extension).'"/>'."\n";
+            $xml .= '            <'.$action.' application="set" data="delivery_pstn_delay_seconds='.(int) $this->extensionRoutingPstnDelaySeconds($extension).'"/>'."\n";
+        }
+
+        $xml .= $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $extension->id, $antiAction);
+
+        return $xml;
+    }
+
+    protected function resolveExtensionFollowMeDestination(Extension $extension): ?string
+    {
+        if (! (bool) $extension->follow_me_enabled) {
+            return null;
+        }
+
+        $destination = trim((string) $extension->follow_me_destination);
+
+        if ($destination === '') {
+            return null;
+        }
+
+        $normalized = DidNormalizationService::toE164($destination);
+
+        if (! DidNormalizationService::isE164($normalized)) {
+            return null;
+        }
+
+        $bindingExists = EndpointBinding::query()
+            ->where('tenant_id', $extension->tenant_id)
+            ->where('extension_id', $extension->id)
+            ->where('type', EndpointBinding::TYPE_PSTN_FORWARD)
+            ->where('is_enabled', true)
+            ->where('forward_number', $normalized)
+            ->exists();
+
+        return $bindingExists ? $normalized : null;
+    }
+
+    protected function extensionRoutingPstnDelaySeconds(Extension $extension): int
+    {
+        return max(0, (int) ($extension->call_timeout ?? 25));
+    }
+
+    protected function extensionRoutingRingTimeout(Extension $extension): int
+    {
+        return max(1, (int) ($extension->call_timeout ?? 25));
     }
 
     protected function compileSelfCallDialplan(Tenant $tenant, Extension $extension): string
@@ -632,7 +1330,7 @@ class DialplanCompiler
             case 'extension':
                 $ext = $tenant->extensions()->find($id);
                 if ($ext) {
-                    return $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $ext->id, true);
+                    return $this->compileExtensionDestinationAction($tenant, $ext, true);
                 }
                 break;
             case 'agent':
@@ -688,7 +1386,7 @@ class DialplanCompiler
             case 'extension':
                 $ext = $tenant->extensions()->find($id);
                 if ($ext) {
-                    return $this->compileHumanTargetHandoffAction($tenant, 'extension', (string) $ext->id);
+                    return $this->compileExtensionDestinationAction($tenant, $ext);
                 }
                 break;
             case 'agent':

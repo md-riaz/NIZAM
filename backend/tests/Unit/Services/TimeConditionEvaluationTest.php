@@ -21,6 +21,7 @@ class TimeConditionEvaluationTest extends TestCase
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
             app(\App\Services\Routing\BridgeCompiler::class),
+            app(\App\Services\Routing\RoutingGraphCompiler::class),
         );
     }
 
@@ -29,7 +30,6 @@ class TimeConditionEvaluationTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'TC Tenant',
             'domain' => 'tc.example.com',
-            'slug' => 'tc-tenant',
             'is_active' => true,
         ]);
 
@@ -72,7 +72,6 @@ class TimeConditionEvaluationTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'TC Tenant',
             'domain' => 'tc.example.com',
-            'slug' => 'tc-tenant',
             'is_active' => true,
         ]);
 
@@ -116,7 +115,6 @@ class TimeConditionEvaluationTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'TC Tenant',
             'domain' => 'tc.example.com',
-            'slug' => 'tc-tenant',
             'is_active' => true,
         ]);
 
@@ -159,7 +157,6 @@ class TimeConditionEvaluationTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'TC Tenant',
             'domain' => 'tc.example.com',
-            'slug' => 'tc-tenant',
             'is_active' => true,
         ]);
 
@@ -205,7 +202,6 @@ class TimeConditionEvaluationTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'TC Tenant',
             'domain' => 'tc.example.com',
-            'slug' => 'tc-tenant',
             'is_active' => true,
         ]);
 

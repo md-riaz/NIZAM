@@ -21,7 +21,6 @@ class ExtensionApiTest extends TestCase
         $this->tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
         ]);
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
     }

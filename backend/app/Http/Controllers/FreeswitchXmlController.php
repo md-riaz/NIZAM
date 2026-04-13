@@ -85,6 +85,9 @@ class FreeswitchXmlController extends Controller
                     'caller_id_number' => (string) ($requestPayload['Caller-Caller-ID-Number'] ?? $requestPayload['variable_effective_caller_id_number'] ?? $callerIdNumber ?? ''),
                     'destination_number' => (string) ($requestPayload['Caller-Destination-Number'] ?? $destinationNumber),
                     'domain' => $domain,
+                    'auto_answer_enabled' => filter_var($requestPayload['variable_nizam_auto_answer_enabled'] ?? $requestPayload['nizam_auto_answer_enabled'] ?? false, FILTER_VALIDATE_BOOL),
+                    'auto_answer_call_info' => (string) ($requestPayload['variable_nizam_auto_answer_call_info'] ?? $requestPayload['nizam_auto_answer_call_info'] ?? ''),
+                    'auto_answer_alert_info' => (string) ($requestPayload['variable_nizam_auto_answer_alert_info'] ?? $requestPayload['nizam_auto_answer_alert_info'] ?? ''),
                 ]);
             }
         }

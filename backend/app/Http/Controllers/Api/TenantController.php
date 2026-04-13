@@ -7,14 +7,22 @@ use App\Http\Requests\StoreTenantRequest;
 use App\Http\Requests\UpdateTenantRequest;
 use App\Http\Resources\TenantResource;
 use App\Models\Tenant;
+use App\Services\Tenant\OrganizationBootstrapService;
+use App\Services\TenantEntrypointProvisioningService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * API controller for managing tenants.
  */
 class TenantController extends Controller
 {
+    public function __construct(
+        protected OrganizationBootstrapService $organizationBootstrapService,
+        protected TenantEntrypointProvisioningService $tenantEntrypointProvisioningService,
+    ) {}
+
     /**
      * List all tenants (paginated).
      */
@@ -41,7 +49,13 @@ class TenantController extends Controller
     {
         $this->authorize('create', Tenant::class);
 
-        $tenant = Tenant::create($request->validated());
+        $tenant = DB::transaction(function () use ($request) {
+            $tenant = Tenant::create($request->validated());
+            $tenant = $this->organizationBootstrapService->provisionDefaults($tenant);
+            $tenant = $this->tenantEntrypointProvisioningService->provision($tenant);
+
+            return $tenant->fresh();
+        });
 
         return (new TenantResource($tenant))->response()->setStatusCode(201);
     }

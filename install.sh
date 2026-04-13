@@ -159,10 +159,17 @@ https://packages.sury.org/php/ $(lsb_release -sc) main" \
 
     info "Installing PHP 8.3 and extensions…"
     DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-        php8.3-fpm php8.3-cli \
+        php8.3-fpm php8.3-cli php8.3-dev php-pear \
         php8.3-pgsql php8.3-mbstring php8.3-xml php8.3-bcmath \
         php8.3-curl php8.3-redis php8.3-zip php8.3-opcache \
         php8.3-pcntl php8.3-sockets
+
+    info "Installing PHP inotify extension for XML CDR watcher…"
+    if ! php -m | grep -qi '^inotify$'; then
+        yes '' | pecl install inotify >/dev/null 2>&1 || die "Failed to install PHP inotify extension"
+    fi
+    echo 'extension=inotify.so' > /etc/php/8.3/mods-available/inotify.ini
+    phpenmod inotify
 
     # Performance tuning
     local ini="/etc/php/8.3/fpm/php.ini"
@@ -510,6 +517,12 @@ FREESWITCH_ESL_PASSWORD=${ESL_PASS}
 FREESWITCH_XML_CURL_URL=http://127.0.0.1/freeswitch/xml-curl
 FREESWITCH_XML_CURL_ENDPOINT_INTERNAL=http://127.0.0.1/freeswitch/xml-curl
 FREESWITCH_LOG_PATH=/var/log/freeswitch/freeswitch.log
+FREESWITCH_XML_CDR_ENABLED=true
+FREESWITCH_XML_CDR_DIRECTORY=/var/log/freeswitch/xml_cdr
+FREESWITCH_XML_CDR_LOG_DIR=/var/log/freeswitch/xml_cdr
+FREESWITCH_XML_CDR_WATCHER=inotify
+FREESWITCH_XML_CDR_POLL_INTERVAL=5
+FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=true
 
 EXT_RTP_IP=auto-nat
 EXT_SIP_IP=auto-nat
@@ -702,12 +715,26 @@ FSEOF
 </configuration>
 FSEOF
 
+    # xml_cdr.conf.xml — write XML CDR files to a single-tier watched directory
+    mkdir -p /var/log/freeswitch/xml_cdr/errors
+    cat > "${conf}/xml_cdr.conf.xml" << FSEOF
+<configuration name="xml_cdr.conf" description="XML CDR Logger">
+  <settings>
+    <param name="url" value="/var/log/freeswitch/xml_cdr"/>
+    <param name="log-dir" value="/var/log/freeswitch/xml_cdr"/>
+    <param name="err-log-dir" value="/var/log/freeswitch/xml_cdr/errors"/>
+    <param name="encode" value="true"/>
+  </settings>
+</configuration>
+FSEOF
+
     # Link sip_profiles to Laravels storage directory
     rm -rf "${FS_CONF_DIR}/sip_profiles"
     ln -sfn "${NIZAM_DIR}/storage/app/freeswitch/sip_profiles" "${FS_CONF_DIR}/sip_profiles"
 
     # Ownership (packages user is 'freeswitch', source build also uses 'freeswitch')
     chown -R freeswitch:freeswitch "${FS_CONF_DIR}" 2>/dev/null || true
+    chown -R freeswitch:freeswitch /var/log/freeswitch/xml_cdr 2>/dev/null || true
     chown -R freeswitch:freeswitch "${NIZAM_DIR}/storage/app/freeswitch" 2>/dev/null || true
 
     # Restart to apply new config
@@ -732,7 +759,7 @@ FSEOF
 }
 
 # =============================================================================
-# SUPERVISOR (queue worker · ESL listener · scheduler)
+# SUPERVISOR (queue worker · ESL listener · scheduler · XML CDR watcher)
 # =============================================================================
 configure_supervisor() {
     info "Writing Supervisor program configs…"
@@ -783,11 +810,28 @@ stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=3
 SUPEOF
 
+    cat > /etc/supervisor/conf.d/nizam-xml-cdr.conf << SUPEOF
+[program:nizam-xml-cdr-watcher]
+command=/bin/bash -lc 'if php ${NIZAM_DIR}/artisan list --raw | grep -q "^cdr:ingest-xml$"; then exec php ${NIZAM_DIR}/artisan cdr:ingest-xml; else echo "cdr:ingest-xml command is not available yet"; exec tail -f /dev/null; fi'
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=${NIZAM_USER}
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/nizam-xml-cdr.log
+stdout_logfile_maxbytes=10MB
+stdout_logfile_backups=3
+startsecs=5
+startretries=10
+SUPEOF
+
     systemctl enable supervisor --quiet
     systemctl start  supervisor
     supervisorctl reread  > /dev/null
     supervisorctl update  > /dev/null
-    log "Supervisor configured (queue × 2, esl-listener, scheduler)"
+    log "Supervisor configured (queue × 2, esl-listener, scheduler, xml-cdr-watcher)"
 }
 
 # =============================================================================
@@ -875,6 +919,7 @@ nginx access : /var/log/nginx/nizam_access.log
 nginx error  : /var/log/nginx/nizam_error.log
 Queue worker : /var/log/supervisor/nizam-queue.log
 ESL listener : /var/log/supervisor/nizam-esl.log
+XML CDR watch: /var/log/supervisor/nizam-xml-cdr.log
 CREDSEOF
     chmod 600 "${CREDS_FILE}"
 }

@@ -18,13 +18,18 @@ use App\Http\Controllers\Api\CodecMetricsController;
 use App\Http\Controllers\Api\CodecResolutionController;
 use App\Http\Controllers\Api\DeviceProfileController;
 use App\Http\Controllers\Api\DidController;
+use App\Http\Controllers\Api\DirectoryController;
 use App\Http\Controllers\Api\ExtensionController;
+use App\Http\Controllers\Api\ExtensionFeatureController;
 use App\Http\Controllers\Api\FlowController;
+use App\Http\Controllers\Api\FreeSwitchModuleStatusController;
 use App\Http\Controllers\Api\GatewayController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HolidayCalendarController;
 use App\Http\Controllers\Api\MobileDeviceController;
 use App\Http\Controllers\Api\IvrController;
+use App\Http\Controllers\Api\InteractionController;
+use App\Http\Controllers\Api\OfficeFeatureController;
 use App\Http\Controllers\Api\QueueController;
 use App\Http\Controllers\Api\QueueMetricsController;
 use App\Http\Controllers\Api\RecordingController;
@@ -32,6 +37,7 @@ use App\Http\Controllers\Api\RegistrationStatusController;
 use App\Http\Controllers\Api\RingGroupController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SystemMediaController;
+use App\Http\Controllers\Api\SupervisorReportController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\TenantStatsController;
@@ -75,6 +81,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Admin observability dashboard
     Route::get('admin/dashboard', AdminDashboardController::class)->name('admin.dashboard');
     Route::get('admin/capabilities', [AdminCapabilityController::class, 'index'])->name('admin.capabilities');
+    Route::get('admin/freeswitch/modules', [FreeSwitchModuleStatusController::class, 'index'])->name('admin.freeswitch.modules');
+    Route::post('admin/freeswitch/modules/start', [FreeSwitchModuleStatusController::class, 'start'])->name('admin.freeswitch.modules.start');
+    Route::post('admin/freeswitch/modules/stop', [FreeSwitchModuleStatusController::class, 'stop'])->name('admin.freeswitch.modules.stop');
 
     // User management (admin-only)
     Route::apiResource('users', UserController::class);
@@ -110,6 +119,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
         Route::get('stats', TenantStatsController::class)->name('tenants.stats');
+        Route::get('directory', [DirectoryController::class, 'index'])->name('directory.index');
 
         // Usage metering
         Route::get('usage/summary', [UsageController::class, 'summary'])->name('tenants.usage.summary');
@@ -119,6 +129,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         // Core resources
         Route::apiResource('extensions', ExtensionController::class);
         Route::get('extensions/{extension}/sip-config', [ExtensionController::class, 'sipConfig'])->name('extensions.sip-config');
+        Route::put('extensions/{extension}/features', [ExtensionFeatureController::class, 'update'])->name('extensions.features.update');
+        Route::get('office-features', [OfficeFeatureController::class, 'show'])->name('office-features.show');
+        Route::put('office-features', [OfficeFeatureController::class, 'update'])->name('office-features.update');
 
         // System media (audio prompts, MOH)
         Route::apiResource('system-media', SystemMediaController::class)->parameters(['system-media' => 'mediaId']);
@@ -174,6 +187,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('calls', [CallSessionController::class, 'index'])->name('calls.index');
         Route::get('calls/{callSession}', [CallSessionController::class, 'show'])->name('calls.show');
         Route::get('calls/{callSession}/analyze', [CallSessionController::class, 'analyze'])->name('calls.analyze');
+        Route::get('interactions/{callSession}', [InteractionController::class, 'show'])->name('interactions.show');
         Route::post('calls/originate', [CallController::class, 'originate'])->name('calls.originate');
         Route::get('calls/status', [CallController::class, 'status'])->name('calls.status');
         Route::post('calls/hangup', [CallController::class, 'hangup'])->name('calls.hangup');
@@ -191,6 +205,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
             Route::get('volume', [CdrAnalyticsController::class, 'volume'])->name('volume');
             Route::get('quality', [CdrAnalyticsController::class, 'quality'])->name('quality');
             Route::get('destinations', [CdrAnalyticsController::class, 'destinations'])->name('destinations');
+        });
+
+        Route::prefix('supervisor-reports')->name('supervisor-reports.')->group(function () {
+            Route::get('call-summary', [SupervisorReportController::class, 'callSummary'])->name('call-summary');
+            Route::get('missed-returned-calls', [SupervisorReportController::class, 'missedReturnedCalls'])->name('missed-returned-calls');
+            Route::get('voicemails-needing-follow-up', [SupervisorReportController::class, 'voicemailsNeedingFollowUp'])->name('voicemails-needing-follow-up');
         });
 
         Route::apiResource('call-routing-policies', CallRoutingPolicyController::class);

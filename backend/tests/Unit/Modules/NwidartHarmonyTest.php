@@ -28,7 +28,7 @@ class NwidartHarmonyTest extends TestCase
         $provider = new AppServiceProvider($this->app);
         $discovered = $provider->discoverNizamModules();
 
-        // All five production modules must be auto-discovered
+        // Production nwidart modules must be auto-discovered
         $this->assertArrayHasKey('pbx-routing', $discovered);
         $this->assertArrayHasKey('pbx-contact-center', $discovered);
         $this->assertArrayHasKey('pbx-automation', $discovered);
@@ -103,6 +103,31 @@ class NwidartHarmonyTest extends TestCase
         );
     }
 
+    public function test_enabled_built_in_app_local_modules_are_registered_through_the_same_registry(): void
+    {
+        $registry = $this->app->make(ModuleRegistry::class);
+
+        $this->assertTrue($registry->isEnabled('voicemail'));
+        $this->assertTrue($registry->isEnabled('ai-transcription'));
+        $this->assertTrue($registry->isEnabled('media-archive'));
+    }
+
+    public function test_disabled_built_in_app_local_module_is_suppressed(): void
+    {
+        config(['telephony.app_local_modules.ai-transcription.enabled' => false]);
+        $this->app->forgetInstance(ModuleRegistry::class);
+
+        try {
+            $registry = $this->app->make(ModuleRegistry::class);
+
+            $this->assertFalse($registry->isEnabled('ai-transcription'));
+            $this->assertNull($registry->executePolicyHook('nonexistent')['ai-transcription'] ?? null);
+        } finally {
+            config(['telephony.app_local_modules.ai-transcription.enabled' => true]);
+            $this->app->forgetInstance(ModuleRegistry::class);
+        }
+    }
+
     public function test_all_nwidart_modules_activation_state_matches_nizam_registry(): void
     {
         $registry = $this->app->make(ModuleRegistry::class);
@@ -146,6 +171,23 @@ class NwidartHarmonyTest extends TestCase
     // =========================================================================
     // FAIL-CLOSED BEHAVIOR
     // =========================================================================
+
+    public function test_built_in_app_local_modules_use_configured_bootstrap_state(): void
+    {
+        config()->set('telephony.app_local_modules.voicemail.enabled', true);
+        config()->set('telephony.app_local_modules.ai-transcription.enabled', false);
+        config()->set('telephony.app_local_modules.media-archive.enabled', true);
+        config()->set('telephony.app_local_modules.messaging.enabled', false);
+
+        $this->app->forgetInstance(ModuleRegistry::class);
+        $registry = $this->app->make(ModuleRegistry::class);
+
+        $this->assertTrue($registry->isEnabled('voicemail'));
+        $this->assertFalse($registry->isEnabled('ai-transcription'));
+        $this->assertTrue($registry->isEnabled('media-archive'));
+        $this->assertFalse($registry->isEnabled('messaging'));
+    }
+
 
     public function test_unknown_module_alias_returns_false_fail_closed(): void
     {
@@ -239,5 +281,33 @@ class NwidartHarmonyTest extends TestCase
                 "nwidartIsEnabled('{$alias}') must return bool without warning"
             );
         }
+    }
+
+    public function test_built_in_app_local_modules_are_registered_from_explicit_config(): void
+    {
+        config()->set('telephony.app_local_modules.voicemail.enabled', true);
+        config()->set('telephony.app_local_modules.ai-transcription.enabled', true);
+        config()->set('telephony.app_local_modules.media-archive.enabled', false);
+        config()->set('telephony.app_local_modules.messaging.enabled', true);
+
+        $this->app->forgetInstance(ModuleRegistry::class);
+        $registry = $this->app->make(ModuleRegistry::class);
+
+        $this->assertTrue($registry->isEnabled('voicemail'));
+        $this->assertTrue($registry->isEnabled('ai-transcription'));
+        $this->assertFalse($registry->isEnabled('media-archive'));
+        $this->assertTrue($registry->isEnabled('messaging'));
+    }
+
+    public function test_built_in_app_local_module_catalog_includes_ai_transcription(): void
+    {
+        $provider = new AppServiceProvider($this->app);
+
+        $this->assertSame([
+            'voicemail',
+            'ai-transcription',
+            'media-archive',
+            'messaging',
+        ], array_keys($provider->builtInAppLocalModules()));
     }
 }

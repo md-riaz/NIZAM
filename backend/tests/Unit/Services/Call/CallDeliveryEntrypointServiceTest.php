@@ -67,7 +67,14 @@ class CallDeliveryEntrypointServiceTest extends TestCase
             'caller_id_number' => '+15550001111',
             'destination_number' => 'call_delivery_entrypoint',
             'domain' => $tenant->domain,
+            'auto_answer_enabled' => true,
+            'auto_answer_call_info' => 'answer-after=0',
+            'auto_answer_alert_info' => 'intercom',
         ]);
+
+        $this->assertTrue((bool) data_get($session->variables, 'nizam_auto_answer_enabled'));
+        $this->assertSame('answer-after=0', data_get($session->variables, 'nizam_auto_answer_call_info'));
+        $this->assertSame('intercom', data_get($session->variables, 'nizam_auto_answer_alert_info'));
 
         $session->refresh();
 

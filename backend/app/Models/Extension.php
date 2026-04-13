@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Extension extends Model
 {
@@ -20,6 +21,7 @@ class Extension extends Model
      */
     protected $fillable = [
         'tenant_id',
+        'user_id',
         'extension',
         'password',
         'directory_first_name',
@@ -29,7 +31,11 @@ class Extension extends Model
         'outbound_caller_id_name',
         'outbound_caller_id_number',
         'voicemail_enabled',
+        'follow_me_enabled',
+        'follow_me_destination',
+        'dnd_enabled',
         'voicemail_pin',
+        'is_primary',
         'is_active',
     ];
 
@@ -54,6 +60,9 @@ class Extension extends Model
             'password' => 'encrypted',
             'voicemail_pin' => 'encrypted',
             'voicemail_enabled' => 'boolean',
+            'follow_me_enabled' => 'boolean',
+            'dnd_enabled' => 'boolean',
+            'is_primary' => 'boolean',
             'is_active' => 'boolean',
         ];
     }
@@ -63,9 +72,19 @@ class Extension extends Model
         return $this->belongsTo(Tenant::class);
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function deviceProfiles(): HasMany
     {
         return $this->hasMany(DeviceProfile::class);
+    }
+
+    public function primaryDeviceProfile(): HasOne
+    {
+        return $this->hasOne(DeviceProfile::class)->where('is_active', true)->latestOfMany();
     }
 
     public function endpointBindings(): HasMany
@@ -78,10 +97,8 @@ class Extension extends Model
         return $this->hasMany(DeviceRegistrationSnapshot::class);
     }
 
-    public function agent(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function agent(): HasOne
     {
         return $this->hasOne(Agent::class);
     }
-
-
 }

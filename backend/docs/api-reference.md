@@ -178,11 +178,12 @@ Content-Type: application/json
 {
   "name": "Acme Corp",
   "domain": "acme.example.com",
-  "slug": "acme",
   "max_extensions": 100,
   "is_active": true
 }
 ```
+
+`default_schedule_id` and `default_holiday_calendar_id` are returned on tenant resources after bootstrap/provisioning creates the tenant defaults. They are not currently accepted by the create/update validation rules.
 
 ### Get / Update / Delete Tenant
 
@@ -191,6 +192,29 @@ GET    /api/tenants/{id}
 PUT    /api/tenants/{id}
 DELETE /api/tenants/{id}
 ```
+
+**Tenant resource fields include:**
+
+```json
+{
+  "id": "uuid",
+  "name": "Acme Corp",
+  "domain": "acme.example.com",
+  "default_schedule_id": "uuid-or-null",
+  "default_holiday_calendar_id": "uuid-or-null",
+  "settings": {},
+  "status": "active",
+  "max_extensions": 100,
+  "max_concurrent_calls": 20,
+  "max_dids": 10,
+  "max_ring_groups": 5,
+  "is_active": true,
+  "created_at": "2026-04-12T10:00:00Z",
+  "updated_at": "2026-04-12T10:00:00Z"
+}
+```
+
+The default schedule and holiday calendar IDs point to bootstrap-created tenant records when available.
 
 ### Tenant Settings
 
@@ -258,17 +282,16 @@ Authorization: Bearer YOUR_TOKEN
 
 ### Tenant Provisioning (Zero-Touch)
 
-Create a tenant with automated onboarding — auto-generates domain, bootstraps default extension 1000.
+Create a tenant with automated onboarding — bootstraps default business-hours, holiday, and main business-phone entrypoint defaults.
 
 ```http
-POST /api/tenants/provision
-Authorization: Bearer YOUR_TOKEN
+POST /api/tenants
+Authorization: Bearer YOUR_TOKEN (admin)
 Content-Type: application/json
 
 {
   "name": "Acme Corp",
   "domain": "acme.nizam.local",
-  "slug": "acme-corp",
   "max_extensions": 50,
   "max_concurrent_calls": 20,
   "max_dids": 10,
@@ -276,7 +299,7 @@ Content-Type: application/json
 }
 ```
 
-Only `name` is required. Domain and slug are auto-generated if not provided. Tenant starts in `trial` status.
+`name` and `domain` are required by current validation. The response tenant resource includes bootstrap-created `default_schedule_id` and `default_holiday_calendar_id` when provisioning succeeds.
 
 ### Usage Metering
 
@@ -317,6 +340,89 @@ Authorization: Bearer YOUR_TOKEN
 ```
 
 Returns total tenants by status, per-tenant resource counts, and aggregate system metrics.
+
+### FreeSWITCH Modules Status
+
+Platform-admin only live module visibility:
+
+```http
+GET /api/v1/admin/freeswitch/modules
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Success response** `200`:
+```json
+{
+  "data": [
+    { "name": "mod_sofia", "type": "endpoint", "status": "running" },
+    { "name": "mod_conference", "type": "application", "status": "running" }
+  ],
+  "meta": {
+    "source": "esl",
+    "live": true
+  }
+}
+```
+
+**FreeSWITCH unavailable** `503`:
+```json
+{
+  "data": [],
+  "meta": {
+    "source": "esl",
+    "live": true,
+    "error": "Unable to connect to FreeSWITCH ESL."
+  }
+}
+```
+
+Notes:
+- Access is restricted to platform admins. Tenant-scoped admins and regular users receive `403`.
+- Module rows are normalized from live `show modules` output.
+- Failure responses keep `data` empty and report the live-source metadata in `meta`.
+
+### Supervisor Reports
+
+All supervisor report endpoints are tenant-scoped and require the same authenticated tenant access used by other tenant resources.
+
+#### Call Summary
+
+```http
+GET /api/v1/tenants/{tenant_id}/supervisor-reports/call-summary?date_from=2026-04-10&date_to=2026-04-10
+Authorization: Bearer YOUR_TOKEN
+```
+
+Returns aggregated totals for the inclusive date range, including `totals.calls`, `totals.answered_calls`, `totals.missed_calls`, `totals.voicemail_calls`, duration totals, and `by_direction` counts.
+
+#### Missed and Returned Calls
+
+```http
+GET /api/v1/tenants/{tenant_id}/supervisor-reports/missed-returned-calls?date_from=2026-04-10&date_to=2026-04-10
+Authorization: Bearer YOUR_TOKEN
+```
+
+Returns:
+- `period`
+- `returned_call_window_days`
+- `summary.missed_calls`, `summary.returned_calls`, `summary.open_missed_calls`
+- `items[]` with missed-call details plus `returned` and optional `returned_call`
+
+You may optionally pass `window_days` to override the returned-call matching window.
+
+#### Voicemails Needing Follow-Up
+
+```http
+GET /api/v1/tenants/{tenant_id}/supervisor-reports/voicemails-needing-follow-up?date_from=2026-04-10&date_to=2026-04-10
+Authorization: Bearer YOUR_TOKEN
+```
+
+Returns:
+- `period`
+- `returned_call_window_days`
+- `summary.voicemails`, `summary.pending_follow_up`, `summary.needs_review`, `summary.needs_attention`
+- `items[]` with voicemail event metadata, `follow_up_status`, optional `recording`, and optional `returned_call`
+
+You may optionally pass `window_days` to override the returned-call matching window.
 
 ### SSL Management
 

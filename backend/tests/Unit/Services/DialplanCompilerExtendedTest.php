@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services;
 
+use App\Models\EndpointBinding;
 use App\Models\Queue;
 use App\Models\Tenant;
 use Illuminate\Support\Str;
@@ -27,6 +28,7 @@ class DialplanCompilerExtendedTest extends TestCase
             app(\App\Services\Routing\NumberRoutingService::class),
             app(\App\Services\Routing\GatewayResolutionService::class),
             app(\App\Services\Routing\BridgeCompiler::class),
+            app(\App\Services\Routing\RoutingGraphCompiler::class),
         );
     }
 
@@ -35,7 +37,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -68,7 +69,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -118,7 +118,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -154,12 +153,89 @@ class DialplanCompilerExtendedTest extends TestCase
         $this->assertStringNotContainsString('user/1001@test.example.com', $xml);
     }
 
+    public function test_compile_did_routing_to_extension_with_follow_me_sets_pstn_bridge_metadata(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Test Tenant',
+            'domain' => 'test.example.com',
+            'is_active' => true,
+        ]);
+
+        $extension = $tenant->extensions()->create([
+            'extension' => '1003',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Follow',
+            'directory_last_name' => 'Me',
+            'is_active' => true,
+            'follow_me_enabled' => true,
+            'follow_me_destination' => '+15557654321',
+        ]);
+
+        EndpointBinding::query()->create([
+            'tenant_id' => $tenant->id,
+            'extension_id' => $extension->id,
+            'type' => EndpointBinding::TYPE_PSTN_FORWARD,
+            'device_uuid' => 'follow-me-'.$extension->id,
+            'platform' => EndpointBinding::PLATFORM_UNKNOWN,
+            'is_push_capable' => false,
+            'is_enabled' => true,
+            'rings_immediately_when_online' => false,
+            'allow_late_join_after_push' => false,
+            'forward_number' => '+15557654321',
+            'forward_requires_confirm' => true,
+        ]);
+
+        $did = $tenant->dids()->create([
+            'number' => '+15550001003',
+            'destination_type' => 'extension',
+            'destination_id' => $extension->id,
+            'is_active' => true,
+        ]);
+
+        $xml = $this->compiler->compileDialplan('test.example.com', '+15550001003');
+
+        $this->assertStringContainsString('call_timeout=25', $xml);
+        $this->assertStringContainsString('delivery_pstn_delay_seconds=25', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
+        $this->assertStringContainsString('nizam_delivery_target_id='.$extension->id, $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML test.example.com"', $xml);
+    }
+
+    public function test_compile_did_routing_to_extension_with_dnd_returns_busy(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Test Tenant',
+            'domain' => 'test.example.com',
+            'is_active' => true,
+        ]);
+
+        $extension = $tenant->extensions()->create([
+            'extension' => '1004',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Do',
+            'directory_last_name' => 'NotDisturb',
+            'is_active' => true,
+            'dnd_enabled' => true,
+        ]);
+
+        $tenant->dids()->create([
+            'number' => '+15550001004',
+            'destination_type' => 'extension',
+            'destination_id' => $extension->id,
+            'is_active' => true,
+        ]);
+
+        $xml = $this->compiler->compileDialplan('test.example.com', '+15550001004');
+
+        $this->assertStringContainsString('application="respond" data="486"', $xml);
+        $this->assertStringNotContainsString('call_delivery_entrypoint XML test.example.com', $xml);
+    }
+
     public function test_compile_did_routing_to_queue_uses_shared_delivery_entrypoint(): void
     {
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -204,7 +280,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -242,7 +317,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -272,7 +346,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -303,7 +376,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -342,12 +414,194 @@ class DialplanCompilerExtendedTest extends TestCase
         $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML test.example.com"', $xml);
     }
 
+    public function test_compile_dialplan_includes_convenience_service_routes(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Convenience Tenant',
+            'domain' => 'pbx.example.com',
+            'is_active' => true,
+            'settings' => [
+                'business_phone' => [
+                    'operator' => ['extension' => '2000'],
+                    'voicemail' => ['main_extension' => '3000'],
+                ],
+            ],
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Primary',
+            'directory_last_name' => 'User',
+            'is_active' => true,
+            'is_primary' => true,
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '2000',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Operator',
+            'directory_last_name' => 'User',
+            'is_active' => true,
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '3000',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Voicemail',
+            'directory_last_name' => 'User',
+            'is_active' => true,
+        ]);
+
+        $xml = $this->compiler->compileDialplan($tenant->domain, '*98');
+
+        $this->assertStringContainsString('extension name="voicemail-main"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*98$"', $xml);
+        $this->assertStringContainsString('voicemail" data="check default pbx.example.com 3000"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*99$"', $xml);
+        $this->assertStringContainsString('voicemail" data="default pbx.example.com 3000"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*78$"', $xml);
+        $this->assertStringContainsString('nizam_dnd_enabled=true', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*79$"', $xml);
+        $this->assertStringContainsString('nizam_dnd_enabled=false', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*69$"', $xml);
+        $this->assertStringContainsString('Call return starter route requested', $xml);
+        $this->assertStringContainsString('destination_number" expression="^0$"', $xml);
+        $this->assertStringContainsString('transfer" data="2000 XML pbx.example.com"', $xml);
+    }
+
+    public function test_compile_convenience_routes_fall_back_to_primary_extension_targets(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Fallback Convenience Tenant',
+            'domain' => 'fallback.example.com',
+            'is_active' => true,
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '4100',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Fallback',
+            'directory_last_name' => 'Primary',
+            'is_active' => true,
+            'is_primary' => true,
+        ]);
+
+        $xml = $this->compiler->compileDialplan($tenant->domain, '0');
+
+        $this->assertStringContainsString('transfer" data="4100 XML fallback.example.com"', $xml);
+        $this->assertStringNotContainsString('voicemail" data="check default fallback.example.com 4100"', $xml);
+    }
+
+    public function test_compile_convenience_routes_ignore_invalid_configured_voicemail_target(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Invalid Voicemail Target Tenant',
+            'domain' => 'invalid-voicemail.example.com',
+            'is_active' => true,
+            'settings' => [
+                'business_phone' => [
+                    'voicemail' => ['main_extension' => '9999'],
+                    'operator' => ['extension' => '4100'],
+                ],
+            ],
+        ]);
+
+        $tenant->extensions()->create([
+            'extension' => '4100',
+            'password' => 'secret1234',
+            'directory_first_name' => 'Fallback',
+            'directory_last_name' => 'Operator',
+            'is_active' => true,
+            'is_primary' => true,
+        ]);
+
+        $xml = $this->compiler->compileDialplan($tenant->domain, '*98');
+
+        $this->assertStringContainsString('extension name="voicemail-main"', $xml);
+        $this->assertStringContainsString('respond" data="404"', $xml);
+        $this->assertStringNotContainsString('voicemail" data="check default invalid-voicemail.example.com 4100"', $xml);
+    }
+
+    public function test_compile_convenience_routes_require_active_operator_target_for_operator_shortcut(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Invalid Operator Target Tenant',
+            'domain' => 'invalid-operator.example.com',
+            'is_active' => true,
+            'settings' => [
+                'business_phone' => [
+                    'operator' => ['extension' => '9999'],
+                ],
+            ],
+        ]);
+
+        $xml = $this->compiler->compileDialplan($tenant->domain, '0');
+
+        $this->assertStringContainsString('destination_number" expression="^0$"', $xml);
+        $this->assertStringContainsString('respond" data="404"', $xml);
+        $this->assertStringNotContainsString('transfer" data="9999 XML invalid-operator.example.com"', $xml);
+    }
+
+    public function test_compile_convenience_routes_make_starter_routes_explicitly_unconfigured(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Starter Routes Tenant',
+            'domain' => 'starter-routes.example.com',
+            'is_active' => true,
+        ]);
+
+        $xml = $this->compiler->compileDialplan($tenant->domain, '*69');
+
+        $this->assertStringContainsString('Call return starter route requested by ${caller_id_number}; call return is not configured yet', $xml);
+        $this->assertStringContainsString('respond" data="404"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*69$"', $xml);
+        $this->assertStringContainsString('nizam_convenience_route=call_return', $xml);
+        $this->assertStringNotContainsString('nizam_convenience_route=unknown', $xml);
+    }
+
+    public function test_compile_convenience_routes_include_directed_pickup_group_pickup_and_parking(): void
+    {
+        $tenant = Tenant::create([
+            'name' => 'Feature Codes Tenant',
+            'domain' => 'features.example.com',
+            'is_active' => true,
+        ]);
+
+        $xml = $this->compiler->compileDialplan($tenant->domain, '**1001');
+
+        $this->assertStringContainsString('extension name="pickup-direct"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*\*(.+)$"', $xml);
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_intercept.lua $1"', $xml);
+        $this->assertStringContainsString('extension name="pickup-group"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*8$"', $xml);
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_intercept_group.lua inbound"', $xml);
+        $this->assertStringContainsString('extension name="intercom-prefix"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*8(\d{2,7})$"', $xml);
+        $this->assertStringContainsString('application="set" data="nizam_auto_answer_enabled=true"', $xml);
+        $this->assertStringContainsString('application="set" data="nizam_auto_answer_call_info=answer-after=0"', $xml);
+        $this->assertStringContainsString('application="set" data="nizam_auto_answer_alert_info=intercom"', $xml);
+        $this->assertStringContainsString('application="export" data="sip_auto_answer=true"', $xml);
+        $this->assertStringContainsString('application="export" data="sip_h_Call-Info=answer-after=0"', $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML features.example.com"', $xml);
+        $this->assertStringContainsString('extension name="paging-prefix"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*80(\d{2,7})$"', $xml);
+        $this->assertStringContainsString('application="set" data="nizam_paging_target_extension=$1"', $xml);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML features.example.com"', $xml);
+        $this->assertStringContainsString('extension name="park-auto"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^(park\\+)?\*5900$"', $xml);
+        $this->assertStringContainsString('application="set" data="nizam_parking_lot=park"', $xml);
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_valet_park.lua park *5900 5901 5999"', $xml);
+        $this->assertStringContainsString('extension name="park-auto-orbit"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^(?:park\\+)?(59(0[1-9]|[1-9][0-9]))$"', $xml);
+        $this->assertStringContainsString('application="valet_park" data="*5900@${context} $1"', $xml);
+    }
+
     public function test_compile_directory_with_voicemail_settings(): void
     {
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -373,7 +627,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -402,7 +655,6 @@ class DialplanCompilerExtendedTest extends TestCase
         Tenant::create([
             'name' => 'Inactive Tenant',
             'domain' => 'inactive.example.com',
-            'slug' => 'inactive-tenant',
             'is_active' => false,
         ]);
 
@@ -417,7 +669,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 
@@ -448,7 +699,6 @@ class DialplanCompilerExtendedTest extends TestCase
         $tenant = Tenant::create([
             'name' => 'Test Tenant',
             'domain' => 'test.example.com',
-            'slug' => 'test-tenant',
             'is_active' => true,
         ]);
 

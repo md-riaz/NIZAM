@@ -5,6 +5,7 @@ namespace Tests\Unit\Services\Call;
 use App\Models\Agent;
 use App\Models\CallSession;
 use App\Models\Did;
+use App\Models\EndpointBinding;
 use App\Models\Extension;
 use App\Models\Flow;
 use App\Models\FlowEdge;
@@ -322,5 +323,37 @@ class DeliveryTargetResolverTest extends TestCase
         $this->assertSame('ring_group', $resolved->targets[0]->sourcePath[1]['type']);
         $this->assertSame('fallback', $resolved->targets[0]->sourcePath[1]['branch']);
         $this->assertSame('extension', $resolved->metadata['final_target_type']);
+    }
+
+    public function test_extension_resolution_keeps_follow_me_as_extension_target_for_orchestration(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $extension = Extension::factory()->create([
+            'tenant_id' => $tenant->id,
+            'extension' => '4001',
+            'follow_me_enabled' => true,
+            'follow_me_destination' => '+15551234567',
+            'is_active' => true,
+        ]);
+        EndpointBinding::factory()->forExtension($extension)->pstnForward()->create([
+            'tenant_id' => $tenant->id,
+            'forward_number' => '+15551234567',
+            'forward_requires_confirm' => true,
+        ]);
+        $callSession = CallSession::factory()->create([
+            'tenant_id' => $tenant->id,
+            'variables' => [
+                'nizam_delivery_target_type' => 'extension',
+                'nizam_delivery_target_id' => $extension->id,
+            ],
+        ]);
+
+        $resolved = app(DeliveryTargetResolver::class)->resolve($callSession);
+
+        $this->assertCount(1, $resolved->targets);
+        $this->assertSame('extension', $resolved->targets[0]->type);
+        $this->assertSame($extension->id, $resolved->targets[0]->id);
+        $this->assertSame('extension', $resolved->metadata['final_target_type']);
+        $this->assertArrayNotHasKey('bypass_reason', $resolved->metadata);
     }
 }

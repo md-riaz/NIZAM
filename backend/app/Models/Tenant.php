@@ -6,6 +6,7 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -42,7 +43,8 @@ class Tenant extends Model implements HasMedia
     protected $fillable = [
         'name',
         'domain',
-        'slug',
+        'default_schedule_id',
+        'default_holiday_calendar_id',
         'settings',
         'codec_policy',
         'max_extensions',
@@ -207,9 +209,19 @@ class Tenant extends Model implements HasMedia
         return $this->hasMany(HolidayCalendar::class);
     }
 
+    public function defaultHolidayCalendar(): BelongsTo
+    {
+        return $this->belongsTo(HolidayCalendar::class, 'default_holiday_calendar_id');
+    }
+
     public function schedules(): HasMany
     {
         return $this->hasMany(Schedule::class);
+    }
+
+    public function defaultSchedule(): BelongsTo
+    {
+        return $this->belongsTo(Schedule::class, 'default_schedule_id');
     }
 
     public function teams(): HasMany

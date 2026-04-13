@@ -28,7 +28,7 @@ class FlowCompilerSnapshotTest extends TestCase
         $this->tenant = Tenant::factory()->create(['domain' => 'snapshot.example.com']);
         $registry = new NodeSpecRegistry();
         $compiler = new FlowToIrCompiler($registry);
-        $this->artifactService = new FlowArtifactService($compiler);
+        $this->artifactService = new FlowArtifactService($compiler, app(\App\Services\Routing\RoutingGraphCompiler::class));
     }
 
     public function test_compiled_xml_matches_expected_snapshot(): void

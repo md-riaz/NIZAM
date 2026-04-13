@@ -86,17 +86,61 @@ return [
     | scanning all nwidart-registered modules for a class matching the
     | conventional path Modules\{Name}\{Name}Module that implements NizamModule.
     |
-    | Activation state (enabled/disabled) is managed exclusively by
+    | Activation state for nwidart modules is managed exclusively by
     | nwidart/laravel-modules via modules_statuses.json. Use:
     |
     |   php artisan module:enable  PbxRouting
     |   php artisan module:disable PbxRouting
+    |
+    | Built-in app-local modules are configured separately below with explicit
+    | enabled flags because they live inside app/Modules instead of nwidart.
     |
     | Then restart the application process for the change to take effect.
     | Core functionality (tenants, auth, extensions, event bus, dialplan
     | compiler, policy engine, FreeSWITCH adapter) is always active.
     |
     */
+    'app_local_modules' => [
+        'voicemail' => [
+            'enabled' => env('APP_LOCAL_MODULE_VOICEMAIL_ENABLED', true),
+        ],
+        'media-archive' => [
+            'enabled' => env('APP_LOCAL_MODULE_MEDIA_ARCHIVE_ENABLED', true),
+        ],
+        'messaging' => [
+            'enabled' => env('APP_LOCAL_MODULE_MESSAGING_ENABLED', true),
+        ],
+    ],
+
+    'bootstrap' => [
+        'default_timezone' => env('BOOTSTRAP_DEFAULT_TIMEZONE', 'Asia/Dhaka'),
+        'default_country' => env('BOOTSTRAP_DEFAULT_COUNTRY', 'Bangladesh'),
+        'business_hours' => [
+            'start' => env('BOOTSTRAP_BUSINESS_HOURS_START', '09:00'),
+            'end' => env('BOOTSTRAP_BUSINESS_HOURS_END', '17:00'),
+            'days' => [1, 2, 3, 4, 5],
+        ],
+        'service_codes' => [
+            'voicemail_main' => '*98',
+            'send_to_voicemail_prefix' => '*99',
+            'intercom_prefix' => '*8',
+            'paging_prefix' => '*80',
+            'dnd_on' => '*78',
+            'dnd_off' => '*79',
+            'call_return' => '*69',
+            'operator' => '0',
+            'pickup_direct_prefix' => '**',
+            'pickup_group' => '*8',
+            'park_auto' => '*5900',
+        ],
+        'parking' => [
+            'orbit_start' => 5901,
+            'orbit_end' => 5999,
+            'timeout' => 900,
+            'lot' => 'park',
+        ],
+    ],
+
 
     /*
     |--------------------------------------------------------------------------
@@ -124,6 +168,16 @@ return [
     'gateway_provisioning' => [
         'profile' => env('FREESWITCH_GATEWAY_PROFILE', 'external'),
         'external_directory' => env('FREESWITCH_GATEWAY_DIRECTORY', storage_path('app/freeswitch/sip_profiles/external')),
+    ],
+
+    'xml_cdr' => [
+        'enabled' => env('FREESWITCH_XML_CDR_ENABLED', false),
+        'directory' => env('FREESWITCH_XML_CDR_DIRECTORY', '/var/log/freeswitch/xml_cdr'),
+        'log_dir' => env('FREESWITCH_XML_CDR_LOG_DIR', env('FREESWITCH_XML_CDR_DIRECTORY', '/var/log/freeswitch/xml_cdr')),
+        'watcher' => env('FREESWITCH_XML_CDR_WATCHER', 'inotify'),
+        'poll_interval_seconds' => (int) env('FREESWITCH_XML_CDR_POLL_INTERVAL', 5),
+        'cleanup_on_success' => env('FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS', true),
+        'cleanup_after_ingest' => env('FREESWITCH_XML_CDR_CLEANUP_AFTER_INGEST', env('FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS', true)),
     ],
 
     'call_delivery' => [

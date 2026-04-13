@@ -17,6 +17,7 @@ services:
       - vendor_data:/var/www/html/vendor
       - ./backend/storage:/var/www/html/storage
       - freeswitch_logs:/var/log/freeswitch:ro
+      - freeswitch_xml_cdr:/var/log/freeswitch/xml_cdr
     networks:
       - app_net
     environment:
@@ -33,6 +34,12 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
       - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
+      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
+      - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_WATCHER=${FREESWITCH_XML_CDR_WATCHER:-inotify}
+      - FREESWITCH_XML_CDR_POLL_INTERVAL=${FREESWITCH_XML_CDR_POLL_INTERVAL:-5}
+      - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=${FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS:-true}
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
       - CACHE_STORE=${CACHE_STORE:-database}
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
@@ -157,6 +164,12 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
       - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
+      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
+      - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_WATCHER=${FREESWITCH_XML_CDR_WATCHER:-inotify}
+      - FREESWITCH_XML_CDR_POLL_INTERVAL=${FREESWITCH_XML_CDR_POLL_INTERVAL:-5}
+      - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=${FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS:-true}
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
       - CACHE_STORE=${CACHE_STORE:-database}
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
@@ -194,6 +207,62 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
       - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
+      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
+      - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_WATCHER=${FREESWITCH_XML_CDR_WATCHER:-inotify}
+      - FREESWITCH_XML_CDR_POLL_INTERVAL=${FREESWITCH_XML_CDR_POLL_INTERVAL:-5}
+      - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=${FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS:-true}
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+      - CACHE_STORE=${CACHE_STORE:-database}
+      - SESSION_DRIVER=${SESSION_DRIVER:-database}
+
+  xml-cdr-watcher:
+    image: php-app:${APP_IMAGE_TAG:-local}
+    container_name: xml-cdr-watcher
+    restart: unless-stopped
+    command: >-
+      sh -lc 'if php artisan list --raw | grep -q "^cdr:ingest-xml$"; then
+        exec php artisan cdr:ingest-xml;
+      else
+        echo "cdr:ingest-xml command is not available in this image yet";
+        tail -f /dev/null;
+      fi'
+    depends_on:
+      app:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/var/www/html
+      - vendor_data:/var/www/html/vendor
+      - ./backend/storage:/var/www/html/storage
+      - freeswitch_xml_cdr:/var/log/freeswitch/xml_cdr
+    networks:
+      - app_net
+    env_file: .env
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_URL=${APP_URL:-http://localhost:8231}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-communications}
+      - DB_USERNAME=${DB_USERNAME:-communications}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - FREESWITCH_HOST=freeswitch
+      - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
+      - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
+      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
+      - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
+      - FREESWITCH_XML_CDR_WATCHER=${FREESWITCH_XML_CDR_WATCHER:-inotify}
+      - FREESWITCH_XML_CDR_POLL_INTERVAL=${FREESWITCH_XML_CDR_POLL_INTERVAL:-5}
+      - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=${FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS:-true}
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
       - CACHE_STORE=${CACHE_STORE:-database}
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
@@ -219,6 +288,8 @@ volumes:
     name: certs_data
   freeswitch_logs:
     name: freeswitch_logs
+  freeswitch_xml_cdr:
+    name: freeswitch_xml_cdr
 
 networks:
   app_net:

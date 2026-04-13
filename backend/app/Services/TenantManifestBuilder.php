@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\FlowCompiledArtifact;
 use App\Models\Tenant;
 use App\Models\TenantDialplanManifest;
 use App\Services\DialplanCompiler;
@@ -39,11 +40,14 @@ class TenantManifestBuilder
             $xml .= $this->dialplanCompiler->compileLocalExtension($tenant, $extension);
         }
 
-        // 4. Add compiled Flow artifacts
-        $flowArtifacts = \App\Models\FlowCompiledArtifact::where('tenant_id', $tenant->id)
-            ->where('artifact_type', 'dialplan_xml')
+        // 4. Add compiled convenience and service-code routes
+        $xml .= $this->dialplanCompiler->compileConvenienceExtensions($tenant);
+
+        // 5. Add compiled Flow artifacts
+        $flowArtifacts = FlowCompiledArtifact::where('tenant_id', $tenant->id)
+            ->where('artifact_type', FlowCompiledArtifact::ARTIFACT_TYPE_DIALPLAN_XML)
             ->get();
-            
+
         foreach ($flowArtifacts as $artifact) {
             // artifact content is already a full document? We should only store the inner <extension>s.
             // But if it's a full document, we need to extract the inside of <context>.
@@ -51,7 +55,7 @@ class TenantManifestBuilder
             $xml .= $artifact->content."\n";
         }
 
-        // 5. Add Schedules (if we had a ScheduleCompiler that saved artifacts, or we compile them on the fly here)
+        // 6. Add Schedules (if we had a ScheduleCompiler that saved artifacts, or we compile them on the fly here)
         $schedules = $tenant->schedules()->get();
         $scheduleCompiler = app(\App\Services\Schedule\Compile\ScheduleCompiler::class);
         foreach ($schedules as $schedule) {

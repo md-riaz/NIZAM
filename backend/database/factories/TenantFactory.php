@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Tenant>
@@ -20,7 +19,6 @@ class TenantFactory extends Factory
         return [
             'name' => $company,
             'domain' => fake()->unique()->domainName(),
-            'slug' => Str::slug($company).'-'.fake()->unique()->randomNumber(4),
             'settings' => [],
             'max_extensions' => fake()->numberBetween(1, 100),
             'max_concurrent_calls' => 0,

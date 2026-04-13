@@ -69,6 +69,11 @@ return [
 
     ],
 
+    'archive' => [
+        'default_driver' => env('RECORDING_ARCHIVE_DRIVER', 'local'),
+        'recordings_prefix' => env('RECORDING_ARCHIVE_PREFIX', 'archive/recordings'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Symbolic Links

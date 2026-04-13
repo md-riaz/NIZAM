@@ -33,10 +33,11 @@ class WebRtcConfigService
 
         $tlsEnabled = ($enabledSettings['tls'] ?? null) === 'true';
         $tlsSipPort = (string) ($enabledSettings['tls-sip-port'] ?? '');
+        $dtlsSrtpEnabled = ($enabledSettings['dtls-srtp'] ?? null) === 'true';
 
         // WebRTC is enabled if WSS is active (requires TLS/certs) OR if plain WS is active.
         // If only plain WS is enabled, we don't force a WSS/TLS requirement.
-        $webrtcEnabled = ($wssBinding !== '' && (($enabledSettings['dtls-srtp'] ?? null) === 'true'))
+        $webrtcEnabled = ($wssBinding !== '' && $dtlsSrtpEnabled)
             || $wsBinding !== '';
 
         $wssPort = $this->extractPort($wssBinding) ?? ($webrtcConfig['wss_port'] ?? 7443);
@@ -52,17 +53,30 @@ class WebRtcConfigService
 
         // Protocol determination: prefer WSS if available, fallback to WS
         $wsUrl = null;
+        $websocketTransport = null;
         if ($webrtcEnabled) {
+            $websocketTransport = $wssBinding !== '' ? 'WSS' : 'WS';
             $wsUrl = ($wssBinding !== '')
                 ? sprintf('wss://%s:%s', $host, $wssPort)
                 : sprintf('ws://%s:%s', $host, $wsPort);
         }
 
-        // Derive available SIP transports from profile settings
-        $transports = ['UDP', 'TCP'];
-        if ($tlsEnabled && $tlsSipPort !== '') {
-            $transports[] = 'TLS';
+        // Derive available SIP transports from profile settings.
+        $legacyTransports = ['UDP', 'TCP'];
+        $softphoneTransports = [];
+
+        if ($websocketTransport !== null) {
+            $softphoneTransports[] = $websocketTransport;
         }
+
+        if ($tlsEnabled && $tlsSipPort !== '') {
+            $legacyTransports[] = 'TLS';
+            $softphoneTransports[] = 'TLS';
+        }
+
+        $softphoneTransports[] = 'TCP';
+        $softphoneTransports[] = 'UDP';
+        $softphoneTransports = array_values(array_unique($softphoneTransports));
 
         $iceServers = [];
 
@@ -84,11 +98,25 @@ class WebRtcConfigService
             $iceServers[] = $turnEntry;
         }
 
+        $codecPrefs = array_values(array_filter(array_map(
+            static fn (string $codec): string => trim($codec),
+            explode(',', $enabledSettings['inbound-codec-prefs'] ?? ($webrtcConfig['codec_prefs'] ?? 'OPUS,PCMU,PCMA,G722')),
+        )));
+
+        $mobilePush = [
+            'driver' => (string) config('telephony.push_driver', 'log'),
+            'enabled' => $this->mobilePushConfigured(),
+            'providers' => [
+                'apns' => $this->apnsConfigured(),
+                'fcm' => $this->fcmConfigured(),
+            ],
+        ];
+
         return [
             'enabled' => $webrtcEnabled,
             'websocket_url' => $wsUrl,
             'sip_server' => sprintf('%s:%s', $host, $sipPort),
-            'sip_transport' => implode(' / ', $transports),
+            'sip_transport' => implode(' / ', $legacyTransports),
             'sip_tls_server' => ($tlsEnabled && $tlsSipPort !== '')
                 ? sprintf('%s:%s', $host, $tlsSipPort)
                 : null,
@@ -99,13 +127,48 @@ class WebRtcConfigService
             'sip_realm' => $extension->tenant->domain,
             'display_name' => trim(($extension->directory_first_name ?? '').' '.($extension->directory_last_name ?? '')),
             'ice_servers' => $iceServers,
-            'codec_prefs' => explode(',', $enabledSettings['inbound-codec-prefs'] ?? ($webrtcConfig['codec_prefs'] ?? 'OPUS,PCMU,PCMA,G722')),
+            'codec_prefs' => $codecPrefs,
             'source_profile' => 'internal',
+            'endpoint_strategy' => [
+                'primary' => $webrtcEnabled ? 'webrtc' : 'softphone',
+                'secondary' => $webrtcEnabled ? 'softphone' : 'hardware',
+                'hardware_provisioning' => 'optional',
+                'recommended_clients' => $webrtcEnabled
+                    ? ['webrtc', 'softphone', 'mobile_push']
+                    : ['softphone', 'hardware'],
+            ],
+            'client_profiles' => [
+                'webrtc' => [
+                    'enabled' => $webrtcEnabled,
+                    'websocket_url' => $wsUrl,
+                    'transport' => $websocketTransport,
+                    'ice_servers' => $iceServers,
+                    'dtls_srtp' => $dtlsSrtpEnabled,
+                ],
+                'softphone' => [
+                    'enabled' => true,
+                    'recommended' => true,
+                    'preferred_transport' => $softphoneTransports[0] ?? 'TCP',
+                    'transports' => $softphoneTransports,
+                    'sip_server' => sprintf('%s:%s', $host, $sipPort),
+                    'sip_tls_server' => ($tlsEnabled && $tlsSipPort !== '')
+                        ? sprintf('%s:%s', $host, $tlsSipPort)
+                        : null,
+                ],
+                'hardware' => [
+                    'enabled' => true,
+                    'recommended' => false,
+                    'provisioning' => 'optional',
+                    'sip_server' => sprintf('%s:%s', $host, $sipPort),
+                ],
+                'mobile_push' => $mobilePush,
+            ],
+            'mobile_push' => $mobilePush,
             'transport' => [
                 'ws_binding' => $wsBinding !== '' ? $wsBinding : null,
                 'wss_binding' => $wssBinding !== '' ? $wssBinding : null,
                 'tls_cert_dir' => $enabledSettings['tls-cert-dir'] ?? null,
-                'dtls_srtp' => ($enabledSettings['dtls-srtp'] ?? null) === 'true',
+                'dtls_srtp' => $dtlsSrtpEnabled,
                 'enable_ice' => ($enabledSettings['enable-ice'] ?? null) === 'true',
                 'tls_version' => $enabledSettings['tls-version'] ?? null,
             ],
@@ -121,5 +184,24 @@ class WebRtcConfigService
         $port = ltrim($binding, ':');
 
         return ctype_digit($port) ? (int) $port : null;
+    }
+
+    protected function mobilePushConfigured(): bool
+    {
+        return $this->apnsConfigured() || $this->fcmConfigured();
+    }
+
+    protected function apnsConfigured(): bool
+    {
+        return filled(config('telephony.push.apns.key_id'))
+            && filled(config('telephony.push.apns.team_id'))
+            && filled(config('telephony.push.apns.bundle_id'))
+            && (filled(config('telephony.push.apns.private_key')) || filled(config('telephony.push.apns.private_key_path')));
+    }
+
+    protected function fcmConfigured(): bool
+    {
+        return filled(config('telephony.push.fcm.project_id'))
+            && (filled(config('telephony.push.fcm.service_account_json')) || filled(config('telephony.push.fcm.service_account_path')));
     }
 }

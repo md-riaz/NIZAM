@@ -20,7 +20,6 @@ class UpdateTenantRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'domain' => 'required|string|unique:tenants,domain,'.$tenantId,
-            'slug' => 'required|string|alpha_dash|unique:tenants,slug,'.$tenantId,
             'max_extensions' => 'integer|min:0',
             'max_concurrent_calls' => 'integer|min:0',
             'max_dids' => 'integer|min:0',

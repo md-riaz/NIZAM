@@ -29,7 +29,7 @@ class FlowPublishServiceTest extends TestCase
         $this->tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
         $registry = new NodeSpecRegistry();
         $compiler = new FlowToIrCompiler($registry);
-        $artifactService = new FlowArtifactService($compiler);
+        $artifactService = new FlowArtifactService($compiler, app(\App\Services\Routing\RoutingGraphCompiler::class));
         $manifestBuilder = new TenantManifestBuilder(app(\App\Services\DialplanCompiler::class));
         $this->publishService = new FlowPublishService($artifactService, $manifestBuilder);
     }
@@ -54,12 +54,29 @@ class FlowPublishServiceTest extends TestCase
             'type' => 'schedule_check',
             'config_json' => ['schedule_id' => 1],
         ]);
+        $hangupNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'hangup',
+            'config_json' => [],
+        ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'source_node_id' => $startNode->id,
             'target_node_id' => $scheduleCheckNode->id,
             'condition' => 'next',
+        ]);
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $scheduleCheckNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'open',
+        ]);
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $scheduleCheckNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'closed',
         ]);
 
         $result = $this->publishService->publish($flowVersion);
@@ -130,12 +147,29 @@ class FlowPublishServiceTest extends TestCase
             'type' => 'schedule_check',
             'config_json' => ['schedule_id' => 1],
         ]);
+        $hangupNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'hangup',
+            'config_json' => [],
+        ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'source_node_id' => $startNode->id,
             'target_node_id' => $scheduleCheckNode->id,
             'condition' => 'next',
+        ]);
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $scheduleCheckNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'open',
+        ]);
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $scheduleCheckNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'closed',
         ]);
 
         // Publish first

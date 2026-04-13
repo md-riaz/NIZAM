@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\ArchiveCallRecording;
 use App\Models\Agent;
 use App\Models\Extension;
 use App\Models\Gateway;
@@ -14,8 +15,13 @@ use App\Models\ScheduleBreak;
 use App\Models\ScheduleException;
 use App\Models\ScheduleRule;
 use App\Modules\Contracts\NizamModule as NizamModuleContract;
+use App\Modules\Media\MediaArchiveModule;
+use App\Modules\Messaging\MessagingModule;
 use App\Modules\ModuleRegistry;
+use App\Modules\Voicemail\VoicemailModule;
 use App\Observers\AgentObserver;
+use App\Services\Storage\LocalFileSystemDriver;
+use App\Services\Storage\StorageDriver;
 use App\Observers\ExtensionObserver;
 use App\Observers\GatewayObserver;
 use App\Observers\HolidayCalendarObserver;
@@ -52,6 +58,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(EslConnectionManager::class, fn () => EslConnectionManager::fromConfig());
         $this->app->bind(OfferCommandDispatcher::class, FreeSwitchOfferCommandDispatcher::class);
+        $this->app->singleton(StorageDriver::class, fn () => new LocalFileSystemDriver);
+        $this->app->singleton(VoicemailModule::class, fn () => new VoicemailModule($this->app->make(\App\Modules\Voicemail\VoicemailEventService::class)));
+        $this->app->singleton(MediaArchiveModule::class, fn () => new MediaArchiveModule(app(StorageDriver::class)));
+        $this->app->singleton(MessagingModule::class, fn () => new MessagingModule);
 
         $this->app->singleton(ModuleRegistry::class, function () {
             $registry = new ModuleRegistry;
@@ -66,6 +76,8 @@ class AppServiceProvider extends ServiceProvider
                 $module = $this->app->make($class);
                 $registry->register($module, $this->nwidartIsEnabled($module->name()));
             }
+
+            $this->registerBuiltInAppLocalModules($registry);
 
             return $registry;
         });
@@ -102,10 +114,66 @@ class AppServiceProvider extends ServiceProvider
         ScheduleException::observe(ScheduleExceptionObserver::class);
         HolidayCalendar::observe(HolidayCalendarObserver::class);
         Holiday::observe(HolidayObserver::class);
+        \App\Models\Did::observe(\App\Observers\DidObserver::class);
+        \App\Models\RingGroup::observe(\App\Observers\RingGroupObserver::class);
+        \App\Models\Ivr::observe(\App\Observers\IvrObserver::class);
+        \App\Models\TimeCondition::observe(\App\Observers\TimeConditionObserver::class);
+        \App\Models\CallRoutingPolicy::observe(\App\Observers\CallRoutingPolicyObserver::class);
+        \App\Models\Team::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\User::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\Schedule::observe(\App\Observers\ScheduleObserver::class);
+        \App\Models\ScheduleRule::observe(\App\Observers\ScheduleRuleObserver::class);
+        \App\Models\ScheduleBreak::observe(\App\Observers\ScheduleBreakObserver::class);
+        \App\Models\ScheduleException::observe(\App\Observers\ScheduleExceptionObserver::class);
+        \App\Models\HolidayCalendar::observe(\App\Observers\HolidayCalendarObserver::class);
+        \App\Models\Holiday::observe(\App\Observers\HolidayObserver::class);
+        \App\Models\Extension::observe(\App\Observers\ExtensionObserver::class);
+        \App\Models\Gateway::observe(\App\Observers\GatewayObserver::class);
+        \App\Models\Queue::observe(\App\Observers\QueueObserver::class);
+        \App\Models\QueueEntry::observe(\App\Observers\QueueEntryObserver::class);
+        \App\Models\Agent::observe(\App\Observers\AgentObserver::class);
+        \App\Models\TeamMember::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\QueueMember::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\Recording::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\Flow::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\FlowVersion::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\FlowNode::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\FlowEdge::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\FlowCompiledArtifact::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\Tenant::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\Bridge::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\DeviceProfile::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\SipProfile::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\EndpointBinding::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\DeviceRegistrationSnapshot::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\Webhook::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\WebhookDeliveryAttempt::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\CallDeliveryAttempt::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\CallSession::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\CallEventLog::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\TenantDialplanManifest::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\QueueMetric::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\WallboardAgentProjection::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\WallboardQueueProjection::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\AnalyticsEvent::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\UsageRecord::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\Alert::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\AlertPolicy::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\BlockedDestination::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\CdrEnrichment::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\CallTraceEvent::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\Permission::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\AuditLog::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\PushNotificationLog::observe(\App\Observers\ScheduleChildObserver::class);
 
         Event::listen(
             CallDetailRecordCreated::class,
             EnrichCallDetailRecord::class,
+        );
+
+        Event::listen(
+            CallDetailRecordCreated::class,
+            ArchiveCallRecording::class,
         );
 
         Event::listen(
@@ -198,5 +266,35 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         return false; // fail-closed: unregistered modules must not execute telecom hooks
+    }
+
+    /**
+     * Register built-in app-local modules with explicit config-driven enabled state.
+     *
+     * These modules live in app/Modules but still flow through the same registry
+     * bootstrap path as nwidart modules, which keeps event wiring deterministic.
+     */
+    public function registerBuiltInAppLocalModules(ModuleRegistry $registry): void
+    {
+        foreach ($this->builtInAppLocalModules() as $name => $class) {
+            $registry->register($this->app->make($class), $this->builtInAppLocalModuleIsEnabled($name));
+        }
+    }
+
+    /**
+     * @return array<string, class-string<NizamModuleContract>>
+     */
+    public function builtInAppLocalModules(): array
+    {
+        return [
+            'voicemail' => VoicemailModule::class,
+            'media-archive' => MediaArchiveModule::class,
+            'messaging' => MessagingModule::class,
+        ];
+    }
+
+    public function builtInAppLocalModuleIsEnabled(string $moduleName): bool
+    {
+        return (bool) config("telephony.app_local_modules.{$moduleName}.enabled", false);
     }
 }
