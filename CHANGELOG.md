@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-04-14]
+
+### Changed
+- **Frontend Branding:** Replaced hardcoded project branding in the login page, document title, and meta description with Vite environment-driven branding values (`VITE_APP_NAME`, `VITE_APP_TAGLINE`, `VITE_APP_DESCRIPTION`, `VITE_LOGIN_EMAIL_PLACEHOLDER`).
+- **Browser Storage Keys:** Centralized frontend storage key generation behind a shared branding config so auth, tenant selection, and theme persistence no longer depend on project-name-specific localStorage keys.
+- **Admin Labels:** Clarified account labeling in the admin shell so global admins display as **Platform Admin** and tenant-bound admins display as **Tenant Admin** while preserving existing superadmin access rules.
+
+---
+
 ## [2026-04-11]
 
 ### Added
