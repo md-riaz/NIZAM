@@ -51,6 +51,14 @@ RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction
 # Copy full application source (vendor/ is in .dockerignore — safe to overlay)
 COPY . .
 
+# Laravel expects writable/cache directories to exist before artisan scripts run.
+RUN mkdir -p \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache
+
 # Generate optimised classmap and run post-install scripts (package:discover)
 RUN composer dump-autoload --optimize --no-interaction
 

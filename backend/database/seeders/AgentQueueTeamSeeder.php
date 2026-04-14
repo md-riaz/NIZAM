@@ -13,7 +13,7 @@ class AgentQueueTeamSeeder extends Seeder
 {
     public function run(): void
     {
-        $tenant = Tenant::where('slug', 'app-communications')->first();
+        $tenant = Tenant::where('domain', env('ADMIN_TENANT_DOMAIN', 'app.local'))->first();
 
         if (!$tenant) {
             $this->command->error('Tenant not found. Run DatabaseSeeder first.');

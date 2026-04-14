@@ -53,7 +53,7 @@ services:
       - "${FREESWITCH_EXTERNAL_SIP_PORT:-5080}:5080/tcp"
       - "${FREESWITCH_WSS_PORT:-7443}:7443/tcp"
       - "127.0.0.1:${FREESWITCH_ESL_PORT:-8021}:8021"
-      - "${FREESWITCH_RTP_PORT_RANGE:-16384-32768}:16384-32768/udp"
+      - "${RTP_PORT_RANGE_START:-16384}-${RTP_PORT_RANGE_END:-16484}:${RTP_PORT_RANGE_START:-16384}-${RTP_PORT_RANGE_END:-16484}/udp"
     volumes:
       - freeswitch_data:/var/lib/freeswitch
       - freeswitch_logs:/var/log/freeswitch

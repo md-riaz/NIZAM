@@ -17,11 +17,11 @@ class GraphFlowDemoSeeder extends Seeder
 {
     public function run(): void
     {
+        $demoDomain = 'graph-demo.app.local';
         $tenant = Tenant::updateOrCreate(
-            ['slug' => 'nizam-graph-demo'],
+            ['domain' => $demoDomain],
             [
-                'name' => 'NIZAM Graph Demo',
-                'domain' => 'graph-demo.nizam.local',
+                'name' => 'Graph Demo',
                 'settings' => ['default_country_code' => '1'],
                 'is_active' => true,
                 'status' => Tenant::STATUS_ACTIVE,

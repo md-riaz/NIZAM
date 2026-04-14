@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Bootstrap the NIZAM platform with a superadmin account
+     * Bootstrap platform with a superadmin account
      * and a default tenant with production-ready seed data.
      */
     public function run(): void
@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         // ──────────────────────────────────────────────
         // 1. Platform Superadmin (tenant-agnostic)
         // ──────────────────────────────────────────────
-        $systemDomain = env('ADMIN_TENANT_DOMAIN', 'nizam.io');
+        $systemDomain = env('ADMIN_TENANT_DOMAIN', 'app.local');
         User::updateOrCreate(
             ['email' => "system@{$systemDomain}"],
             [
@@ -40,13 +40,13 @@ class DatabaseSeeder extends Seeder
         );
 
         // ──────────────────────────────────────────────
-        // 2. Default Tenant — "Nizam Communications"
+        // 2. Default Tenant
         // ──────────────────────────────────────────────
+        $tenantDomain = env('ADMIN_TENANT_DOMAIN', 'app.local');
         $tenant = Tenant::updateOrCreate(
-            ['slug' => env('ADMIN_TENANT_SLUG', 'nizam-communications')],
+            ['domain' => $tenantDomain],
             [
-                'name'           => env('ADMIN_TENANT_NAME', 'Nizam Communications'),
-                'domain'         => env('ADMIN_TENANT_DOMAIN', 'nizam.local'),
+                'name'           => env('ADMIN_TENANT_NAME', ucfirst(strtok($tenantDomain, '.')) ?: 'Default Tenant'),
                 'settings'       => [],
                 'max_extensions' => 100,
                 'is_active'      => true,
@@ -57,7 +57,7 @@ class DatabaseSeeder extends Seeder
         // 3. Tenant Admin User
         // ──────────────────────────────────────────────
         User::updateOrCreate(
-            ['email' => env('ADMIN_EMAIL', 'admin@nizam.io')],
+            ['email' => env('ADMIN_EMAIL', 'admin@app.local')],
             [
                 'name'      => env('ADMIN_NAME', 'App Administrator'),
                 'password'  => env('ADMIN_PASSWORD', 'password'),
@@ -90,7 +90,7 @@ class DatabaseSeeder extends Seeder
                     'directory_last_name'         => $last,
                     'effective_caller_id_name'    => "$first $last",
                     'effective_caller_id_number'  => $ext,
-                    'outbound_caller_id_name'     => 'Nizam Communications',
+                    'outbound_caller_id_name'     => $tenant->name,
                     'outbound_caller_id_number'   => '+8801700000001',
                     'voicemail_enabled'           => true,
                     'voicemail_pin'               => substr(str_shuffle('123456789'), 0, 4),
@@ -135,8 +135,8 @@ class DatabaseSeeder extends Seeder
         $mainIvr = Ivr::firstOrCreate(
             ['tenant_id' => $tenant->id, 'name' => 'Main Auto-Attendant'],
             [
-                'greet_long'   => 'ivr/nizam_welcome.wav',
-                'greet_short'  => 'ivr/nizam_welcome_short.wav',
+                'greet_long'   => 'ivr/welcome.wav',
+                'greet_short'  => 'ivr/welcome_short.wav',
                 'timeout'      => 5,
                 'max_failures' => 3,
                 'options'       => [
@@ -329,7 +329,7 @@ class DatabaseSeeder extends Seeder
         // 11. Webhooks — Event Integrations
         // ──────────────────────────────────────────────
         Webhook::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'url' => 'https://nizam.local/api/webhooks/calls'],
+            ['tenant_id' => $tenant->id, 'url' => sprintf('https://%s/api/webhooks/calls', $tenantDomain)],
             [
                 'events'      => ['call.created', 'call.answered', 'call.hangup'],
                 'secret'      => bin2hex(random_bytes(16)),

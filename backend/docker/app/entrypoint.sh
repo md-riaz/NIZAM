@@ -9,6 +9,13 @@ ENV_FILE="$APP_ROOT/.env"
 VITE_HOT_FILE="$APP_ROOT/public/hot"
 VITE_MANIFEST="$APP_ROOT/public/build/manifest.json"
 
+mkdir -p \
+    "$APP_ROOT/storage/framework/cache/data" \
+    "$APP_ROOT/storage/framework/sessions" \
+    "$APP_ROOT/storage/framework/views" \
+    "$APP_ROOT/storage/logs" \
+    "$APP_ROOT/bootstrap/cache"
+
 chown -R www-data:www-data \
     "$APP_ROOT/storage" \
     "$APP_ROOT/bootstrap/cache"

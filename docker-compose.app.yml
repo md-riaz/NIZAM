@@ -16,7 +16,7 @@ services:
       - ./backend:/var/www/html
       - vendor_data:/var/www/html/vendor
       - ./backend/storage:/var/www/html/storage
-      - freeswitch_logs:/var/log/freeswitch:ro
+      - freeswitch_logs:/var/log/freeswitch
       - freeswitch_xml_cdr:/var/log/freeswitch/xml_cdr
     networks:
       - app_net

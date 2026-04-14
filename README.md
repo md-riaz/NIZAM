@@ -431,7 +431,6 @@ The API will be available at `http://localhost:8231/api/v1` by default.
 | `ADMIN_EMAIL` | blank | Required in production if you want `db:seed` to create the first admin |
 | `ADMIN_PASSWORD` | blank | Required in production if you want `db:seed` to create the first admin |
 | `ADMIN_TENANT_NAME` | `Demo Company` | Tenant name created by the bootstrap seeder |
-| `ADMIN_TENANT_SLUG` | `demo-company` | Tenant slug created by the bootstrap seeder |
 | `ADMIN_TENANT_DOMAIN` | `demo.app.local` | Tenant domain created by the bootstrap seeder |
 | `DB_CONNECTION` | `pgsql` | Database driver |
 | `DB_HOST` | `127.0.0.1` | Database host |
