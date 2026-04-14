@@ -8,6 +8,7 @@ import {
     type ReactNode,
 } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { getStoredValue, removeStoredValue, setStoredValue } from '@/lib/branding';
 import api from '@/lib/api';
 import type { Tenant } from '@/types/models';
 import { useAuth } from './AuthContext';
@@ -48,7 +49,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!activeTenant && tenants.length > 0) {
             // Try to restore from localStorage
-            const storedId = localStorage.getItem('nizam_active_tenant');
+            const storedId = getStoredValue('activeTenant');
             const restored = storedId
                 ? tenants.find((t) => String(t.id) === storedId)
                 : null;
@@ -65,9 +66,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     const switchTenant = useCallback((tenant: Tenant | null) => {
         setActiveTenant(tenant);
         if (tenant) {
-            localStorage.setItem('nizam_active_tenant', String(tenant.id));
+            setStoredValue('activeTenant', String(tenant.id));
         } else {
-            localStorage.removeItem('nizam_active_tenant');
+            removeStoredValue('activeTenant');
         }
     }, []);
 

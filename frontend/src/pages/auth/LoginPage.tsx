@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
+import { branding } from '@/lib/branding';
 import { LoginRequestSchema, type ApiError, type LoginRequest } from '@/types/auth';
 
 export default function LoginPage() {
@@ -57,10 +58,10 @@ export default function LoginPage() {
                         <Shield className="size-8 text-primary" />
                     </div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                        NIZAM
+                        {branding.appName}
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Communications Control Plane
+                        {branding.appTagline}
                     </p>
                 </div>
 
@@ -85,7 +86,7 @@ export default function LoginPage() {
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="admin@nizam.io"
+                                    placeholder={branding.loginEmailPlaceholder}
                                     autoComplete="email"
                                     autoFocus
                                     aria-invalid={!!errors.email}
@@ -135,7 +136,7 @@ export default function LoginPage() {
                 </Card>
 
                 <p className="mt-6 text-center text-xs text-muted-foreground">
-                    NIZAM v1.0 &middot; Open Communications Control Platform
+                    {branding.appName} &middot; {branding.appDescription}
                 </p>
             </div>
         </div>

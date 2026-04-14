@@ -42,6 +42,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AuthContext';
 import { useTenant } from '@/context/TenantContext';
+import { branding, setStoredValue } from '@/lib/branding';
 import { cn } from '@/lib/utils';
 
 // ─── Navigation Structure (Stitch Design) ────────────────────
@@ -123,10 +124,7 @@ const NAV_SECTIONS: NavSection[] = [
 export default function SuperadminLayout() {
     const { user, logout } = useAuth();
     const { tenants, activeTenant, switchTenant } = useTenant();
-    const env = (import.meta as ImportMeta & {
-        env?: Record<string, string | undefined>;
-    }).env ?? {};
-    const platformName = env.VITE_APP_NAME ?? 'Communications Platform';
+    const platformName = branding.appName;
     const location = useLocation();
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState(false);
@@ -137,6 +135,11 @@ export default function SuperadminLayout() {
 
     const isSuperadmin = user?.role === 'admin' && !user?.tenant_id;
     const isAdmin = user?.role === 'admin';
+    const roleLabel = isSuperadmin
+        ? 'Platform Admin'
+        : isAdmin
+            ? 'Tenant Admin'
+            : user?.role ?? 'User';
 
     const filteredSections = NAV_SECTIONS.map((section) => ({
         ...section,
@@ -152,8 +155,7 @@ export default function SuperadminLayout() {
         const next = !isDark;
         setIsDark(next);
         document.documentElement.classList.toggle('dark', next);
-        const themeKey = 'platform-theme';
-        localStorage.setItem(themeKey, next ? 'dark' : 'light');
+        setStoredValue('theme', next ? 'dark' : 'light');
     };
 
     const handleLogout = async () => {
@@ -313,7 +315,7 @@ export default function SuperadminLayout() {
                                         {user?.name}
                                     </p>
                                     <p className="truncate text-[10px] text-muted-foreground">
-                                        {user?.role}
+                                        {roleLabel}
                                     </p>
                                 </div>
                             </button>

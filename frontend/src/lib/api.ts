@@ -1,4 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { getStoredValue, removeStoredValue } from '@/lib/branding';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8231/api/v1',
@@ -10,7 +11,7 @@ const api = axios.create({
 
 // ─── Request Interceptor: Attach Bearer Token ────────────────
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('nizam_token');
+    const token = getStoredValue('token');
     if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -22,7 +23,7 @@ api.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
         if (error.response?.status === 401) {
-            localStorage.removeItem('nizam_token');
+            removeStoredValue('token');
             // Only redirect if not already on login
             if (!window.location.pathname.startsWith('/login')) {
                 window.location.href = '/login';

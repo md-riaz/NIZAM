@@ -7,6 +7,7 @@ import { Navigate, Route, RouterProvider, createBrowserRouter, createRoutesFromE
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { TenantProvider } from '@/context/TenantContext';
+import { branding, getStoredValue } from '@/lib/branding';
 import { queryClient } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -203,6 +204,8 @@ const router = createBrowserRouter(
 // ─── App ─────────────────────────────────────────────────────
 
 function App() {
+    document.title = `${branding.appName} — ${branding.appTagline}`;
+
     return (
         <Suspense fallback={<PageLoader />}>
             <RouterProvider router={router} />
@@ -214,8 +217,7 @@ function App() {
 
 const rootEl = document.getElementById('app');
 if (rootEl) {
-    const themeKey = 'platform-theme';
-    const storedTheme = localStorage.getItem(themeKey);
+    const storedTheme = getStoredValue('theme');
     if (storedTheme === 'dark') {
         document.documentElement.classList.add('dark');
     }

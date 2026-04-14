@@ -8,6 +8,7 @@ import {
     type ReactNode,
 } from 'react';
 import api from '@/lib/api';
+import { getStoredValue, removeStoredValue, setStoredValue } from '@/lib/branding';
 import type { AuthResponse, LoginRequest, User } from '@/types/auth';
 
 // ─── Context Shape ───────────────────────────────────────────
@@ -28,7 +29,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(
-        () => localStorage.getItem('nizam_token'),
+        () => getStoredValue('token'),
     );
     const [isLoading, setIsLoading] = useState(true);
 
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         api.get<{ user: User }>('auth/me')
             .then((res) => setUser(res.data.user))
             .catch(() => {
-                localStorage.removeItem('nizam_token');
+                removeStoredValue('token');
                 setToken(null);
             })
             .finally(() => setIsLoading(false));
@@ -50,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = useCallback(async (credentials: LoginRequest) => {
         const { data } = await api.post<AuthResponse>('auth/login', credentials);
-        localStorage.setItem('nizam_token', data.token);
+        setStoredValue('token', data.token);
         setToken(data.token);
         setUser(data.user);
     }, []);
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             await api.post('auth/logout');
         } finally {
-            localStorage.removeItem('nizam_token');
+            removeStoredValue('token');
             setToken(null);
             setUser(null);
         }
