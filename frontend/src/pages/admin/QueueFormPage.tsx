@@ -45,7 +45,7 @@ export default function QueueFormPage() {
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
-    const { currentTenant } = useTenant();
+    const { activeTenant } = useTenant();
 
     const form = useForm<QueueFormValues>({
         resolver: zodResolver(queueSchema),
@@ -62,13 +62,13 @@ export default function QueueFormPage() {
     });
 
     const { data: queue, isLoading: isFetching } = useQuery({
-        queryKey: ['queue', currentTenant?.id, id],
+        queryKey: ['queue', activeTenant?.id, id],
         queryFn: async () => {
-            if (!currentTenant) return null;
-            const response = await api.get(`tenants/${currentTenant.id}/queues/${id}`);
+            if (!activeTenant) return null;
+            const response = await api.get(`tenants/${activeTenant.id}/queues/${id}`);
             return response.data.data;
         },
-        enabled: isEdit && !!currentTenant,
+        enabled: isEdit && !!activeTenant,
     });
 
     useEffect(() => {
@@ -88,18 +88,18 @@ export default function QueueFormPage() {
 
     const mutation = useApiMutation({
         mutationFn: async (values: QueueFormValues) => {
-            if (!currentTenant) throw new Error('No active tenant');
+            if (!activeTenant) throw new Error('No active tenant');
             if (isEdit) {
-                return api.put(`tenants/${currentTenant.id}/queues/${id}`, values);
+                return api.put(`tenants/${activeTenant.id}/queues/${id}`, values);
             }
-            return api.post(`tenants/${currentTenant.id}/queues`, values);
+            return api.post(`tenants/${activeTenant.id}/queues`, values);
         },
         successMessage: `Queue ${isEdit ? 'updated' : 'created'} successfully`,
-        invalidateQueries: [['queues', currentTenant?.id || '']],
+        invalidateQueries: [['queues', activeTenant?.id || '']],
         onSuccess: () => navigate('/admin/queues'),
     });
 
-    if (!currentTenant) return null;
+    if (!activeTenant) return null;
 
     const currentOverflowAction = form.watch('overflow_action');
 

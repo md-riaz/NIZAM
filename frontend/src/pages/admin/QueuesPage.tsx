@@ -29,30 +29,30 @@ interface Queue {
 }
 
 export default function QueuesPage() {
-    const { currentTenant } = useTenant();
+    const { activeTenant } = useTenant();
     const { user } = useAuth();
     const [queueToDelete, setQueueToDelete] = useState<Queue | null>(null);
 
     const { data: queues = [], isLoading } = useQuery<Queue[]>({
-        queryKey: ['queues', currentTenant?.id],
+        queryKey: ['queues', activeTenant?.id],
         queryFn: async () => {
-            if (!currentTenant) return [];
-            const response = await api.get(`tenants/${currentTenant.id}/queues`);
+            if (!activeTenant) return [];
+            const response = await api.get(`tenants/${activeTenant.id}/queues`);
             return response.data.data;
         },
-        enabled: !!currentTenant,
+        enabled: !!activeTenant,
     });
 
     const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
-            await api.delete(`tenants/${currentTenant?.id}/queues/${id}`);
+            await api.delete(`tenants/${activeTenant?.id}/queues/${id}`);
         },
         successMessage: 'Queue deleted successfully',
-        invalidateQueries: [['queues', currentTenant?.id || '']],
+        invalidateQueries: [['queues', activeTenant?.id || '']],
         onSettled: () => setQueueToDelete(null),
     });
 
-    if (!currentTenant) return null;
+    if (!activeTenant) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">

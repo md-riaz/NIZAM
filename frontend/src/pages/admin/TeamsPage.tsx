@@ -30,30 +30,30 @@ interface Team {
 }
 
 export default function TeamsPage() {
-    const { currentTenant } = useTenant();
+    const { activeTenant } = useTenant();
     const { user } = useAuth();
     const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
     const { data: teams = [], isLoading } = useQuery<Team[]>({
-        queryKey: ['teams', currentTenant?.id],
+        queryKey: ['teams', activeTenant?.id],
         queryFn: async () => {
-            if (!currentTenant) return [];
-            const response = await api.get(`tenants/${currentTenant.id}/teams`);
+            if (!activeTenant) return [];
+            const response = await api.get(`tenants/${activeTenant.id}/teams`);
             return response.data.data;
         },
-        enabled: !!currentTenant,
+        enabled: !!activeTenant,
     });
 
     const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
-            await api.delete(`tenants/${currentTenant?.id}/teams/${id}`);
+            await api.delete(`tenants/${activeTenant?.id}/teams/${id}`);
         },
         successMessage: 'Team deleted successfully',
-        invalidateQueries: [['teams', currentTenant?.id || '']],
+        invalidateQueries: [['teams', activeTenant?.id || '']],
         onSettled: () => setTeamToDelete(null),
     });
 
-    if (!currentTenant) return null;
+    if (!activeTenant) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">

@@ -3,7 +3,6 @@ import {
     AlertCircle,
     ArrowDownZA,
     ArrowUpAZ,
-    Download,
     FileText,
     Radio,
     RefreshCw,
@@ -264,10 +263,6 @@ export default function LogViewerPage() {
                                         <span>
                                             Showing {appLogs?.lines} most recent lines
                                         </span>
-                                        <Button variant="ghost" size="sm" aria-label="Download logs" className="cursor-pointer">
-                                            <Download className="mr-2 size-4" />
-                                            Download
-                                        </Button>
                                     </div>
                                     <div className="max-h-150 overflow-auto rounded-lg border bg-muted/30 p-4 font-mono text-xs">
                                         {appLogs?.logs.map((line, idx) => (

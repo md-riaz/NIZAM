@@ -36,30 +36,30 @@ interface Agent {
 }
 
 export default function AgentsPage() {
-    const { currentTenant } = useTenant();
+    const { activeTenant } = useTenant();
     const { user } = useAuth();
     const [agentToDelete, setAgentToDelete] = useState<Agent | null>(null);
 
     const { data: agents = [], isLoading } = useQuery<Agent[]>({
-        queryKey: ['agents', currentTenant?.id],
+        queryKey: ['agents', activeTenant?.id],
         queryFn: async () => {
-            if (!currentTenant) return [];
-            const response = await api.get(`tenants/${currentTenant.id}/agents`);
+            if (!activeTenant) return [];
+            const response = await api.get(`tenants/${activeTenant.id}/agents`);
             return response.data.data;
         },
-        enabled: !!currentTenant,
+        enabled: !!activeTenant,
     });
 
     const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
-            await api.delete(`tenants/${currentTenant?.id}/agents/${id}`);
+            await api.delete(`tenants/${activeTenant?.id}/agents/${id}`);
         },
         successMessage: 'Agent deleted successfully',
-        invalidateQueries: [['agents', currentTenant?.id || '']],
+        invalidateQueries: [['agents', activeTenant?.id || '']],
         onSettled: () => setAgentToDelete(null),
     });
 
-    if (!currentTenant) return null;
+    if (!activeTenant) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">

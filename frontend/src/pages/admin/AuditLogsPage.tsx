@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { Clock, Download, User } from 'lucide-react';
+import { Clock, User } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -70,10 +69,6 @@ export default function AuditLogsPage() {
                         administrative actions.
                     </p>
                 </div>
-                <Button variant="outline">
-                    <Download className="size-4" />
-                    Export CSV
-                </Button>
             </div>
 
             <Card>

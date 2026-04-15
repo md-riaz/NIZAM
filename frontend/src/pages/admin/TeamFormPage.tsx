@@ -40,7 +40,7 @@ export default function TeamFormPage() {
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
-    const { currentTenant } = useTenant();
+    const { activeTenant } = useTenant();
 
     const form = useForm<TeamFormValues>({
         resolver: zodResolver(teamSchema),
@@ -53,13 +53,13 @@ export default function TeamFormPage() {
     });
 
     const { data: team, isLoading: isFetching } = useQuery({
-        queryKey: ['team', currentTenant?.id, id],
+        queryKey: ['team', activeTenant?.id, id],
         queryFn: async () => {
-            if (!currentTenant) return null;
-            const response = await api.get(`tenants/${currentTenant.id}/teams/${id}`);
+            if (!activeTenant) return null;
+            const response = await api.get(`tenants/${activeTenant.id}/teams/${id}`);
             return response.data.data;
         },
-        enabled: isEdit && !!currentTenant,
+        enabled: isEdit && !!activeTenant,
     });
 
     useEffect(() => {
@@ -75,18 +75,18 @@ export default function TeamFormPage() {
 
     const mutation = useApiMutation({
         mutationFn: async (values: TeamFormValues) => {
-            if (!currentTenant) throw new Error('No active tenant');
+            if (!activeTenant) throw new Error('No active tenant');
             if (isEdit) {
-                return api.put(`tenants/${currentTenant.id}/teams/${id}`, values);
+                return api.put(`tenants/${activeTenant.id}/teams/${id}`, values);
             }
-            return api.post(`tenants/${currentTenant.id}/teams`, values);
+            return api.post(`tenants/${activeTenant.id}/teams`, values);
         },
         successMessage: `Team ${isEdit ? 'updated' : 'created'} successfully`,
-        invalidateQueries: [['teams', currentTenant?.id || '']],
+        invalidateQueries: [['teams', activeTenant?.id || '']],
         onSuccess: () => navigate('/admin/teams'),
     });
 
-    if (!currentTenant) return null;
+    if (!activeTenant) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">

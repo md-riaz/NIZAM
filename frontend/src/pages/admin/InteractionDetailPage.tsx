@@ -313,7 +313,7 @@ export default function InteractionDetailPage() {
         return (
             <div className="space-y-6 p-6 lg:p-8">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/admin/calls')}>
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/admin/call-history')}>
                         <ArrowLeft className="size-4" />
                         <span className="sr-only">Back to calls</span>
                     </Button>
@@ -343,7 +343,7 @@ export default function InteractionDetailPage() {
         <div className="space-y-6 p-6 lg:p-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex items-start gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/admin/calls')}>
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/admin/call-history')}>
                         <ArrowLeft className="size-4" />
                         <span className="sr-only">Back to calls</span>
                     </Button>

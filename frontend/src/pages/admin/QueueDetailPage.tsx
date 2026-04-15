@@ -54,35 +54,35 @@ interface Member extends Agent {
 
 export default function QueueDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const { currentTenant } = useTenant();
+    const { activeTenant } = useTenant();
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
 
     const { data: queue } = useQuery({
-        queryKey: ['queue', currentTenant?.id, id],
+        queryKey: ['queue', activeTenant?.id, id],
         queryFn: async () => {
-             const res = await api.get(`tenants/${currentTenant!.id}/queues/${id}`);
+             const res = await api.get(`tenants/${activeTenant!.id}/queues/${id}`);
              return res.data.data;
         },
-        enabled: !!currentTenant && !!id,
+        enabled: !!activeTenant && !!id,
     });
 
     const { data: members = [], isLoading } = useQuery<Member[]>({
-        queryKey: ['queue-members', currentTenant?.id, id],
+        queryKey: ['queue-members', activeTenant?.id, id],
         queryFn: async () => {
-            const res = await api.get(`tenants/${currentTenant!.id}/queues/${id}/members`);
+            const res = await api.get(`tenants/${activeTenant!.id}/queues/${id}/members`);
             return res.data.data;
         },
-        enabled: !!currentTenant && !!id,
+        enabled: !!activeTenant && !!id,
     });
 
     const { data: agents = [] } = useQuery<Agent[]>({
-        queryKey: ['agents', currentTenant?.id],
+        queryKey: ['agents', activeTenant?.id],
         queryFn: async () => {
-            const res = await api.get(`tenants/${currentTenant!.id}/agents`);
+            const res = await api.get(`tenants/${activeTenant!.id}/agents`);
             return res.data.data;
         },
-        enabled: !!currentTenant && isAddOpen, // Only fetch when dialog opens
+        enabled: !!activeTenant && isAddOpen, // Only fetch when dialog opens
     });
 
     const form = useForm<z.infer<typeof memberSchema>>({
@@ -92,10 +92,10 @@ export default function QueueDetailPage() {
 
     const addMutation = useApiMutation({
         mutationFn: async (values: z.infer<typeof memberSchema>) => {
-            return api.post(`tenants/${currentTenant!.id}/queues/${id}/members`, values);
+            return api.post(`tenants/${activeTenant!.id}/queues/${id}/members`, values);
         },
         successMessage: 'Agent added to queue',
-        invalidateQueries: [['queue-members', currentTenant?.id || '', id || '']],
+        invalidateQueries: [['queue-members', activeTenant?.id || '', id || '']],
         onSuccess: () => {
             setIsAddOpen(false);
             form.reset();
@@ -104,14 +104,14 @@ export default function QueueDetailPage() {
 
     const removeMutation = useApiMutation({
         mutationFn: async (agentId: string) => {
-            return api.delete(`tenants/${currentTenant!.id}/queues/${id}/members/${agentId}`);
+            return api.delete(`tenants/${activeTenant!.id}/queues/${id}/members/${agentId}`);
         },
         successMessage: 'Agent removed from queue',
-        invalidateQueries: [['queue-members', currentTenant?.id || '', id || '']],
+        invalidateQueries: [['queue-members', activeTenant?.id || '', id || '']],
         onSettled: () => setMemberToRemove(null),
     });
 
-    if (!currentTenant || !queue) return null;
+    if (!activeTenant || !queue) return null;
 
     // Filter agents not already in the queue
     const availableAgents = agents.filter(a => !members.find(m => m.id === a.id));
