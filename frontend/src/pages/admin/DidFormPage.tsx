@@ -33,6 +33,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import type { Extension, Flow } from '@/types/models';
 
 const didSchema = z.object({
     number: z.string().min(1, 'Number is required'),
@@ -62,6 +63,9 @@ export default function DidFormPage() {
         },
     });
 
+    const destType = form.watch('destination_type');
+    const selectedDestinationId = form.watch('destination_id');
+
     const { data: did, isLoading: isFetching } = useQuery({
         queryKey: ['did', id],
         queryFn: async () => {
@@ -71,15 +75,37 @@ export default function DidFormPage() {
         enabled: isEdit && !!activeTenant,
     });
 
-    // Fetch extensions for destination dropdown (as an example)
-    const { data: extensions = [] } = useQuery({
+    const { data: extensions = [] } = useQuery<Extension[]>({
         queryKey: ['extensions', activeTenant?.id],
         queryFn: async () => {
-            const res = await api.get(`${tenantApiPrefix}/extensions`);
+            const res = await api.get<{ data: Extension[] }>(`${tenantApiPrefix}/extensions`);
             return res.data.data;
         },
         enabled: !!activeTenant,
     });
+
+    const { data: flows = [] } = useQuery<Flow[]>({
+        queryKey: ['flows', activeTenant?.id],
+        queryFn: async () => {
+            const res = await api.get<{ data: Flow[] }>(`${tenantApiPrefix}/flows`);
+            return res.data.data;
+        },
+        enabled: !!activeTenant,
+    });
+
+    const destinationOptions = destType === 'flow'
+        ? flows
+            .filter((flow) => !!flow.active_version)
+            .map((flow) => ({
+                id: flow.id,
+                label: `${flow.name}${flow.active_version?.is_published ? ' (published)' : ' (draft)'}`,
+            }))
+        : destType === 'extension'
+            ? extensions.map((ext) => ({
+                id: ext.id,
+                label: `${ext.extension} - ${ext.directory_first_name ?? ext.directory_last_name ?? 'Extension'}`,
+            }))
+            : [];
 
     useEffect(() => {
         if (did) {
@@ -92,6 +118,12 @@ export default function DidFormPage() {
             });
         }
     }, [did, form]);
+
+    useEffect(() => {
+        if (!selectedDestinationId) return;
+        if (destinationOptions.some((option) => option.id === selectedDestinationId)) return;
+        form.setValue('destination_id', '');
+    }, [destinationOptions, selectedDestinationId, form]);
 
     const mutation = useMutation({
         mutationFn: async (values: DidFormValues) => {
@@ -111,8 +143,6 @@ export default function DidFormPage() {
     };
 
     if (!activeTenant) return null;
-
-    const destType = form.watch('destination_type');
 
     return (
         <div className="space-y-6 p-6 lg:p-8">
@@ -155,7 +185,7 @@ export default function DidFormPage() {
                                                 <Input placeholder="e.g. 18005551234" {...field} />
                                             </FormControl>
                                             <FormDescription>
-                                                The inbound phone number.
+                                                Inbound phone number.
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -183,7 +213,13 @@ export default function DidFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Destination Type</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value);
+                                                        form.setValue('destination_id', '');
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select type" />
@@ -191,8 +227,7 @@ export default function DidFormPage() {
                                                     </FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="extension">Extension</SelectItem>
-                                                        <SelectItem value="ivr">IVR</SelectItem>
-                                                        <SelectItem value="ring_group">Ring Group</SelectItem>
+                                                        <SelectItem value="flow">Call Flow</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />
@@ -200,33 +235,39 @@ export default function DidFormPage() {
                                         )}
                                     />
 
-                                    {destType === 'extension' && (
+                                    {(destType === 'extension' || destType === 'flow') && (
                                         <FormField
                                             control={form.control}
                                             name="destination_id"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Destination Extension</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormLabel>
+                                                        {destType === 'flow' ? 'Destination Flow' : 'Destination Extension'}
+                                                    </FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl>
                                                             <SelectTrigger>
-                                                                <SelectValue placeholder="Select extension" />
+                                                                <SelectValue placeholder={destType === 'flow' ? 'Select flow' : 'Select extension'} />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            {extensions.map((ext: any) => (
-                                                                <SelectItem key={ext.id} value={ext.id}>
-                                                                    {ext.extension} - {ext.name}
+                                                            {destinationOptions.map((option) => (
+                                                                <SelectItem key={option.id} value={option.id}>
+                                                                    {option.label}
                                                                 </SelectItem>
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
+                                                    <FormDescription>
+                                                        {destType === 'flow'
+                                                            ? 'Choose flow that should answer inbound call and execute published routing graph.'
+                                                            : 'Choose extension that should receive inbound calls.'}
+                                                    </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
                                     )}
-                                    {/* Additional destination types can be added here */}
                                 </div>
 
                                 <div className="flex justify-end">

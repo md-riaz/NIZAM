@@ -98,10 +98,79 @@ export const DidSchema = z.object({
     destination_type: z.string().nullable().optional(),
     destination_id: z.string().nullable().optional(),
     enabled: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     created_at: z.string(),
     updated_at: z.string(),
 });
 export type Did = z.infer<typeof DidSchema>;
+
+// ─── Flow Builder ────────────────────────────────────────────
+
+export const FlowNodePositionSchema = z.object({
+    x: z.number(),
+    y: z.number(),
+});
+export type FlowNodePosition = z.infer<typeof FlowNodePositionSchema>;
+
+export const FlowMenuOptionSchema = z.object({
+    digit: z.string(),
+    label: z.string().optional().default(''),
+});
+export type FlowMenuOption = z.infer<typeof FlowMenuOptionSchema>;
+
+export const FlowNodeConfigSchema = z.record(z.string(), z.unknown());
+export type FlowNodeConfig = z.infer<typeof FlowNodeConfigSchema>;
+
+export const FlowNodeSchema = z.object({
+    id: idSchema,
+    type: z.string(),
+    name: z.string().nullable().optional(),
+    config: FlowNodeConfigSchema.nullable().optional(),
+    position_x: z.number().nullable().optional(),
+    position_y: z.number().nullable().optional(),
+});
+export type FlowNode = z.infer<typeof FlowNodeSchema>;
+
+export const FlowEdgeSchema = z.object({
+    id: idSchema,
+    source_node_id: idSchema,
+    target_node_id: idSchema,
+    condition: z.string().nullable().optional(),
+});
+export type FlowEdge = z.infer<typeof FlowEdgeSchema>;
+
+export const FlowVersionSchema = z.object({
+    id: idSchema,
+    version_number: z.number().nullable().optional(),
+    status: z.string().nullable().optional(),
+    is_published: z.boolean().optional(),
+    definition_checksum: z.string().nullable().optional(),
+    nodes: z.array(FlowNodeSchema).default([]),
+    edges: z.array(FlowEdgeSchema).default([]),
+    created_at: z.string().nullable().optional(),
+    updated_at: z.string().nullable().optional(),
+});
+export type FlowVersion = z.infer<typeof FlowVersionSchema>;
+
+export const FlowSchema = z.object({
+    id: idSchema,
+    tenant_id: idSchema,
+    name: z.string(),
+    description: z.string().nullable().optional(),
+    active_version_id: idSchema.nullable().optional(),
+    active_version: FlowVersionSchema.nullable().optional(),
+    latest_version: FlowVersionSchema.nullable().optional(),
+    versions: z.array(FlowVersionSchema).default([]),
+    created_at: z.string(),
+    updated_at: z.string(),
+});
+export type Flow = z.infer<typeof FlowSchema>;
+
+export const FlowDefinitionSchema = z.object({
+    nodes: z.array(FlowNodeSchema),
+    edges: z.array(FlowEdgeSchema),
+});
+export type FlowDefinition = z.infer<typeof FlowDefinitionSchema>;
 
 // ─── CDR ─────────────────────────────────────────────────────
 

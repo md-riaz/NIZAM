@@ -16,6 +16,7 @@ class FlowResource extends JsonResource
             'description' => $this->description,
             'active_version_id' => $this->active_version_id,
             'active_version' => new FlowVersionResource($this->whenLoaded('activeVersion')),
+            'latest_version' => new FlowVersionResource($this->whenLoaded('latestVersion')),
             'versions' => FlowVersionResource::collection($this->whenLoaded('versions')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
