@@ -1,8 +1,12 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { getStoredValue, removeStoredValue } from '@/lib/branding';
 
+const fallbackApiUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/api/v1`
+    : 'http://127.0.0.1:8231/api/v1';
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8231/api/v1',
+    baseURL: import.meta.env.VITE_API_URL || fallbackApiUrl,
     headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',

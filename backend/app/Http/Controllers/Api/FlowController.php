@@ -20,7 +20,7 @@ class FlowController extends Controller
 
     public function index(Tenant $tenant)
     {
-        return FlowResource::collection($tenant->flows()->with(['activeVersion', 'versions'])->paginate(15));
+        return FlowResource::collection($tenant->flows()->with(['activeVersion', 'latestVersion', 'versions'])->paginate(15));
     }
 
     public function store(StoreFlowRequest $request, Tenant $tenant): JsonResponse
@@ -36,7 +36,7 @@ class FlowController extends Controller
             return response()->json(['message' => 'Flow not found.'], 404);
         }
 
-        return new FlowResource($flow->load(['activeVersion.nodes', 'activeVersion.edges', 'versions']));
+        return new FlowResource($flow->load(['activeVersion.nodes', 'activeVersion.edges', 'latestVersion.nodes', 'latestVersion.edges', 'versions']));
     }
 
     public function update(UpdateFlowRequest $request, Tenant $tenant, Flow $flow): JsonResponse|FlowResource
@@ -58,7 +58,7 @@ class FlowController extends Controller
 
         $flow = $this->flowApplicationService->update($flow, FlowData::fromArray($payload));
 
-        return new FlowResource($flow->load(['activeVersion.nodes', 'activeVersion.edges', 'versions']));
+        return new FlowResource($flow->load(['activeVersion.nodes', 'activeVersion.edges', 'latestVersion.nodes', 'latestVersion.edges', 'versions']));
     }
 
     public function destroy(Tenant $tenant, Flow $flow): JsonResponse

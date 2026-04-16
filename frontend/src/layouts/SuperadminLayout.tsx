@@ -74,6 +74,7 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Phone System',
         items: [
             { label: 'Extensions', icon: Phone, href: '/admin/extensions', tenantRequired: true },
+            { label: 'Call Flows', icon: Route, href: '/admin/flows', tenantRequired: true },
             { label: 'Ring Groups', icon: GitBranch, href: '/admin/ring-groups', tenantRequired: true },
             { label: 'DIDs', icon: Hash, href: '/admin/dids', adminOnly: true, tenantRequired: true },
         ],

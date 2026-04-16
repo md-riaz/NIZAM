@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Flow extends Model
@@ -32,6 +33,11 @@ class Flow extends Model
     public function activeVersion(): BelongsTo
     {
         return $this->belongsTo(FlowVersion::class, 'active_version_id');
+    }
+
+    public function latestVersion(): HasOne
+    {
+        return $this->hasOne(FlowVersion::class)->latestOfMany('version_number');
     }
 
     public function activeRoutingGraphArtifact(): HasOneThrough
