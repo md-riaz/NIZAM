@@ -64,6 +64,21 @@ class DidApiTest extends TestCase
         $response->assertJsonFragment(['number' => $did->number]);
     }
 
+    public function test_show_normalizes_ivr_destination_type_to_flow_for_frontend_forms(): void
+    {
+        $did = Did::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'destination_type' => 'ivr',
+            'destination_id' => Str::uuid()->toString(),
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/dids/{$did->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.destination_type', 'flow');
+    }
+
     public function test_can_update_a_did(): void
     {
         $did = Did::factory()->create(['tenant_id' => $this->tenant->id]);

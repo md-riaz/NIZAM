@@ -29,7 +29,13 @@ class FlowGraphService
                 $flow->forceFill(['active_version_id' => $version->id])->save();
             }
 
-            return $flow->fresh(['activeVersion', 'versions']);
+            return $flow->fresh([
+                'activeVersion.nodes',
+                'activeVersion.edges',
+                'latestVersion.nodes',
+                'latestVersion.edges',
+                'versions',
+            ]);
         });
     }
 
@@ -49,7 +55,13 @@ class FlowGraphService
                 }
             }
 
-            return $flow->fresh(['activeVersion', 'versions']);
+            return $flow->fresh([
+                'activeVersion.nodes',
+                'activeVersion.edges',
+                'latestVersion.nodes',
+                'latestVersion.edges',
+                'versions',
+            ]);
         });
     }
 

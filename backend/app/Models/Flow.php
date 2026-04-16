@@ -37,7 +37,7 @@ class Flow extends Model
 
     public function latestVersion(): HasOne
     {
-        return $this->hasOne(FlowVersion::class)->latestOfMany('version_number');
+        return $this->hasOne(FlowVersion::class)->latest('version_number');
     }
 
     public function activeRoutingGraphArtifact(): HasOneThrough

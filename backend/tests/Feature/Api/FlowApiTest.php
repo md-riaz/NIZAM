@@ -96,6 +96,64 @@ class FlowApiTest extends TestCase
         ]);
     }
 
+    public function test_update_response_includes_latest_version_definition_for_draft_rehydration(): void
+    {
+        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->putJson("/api/v1/tenants/{$this->tenant->id}/flows/{$flow->id}", [
+                'name' => 'Updated Flow',
+                'version' => [
+                    'definition' => [
+                        'nodes' => [
+                            [
+                                'id' => 'start-node',
+                                'type' => 'start',
+                                'name' => 'Call Start Reload Check',
+                                'config' => [],
+                            ],
+                        ],
+                        'edges' => [],
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.latest_version.nodes.0.name', 'Call Start Reload Check')
+            ->assertJsonPath('data.latest_version.nodes.0.type', 'start');
+    }
+
+    public function test_show_response_includes_latest_version_definition_for_draft_rehydration(): void
+    {
+        $flow = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/tenants/{$this->tenant->id}/flows", [
+                'name' => 'Smoke Test Flow',
+                'description' => 'Draft rehydration test',
+                'version' => [
+                    'definition' => [
+                        'nodes' => [
+                            [
+                                'id' => 'start-node',
+                                'type' => 'start',
+                                'name' => 'Call Start Reload Check',
+                                'config' => [],
+                            ],
+                        ],
+                        'edges' => [],
+                    ],
+                ],
+            ])
+            ->assertStatus(201)
+            ->json('data');
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson("/api/v1/tenants/{$this->tenant->id}/flows/{$flow['id']}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.latest_version.nodes.0.name', 'Call Start Reload Check')
+            ->assertJsonPath('data.latest_version.nodes.0.type', 'start');
+    }
+
     public function test_can_delete_a_call_flow(): void
     {
         $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);

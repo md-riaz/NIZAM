@@ -107,23 +107,58 @@ export default function DidFormPage() {
             }))
             : [];
 
+    const selectedDestinationOption = selectedDestinationId
+        ? destinationOptions.find((option) => option.id === selectedDestinationId)
+        : undefined;
+
+    const destinationOptionsWithCurrent = !selectedDestinationOption && selectedDestinationId
+        ? [
+            ...destinationOptions,
+            {
+                id: selectedDestinationId,
+                label: destType === 'flow'
+                    ? 'Current flow (not in published list)'
+                    : 'Current destination',
+            },
+        ]
+        : destinationOptions;
+
     useEffect(() => {
         if (did) {
+            const destinationType = did.destination_type || '';
+            const destinationId = did.destination_id || '';
+
             form.reset({
                 number: did.number || '',
                 description: did.description || '',
-                destination_type: did.destination_type || '',
-                destination_id: did.destination_id || '',
+                destination_type: destinationType,
+                destination_id: destinationId,
                 is_active: did.is_active ?? true,
             });
+
+            form.setValue('destination_type', destinationType, { shouldDirty: false });
+            form.setValue('destination_id', destinationId, { shouldDirty: false });
         }
     }, [did, form]);
 
     useEffect(() => {
+        if (!did) return;
+
+        const destinationType = did.destination_type || '';
+        const destinationId = did.destination_id || '';
+
+        if (!destinationType) return;
+        if (destType === destinationType && form.getValues('destination_id') === destinationId) return;
+
+        form.setValue('destination_type', destinationType, { shouldDirty: false });
+        form.setValue('destination_id', destinationId, { shouldDirty: false });
+    }, [did, destType, form]);
+
+    useEffect(() => {
         if (!selectedDestinationId) return;
-        if (destinationOptions.some((option) => option.id === selectedDestinationId)) return;
+        if (destinationOptionsWithCurrent.some((option) => option.id === selectedDestinationId)) return;
         form.setValue('destination_id', '');
-    }, [destinationOptions, selectedDestinationId, form]);
+    }, [destinationOptionsWithCurrent, selectedDestinationId, form]);
 
     const mutation = useMutation({
         mutationFn: async (values: DidFormValues) => {
@@ -251,7 +286,7 @@ export default function DidFormPage() {
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            {destinationOptions.map((option) => (
+                                                            {destinationOptionsWithCurrent.map((option) => (
                                                                 <SelectItem key={option.id} value={option.id}>
                                                                     {option.label}
                                                                 </SelectItem>
