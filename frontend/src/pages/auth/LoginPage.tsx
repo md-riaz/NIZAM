@@ -74,6 +74,22 @@ export default function LoginPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
+                        {branding.devLoginCredentials && (
+                            <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+                                <p className="font-medium text-foreground">Seeded platform admin</p>
+                                <div className="mt-2 space-y-1 text-muted-foreground">
+                                    <p>
+                                        <span className="font-medium text-foreground">Email:</span>{' '}
+                                        <span className="font-mono">{branding.devLoginCredentials.email}</span>
+                                    </p>
+                                    <p>
+                                        <span className="font-medium text-foreground">Password:</span>{' '}
+                                        <span className="font-mono">{branding.devLoginCredentials.password}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                             {serverError && (
                                 <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
