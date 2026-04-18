@@ -26,7 +26,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'tenant_id',
+        'organization_id',
         'schedule_id',
         'holiday_calendar_id',
         'role',
@@ -55,9 +55,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class, 'organization_id');
     }
 
     public function schedule(): BelongsTo
@@ -72,12 +72,12 @@ class User extends Authenticatable
 
     public function effectiveSchedule(): ?Schedule
     {
-        return $this->schedule ?: $this->tenant?->defaultSchedule;
+        return $this->schedule ?: $this->organization?->defaultSchedule;
     }
 
     public function effectiveHolidayCalendar(): ?HolidayCalendar
     {
-        return $this->holidayCalendar ?: $this->effectiveSchedule()?->holidayCalendar ?: $this->tenant?->defaultHolidayCalendar;
+        return $this->holidayCalendar ?: $this->effectiveSchedule()?->holidayCalendar ?: $this->organization?->defaultHolidayCalendar;
     }
 
     public function permissions(): BelongsToMany
@@ -100,9 +100,19 @@ class User extends Authenticatable
         return $this->hasMany(DeviceProfile::class);
     }
 
+    public function isSuperadmin(): bool
+    {
+        return $this->role === 'superadmin';
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function isAgent(): bool
+    {
+        return $this->role === 'agent';
     }
 
     /**
@@ -113,7 +123,7 @@ class User extends Authenticatable
      */
     public function hasPermission(string $slug): bool
     {
-        if ($this->isAdmin()) {
+        if ($this->isSuperadmin() || $this->isAdmin()) {
             return true;
         }
 

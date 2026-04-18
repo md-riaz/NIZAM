@@ -9,7 +9,7 @@ class GatewayPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,25 +23,25 @@ class GatewayPolicy
 
     public function view(User $user, Gateway $gateway): bool
     {
-        return $user->tenant_id === $gateway->tenant_id
+        return $user->organization_id === $gateway->organization_id
             && $user->hasPermission('gateways.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null
+        return $user->organization_id !== null
             && $user->hasPermission('gateways.manage');
     }
 
     public function update(User $user, Gateway $gateway): bool
     {
-        return $user->tenant_id === $gateway->tenant_id
+        return $user->organization_id === $gateway->organization_id
             && $user->hasPermission('gateways.manage');
     }
 
     public function delete(User $user, Gateway $gateway): bool
     {
-        return $user->tenant_id === $gateway->tenant_id
+        return $user->organization_id === $gateway->organization_id
             && $user->hasPermission('gateways.manage');
     }
 }

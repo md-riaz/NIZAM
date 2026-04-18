@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 
@@ -19,44 +19,44 @@ class AdminDashboardController extends Controller
     {
         $user = request()->user();
 
-        if ($user->role !== 'admin') {
+        if (! $user->isSuperadmin()) {
             abort(403);
         }
 
-        $tenants = Tenant::all();
+        $organizations = Organization::all();
 
-        $statusCounts = $tenants->groupBy('status')->map->count();
+        $statusCounts = $organizations->groupBy('status')->map->count();
 
-        $perTenantStats = $tenants->map(function (Tenant $tenant) {
+        $perOrganizationStats = $organizations->map(function (Organization $organization) {
             return [
-                'id' => $tenant->id,
-                'name' => $tenant->name,
-                'domain' => $tenant->domain,
-                'status' => $tenant->status,
-                'extensions_count' => $tenant->extensions()->count(),
-                'active_extensions_count' => $tenant->extensions()->where('is_active', true)->count(),
-                'dids_count' => $tenant->dids()->count(),
-                'ring_groups_count' => $tenant->ringGroups()->count(),
-                'recordings_total_size' => (int) $tenant->recordings()->sum('file_size'),
-                'cdrs_today' => $tenant->cdrs()->whereDate('start_stamp', Carbon::today())->count(),
-                'webhooks_count' => $tenant->webhooks()->count(),
+                'id' => $organization->id,
+                'name' => $organization->name,
+                'domain' => $organization->domain,
+                'status' => $organization->status,
+                'extensions_count' => $organization->extensions()->count(),
+                'active_extensions_count' => $organization->extensions()->where('is_active', true)->count(),
+                'dids_count' => $organization->dids()->count(),
+                'ring_groups_count' => $organization->ringGroups()->count(),
+                'recordings_total_size' => (int) $organization->recordings()->sum('file_size'),
+                'cdrs_today' => $organization->cdrs()->whereDate('start_stamp', Carbon::today())->count(),
+                'webhooks_count' => $organization->webhooks()->count(),
             ];
         });
 
         return response()->json([
             'data' => [
-                'total_tenants' => $tenants->count(),
-                'tenants_by_status' => [
-                    'trial' => $statusCounts->get(Tenant::STATUS_TRIAL, 0),
-                    'active' => $statusCounts->get(Tenant::STATUS_ACTIVE, 0),
-                    'suspended' => $statusCounts->get(Tenant::STATUS_SUSPENDED, 0),
-                    'terminated' => $statusCounts->get(Tenant::STATUS_TERMINATED, 0),
+                'total_organizations' => $organizations->count(),
+                'organizations_by_status' => [
+                    'trial' => $statusCounts->get(Organization::STATUS_TRIAL, 0),
+                    'active' => $statusCounts->get(Organization::STATUS_ACTIVE, 0),
+                    'suspended' => $statusCounts->get(Organization::STATUS_SUSPENDED, 0),
+                    'terminated' => $statusCounts->get(Organization::STATUS_TERMINATED, 0),
                 ],
-                'total_extensions' => $perTenantStats->sum('extensions_count'),
-                'total_active_extensions' => $perTenantStats->sum('active_extensions_count'),
-                'total_dids' => $perTenantStats->sum('dids_count'),
-                'total_recordings_size' => $perTenantStats->sum('recordings_total_size'),
-                'tenants' => $perTenantStats->values(),
+                'total_extensions' => $perOrganizationStats->sum('extensions_count'),
+                'total_active_extensions' => $perOrganizationStats->sum('active_extensions_count'),
+                'total_dids' => $perOrganizationStats->sum('dids_count'),
+                'total_recordings_size' => $perOrganizationStats->sum('recordings_total_size'),
+                'organizations' => $perOrganizationStats->values(),
             ],
         ]);
     }

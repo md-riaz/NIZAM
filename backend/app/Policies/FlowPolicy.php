@@ -12,7 +12,7 @@ class FlowPolicy
 
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->isAdmin()) {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -26,7 +26,7 @@ class FlowPolicy
 
     public function view(User $user, Flow $flow): bool
     {
-        if ($user->tenant_id !== $flow->tenant_id) {
+        if ($user->organization_id !== $flow->organization_id) {
             return false;
         }
 
@@ -40,7 +40,7 @@ class FlowPolicy
 
     public function update(User $user, Flow $flow): bool
     {
-        if ($user->tenant_id !== $flow->tenant_id) {
+        if ($user->organization_id !== $flow->organization_id) {
             return false;
         }
 
@@ -49,7 +49,7 @@ class FlowPolicy
 
     public function delete(User $user, Flow $flow): bool
     {
-        if ($user->tenant_id !== $flow->tenant_id) {
+        if ($user->organization_id !== $flow->organization_id) {
             return false;
         }
 

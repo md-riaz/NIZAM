@@ -52,7 +52,7 @@ class PresenceAggregator
 
         return [
             'user_id' => $user->id,
-            'tenant_id' => $user->tenant_id,
+            'organization_id' => $user->organization_id,
             'status' => $status,
             'availability' => $this->resolveAvailability($status),
             'primary_extension_id' => $primaryExtension?->id,
@@ -113,7 +113,7 @@ class PresenceAggregator
             return 'available';
         }
 
-        return $role === 'admin' ? 'available' : 'offline';
+        return in_array($role, ['superadmin', 'admin'], true) ? 'available' : 'offline';
     }
 
     private function resolveAvailability(string $status): string

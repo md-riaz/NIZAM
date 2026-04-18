@@ -9,7 +9,7 @@ class CallRoutingPolicyPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,25 +23,25 @@ class CallRoutingPolicyPolicy
 
     public function view(User $user, CallRoutingPolicy $policy): bool
     {
-        return $user->tenant_id === $policy->tenant_id
+        return $user->organization_id === $policy->organization_id
             && $user->hasPermission('call_routing_policies.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null
+        return $user->organization_id !== null
             && $user->hasPermission('call_routing_policies.create');
     }
 
     public function update(User $user, CallRoutingPolicy $policy): bool
     {
-        return $user->tenant_id === $policy->tenant_id
+        return $user->organization_id === $policy->organization_id
             && $user->hasPermission('call_routing_policies.update');
     }
 
     public function delete(User $user, CallRoutingPolicy $policy): bool
     {
-        return $user->tenant_id === $policy->tenant_id
+        return $user->organization_id === $policy->organization_id
             && $user->hasPermission('call_routing_policies.delete');
     }
 }

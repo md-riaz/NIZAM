@@ -9,7 +9,7 @@ class ExtensionPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,25 +23,25 @@ class ExtensionPolicy
 
     public function view(User $user, Extension $extension): bool
     {
-        return $user->tenant_id === $extension->tenant_id
+        return $user->organization_id === $extension->organization_id
             && $user->hasPermission('extensions.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null
+        return $user->organization_id !== null
             && $user->hasPermission('extensions.create');
     }
 
     public function update(User $user, Extension $extension): bool
     {
-        return $user->tenant_id === $extension->tenant_id
+        return $user->organization_id === $extension->organization_id
             && $user->hasPermission('extensions.update');
     }
 
     public function delete(User $user, Extension $extension): bool
     {
-        return $user->tenant_id === $extension->tenant_id
+        return $user->organization_id === $extension->organization_id
             && $user->hasPermission('extensions.delete');
     }
 }

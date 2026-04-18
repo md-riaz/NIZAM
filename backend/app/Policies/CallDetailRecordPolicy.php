@@ -9,7 +9,7 @@ class CallDetailRecordPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,7 +23,7 @@ class CallDetailRecordPolicy
 
     public function view(User $user, CallDetailRecord $cdr): bool
     {
-        return $user->tenant_id === $cdr->tenant_id
+        return $user->organization_id === $cdr->organization_id
             && $user->hasPermission('cdrs.view');
     }
 }

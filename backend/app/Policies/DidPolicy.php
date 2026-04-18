@@ -9,7 +9,7 @@ class DidPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,25 +23,25 @@ class DidPolicy
 
     public function view(User $user, Did $did): bool
     {
-        return $user->tenant_id === $did->tenant_id
+        return $user->organization_id === $did->organization_id
             && $user->hasPermission('dids.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null
+        return $user->organization_id !== null
             && $user->hasPermission('dids.create');
     }
 
     public function update(User $user, Did $did): bool
     {
-        return $user->tenant_id === $did->tenant_id
+        return $user->organization_id === $did->organization_id
             && $user->hasPermission('dids.update');
     }
 
     public function delete(User $user, Did $did): bool
     {
-        return $user->tenant_id === $did->tenant_id
+        return $user->organization_id === $did->organization_id
             && $user->hasPermission('dids.delete');
     }
 }

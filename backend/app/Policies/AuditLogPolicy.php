@@ -9,7 +9,7 @@ class AuditLogPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,7 +23,7 @@ class AuditLogPolicy
 
     public function view(User $user, AuditLog $auditLog): bool
     {
-        return $user->tenant_id === $auditLog->tenant_id
+        return $user->organization_id === $auditLog->organization_id
             && $user->hasPermission('audit_logs.view');
     }
 }

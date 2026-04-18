@@ -9,7 +9,7 @@ class WebhookPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,25 +23,25 @@ class WebhookPolicy
 
     public function view(User $user, Webhook $webhook): bool
     {
-        return $user->tenant_id === $webhook->tenant_id
+        return $user->organization_id === $webhook->organization_id
             && $user->hasPermission('webhooks.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null
+        return $user->organization_id !== null
             && $user->hasPermission('webhooks.create');
     }
 
     public function update(User $user, Webhook $webhook): bool
     {
-        return $user->tenant_id === $webhook->tenant_id
+        return $user->organization_id === $webhook->organization_id
             && $user->hasPermission('webhooks.update');
     }
 
     public function delete(User $user, Webhook $webhook): bool
     {
-        return $user->tenant_id === $webhook->tenant_id
+        return $user->organization_id === $webhook->organization_id
             && $user->hasPermission('webhooks.delete');
     }
 }

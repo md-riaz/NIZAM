@@ -9,7 +9,7 @@ class EndpointBindingPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,25 +23,25 @@ class EndpointBindingPolicy
 
     public function view(User $user, EndpointBinding $endpointBinding): bool
     {
-        return $user->tenant_id === $endpointBinding->tenant_id
+        return $user->organization_id === $endpointBinding->organization_id
             && $user->hasPermission('endpoint_bindings.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null
+        return $user->organization_id !== null
             && $user->hasPermission('endpoint_bindings.create');
     }
 
     public function update(User $user, EndpointBinding $endpointBinding): bool
     {
-        return $user->tenant_id === $endpointBinding->tenant_id
+        return $user->organization_id === $endpointBinding->organization_id
             && $user->hasPermission('endpoint_bindings.update');
     }
 
     public function delete(User $user, EndpointBinding $endpointBinding): bool
     {
-        return $user->tenant_id === $endpointBinding->tenant_id
+        return $user->organization_id === $endpointBinding->organization_id
             && $user->hasPermission('endpoint_bindings.delete');
     }
 }

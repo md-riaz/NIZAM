@@ -9,7 +9,7 @@ class RingGroupPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,25 +23,25 @@ class RingGroupPolicy
 
     public function view(User $user, RingGroup $ringGroup): bool
     {
-        return $user->tenant_id === $ringGroup->tenant_id
+        return $user->organization_id === $ringGroup->organization_id
             && $user->hasPermission('ring_groups.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->tenant_id !== null
+        return $user->organization_id !== null
             && $user->hasPermission('ring_groups.create');
     }
 
     public function update(User $user, RingGroup $ringGroup): bool
     {
-        return $user->tenant_id === $ringGroup->tenant_id
+        return $user->organization_id === $ringGroup->organization_id
             && $user->hasPermission('ring_groups.update');
     }
 
     public function delete(User $user, RingGroup $ringGroup): bool
     {
-        return $user->tenant_id === $ringGroup->tenant_id
+        return $user->organization_id === $ringGroup->organization_id
             && $user->hasPermission('ring_groups.delete');
     }
 }

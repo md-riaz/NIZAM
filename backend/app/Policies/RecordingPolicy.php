@@ -9,7 +9,7 @@ class RecordingPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'admin') {
+        if ($user->isSuperadmin()) {
             return true;
         }
 
@@ -23,19 +23,19 @@ class RecordingPolicy
 
     public function view(User $user, Recording $recording): bool
     {
-        return $user->tenant_id === $recording->tenant_id
+        return $user->organization_id === $recording->organization_id
             && $user->hasPermission('recordings.view');
     }
 
     public function download(User $user, Recording $recording): bool
     {
-        return $user->tenant_id === $recording->tenant_id
+        return $user->organization_id === $recording->organization_id
             && $user->hasPermission('recordings.download');
     }
 
     public function delete(User $user, Recording $recording): bool
     {
-        return $user->tenant_id === $recording->tenant_id
+        return $user->organization_id === $recording->organization_id
             && $user->hasPermission('recordings.delete');
     }
 }

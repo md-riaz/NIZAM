@@ -140,7 +140,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\FlowNode::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\FlowEdge::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\FlowCompiledArtifact::observe(\App\Observers\ScheduleChildObserver::class);
-        \App\Models\Tenant::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\Organization::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\Bridge::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\DeviceProfile::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\SipProfile::observe(\App\Observers\ScheduleChildObserver::class);
@@ -151,7 +151,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\CallDeliveryAttempt::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\CallSession::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\CallEventLog::observe(\App\Observers\ScheduleChildObserver::class);
-        \App\Models\TenantDialplanManifest::observe(\App\Observers\ScheduleChildObserver::class);
+        \App\Models\OrganizationDialplanManifest::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\QueueMetric::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\WallboardAgentProjection::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\WallboardQueueProjection::observe(\App\Observers\ScheduleChildObserver::class);
@@ -188,7 +188,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('callControl', fn ($user) => $callPolicy->before($user, 'callControl') ?? $callPolicy->callControl($user));
 
         // Platform admin gate - for system-level operations (logs, health, etc.)
-        Gate::define('platform-admin', fn ($user) => $user->role === 'admin' && $user->tenant_id === null);
+        Gate::define('platform-admin', fn ($user) => $user->role === 'superadmin' && $user->organization_id === null);
 
         // Boot all NIZAM modules (telecom hooks: dialplan, policy, events)
         // Routes and migrations are handled by nwidart/laravel-modules ServiceProviders

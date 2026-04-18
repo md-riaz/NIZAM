@@ -8,7 +8,7 @@ use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Ivr;
 use App\Models\RingGroup;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\TimeCondition;
 use App\Models\User;
 use App\Models\Webhook;
@@ -21,32 +21,32 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Bootstrap platform with a superadmin account
-     * and a default tenant with production-ready seed data.
+     * and a default organization with production-ready seed data.
      */
     public function run(): void
     {
         // ──────────────────────────────────────────────
-        // 1. Platform Superadmin (tenant-agnostic)
+        // 1. Platform Superadmin (organization-agnostic)
         // ──────────────────────────────────────────────
-        $systemDomain = env('ADMIN_TENANT_DOMAIN', 'app.local');
+        $systemDomain = env('ADMIN_ORGANIZATION_DOMAIN', 'app.local');
         User::updateOrCreate(
             ['email' => "system@{$systemDomain}"],
             [
                 'name'      => 'Platform Administrator',
                 'password'  => env('ADMIN_PASSWORD', 'password'),
-                'tenant_id' => null,          // Platform-level — not scoped to any tenant
-                'role'      => 'admin',       // Full cross-tenant access
+                'organization_id' => null,          // Platform-level — not scoped to any organization
+                'role'      => 'superadmin',  // Full cross-organization access
             ]
         );
 
         // ──────────────────────────────────────────────
-        // 2. Default Tenant
+        // 2. Default Organization
         // ──────────────────────────────────────────────
-        $tenantDomain = env('ADMIN_TENANT_DOMAIN', 'app.local');
-        $tenant = Tenant::updateOrCreate(
-            ['domain' => $tenantDomain],
+        $organizationDomain = env('ADMIN_ORGANIZATION_DOMAIN', 'app.local');
+        $organization = Organization::updateOrCreate(
+            ['domain' => $organizationDomain],
             [
-                'name'           => env('ADMIN_TENANT_NAME', ucfirst(strtok($tenantDomain, '.')) ?: 'Default Tenant'),
+                'name'           => env('ADMIN_ORGANIZATION_NAME', ucfirst(strtok($organizationDomain, '.')) ?: 'Default Organization'),
                 'settings'       => [],
                 'max_extensions' => 100,
                 'is_active'      => true,
@@ -54,14 +54,14 @@ class DatabaseSeeder extends Seeder
         );
 
         // ──────────────────────────────────────────────
-        // 3. Tenant Admin User
+        // 3. Organization Admin User
         // ──────────────────────────────────────────────
         User::updateOrCreate(
             ['email' => env('ADMIN_EMAIL', 'admin@app.local')],
             [
                 'name'      => env('ADMIN_NAME', 'App Administrator'),
                 'password'  => env('ADMIN_PASSWORD', 'password'),
-                'tenant_id' => $tenant->id,
+                'organization_id' => $organization->id,
                 'role'      => 'admin',
             ]
         );
@@ -83,14 +83,14 @@ class DatabaseSeeder extends Seeder
         $extensions = [];
         foreach ($staff as $ext => [$first, $last, $title]) {
             $extensions[$ext] = Extension::firstOrCreate(
-                ['tenant_id' => $tenant->id, 'extension' => $ext],
+                ['organization_id' => $organization->id, 'extension' => $ext],
                 [
                     'password'                    => 'Nzm' . $ext . '!',
                     'directory_first_name'        => $first,
                     'directory_last_name'         => $last,
                     'effective_caller_id_name'    => "$first $last",
                     'effective_caller_id_number'  => $ext,
-                    'outbound_caller_id_name'     => $tenant->name,
+                    'outbound_caller_id_name'     => $organization->name,
                     'outbound_caller_id_number'   => '+8801700000001',
                     'voicemail_enabled'           => true,
                     'voicemail_pin'               => substr(str_shuffle('123456789'), 0, 4),
@@ -103,7 +103,7 @@ class DatabaseSeeder extends Seeder
         // 5. Ring Groups (created BEFORE DIDs so IDs are available)
         // ──────────────────────────────────────────────
         $salesRing = RingGroup::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'Sales Team'],
+            ['organization_id' => $organization->id, 'name' => 'Sales Team'],
             [
                 'strategy'     => 'simultaneous',
                 'ring_timeout' => 25,
@@ -116,7 +116,7 @@ class DatabaseSeeder extends Seeder
         );
 
         $supportRing = RingGroup::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'Technical Support'],
+            ['organization_id' => $organization->id, 'name' => 'Technical Support'],
             [
                 'strategy'     => 'sequence',
                 'ring_timeout' => 20,
@@ -133,7 +133,7 @@ class DatabaseSeeder extends Seeder
         // 6. IVR — Main Auto-Attendant (created BEFORE DIDs)
         // ──────────────────────────────────────────────
         $mainIvr = Ivr::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'Main Auto-Attendant'],
+            ['organization_id' => $organization->id, 'name' => 'Main Auto-Attendant'],
             [
                 'greet_long'   => 'ivr/welcome.wav',
                 'greet_short'  => 'ivr/welcome_short.wav',
@@ -153,7 +153,7 @@ class DatabaseSeeder extends Seeder
         // 7. DIDs — Inbound Numbers (all destination_ids now available)
         // ──────────────────────────────────────────────
         Did::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'number' => '+8801700000001'],
+            ['organization_id' => $organization->id, 'number' => '+8801700000001'],
             [
                 'description'      => 'Main Office Line',
                 'destination_type' => 'ivr',
@@ -163,7 +163,7 @@ class DatabaseSeeder extends Seeder
         );
 
         Did::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'number' => '+8801700000002'],
+            ['organization_id' => $organization->id, 'number' => '+8801700000002'],
             [
                 'description'      => 'Sales Direct Line',
                 'destination_type' => 'ring_group',
@@ -173,7 +173,7 @@ class DatabaseSeeder extends Seeder
         );
 
         Did::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'number' => '+8801700000003'],
+            ['organization_id' => $organization->id, 'number' => '+8801700000003'],
             [
                 'description'      => 'Support Hotline',
                 'destination_type' => 'extension',
@@ -183,7 +183,7 @@ class DatabaseSeeder extends Seeder
         );
 
         Did::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'number' => '+8801700000004'],
+            ['organization_id' => $organization->id, 'number' => '+8801700000004'],
             [
                 'description'      => 'Fax / Billing Line',
                 'destination_type' => 'extension',
@@ -196,7 +196,7 @@ class DatabaseSeeder extends Seeder
         // 8. Time Condition — Business Hours
         // ──────────────────────────────────────────────
         TimeCondition::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'Business Hours'],
+            ['organization_id' => $organization->id, 'name' => 'Business Hours'],
             [
                 'conditions' => [
                     [
@@ -272,7 +272,7 @@ class DatabaseSeeder extends Seeder
         foreach ($callLogs as $log) {
             CallDetailRecord::firstOrCreate(
                 [
-                    'tenant_id'          => $tenant->id,
+                    'organization_id'          => $organization->id,
                     'caller_id_number'   => $log['caller_number'],
                     'destination_number' => $log['destination'],
                     'start_stamp'        => now()->subMinutes($log['minutes_ago']),
@@ -296,7 +296,7 @@ class DatabaseSeeder extends Seeder
         // 10. Device Profiles — Provisioned Phones
         // ──────────────────────────────────────────────
         DeviceProfile::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'mac_address' => '00:15:65:A1:B2:C3'],
+            ['organization_id' => $organization->id, 'mac_address' => '00:15:65:A1:B2:C3'],
             [
                 'name'         => 'Yealink T54W — Reception (Fatima)',
                 'vendor'       => 'yealink',
@@ -306,7 +306,7 @@ class DatabaseSeeder extends Seeder
         );
 
         DeviceProfile::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'mac_address' => '00:15:65:D4:E5:F6'],
+            ['organization_id' => $organization->id, 'mac_address' => '00:15:65:D4:E5:F6'],
             [
                 'name'         => 'Yealink T46U — Operations (Karim)',
                 'vendor'       => 'yealink',
@@ -316,7 +316,7 @@ class DatabaseSeeder extends Seeder
         );
 
         DeviceProfile::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'mac_address' => '80:5E:C0:11:22:33'],
+            ['organization_id' => $organization->id, 'mac_address' => '80:5E:C0:11:22:33'],
             [
                 'name'         => 'Fanvil X6U — Support Desk (Tariq)',
                 'vendor'       => 'fanvil',
@@ -329,7 +329,7 @@ class DatabaseSeeder extends Seeder
         // 11. Webhooks — Event Integrations
         // ──────────────────────────────────────────────
         Webhook::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'url' => sprintf('https://%s/api/webhooks/calls', $tenantDomain)],
+            ['organization_id' => $organization->id, 'url' => sprintf('https://%s/api/webhooks/calls', $organizationDomain)],
             [
                 'events'      => ['call.created', 'call.answered', 'call.hangup'],
                 'secret'      => bin2hex(random_bytes(16)),

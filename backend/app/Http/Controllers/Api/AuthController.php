@@ -14,24 +14,9 @@ class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        $token = $user->createToken('auth-token')->plainTextToken;
-
         return response()->json([
-            'user' => new UserResource($user),
-            'token' => $token,
-        ], 201);
+            'message' => 'Self-registration is disabled.',
+        ], 403);
     }
 
     public function login(Request $request): JsonResponse
@@ -47,7 +32,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $user = Auth::user();
+        $user = Auth::user()->load('organization');
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
@@ -66,7 +51,7 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json([
-            'user' => new UserResource($request->user()->load('tenant')),
+            'user' => new UserResource($request->user()->load('organization')),
         ]);
     }
 }
