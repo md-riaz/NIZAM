@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 
 import api from '@/lib/api';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -49,7 +49,7 @@ export default function DidFormPage() {
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
     const queryClient = useQueryClient();
 
     const form = useForm<DidFormValues>({
@@ -69,28 +69,28 @@ export default function DidFormPage() {
     const { data: did, isLoading: isFetching } = useQuery({
         queryKey: ['did', id],
         queryFn: async () => {
-            const res = await api.get(`${tenantApiPrefix}/dids/${id}`);
+            const res = await api.get(`${organizationApiPrefix}/dids/${id}`);
             return res.data.data;
         },
-        enabled: isEdit && !!activeTenant,
+        enabled: isEdit && !!activeOrganization,
     });
 
     const { data: extensions = [] } = useQuery<Extension[]>({
-        queryKey: ['extensions', activeTenant?.id],
+        queryKey: ['extensions', activeOrganization?.id],
         queryFn: async () => {
-            const res = await api.get<{ data: Extension[] }>(`${tenantApiPrefix}/extensions`);
+            const res = await api.get<{ data: Extension[] }>(`${organizationApiPrefix}/extensions`);
             return res.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const { data: flows = [] } = useQuery<Flow[]>({
-        queryKey: ['flows', activeTenant?.id],
+        queryKey: ['flows', activeOrganization?.id],
         queryFn: async () => {
-            const res = await api.get<{ data: Flow[] }>(`${tenantApiPrefix}/flows`);
+            const res = await api.get<{ data: Flow[] }>(`${organizationApiPrefix}/flows`);
             return res.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const destinationOptions = destType === 'flow'
@@ -163,9 +163,9 @@ export default function DidFormPage() {
     const mutation = useMutation({
         mutationFn: async (values: DidFormValues) => {
             if (isEdit) {
-                return api.put(`${tenantApiPrefix}/dids/${id}`, values);
+                return api.put(`${organizationApiPrefix}/dids/${id}`, values);
             }
-            return api.post(`${tenantApiPrefix}/dids`, values);
+            return api.post(`${organizationApiPrefix}/dids`, values);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['dids'] });
@@ -177,7 +177,7 @@ export default function DidFormPage() {
         mutation.mutate(values);
     };
 
-    if (!activeTenant) return null;
+    if (!activeOrganization) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">
@@ -187,19 +187,19 @@ export default function DidFormPage() {
                 </Button>
                 <div>
                     <p className="text-sm text-muted-foreground">
-                        {activeTenant.name} &rsaquo; Routing
+                        {activeOrganization.name} &rsaquo; Routing
                     </p>
                     <h1 className="text-2xl font-bold tracking-tight">
-                        {isEdit ? 'Edit DID' : 'Add DID'}
+                        {isEdit ? 'Edit Number' : 'Add Number'}
                     </h1>
                 </div>
             </div>
 
             <Card className="max-w-2xl">
                 <CardHeader>
-                    <CardTitle>DID Details</CardTitle>
+                    <CardTitle>Number Details</CardTitle>
                     <CardDescription>
-                        Configure inbound number and its routing destination.
+                        Configure an inbound phone number and where calls should route.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -220,7 +220,7 @@ export default function DidFormPage() {
                                                 <Input placeholder="e.g. 18005551234" {...field} />
                                             </FormControl>
                                             <FormDescription>
-                                                Inbound phone number.
+                                                Phone number customers dial to reach this route.
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -308,7 +308,7 @@ export default function DidFormPage() {
                                 <div className="flex justify-end">
                                     <Button type="submit" disabled={mutation.isPending}>
                                         <Save className="mr-2 size-4" />
-                                        {mutation.isPending ? 'Saving...' : 'Save DID'}
+                                        {mutation.isPending ? 'Saving...' : 'Save Number'}
                                     </Button>
                                 </div>
                             </form>

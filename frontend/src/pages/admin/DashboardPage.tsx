@@ -32,7 +32,7 @@ interface StatCardProps {
     className?: string;
 }
 
-interface DashboardTenantSummary {
+interface DashboardOrganizationSummary {
     id: number;
     name: string;
     domain: string;
@@ -48,8 +48,8 @@ interface DashboardTenantSummary {
 
 interface AdminDashboardResponse {
     data: {
-        total_tenants: number;
-        tenants_by_status: {
+        total_organizations: number;
+        organizations_by_status: {
             trial: number;
             active: number;
             suspended: number;
@@ -59,7 +59,7 @@ interface AdminDashboardResponse {
         total_active_extensions: number;
         total_dids: number;
         total_recordings_size: number;
-        tenants: DashboardTenantSummary[];
+        organizations: DashboardOrganizationSummary[];
     };
 }
 
@@ -142,8 +142,8 @@ export default function DashboardPage() {
         return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
     };
 
-    const tenantStatus = dashboard?.tenants_by_status;
-    const tenants = dashboard?.tenants ?? [];
+    const organizationStatus = dashboard?.organizations_by_status;
+    const organizations = dashboard?.organizations ?? [];
 
     return (
         <div className="space-y-8 p-6 lg:p-8">
@@ -156,11 +156,11 @@ export default function DashboardPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
-                    title="Total Tenants"
-                    value={dashboardLoading ? '…' : (dashboard?.total_tenants ?? 0)}
+                    title="Total Organizations"
+                    value={dashboardLoading ? '…' : (dashboard?.total_organizations ?? 0)}
                     description={
-                        tenantStatus
-                            ? `${tenantStatus.active} active · ${tenantStatus.suspended} suspended`
+                        organizationStatus
+                            ? `${organizationStatus.active} active · ${organizationStatus.suspended} suspended`
                             : 'Platform organizations'
                     }
                     icon={Building2}
@@ -171,12 +171,12 @@ export default function DashboardPage() {
                     description={
                         dashboard
                             ? `${dashboard.total_active_extensions} active registrations`
-                            : 'Across all tenants'
+                            : 'Across all organizations'
                     }
                     icon={Phone}
                 />
                 <StatCard
-                    title="DIDs"
+                    title="Numbers"
                     value={dashboardLoading ? '…' : (dashboard?.total_dids ?? 0)}
                     description="Inbound numbers configured"
                     icon={PhoneCall}
@@ -198,20 +198,20 @@ export default function DashboardPage() {
                     icon={HardDrive}
                 />
                 <StatCard
-                    title="Active Tenants"
-                    value={dashboardLoading ? '…' : (tenantStatus?.active ?? 0)}
+                    title="Active Organizations"
+                    value={dashboardLoading ? '…' : (organizationStatus?.active ?? 0)}
                     description="Currently serving traffic"
                     icon={Activity}
                 />
                 <StatCard
-                    title="Trial Tenants"
-                    value={dashboardLoading ? '…' : (tenantStatus?.trial ?? 0)}
+                    title="Trial Organizations"
+                    value={dashboardLoading ? '…' : (organizationStatus?.trial ?? 0)}
                     description="Evaluation environments"
                     icon={TrendingUp}
                 />
                 <StatCard
-                    title="Terminated Tenants"
-                    value={dashboardLoading ? '…' : (tenantStatus?.terminated ?? 0)}
+                    title="Terminated Organizations"
+                    value={dashboardLoading ? '…' : (organizationStatus?.terminated ?? 0)}
                     description="Archived subscriptions"
                     icon={Building2}
                 />
@@ -219,9 +219,9 @@ export default function DashboardPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Tenant Activity Snapshot</CardTitle>
+                    <CardTitle>Organization Activity Snapshot</CardTitle>
                     <CardDescription>
-                        Operational summary for recently active tenants.
+                        Operational summary for recently active organizations.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -232,31 +232,31 @@ export default function DashboardPage() {
                                 aria-label="Loading dashboard snapshot"
                             />
                         </div>
-                    ) : tenants.length > 0 ? (
+                    ) : organizations.length > 0 ? (
                         <div className="space-y-3">
-                            {tenants.slice(0, 8).map((tenant) => (
+                            {organizations.slice(0, 8).map((organization) => (
                                 <div
-                                    key={tenant.id}
+                                    key={organization.id}
                                     className="group grid gap-3 rounded-lg border px-4 py-3 transition-colors hover:bg-accent/50 sm:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))_auto] sm:items-center"
                                 >
                                     <div className="min-w-0">
-                                        <p className="font-medium">{tenant.name}</p>
-                                        <p className="text-sm text-muted-foreground">{tenant.domain}</p>
+                                        <p className="font-medium">{organization.name}</p>
+                                        <p className="text-sm text-muted-foreground">{organization.domain}</p>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Ext: <span className="font-semibold text-foreground">{tenant.extensions_count}</span>
+                                        Ext: <span className="font-semibold text-foreground">{organization.extensions_count}</span>
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        DIDs: <span className="font-semibold text-foreground">{tenant.dids_count}</span>
+                                        Numbers: <span className="font-semibold text-foreground">{organization.dids_count}</span>
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Ring: <span className="font-semibold text-foreground">{tenant.ring_groups_count}</span>
+                                        Ring: <span className="font-semibold text-foreground">{organization.ring_groups_count}</span>
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Today CDR: <span className="font-semibold text-foreground">{tenant.cdrs_today}</span>
+                                        Today CDR: <span className="font-semibold text-foreground">{organization.cdrs_today}</span>
                                     </p>
                                     <div className="flex items-center justify-between gap-3">
-                                        <span className="text-xs text-muted-foreground">{tenant.status}</span>
+                                        <span className="text-xs text-muted-foreground">{organization.status}</span>
                                         <ArrowUpRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                                     </div>
                                 </div>
@@ -264,7 +264,7 @@ export default function DashboardPage() {
                         </div>
                     ) : (
                         <div className="py-8 text-center text-sm text-muted-foreground">
-                            No tenant telemetry available yet.
+                            No organization telemetry available yet.
                         </div>
                     )}
                 </CardContent>

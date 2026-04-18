@@ -32,11 +32,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 
 const gatewaySchema = z.object({
-    tenant_id: z.string().nullable().optional(),
+    organization_id: z.string().nullable().optional(),
     name: z.string().min(1, 'Name is required'),
     host: z.string().min(1, 'SIP server is required'),
     username: z.string().optional(),
@@ -51,13 +51,13 @@ export default function GatewayFormPage() {
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
-    const { activeTenant, tenantApiPrefix, tenants } = useTenant();
+    const { activeOrganization, organizationApiPrefix, organizations } = useOrganization();
     const queryClient = useQueryClient();
 
     const form = useForm<GatewayFormValues>({
         resolver: zodResolver(gatewaySchema),
         defaultValues: {
-            tenant_id: 'global',
+            organization_id: 'global',
             name: '',
             host: '',
             username: '',
@@ -68,9 +68,9 @@ export default function GatewayFormPage() {
     });
 
     const { data: gateway, isLoading: isFetching } = useQuery({
-        queryKey: ['gateway', id, activeTenant?.id || 'global'],
+        queryKey: ['gateway', id, activeOrganization?.id || 'global'],
         queryFn: async () => {
-            const url = activeTenant ? `${tenantApiPrefix}/gateways/${id}` : `admin/gateways/${id}`;
+            const url = activeOrganization ? `${organizationApiPrefix}/gateways/${id}` : `admin/gateways/${id}`;
             const res = await api.get(url);
             return res.data.data;
         },
@@ -80,7 +80,7 @@ export default function GatewayFormPage() {
     useEffect(() => {
         if (gateway) {
             form.reset({
-                tenant_id: gateway.tenant_id || 'global',
+                organization_id: gateway.organization_id || 'global',
                 name: gateway.name || '',
                 host: gateway.host || '',
                 username: gateway.username || '',
@@ -93,8 +93,8 @@ export default function GatewayFormPage() {
 
     const mutation = useMutation({
         mutationFn: async (values: GatewayFormValues) => {
-            const payload = { ...values, tenant_id: values.tenant_id === 'global' ? null : values.tenant_id };
-            const baseUrl = activeTenant ? `${tenantApiPrefix}/gateways` : 'admin/gateways';
+            const payload = { ...values, organization_id: values.organization_id === 'global' ? null : values.organization_id };
+            const baseUrl = activeOrganization ? `${organizationApiPrefix}/gateways` : 'admin/gateways';
             
             if (isEdit) {
                 return api.put(`${baseUrl}/${id}`, payload);
@@ -121,19 +121,19 @@ export default function GatewayFormPage() {
                 </Button>
                 <div>
                     <p className="text-sm text-muted-foreground">
-                        {activeTenant ? activeTenant.name : 'Platform Admin'} &rsaquo; Connectivity
+                        {activeOrganization ? activeOrganization.name : 'Platform Admin'} &rsaquo; Connectivity
                     </p>
                     <h1 className="text-2xl font-bold tracking-tight">
-                        {isEdit ? 'Edit Gateway' : 'Add Gateway'}
+                        {isEdit ? 'Edit Provider' : 'Add Provider'}
                     </h1>
                 </div>
             </div>
 
             <Card className="max-w-2xl">
                 <CardHeader>
-                    <CardTitle>Gateway Details</CardTitle>
+                    <CardTitle>Provider Connection</CardTitle>
                     <CardDescription>
-                        Configure SIP trunk credentials and routing settings.
+                        Configure reusable SIP provider credentials and connection settings.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -144,13 +144,13 @@ export default function GatewayFormPage() {
                     ) : (
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                {!activeTenant && (
+                                {!activeOrganization && (
                                     <FormField
                                         control={form.control}
-                                        name="tenant_id"
+                                        name="organization_id"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Tenant / Owner</FormLabel>
+                                                <FormLabel>Organization / Owner</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value || 'global'}>
                                                     <FormControl>
                                                         <SelectTrigger>
@@ -159,13 +159,13 @@ export default function GatewayFormPage() {
                                                     </FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="global">Platform (Global)</SelectItem>
-                                                        {tenants.map(t => (
+                                                        {organizations.map(t => (
                                                             <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
                                                 <FormDescription>
-                                                    Platform gateways can be used by all tenants contextually or serve as global outbounds.
+                                                    Platform providers can be shared across organizations or used as global outbound connections.
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -178,12 +178,12 @@ export default function GatewayFormPage() {
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Name</FormLabel>
+                                            <FormLabel>Provider Name</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="e.g. Twilio Trunk" {...field} />
+                                                <Input placeholder="e.g. Twilio Elastic SIP" {...field} />
                                             </FormControl>
                                             <FormDescription>
-                                                A friendly name for this gateway.
+                                                Friendly name used when choosing this provider for numbers or outbound calling.
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -195,12 +195,12 @@ export default function GatewayFormPage() {
                                     name="host"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>SIP Server</FormLabel>
+                                            <FormLabel>SIP Host</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="e.g. sip.twilio.com" {...field} />
                                             </FormControl>
                                             <FormDescription>
-                                                The primary SIP server hostname or IP address.
+                                                Primary SIP server hostname or IP address for this provider connection.
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -253,7 +253,7 @@ export default function GatewayFormPage() {
                                                     Register
                                                 </FormLabel>
                                                 <FormDescription>
-                                                    Send SIP REGISTER requests to this gateway.
+                                                    Send SIP REGISTER requests to this provider.
                                                 </FormDescription>
                                             </div>
                                         </FormItem>
@@ -263,7 +263,7 @@ export default function GatewayFormPage() {
                                 <div className="flex justify-end">
                                     <Button type="submit" disabled={mutation.isPending}>
                                         <Save className="mr-2 size-4" />
-                                        {mutation.isPending ? 'Saving...' : 'Save Gateway'}
+                                        {mutation.isPending ? 'Saving...' : 'Save Provider'}
                                     </Button>
                                 </div>
                             </form>

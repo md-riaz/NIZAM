@@ -13,7 +13,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
 import type { Flow } from '@/types/models';
@@ -25,30 +25,30 @@ function statusLabel(flow: Flow) {
 }
 
 export default function FlowsPage() {
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
 
     const { data: flows = [], isLoading } = useQuery<Flow[]>({
-        queryKey: ['flows', activeTenant?.id],
+        queryKey: ['flows', activeOrganization?.id],
         queryFn: async () => {
-            const response = await api.get<{ data: Flow[] }>(`${tenantApiPrefix}/flows`);
+            const response = await api.get<{ data: Flow[] }>(`${organizationApiPrefix}/flows`);
             return response.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const publishMutation = useApiMutation({
-        mutationFn: async (flowId: string) => api.post(`${tenantApiPrefix}/flows/${flowId}/publish`),
+        mutationFn: async (flowId: string) => api.post(`${organizationApiPrefix}/flows/${flowId}/publish`),
         successMessage: 'Flow published successfully',
         invalidateQueries: [
-            ['flows', activeTenant?.id || ''],
+            ['flows', activeOrganization?.id || ''],
             ['flow'],
         ],
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select tenant to manage call flows.
+                Select organization to manage call flows.
             </div>
         );
     }
@@ -57,7 +57,7 @@ export default function FlowsPage() {
         <div className="space-y-6 p-6 lg:p-8">
             <PageHeader
                 title="Call Flows"
-                description="Build inbound call-routing graphs and publish them for DID assignment."
+                description="Build inbound call-routing graphs and publish them for number assignment."
                 actionLabel="Create Flow"
                 actionRoute="/admin/flows/create"
                 actionIcon={<Plus className="mr-2 size-4" />}

@@ -76,7 +76,7 @@ const NAV_SECTIONS: NavSection[] = [
             { label: 'Extensions', icon: Phone, href: '/admin/extensions', organizationRequired: true },
             { label: 'Call Flows', icon: Route, href: '/admin/flows', organizationRequired: true },
             { label: 'Ring Groups', icon: GitBranch, href: '/admin/ring-groups', organizationRequired: true },
-            { label: 'DIDs', icon: Hash, href: '/admin/dids', adminOnly: true, organizationRequired: true },
+            { label: 'Numbers', icon: Hash, href: '/admin/dids', adminOnly: true, organizationRequired: true },
         ],
     },
     {
@@ -90,8 +90,8 @@ const NAV_SECTIONS: NavSection[] = [
     {
         title: 'Connectivity',
         items: [
-            // Gateways remain visible globally for Platform Admins to control all infrastructure
-            { label: (hasOrganization) => hasOrganization ? 'Gateways' : 'Platform Gateways', icon: Globe, href: '/admin/gateways', adminOnly: true },
+            // Providers remain visible globally for Platform Admins to control shared connectivity
+            { label: (hasOrganization) => hasOrganization ? 'Providers' : 'Platform Providers', icon: Globe, href: '/admin/gateways', adminOnly: true },
         ],
     },
     {
@@ -147,7 +147,7 @@ export default function SuperadminLayout() {
         ...section,
         items: section.items.filter((item) => {
             if (item.superadminOnly && !isSuperadmin) return false;
-            if (item.adminOnly && !isAdmin) return false;
+            if (item.adminOnly && !isAdmin && !isSuperadmin) return false;
             if (item.organizationRequired && !activeOrganization) return false;
             return true;
         }),

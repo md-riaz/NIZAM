@@ -30,20 +30,20 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import type { Gateway } from '@/types/models';
 
 export default function GatewaysPage() {
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [gatewayToDelete, setGatewayToDelete] = useState<Gateway | null>(null);
 
     const { data: gateways = [], isLoading } = useQuery({
-        queryKey: ['gateways', activeTenant?.id || 'global'],
+        queryKey: ['gateways', activeOrganization?.id || 'global'],
         queryFn: async () => {
-            const url = activeTenant ? `${tenantApiPrefix}/gateways` : 'admin/gateways';
+            const url = activeOrganization ? `${organizationApiPrefix}/gateways` : 'admin/gateways';
             const res = await api.get<{ data: Gateway[] }>(url);
             return res.data?.data || [];
         },
@@ -51,7 +51,7 @@ export default function GatewaysPage() {
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
-            const url = activeTenant ? `${tenantApiPrefix}/gateways/${id}` : `admin/gateways/${id}`;
+            const url = activeOrganization ? `${organizationApiPrefix}/gateways/${id}` : `admin/gateways/${id}`;
             return api.delete(url);
         },
         onSuccess: () => {
@@ -65,24 +65,24 @@ export default function GatewaysPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm text-muted-foreground">
-                        {activeTenant ? activeTenant.name : 'Platform Admin'} &rsaquo; Connectivity
+                        {activeOrganization ? activeOrganization.name : 'Platform Admin'} &rsaquo; Connectivity
                     </p>
-                    <h1 className="text-2xl font-bold tracking-tight">Gateways</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Providers</h1>
                     <p className="text-muted-foreground">
-                        SIP trunk gateways for outbound and inbound connectivity.
+                        Reusable SIP provider connections for inbound numbers and outbound calling.
                     </p>
                 </div>
                 <Button onClick={() => navigate('/admin/gateways/create')}>
                     <Plus className="size-4" />
-                    Add Gateway
+                    Add Provider
                 </Button>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>All Gateways</CardTitle>
+                    <CardTitle>All Providers</CardTitle>
                     <CardDescription>
-                        {gateways.length} gateways configured {activeTenant ? `for ${activeTenant.domain}` : 'globally'}
+                        {gateways.length} provider connections configured {activeOrganization ? `for ${activeOrganization.domain}` : 'globally'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -96,7 +96,7 @@ export default function GatewaysPage() {
                                 <TableRow>
                                     <TableHead>Name</TableHead>
                                     <TableHead>SIP Server</TableHead>
-                                    {!activeTenant && <TableHead>Tenant</TableHead>}
+                                    {!activeOrganization && <TableHead>Organization</TableHead>}
                                     <TableHead>Register</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
@@ -114,11 +114,11 @@ export default function GatewaysPage() {
                                         <TableCell className="font-mono text-sm text-muted-foreground">
                                             {gw.host ?? '—'}
                                         </TableCell>
-                                        {!activeTenant && (
+                                        {!activeOrganization && (
                                             <TableCell>
                                                 <div className="flex flex-col">
-                                                    <span className="font-medium">{gw.tenant?.name ?? 'Global'}</span>
-                                                    <span className="text-xs text-muted-foreground">{gw.tenant?.domain}</span>
+                                                    <span className="font-medium">{gw.organization?.name ?? 'Global'}</span>
+                                                    <span className="text-xs text-muted-foreground">{gw.organization?.domain}</span>
                                                 </div>
                                             </TableCell>
                                         )}
@@ -154,8 +154,8 @@ export default function GatewaysPage() {
                                 ))}
                                 {gateways.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={activeTenant ? 5 : 6} className="h-24 text-center text-muted-foreground">
-                                            No gateways configured.
+                                        <TableCell colSpan={activeOrganization ? 5 : 6} className="h-24 text-center text-muted-foreground">
+                                            No providers connected.
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -170,7 +170,7 @@ export default function GatewaysPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete the gateway "{gatewayToDelete?.name}". This action cannot be undone.
+                            This will permanently delete the provider connection "{gatewayToDelete?.name}". This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

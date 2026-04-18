@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Hash, Pencil, Trash2 } from 'lucide-react';
 
 import api from '@/lib/api';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import type { Did } from '@/types/models';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,25 +35,25 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function DidsPage() {
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [didToDelete, setDidToDelete] = useState<Did | null>(null);
 
     const { data: dids = [], isLoading } = useQuery({
-        queryKey: ['dids', activeTenant?.id],
+        queryKey: ['dids', activeOrganization?.id],
         queryFn: async () => {
             const res = await api.get<{ data: Did[] }>(
-                `${tenantApiPrefix}/dids`,
+                `${organizationApiPrefix}/dids`,
             );
             return res.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
-            return api.delete(`${tenantApiPrefix}/dids/${id}`);
+            return api.delete(`${organizationApiPrefix}/dids/${id}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['dids'] });
@@ -61,10 +61,10 @@ export default function DidsPage() {
         },
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select a tenant to view DIDs.
+                Select an organization to view numbers.
             </div>
         );
     }
@@ -74,24 +74,24 @@ export default function DidsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm text-muted-foreground">
-                        {activeTenant.name} &rsaquo; Routing
+                        {activeOrganization.name} &rsaquo; Routing
                     </p>
-                    <h1 className="text-2xl font-bold tracking-tight">DIDs</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Numbers</h1>
                     <p className="text-muted-foreground">
-                        Inbound phone numbers and their routing destinations.
+                        Manage inbound phone numbers and where they route.
                     </p>
                 </div>
                 <Button onClick={() => navigate('/admin/dids/create')}>
                     <Plus className="size-4" />
-                    Add DID
+                    Add Number
                 </Button>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>All DIDs</CardTitle>
+                    <CardTitle>All Numbers</CardTitle>
                     <CardDescription>
-                        {dids.length} numbers assigned to {activeTenant.domain}
+                        {dids.length} numbers assigned to {activeOrganization.domain}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -161,7 +161,7 @@ export default function DidsPage() {
                                 {dids.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                                            No DIDs assigned.
+                                            No numbers assigned.
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -176,7 +176,7 @@ export default function DidsPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete the DID "{didToDelete?.number}". This action cannot be undone.
+                            This will permanently delete the number "{didToDelete?.number}". This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
