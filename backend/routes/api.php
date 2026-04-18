@@ -39,8 +39,10 @@ use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SystemMediaController;
 use App\Http\Controllers\Api\SupervisorReportController;
 use App\Http\Controllers\Api\TeamController;
-use App\Http\Controllers\Api\TenantController;
-use App\Http\Controllers\Api\TenantStatsController;
+use App\Http\Controllers\Api\OrganizationController;
+use App\Http\Controllers\Api\OrganizationDomainSuggestionController;
+use App\Http\Controllers\Api\OrganizationStatsController;
+use App\Http\Controllers\Api\PlatformSettingController;
 use App\Http\Controllers\Api\TimeConditionController;
 use App\Http\Controllers\Api\TokenController;
 use App\Http\Controllers\Api\UsageController;
@@ -74,9 +76,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('auth/tokens', [TokenController::class, 'store'])->name('auth.tokens.store');
     Route::delete('auth/tokens/{tokenId}', [TokenController::class, 'destroy'])->name('auth.tokens.destroy');
 
-    Route::apiResource('tenants', TenantController::class);
-    Route::get('tenants/{tenant}/settings', [TenantController::class, 'settings'])->name('tenants.settings');
-    Route::put('tenants/{tenant}/settings', [TenantController::class, 'updateSettings'])->name('tenants.settings.update');
+    Route::get('organizations/domain-suggestion', OrganizationDomainSuggestionController::class)->name('organizations.domain-suggestion');
+    Route::apiResource('organizations', OrganizationController::class)->parameters(['organizations' => 'organization']);
+    Route::get('organizations/{organization}/settings', [OrganizationController::class, 'settings'])->name('organizations.settings');
+    Route::put('organizations/{organization}/settings', [OrganizationController::class, 'updateSettings'])->name('organizations.settings.update');
+    Route::get('admin/platform-settings', [PlatformSettingController::class, 'show'])->name('admin.platform-settings.show');
+    Route::put('admin/platform-settings', [PlatformSettingController::class, 'update'])->name('admin.platform-settings.update');
 
     // Admin observability dashboard
     Route::get('admin/dashboard', AdminDashboardController::class)->name('admin.dashboard');
@@ -117,14 +122,14 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('gateways/kill', [\App\Http\Controllers\Api\SipStatusController::class, 'killGateway'])->name('gateways.kill');
     });
 
-    Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
-        Route::get('stats', TenantStatsController::class)->name('tenants.stats');
+    Route::prefix('organizations/{organization}')->middleware('organization.access')->group(function () {
+        Route::get('stats', OrganizationStatsController::class)->name('organizations.stats');
         Route::get('directory', [DirectoryController::class, 'index'])->name('directory.index');
 
         // Usage metering
-        Route::get('usage/summary', [UsageController::class, 'summary'])->name('tenants.usage.summary');
-        Route::post('usage/collect', [UsageController::class, 'collect'])->name('tenants.usage.collect');
-        Route::get('usage/reconcile', [UsageController::class, 'reconcile'])->name('tenants.usage.reconcile');
+        Route::get('usage/summary', [UsageController::class, 'summary'])->name('organizations.usage.summary');
+        Route::post('usage/collect', [UsageController::class, 'collect'])->name('organizations.usage.collect');
+        Route::get('usage/reconcile', [UsageController::class, 'reconcile'])->name('organizations.usage.reconcile');
 
         // Core resources
         Route::apiResource('extensions', ExtensionController::class);

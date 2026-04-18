@@ -2,12 +2,15 @@ import { z } from 'zod';
 
 const idSchema = z.union([z.string(), z.number()]).transform((value) => String(value));
 
-// ─── Tenant ──────────────────────────────────────────────────
+// ─── Organization ──────────────────────────────────────────────────
 
-export const TenantSchema = z.object({
+export const OrganizationSchema = z.object({
     id: idSchema,
     name: z.string(),
     domain: z.string(),
+    domain_prefix: z.string().optional(),
+    domain_suffix: z.string().optional(),
+    domain_matches_configured_suffix: z.boolean().optional(),
     default_schedule_id: idSchema.nullable().optional(),
     default_holiday_calendar_id: idSchema.nullable().optional(),
     slug: z.string().nullable().optional(),
@@ -21,13 +24,13 @@ export const TenantSchema = z.object({
     created_at: z.string(),
     updated_at: z.string(),
 });
-export type Tenant = z.infer<typeof TenantSchema>;
+export type Organization = z.infer<typeof OrganizationSchema>;
 
 // ─── Extension ───────────────────────────────────────────────
 
 export const ExtensionSchema = z.object({
     id: idSchema,
-    tenant_id: idSchema,
+    organization_id: idSchema,
     extension: z.string(),
     password: z.string().optional(),
     directory_first_name: z.string().nullable().optional(),
@@ -56,7 +59,7 @@ export type RingGroupMember = z.infer<typeof RingGroupMemberSchema>;
 
 export const RingGroupSchema = z.object({
     id: idSchema,
-    tenant_id: idSchema,
+    organization_id: idSchema,
     name: z.string(),
     strategy: z.string(),
     ring_timeout: z.number().optional(),
@@ -73,7 +76,7 @@ export type RingGroup = z.infer<typeof RingGroupSchema>;
 
 export const GatewaySchema = z.object({
     id: idSchema,
-    tenant_id: idSchema,
+    organization_id: idSchema,
     name: z.string(),
     host: z.string().nullable().optional(),
     gateway_name: z.string().optional(),
@@ -82,7 +85,7 @@ export const GatewaySchema = z.object({
     proxy: z.string().nullable().optional(),
     register: z.boolean().optional(),
     enabled: z.boolean().optional(),
-    tenant: TenantSchema.nullable().optional(),
+    organization: OrganizationSchema.nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
 });
@@ -92,7 +95,7 @@ export type Gateway = z.infer<typeof GatewaySchema>;
 
 export const DidSchema = z.object({
     id: idSchema,
-    tenant_id: idSchema,
+    organization_id: idSchema,
     number: z.string(),
     description: z.string().nullable().optional(),
     destination_type: z.string().nullable().optional(),
@@ -154,7 +157,7 @@ export type FlowVersion = z.infer<typeof FlowVersionSchema>;
 
 export const FlowSchema = z.object({
     id: idSchema,
-    tenant_id: idSchema,
+    organization_id: idSchema,
     name: z.string(),
     description: z.string().nullable().optional(),
     active_version_id: idSchema.nullable().optional(),
@@ -176,7 +179,7 @@ export type FlowDefinition = z.infer<typeof FlowDefinitionSchema>;
 
 export const CdrSchema = z.object({
     id: idSchema,
-    tenant_id: idSchema,
+    organization_id: idSchema,
     uuid: z.string().nullable().optional(),
     call_uuid: z.string().nullable().optional(),
     caller_id_name: z.string().nullable().optional(),
@@ -239,7 +242,7 @@ export type InteractionPushNotificationLog = z.infer<typeof InteractionPushNotif
 
 export const CallSessionSummarySchema = z.object({
     id: idSchema,
-    tenant_id: idSchema,
+    organization_id: idSchema,
     call_uuid: z.string(),
     state: z.string().nullable().optional(),
     started_at: z.string().nullable().optional(),
@@ -295,7 +298,7 @@ export type InteractionOverview = z.infer<typeof InteractionOverviewSchema>;
 export const AuditLogSchema = z.object({
     id: idSchema,
     user_id: z.number().nullable().optional(),
-    tenant_id: z.number().nullable().optional(),
+    organization_id: z.number().nullable().optional(),
     auditable_type: z.string(),
     auditable_id: idSchema,
     action: z.string().nullable().optional(),
@@ -320,10 +323,10 @@ export const UserSchema = z.object({
     id: idSchema,
     name: z.string(),
     email: z.string().email(),
-    tenant_id: idSchema.nullable().optional(),
+    organization_id: idSchema.nullable().optional(),
     role: z.string(),
     email_verified_at: z.string().nullable().optional(),
-    tenant: TenantSchema.nullable().optional(),
+    organization: OrganizationSchema.nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
 });

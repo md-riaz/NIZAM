@@ -49,7 +49,7 @@ class OrganizationController extends Controller
         $this->authorize('create', Organization::class);
 
         $organization = DB::transaction(function () use ($request) {
-            $organization = Organization::create($request->validated());
+            $organization = Organization::create($request->safe()->except('domain_prefix'));
             $organization = $this->organizationBootstrapService->provisionDefaults($organization);
             $organization = $this->organizationEntrypointProvisioningService->provision($organization);
 
@@ -76,7 +76,7 @@ class OrganizationController extends Controller
     {
         $this->authorize('update', $organization);
 
-        $organization->update($request->validated());
+        $organization->update($request->safe()->except('domain_prefix'));
 
         return new OrganizationResource($organization);
     }

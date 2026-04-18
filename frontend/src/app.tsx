@@ -6,7 +6,7 @@ import { Navigate, Route, RouterProvider, createBrowserRouter, createRoutesFromE
 
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { TenantProvider } from '@/context/TenantContext';
+import { OrganizationProvider } from '@/context/OrganizationContext';
 import { branding, getStoredValue } from '@/lib/branding';
 import { queryClient } from '@/lib/query-client';
 import { Toaster } from '@/components/ui/sonner';
@@ -15,9 +15,9 @@ import { Toaster } from '@/components/ui/sonner';
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const SuperadminLayout = lazy(() => import('@/layouts/SuperadminLayout'));
 const DashboardPage = lazy(() => import('@/pages/admin/DashboardPage'));
-const TenantsPage = lazy(() => import('@/pages/admin/TenantsPage'));
-const TenantFormPage = lazy(() => import('@/pages/admin/TenantFormPage'));
-const TenantSettingsPage = lazy(() => import('@/pages/admin/TenantSettingsPage'));
+const OrganizationsPage = lazy(() => import('@/pages/admin/OrganizationsPage'));
+const OrganizationFormPage = lazy(() => import('@/pages/admin/OrganizationFormPage'));
+const OrganizationSettingsPage = lazy(() => import('@/pages/admin/OrganizationSettingsPage'));
 const UsersPage = lazy(() => import('@/pages/admin/UsersPage'));
 const UserFormPage = lazy(() => import('@/pages/admin/UserFormPage'));
 const UserPermissionsPage = lazy(() => import('@/pages/admin/UserPermissionsPage'));
@@ -43,6 +43,7 @@ const SipProfilesPage = lazy(() => import('@/pages/admin/SipProfilesPage'));
 const SipProfileFormPage = lazy(() => import('@/pages/admin/SipProfileFormPage'));
 const BlockedDestinationsPage = lazy(() => import('@/pages/admin/BlockedDestinationsPage'));
 const CapabilitiesPage = lazy(() => import('@/pages/admin/CapabilitiesPage'));
+const SystemSettingsPage = lazy(() => import('@/pages/admin/SystemSettingsPage'));
 
 // ─── Phase 2 (Contact Center) ────────────────────────────────
 const TeamsPage = lazy(() => import('@/pages/admin/TeamsPage'));
@@ -90,7 +91,7 @@ function SuperadminOnlyRoute({ children }: { children: React.ReactNode }) {
 
     if (isLoading) return null;
 
-    const isSuperadmin = user?.role === 'admin' && !user?.tenant_id;
+    const isSuperadmin = user?.role === 'superadmin' && !user?.organization_id;
 
     if (!isSuperadmin) {
         return <Navigate to="/admin" replace />;
@@ -133,25 +134,25 @@ const router = createBrowserRouter(
                 element={
                     <ProtectedRoute>
                         <ErrorBoundary>
-                            <TenantProvider>
+                            <OrganizationProvider>
                                 <SuperadminLayout />
-                            </TenantProvider>
+                            </OrganizationProvider>
                         </ErrorBoundary>
                     </ProtectedRoute>
                 }
             >
                 {/* General */}
                 <Route index element={<DashboardPage />} />
-                <Route path="tenants" element={<TenantsPage />} />
-                <Route path="tenants/create" element={<TenantFormPage />} />
-                <Route path="tenants/:id/edit" element={<TenantFormPage />} />
-                <Route path="tenants/:id/settings" element={<TenantSettingsPage />} />
+                <Route path="organizations" element={<OrganizationsPage />} />
+                <Route path="organizations/create" element={<SuperadminOnlyRoute><OrganizationFormPage /></SuperadminOnlyRoute>} />
+                <Route path="organizations/:id/edit" element={<SuperadminOnlyRoute><OrganizationFormPage /></SuperadminOnlyRoute>} />
+                <Route path="organizations/:id/settings" element={<OrganizationSettingsPage />} />
                 <Route path="users" element={<UsersPage />} />
                 <Route path="users/create" element={<UserFormPage />} />
                 <Route path="users/:id/edit" element={<UserFormPage />} />
                 <Route path="users/:id/permissions" element={<UserPermissionsPage />} />
 
-                {/* Phone System (tenant-scoped) */}
+                {/* Phone System (organization-scoped) */}
                 <Route path="extensions" element={<ExtensionsPage />} />
                 <Route path="extensions/create" element={<ExtensionFormPage />} />
                 <Route path="extensions/:id" element={<ExtensionDetailPage />} />
@@ -166,7 +167,7 @@ const router = createBrowserRouter(
                 <Route path="flows/create" element={<FlowEditorPage />} />
                 <Route path="flows/:id/edit" element={<FlowEditorPage />} />
 
-                {/* Contact Center (tenant-scoped) */}
+                {/* Contact Center (organization-scoped) */}
                 <Route path="teams" element={<TeamsPage />} />
                 <Route path="teams/create" element={<TeamFormPage />} />
                 <Route path="teams/:id/edit" element={<TeamFormPage />} />
@@ -178,17 +179,18 @@ const router = createBrowserRouter(
                 <Route path="queues/:id/edit" element={<QueueFormPage />} />
                 <Route path="queues/:id" element={<QueueDetailPage />} />
 
-                {/* Connectivity (tenant-scoped) */}
+                {/* Connectivity (organization-scoped) */}
                 <Route path="gateways" element={<GatewaysPage />} />
                 <Route path="gateways/create" element={<GatewayFormPage />} />
                 <Route path="gateways/:id/edit" element={<GatewayFormPage />} />
 
-                {/* Call History (tenant-scoped) */}
+                {/* Call History (organization-scoped) */}
                 <Route path="call-history" element={<CallHistoryPage />} />
                 <Route path="interactions/:id" element={<InteractionDetailPage />} />
 
                 {/* System */}
                 <Route path="capabilities" element={<SuperadminOnlyRoute><CapabilitiesPage /></SuperadminOnlyRoute>} />
+                <Route path="system-settings" element={<SuperadminOnlyRoute><SystemSettingsPage /></SuperadminOnlyRoute>} />
                 <Route path="logs" element={<AuditLogsPage />} />
                 <Route path="system-logs" element={<LogViewerPage />} />
                 <Route path="auth-tokens" element={<AuthTokensPage />} />

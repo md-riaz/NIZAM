@@ -199,6 +199,116 @@ class AuthApiTest extends TestCase
         $this->assertFalse($user->can('platform-admin'));
     }
 
+    public function test_superadmin_can_create_organization_with_domain_prefix_using_platform_suffix(): void
+    {
+        \App\Models\SystemSetting::upsertPlatformString(\App\Models\SystemSetting::ORGANIZATION_DOMAIN_SUFFIX, 'example.test');
+        $user = User::factory()->create([
+            'role' => 'superadmin',
+            'organization_id' => null,
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/organizations', [
+            'name' => 'Acme Telecom',
+            'domain_prefix' => 'acme',
+            'max_extensions' => 10,
+            'max_concurrent_calls' => 0,
+            'max_dids' => 0,
+            'max_ring_groups' => 0,
+            'is_active' => true,
+            'status' => 'active',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.domain', 'acme.example.test')
+            ->assertJsonPath('data.domain_prefix', 'acme')
+            ->assertJsonPath('data.domain_suffix', 'example.test')
+            ->assertJsonPath('data.domain_matches_configured_suffix', true);
+
+        $this->assertDatabaseHas('organizations', [
+            'name' => 'Acme Telecom',
+            'domain' => 'acme.example.test',
+        ]);
+    }
+
+    public function test_superadmin_cannot_create_organization_with_duplicate_domain_prefix(): void
+    {
+        \App\Models\SystemSetting::upsertPlatformString(\App\Models\SystemSetting::ORGANIZATION_DOMAIN_SUFFIX, 'example.test');
+        Organization::factory()->create([
+            'domain' => 'acme.example.test',
+        ]);
+        $user = User::factory()->create([
+            'role' => 'superadmin',
+            'organization_id' => null,
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/organizations', [
+            'name' => 'Acme Duplicate',
+            'domain_prefix' => 'acme',
+            'max_extensions' => 10,
+            'max_concurrent_calls' => 0,
+            'max_dids' => 0,
+            'max_ring_groups' => 0,
+            'is_active' => true,
+            'status' => 'active',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['domain']);
+    }
+
+    public function test_superadmin_can_update_organization_with_domain_prefix_using_platform_suffix(): void
+    {
+        \App\Models\SystemSetting::upsertPlatformString(\App\Models\SystemSetting::ORGANIZATION_DOMAIN_SUFFIX, 'example.test');
+        $organization = Organization::factory()->create([
+            'name' => 'Legacy Org',
+            'domain' => 'legacy.example.test',
+        ]);
+        $user = User::factory()->create([
+            'role' => 'superadmin',
+            'organization_id' => null,
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')->putJson('/api/v1/organizations/'.$organization->id, [
+            'name' => 'Legacy Org Updated',
+            'domain_prefix' => 'legacy2',
+            'max_extensions' => $organization->max_extensions,
+            'max_concurrent_calls' => $organization->max_concurrent_calls,
+            'max_dids' => $organization->max_dids,
+            'max_ring_groups' => $organization->max_ring_groups,
+            'is_active' => $organization->is_active,
+            'status' => $organization->status,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.domain', 'legacy2.example.test')
+            ->assertJsonPath('data.domain_prefix', 'legacy2');
+
+        $this->assertDatabaseHas('organizations', [
+            'id' => $organization->id,
+            'domain' => 'legacy2.example.test',
+        ]);
+    }
+
+    public function test_organization_resource_flags_legacy_domain_when_suffix_does_not_match(): void
+    {
+        \App\Models\SystemSetting::upsertPlatformString(\App\Models\SystemSetting::ORGANIZATION_DOMAIN_SUFFIX, 'example.test');
+        $organization = Organization::factory()->create([
+            'domain' => 'legacy.other.test',
+        ]);
+        $user = User::factory()->create([
+            'role' => 'superadmin',
+            'organization_id' => null,
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/organizations/'.$organization->id);
+
+        $response->assertOk()
+            ->assertJsonPath('data.domain', 'legacy.other.test')
+            ->assertJsonPath('data.domain_prefix', 'legacy.other.test')
+            ->assertJsonPath('data.domain_suffix', 'example.test')
+            ->assertJsonPath('data.domain_matches_configured_suffix', false);
+    }
+
     public function test_login_response_keeps_explicit_organization_fields(): void
     {
         $organization = Organization::factory()->create();

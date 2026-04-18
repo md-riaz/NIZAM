@@ -41,19 +41,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AuthContext';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { branding, setStoredValue } from '@/lib/branding';
 import { cn } from '@/lib/utils';
 
 // ─── Navigation Structure (Stitch Design) ────────────────────
 
 interface NavItem {
-    label: string | ((activeTenant: boolean) => string);
+    label: string | ((activeOrganization: boolean) => string);
     icon: React.ComponentType<{ className?: string }>;
     href: string;
     superadminOnly?: boolean;
     adminOnly?: boolean;
-    tenantRequired?: boolean;
+    organizationRequired?: boolean;
 }
 
 interface NavSection {
@@ -66,44 +66,44 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'General',
         items: [
             { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-            { label: 'Tenants', icon: Building2, href: '/admin/tenants', superadminOnly: true },
-            { label: 'Users', icon: Users, href: '/admin/users', adminOnly: true, tenantRequired: true },
+            { label: 'Organizations', icon: Building2, href: '/admin/organizations', superadminOnly: true },
+            { label: 'Users', icon: Users, href: '/admin/users', adminOnly: true, organizationRequired: true },
         ],
     },
     {
         title: 'Phone System',
         items: [
-            { label: 'Extensions', icon: Phone, href: '/admin/extensions', tenantRequired: true },
-            { label: 'Call Flows', icon: Route, href: '/admin/flows', tenantRequired: true },
-            { label: 'Ring Groups', icon: GitBranch, href: '/admin/ring-groups', tenantRequired: true },
-            { label: 'DIDs', icon: Hash, href: '/admin/dids', adminOnly: true, tenantRequired: true },
+            { label: 'Extensions', icon: Phone, href: '/admin/extensions', organizationRequired: true },
+            { label: 'Call Flows', icon: Route, href: '/admin/flows', organizationRequired: true },
+            { label: 'Ring Groups', icon: GitBranch, href: '/admin/ring-groups', organizationRequired: true },
+            { label: 'DIDs', icon: Hash, href: '/admin/dids', adminOnly: true, organizationRequired: true },
         ],
     },
     {
         title: 'Contact Center',
         items: [
-            { label: 'Queues', icon: PhoneCall, href: '/admin/queues', tenantRequired: true },
-            { label: 'Teams', icon: Users, href: '/admin/teams', tenantRequired: true },
-            { label: 'Agents', icon: ShieldCheck, href: '/admin/agents', tenantRequired: true },
+            { label: 'Queues', icon: PhoneCall, href: '/admin/queues', organizationRequired: true },
+            { label: 'Teams', icon: Users, href: '/admin/teams', organizationRequired: true },
+            { label: 'Agents', icon: ShieldCheck, href: '/admin/agents', organizationRequired: true },
         ],
     },
     {
         title: 'Connectivity',
         items: [
             // Gateways remain visible globally for Platform Admins to control all infrastructure
-            { label: (hasTenant) => hasTenant ? 'Gateways' : 'Platform Gateways', icon: Globe, href: '/admin/gateways', adminOnly: true },
+            { label: (hasOrganization) => hasOrganization ? 'Gateways' : 'Platform Gateways', icon: Globe, href: '/admin/gateways', adminOnly: true },
         ],
     },
     {
         title: 'Calls',
         items: [
-            { label: 'Call History', icon: PhoneCall, href: '/admin/call-history', tenantRequired: true },
+            { label: 'Call History', icon: PhoneCall, href: '/admin/call-history', organizationRequired: true },
         ],
     },
     {
         title: 'Security',
         items: [
-            { label: 'Auth Tokens', icon: KeyRound, href: '/admin/auth-tokens', adminOnly: true, tenantRequired: true },
+            { label: 'Auth Tokens', icon: KeyRound, href: '/admin/auth-tokens', adminOnly: true, organizationRequired: true },
             { label: 'SIP Profiles', icon: Radio, href: '/admin/sip-profiles', superadminOnly: true },
             { label: 'Blocked Destinations', icon: ShieldAlert, href: '/admin/blocked-destinations', superadminOnly: true },
         ],
@@ -112,8 +112,9 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'System',
         items: [
             { label: 'Capabilities', icon: Sparkles, href: '/admin/capabilities', superadminOnly: true },
+            { label: 'System Settings', icon: Globe, href: '/admin/system-settings', superadminOnly: true },
             { label: 'FreeSWITCH Modules', icon: Radio, href: '/admin/freeswitch/modules', superadminOnly: true },
-            { label: 'Audit Logs', icon: ScrollText, href: '/admin/logs', adminOnly: true, tenantRequired: true },
+            { label: 'Audit Logs', icon: ScrollText, href: '/admin/logs', adminOnly: true, organizationRequired: true },
             { label: 'System Logs', icon: FileText, href: '/admin/system-logs', superadminOnly: true },
             { label: 'SIP Status', icon: Radio, href: '/admin/sip-status', superadminOnly: true },
         ],
@@ -124,7 +125,7 @@ const NAV_SECTIONS: NavSection[] = [
 
 export default function SuperadminLayout() {
     const { user, logout } = useAuth();
-    const { tenants, activeTenant, switchTenant } = useTenant();
+    const { organizations, activeOrganization, switchOrganization } = useOrganization();
     const platformName = branding.appName;
     const location = useLocation();
     const navigate = useNavigate();
@@ -134,12 +135,12 @@ export default function SuperadminLayout() {
         () => document.documentElement.classList.contains('dark'),
     );
 
-    const isSuperadmin = user?.role === 'admin' && !user?.tenant_id;
+    const isSuperadmin = user?.role === 'superadmin' && !user?.organization_id;
     const isAdmin = user?.role === 'admin';
     const roleLabel = isSuperadmin
         ? 'Platform Admin'
         : isAdmin
-            ? 'Tenant Admin'
+            ? 'Organization Admin'
             : user?.role ?? 'User';
 
     const filteredSections = NAV_SECTIONS.map((section) => ({
@@ -147,7 +148,7 @@ export default function SuperadminLayout() {
         items: section.items.filter((item) => {
             if (item.superadminOnly && !isSuperadmin) return false;
             if (item.adminOnly && !isAdmin) return false;
-            if (item.tenantRequired && !activeTenant) return false;
+            if (item.organizationRequired && !activeOrganization) return false;
             return true;
         }),
     })).filter((section) => section.items.length > 0);
@@ -192,27 +193,27 @@ export default function SuperadminLayout() {
                     'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar transition-transform duration-200 ease-out lg:static lg:z-auto lg:translate-x-0 lg:transition-all',
                     collapsed ? 'lg:w-17' : 'lg:w-64',
                     mobileNavOpen ? 'translate-x-0 w-72' : '-translate-x-full w-72',
-                    activeTenant ? 'border-primary/20' : ''
+                    activeOrganization ? 'border-primary/20' : ''
                 )}
             >
                 {/* Brand */}
                 <div className={cn(
                     "flex h-14 items-center gap-3 px-4",
-                    activeTenant ? "bg-primary/5" : ""
+                    activeOrganization ? "bg-primary/5" : ""
                 )}>
                     <div className={cn(
                         "flex size-8 shrink-0 items-center justify-center rounded-lg text-primary-foreground",
-                        activeTenant ? "bg-primary" : "bg-sidebar-primary"
+                        activeOrganization ? "bg-primary" : "bg-sidebar-primary"
                     )}>
-                        {activeTenant ? <Building2 className="size-4" /> : <Shield className="size-4" />}
+                        {activeOrganization ? <Building2 className="size-4" /> : <Shield className="size-4" />}
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col min-w-0">
                             <span className="truncate text-sm font-bold tracking-tight text-sidebar-foreground">
-                                {activeTenant ? activeTenant.name : platformName}
+                                {activeOrganization ? activeOrganization.name : platformName}
                             </span>
                             <p className="truncate text-[10px] leading-none text-muted-foreground mt-1">
-                                {activeTenant ? 'TENANT MANAGEMENT' : 'GLOBAL PLATFORM CONTROL'}
+                                {activeOrganization ? 'ORGANIZATION MANAGEMENT' : 'GLOBAL PLATFORM CONTROL'}
                             </p>
                         </div>
                     )}
@@ -252,7 +253,7 @@ export default function SuperadminLayout() {
                                     >
                                         <item.icon className="size-4 shrink-0" />
                                         <span className={cn(collapsed && 'lg:hidden')}>
-                                            {typeof item.label === 'function' ? item.label(!!activeTenant) : item.label}
+                                            {typeof item.label === 'function' ? item.label(!!activeOrganization) : item.label}
                                         </span>
                                     </Link>
                                 );
@@ -342,7 +343,7 @@ export default function SuperadminLayout() {
 
             {/* ─── Main Area ──────────────────────────────── */}
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                {/* Top Header Bar with Tenant Switcher */}
+                {/* Top Header Bar with Organization Switcher */}
                 <header className="flex h-14 items-center justify-between gap-3 border-b bg-background px-4 lg:px-6">
                     <div className="flex min-w-0 items-center gap-3">
                         <Button
@@ -364,14 +365,14 @@ export default function SuperadminLayout() {
                             </span>
                             <span className={cn(
                                 "text-[10px] font-medium tracking-wider uppercase",
-                                activeTenant ? "text-primary" : "text-muted-foreground"
+                                activeOrganization ? "text-primary" : "text-muted-foreground"
                             )}>
-                                {activeTenant ? `Tenant: ${activeTenant.name}` : 'Platform Admin'}
+                                {activeOrganization ? `Organization: ${activeOrganization.name}` : 'Platform Admin'}
                             </span>
                         </div>
                     </div>
 
-                    {/* Tenant Switcher (FusionPBX-style) */}
+                    {/* Organization Switcher (FusionPBX-style) */}
                     {isSuperadmin ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -382,17 +383,17 @@ export default function SuperadminLayout() {
                                 >
                                     <Building2 className="size-4 text-primary" />
                                     <span className="max-w-50 truncate">
-                                        {activeTenant?.name ?? 'Select Tenant'}
+                                        {activeOrganization?.name ?? 'Select Organization'}
                                     </span>
                                     <ChevronsUpDown className="size-3 text-muted-foreground" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-64">
-                                <DropdownMenuLabel>Switch Tenant</DropdownMenuLabel>
+                                <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                     onClick={() => {
-                                        switchTenant(null);
+                                        switchOrganization(null);
                                         navigate('/admin');
                                     }}
                                 >
@@ -401,18 +402,18 @@ export default function SuperadminLayout() {
                                             <p className="text-sm font-medium">Platform Admin</p>
                                             <p className="text-xs text-muted-foreground">Global Scope</p>
                                         </div>
-                                        {!activeTenant && (
+                                        {!activeOrganization && (
                                             <Check className="size-4 text-primary" />
                                         )}
                                     </div>
                                 </DropdownMenuItem>
-                                {tenants.length > 0 && <DropdownMenuSeparator />}
-                                {tenants.map((tenant) => (
+                                {organizations.length > 0 && <DropdownMenuSeparator />}
+                                {organizations.map((organization) => (
                                     <DropdownMenuItem
-                                        key={tenant.id}
+                                        key={organization.id}
                                         onClick={() => {
-                                            switchTenant(tenant);
-                                            if (location.pathname === '/admin/tenants') {
+                                            switchOrganization(organization);
+                                            if (location.pathname === '/admin/organizations') {
                                                 navigate('/admin');
                                             }
                                         }}
@@ -420,21 +421,21 @@ export default function SuperadminLayout() {
                                         <div className="flex flex-1 items-center justify-between">
                                             <div>
                                                 <p className="text-sm font-medium">
-                                                    {tenant.name}
+                                                    {organization.name}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {tenant.domain}
+                                                    {organization.domain}
                                                 </p>
                                             </div>
-                                            {activeTenant?.id === tenant.id && (
+                                            {activeOrganization?.id === organization.id && (
                                                 <Check className="size-4 text-primary" />
                                             )}
                                         </div>
                                     </DropdownMenuItem>
                                 ))}
-                                {tenants.length === 0 && (
+                                {organizations.length === 0 && (
                                     <DropdownMenuItem disabled>
-                                        No tenants available
+                                        No organizations available
                                     </DropdownMenuItem>
                                 )}
                             </DropdownMenuContent>
@@ -443,7 +444,7 @@ export default function SuperadminLayout() {
                         <div className="flex max-w-48 items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm font-medium sm:max-w-64">
                             <Building2 className="size-4 shrink-0 text-primary" />
                             <span className="truncate">
-                                {activeTenant?.name ?? platformName}
+                                {activeOrganization?.name ?? platformName}
                             </span>
                         </div>
                     )}
