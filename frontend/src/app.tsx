@@ -160,9 +160,9 @@ const router = createBrowserRouter(
                 <Route path="ring-groups" element={<RingGroupsPage />} />
                 <Route path="ring-groups/create" element={<RingGroupFormPage />} />
                 <Route path="ring-groups/:id/edit" element={<RingGroupFormPage />} />
-                <Route path="dids" element={<DidsPage />} />
-                <Route path="dids/create" element={<DidFormPage />} />
-                <Route path="dids/:id/edit" element={<DidFormPage />} />
+                <Route path="numbers" element={<DidsPage />} />
+                <Route path="numbers/create" element={<DidFormPage />} />
+                <Route path="numbers/:id/edit" element={<DidFormPage />} />
                 <Route path="flows" element={<FlowsPage />} />
                 <Route path="flows/create" element={<FlowEditorPage />} />
                 <Route path="flows/:id/edit" element={<FlowEditorPage />} />
@@ -180,9 +180,9 @@ const router = createBrowserRouter(
                 <Route path="queues/:id" element={<QueueDetailPage />} />
 
                 {/* Connectivity (organization-scoped) */}
-                <Route path="gateways" element={<GatewaysPage />} />
-                <Route path="gateways/create" element={<GatewayFormPage />} />
-                <Route path="gateways/:id/edit" element={<GatewayFormPage />} />
+                <Route path="providers" element={<GatewaysPage />} />
+                <Route path="providers/create" element={<GatewayFormPage />} />
+                <Route path="providers/:id/edit" element={<GatewayFormPage />} />
 
                 {/* Call History (organization-scoped) */}
                 <Route path="call-history" element={<CallHistoryPage />} />

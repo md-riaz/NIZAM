@@ -169,7 +169,7 @@ export default function DidFormPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['dids'] });
-            navigate('/admin/dids');
+            navigate('/admin/numbers');
         },
     });
 
@@ -182,7 +182,7 @@ export default function DidFormPage() {
     return (
         <div className="space-y-6 p-6 lg:p-8">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dids')}>
+                <Button variant="ghost" size="icon" onClick={() => navigate('/admin/numbers')}>
                     <ArrowLeft className="size-4" />
                 </Button>
                 <div>

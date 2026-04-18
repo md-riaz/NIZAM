@@ -72,7 +72,7 @@ export default function GatewaysPage() {
                         Reusable SIP provider connections for inbound numbers and outbound calling.
                     </p>
                 </div>
-                <Button onClick={() => navigate('/admin/gateways/create')}>
+                <Button onClick={() => navigate('/admin/providers/create')}>
                     <Plus className="size-4" />
                     Add Provider
                 </Button>
@@ -137,7 +137,7 @@ export default function GatewaysPage() {
                                                 <Button 
                                                     variant="ghost" 
                                                     size="icon"
-                                                    onClick={() => navigate(`/admin/gateways/${gw.id}/edit`)}
+                                                    onClick={() => navigate(`/admin/providers/${gw.id}/edit`)}
                                                 >
                                                     <Pencil className="size-4" />
                                                 </Button>

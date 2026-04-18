@@ -103,7 +103,7 @@ export default function GatewayFormPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['gateways'] });
-            navigate('/admin/gateways');
+            navigate('/admin/providers');
         },
     });
 
@@ -116,7 +116,7 @@ export default function GatewayFormPage() {
     return (
         <div className="space-y-6 p-6 lg:p-8">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate('/admin/gateways')}>
+                <Button variant="ghost" size="icon" onClick={() => navigate('/admin/providers')}>
                     <ArrowLeft className="size-4" />
                 </Button>
                 <div>
