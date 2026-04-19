@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\GatewayController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HolidayCalendarController;
 use App\Http\Controllers\Api\MobileDeviceController;
+use App\Http\Controllers\Api\NumberProviderController;
 use App\Http\Controllers\Api\IvrController;
 use App\Http\Controllers\Api\InteractionController;
 use App\Http\Controllers\Api\OfficeFeatureController;
@@ -152,6 +153,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('flows/{flow}/publish', [FlowController::class, 'publish'])->name('flows.publish');
 
         Route::apiResource('dids', DidController::class);
+        Route::post('dids/{did}/provider', [NumberProviderController::class, 'store'])->name('dids.provider.store');
+        Route::put('dids/{did}/provider', [NumberProviderController::class, 'update'])->name('dids.provider.update');
+        Route::delete('dids/{did}/provider', [NumberProviderController::class, 'destroy'])->name('dids.provider.destroy');
         Route::apiResource('ring-groups', RingGroupController::class);
         Route::apiResource('ivrs', IvrController::class);
         Route::apiResource('time-conditions', TimeConditionController::class);

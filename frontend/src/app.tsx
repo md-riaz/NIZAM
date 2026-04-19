@@ -24,8 +24,6 @@ const UserPermissionsPage = lazy(() => import('@/pages/admin/UserPermissionsPage
 const ExtensionsPage = lazy(() => import('@/pages/admin/ExtensionsPage'));
 const ExtensionFormPage = lazy(() => import('@/pages/admin/ExtensionFormPage'));
 const ExtensionDetailPage = lazy(() => import('@/pages/admin/ExtensionDetailPage'));
-const GatewaysPage = lazy(() => import('@/pages/admin/GatewaysPage'));
-const GatewayFormPage = lazy(() => import('@/pages/admin/GatewayFormPage'));
 const DidsPage = lazy(() => import('@/pages/admin/DidsPage'));
 const DidFormPage = lazy(() => import('@/pages/admin/DidFormPage'));
 const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
@@ -178,11 +176,6 @@ const router = createBrowserRouter(
                 <Route path="queues/create" element={<QueueFormPage />} />
                 <Route path="queues/:id/edit" element={<QueueFormPage />} />
                 <Route path="queues/:id" element={<QueueDetailPage />} />
-
-                {/* Connectivity (organization-scoped) */}
-                <Route path="providers" element={<GatewaysPage />} />
-                <Route path="providers/create" element={<GatewayFormPage />} />
-                <Route path="providers/:id/edit" element={<GatewayFormPage />} />
 
                 {/* Call History (organization-scoped) */}
                 <Route path="call-history" element={<CallHistoryPage />} />
