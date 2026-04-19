@@ -14,12 +14,12 @@ class GatewayObserver
 
     public function created(Gateway $gateway): void
     {
-        $this->sync($gateway, 'created');
+        $this->syncCreated($gateway);
     }
 
     public function updated(Gateway $gateway): void
     {
-        $this->sync($gateway, 'updated');
+        $this->syncUpdated($gateway);
     }
 
     public function deleted(Gateway $gateway): void
@@ -34,14 +34,25 @@ class GatewayObserver
         }
     }
 
-    protected function sync(Gateway $gateway, string $event): void
+    protected function syncCreated(Gateway $gateway): void
     {
         try {
-            $this->provisioning->sync($gateway);
+            $this->provisioning->syncCreated($gateway);
         } catch (\Throwable $e) {
-            Log::error('Failed to sync gateway provisioning', [
+            Log::error('Failed to sync created gateway provisioning', [
                 'gateway_id' => $gateway->id,
-                'event' => $event,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    protected function syncUpdated(Gateway $gateway): void
+    {
+        try {
+            $this->provisioning->syncUpdated($gateway, $gateway->getOriginal());
+        } catch (\Throwable $e) {
+            Log::error('Failed to sync updated gateway provisioning', [
+                'gateway_id' => $gateway->id,
                 'error' => $e->getMessage(),
             ]);
         }

@@ -128,7 +128,6 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\HolidayCalendar::observe(\App\Observers\HolidayCalendarObserver::class);
         \App\Models\Holiday::observe(\App\Observers\HolidayObserver::class);
         \App\Models\Extension::observe(\App\Observers\ExtensionObserver::class);
-        \App\Models\Gateway::observe(\App\Observers\GatewayObserver::class);
         \App\Models\Queue::observe(\App\Observers\QueueObserver::class);
         \App\Models\QueueEntry::observe(\App\Observers\QueueEntryObserver::class);
         \App\Models\Agent::observe(\App\Observers\AgentObserver::class);

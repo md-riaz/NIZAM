@@ -10,31 +10,26 @@ class GatewayProvisioningService
 {
     public function __construct(
         protected FreeSwitchCommandService $freeSwitch,
-    ) {}
-
-    public function sync(Gateway $gateway): void
-    {
-        $directory = $this->directory();
-        File::ensureDirectoryExists($directory);
-
-        if (! $gateway->is_active) {
-            $this->remove($gateway);
-            return;
-        }
-
-        File::put($this->filePath($gateway), $this->render($gateway));
-        $this->reloadProfile($gateway);
+        protected ?GatewayLifecyclePlanner $planner = null,
+        protected ?FreeSwitchGatewayLifecycleExecutor $executor = null,
+    ) {
+        $this->planner ??= app(GatewayLifecyclePlanner::class);
+        $this->executor ??= app(FreeSwitchGatewayLifecycleExecutor::class);
     }
 
-    public function remove(Gateway $gateway): void
+    public function syncCreated(Gateway $gateway): array
     {
-        $filePath = $this->filePath($gateway);
-        if (File::exists($filePath)) {
-            File::delete($filePath);
-        }
+        return $this->applyPlan($gateway, $this->planner->forCreate($gateway));
+    }
 
-        $this->freeSwitch->execute('sofia', ['profile', $this->profile(), 'killgw', $this->gatewayIdentifier($gateway)]);
-        $this->reloadProfile();
+    public function syncUpdated(Gateway $gateway, array $original): array
+    {
+        return $this->applyPlan($gateway, $this->planner->forUpdate($gateway, $original));
+    }
+
+    public function remove(Gateway $gateway): array
+    {
+        return $this->applyPlan($gateway, $this->planner->forDelete($gateway));
     }
 
     public function syncAll(iterable $gateways): void
@@ -90,7 +85,8 @@ class GatewayProvisioningService
             File::delete($this->directory().'/'.$filename);
         }
 
-        $this->reloadProfile();
+        $this->freeSwitch->execute('reloadxml');
+        $this->freeSwitch->execute('sofia', ['profile', $this->profile(), 'rescan']);
 
         return $summary;
     }
@@ -103,7 +99,7 @@ class GatewayProvisioningService
         $port = $gateway->port ?: 5060;
         $realm = $gateway->realm ?: $gateway->host;
         $proxy = str_contains($proxyHost, ':') ? $proxyHost : $proxyHost.':'.$port;
-        $register = $gateway->username && $gateway->password ? 'true' : 'false';
+        $register = $this->shouldRegister($gateway) ? 'true' : 'false';
         $fromUser = $gateway->username ?: $gateway->name;
         $contactParams = match ($gateway->transport) {
             'tcp' => 'transport=tcp',
@@ -166,25 +162,39 @@ class GatewayProvisioningService
         return implode("\n", $xml)."\n";
     }
 
-    protected function reloadProfile(?Gateway $gateway = null): void
+    protected function applyPlan(Gateway $gateway, GatewayLifecyclePlan $plan): array
     {
-        $profile = $this->profile();
-        $this->freeSwitch->execute('reloadxml');
+        File::ensureDirectoryExists($this->directory());
+        $filePath = $this->filePath($gateway);
 
-        // Note: FreeSWITCH applies global vars from vars.xml/switch.conf.xml only on full restart.
-        // For gateway-specific changes, rescan is sufficient.
-        $rescan = $this->freeSwitch->execute('sofia', ['profile', $profile, 'rescan']);
-
-        if (($gateway?->is_active ?? false) && $gateway) {
-            $this->freeSwitch->execute('sofia', ['profile', $profile, 'killgw', $this->gatewayIdentifier($gateway)]);
-            $this->freeSwitch->execute('sofia', ['profile', $profile, 'startgw', $this->gatewayIdentifier($gateway)]);
+        if ($plan->shouldWriteFile) {
+            File::put($filePath, $this->render($gateway));
         }
 
-        Log::info('Gateway profile reloaded', [
-            'gateway_id' => $gateway?->id,
-            'profile' => $profile,
-            'rescan' => $rescan,
+        if ($plan->shouldDeleteFile && File::exists($filePath)) {
+            File::delete($filePath);
+        }
+
+        $results = $this->executor->execute($plan, $this->gatewayIdentifier($gateway));
+
+        Log::info('Gateway lifecycle applied', [
+            'gateway_id' => $gateway->id,
+            'action' => $plan->action,
+            'reason' => $plan->reason,
+            'outcome' => $plan->outcome,
+            'profile' => $plan->profile,
+            'old_profile' => $plan->oldProfile,
+            'results' => $results,
         ]);
+
+        return [
+            'action' => $plan->action,
+            'reason' => $plan->reason,
+            'outcome' => $plan->outcome,
+            'profile' => $plan->profile,
+            'old_profile' => $plan->oldProfile,
+            'results' => $results,
+        ];
     }
 
     protected function filePath(Gateway $gateway): string
@@ -205,6 +215,15 @@ class GatewayProvisioningService
     protected function gatewayIdentifier(Gateway $gateway): string
     {
         return 'v_'.$gateway->id;
+    }
+
+    protected function shouldRegister(Gateway $gateway): bool
+    {
+        return (bool) $gateway->register
+            && filled($gateway->username)
+            && filled($gateway->password)
+            && filled($gateway->host)
+            && filled($gateway->profile);
     }
 
     protected function xml(string $value): string
