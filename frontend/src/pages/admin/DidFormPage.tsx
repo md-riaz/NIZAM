@@ -1,14 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import { isAxiosError } from 'axios';
+import { toast } from 'sonner';
 
 import api from '@/lib/api';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -33,46 +36,172 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import type { Extension, Flow } from '@/types/models';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Did, Extension, Flow, Gateway } from '@/types/models';
 
 const didSchema = z.object({
     number: z.string().min(1, 'Number is required'),
     description: z.string().optional(),
-    destination_type: z.string().optional(),
-    destination_id: z.string().optional(),
+    destination_type: z.enum(['extension', 'flow'], {
+        errorMap: () => ({ message: 'Destination type is required' }),
+    }),
+    destination_id: z.string().uuid('Destination is required'),
+    is_active: z.boolean(),
+});
+
+const providerSchema = z.object({
+    name: z.string().min(1, 'Provider name is required'),
+    host: z.string().min(1, 'SIP host is required'),
+    username: z.string().optional(),
+    password: z.string().optional(),
+    register: z.boolean(),
     is_active: z.boolean(),
 });
 
 type DidFormValues = z.infer<typeof didSchema>;
+type ProviderFormValues = z.infer<typeof providerSchema>;
+
+type DidResponse = Did;
+type ProviderResponse = Gateway;
+
+type DestinationOption = {
+    id: string;
+    label: string;
+};
+
+const emptyProviderValues: ProviderFormValues = {
+    name: '',
+    host: '',
+    username: '',
+    password: '',
+    register: true,
+    is_active: true,
+};
+
+function isUuid(value?: string | null): value is string {
+    return typeof value === 'string' && z.string().uuid().safeParse(value).success;
+}
+
+function toDidFormValues(did?: DidResponse | null): DidFormValues {
+    return {
+        number: did?.number || '',
+        description: did?.description || '',
+        destination_type: did?.destination_type === 'flow' ? 'flow' : 'extension',
+        destination_id: isUuid(did?.destination_id) ? did.destination_id : '00000000-0000-0000-0000-000000000000',
+        is_active: did?.is_active ?? true,
+    };
+}
+
+function toProviderFormValues(gateway?: ProviderResponse | null): ProviderFormValues {
+    return {
+        name: gateway?.name || '',
+        host: gateway?.host || '',
+        username: gateway?.username || '',
+        password: gateway?.password || '',
+        register: gateway?.register ?? true,
+        is_active: gateway?.is_active ?? true,
+    };
+}
+
+function getDestinationOptions(
+    destinationType: DidFormValues['destination_type'],
+    extensions: Extension[],
+    flows: Flow[],
+): DestinationOption[] {
+    if (destinationType === 'flow') {
+        const availableFlows = flows.filter((flow) => !!flow.active_version);
+        const source = availableFlows.length > 0 ? availableFlows : flows;
+
+        return source.map((flow) => ({
+            id: flow.id,
+            label: `${flow.name}${flow.active_version?.is_published ? ' (published)' : ' (draft)'}`,
+        }));
+    }
+
+    return extensions.map((ext) => {
+        const displayName = [ext.directory_first_name, ext.directory_last_name]
+            .filter(Boolean)
+            .join(' ');
+
+        return {
+            id: ext.id,
+            label: displayName ? `${ext.extension} - ${displayName}` : ext.extension,
+        };
+    });
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+    if (!isAxiosError(error)) {
+        return fallback;
+    }
+
+    const data = error.response?.data;
+    if (!data || typeof data !== 'object') {
+        return fallback;
+    }
+
+    const message = Reflect.get(data, 'message');
+    if (typeof message === 'string' && message.length > 0) {
+        return message;
+    }
+
+    const errors = Reflect.get(data, 'errors');
+    if (!errors || typeof errors !== 'object') {
+        return fallback;
+    }
+
+    for (const value of Object.values(errors)) {
+        if (Array.isArray(value)) {
+            const first = value.find((entry) => typeof entry === 'string');
+            if (typeof first === 'string' && first.length > 0) {
+                return first;
+            }
+        }
+
+        if (typeof value === 'string' && value.length > 0) {
+            return value;
+        }
+    }
+
+    return fallback;
+}
 
 export default function DidFormPage() {
     const { id } = useParams<{ id: string }>();
-    const isEdit = Boolean(id);
     const navigate = useNavigate();
     const { activeOrganization, organizationApiPrefix } = useOrganization();
     const queryClient = useQueryClient();
+    const [savedDidId, setSavedDidId] = useState<string | null>(id ?? null);
+    const [activeTab, setActiveTab] = useState<'number' | 'provider'>('number');
 
-    const form = useForm<DidFormValues>({
+    const currentDidId = savedDidId ?? id ?? null;
+
+    const numberForm = useForm<DidFormValues>({
         resolver: zodResolver(didSchema),
         defaultValues: {
             number: '',
             description: '',
-            destination_type: '',
-            destination_id: '',
+            destination_type: 'extension',
+            destination_id: '00000000-0000-0000-0000-000000000000',
             is_active: true,
         },
     });
 
-    const destType = form.watch('destination_type');
-    const selectedDestinationId = form.watch('destination_id');
+    const providerForm = useForm<ProviderFormValues>({
+        resolver: zodResolver(providerSchema),
+        defaultValues: emptyProviderValues,
+    });
 
-    const { data: did, isLoading: isFetching } = useQuery({
-        queryKey: ['did', id],
+    const destType = numberForm.watch('destination_type');
+    const selectedDestinationId = numberForm.watch('destination_id');
+
+    const { data: did, isLoading: isFetching } = useQuery<DidResponse>({
+        queryKey: ['did', currentDidId],
         queryFn: async () => {
-            const res = await api.get(`${organizationApiPrefix}/dids/${id}`);
+            const res = await api.get(`${organizationApiPrefix}/dids/${currentDidId}`);
             return res.data.data;
         },
-        enabled: isEdit && !!activeOrganization,
+        enabled: !!currentDidId && !!activeOrganization,
     });
 
     const { data: extensions = [] } = useQuery<Extension[]>({
@@ -93,229 +222,522 @@ export default function DidFormPage() {
         enabled: !!activeOrganization,
     });
 
-    const destinationOptions = destType === 'flow'
-        ? flows
-            .filter((flow) => !!flow.active_version)
-            .map((flow) => ({
-                id: flow.id,
-                label: `${flow.name}${flow.active_version?.is_published ? ' (published)' : ' (draft)'}`,
-            }))
-        : destType === 'extension'
-            ? extensions.map((ext) => ({
-                id: ext.id,
-                label: `${ext.extension} - ${ext.directory_first_name ?? ext.directory_last_name ?? 'Extension'}`,
-            }))
-            : [];
+    const destinationOptions = useMemo(
+        () => getDestinationOptions(destType, extensions, flows),
+        [destType, extensions, flows],
+    );
 
-    const selectedDestinationOption = selectedDestinationId
-        ? destinationOptions.find((option) => option.id === selectedDestinationId)
-        : undefined;
+    const destinationOptionsWithCurrent = useMemo(() => {
+        if (!selectedDestinationId || destinationOptions.some((option) => option.id === selectedDestinationId)) {
+            return destinationOptions;
+        }
 
-    const destinationOptionsWithCurrent = !selectedDestinationOption && selectedDestinationId
-        ? [
+        return [
             ...destinationOptions,
             {
                 id: selectedDestinationId,
-                label: destType === 'flow'
-                    ? 'Current flow (not in published list)'
-                    : 'Current destination',
+                label: destType === 'flow' ? 'Current flow' : 'Current extension',
             },
-        ]
-        : destinationOptions;
-
-    useEffect(() => {
-        if (did) {
-            const destinationType = did.destination_type || '';
-            const destinationId = did.destination_id || '';
-
-            form.reset({
-                number: did.number || '',
-                description: did.description || '',
-                destination_type: destinationType,
-                destination_id: destinationId,
-                is_active: did.is_active ?? true,
-            });
-
-            form.setValue('destination_type', destinationType, { shouldDirty: false });
-            form.setValue('destination_id', destinationId, { shouldDirty: false });
-        }
-    }, [did, form]);
+        ];
+    }, [destType, destinationOptions, selectedDestinationId]);
 
     useEffect(() => {
         if (!did) return;
 
-        const destinationType = did.destination_type || '';
-        const destinationId = did.destination_id || '';
+        numberForm.reset(toDidFormValues(did));
 
-        if (!destinationType) return;
-        if (destType === destinationType && form.getValues('destination_id') === destinationId) return;
+        if (did.gateway) {
+            providerForm.reset(toProviderFormValues(did.gateway));
+        }
 
-        form.setValue('destination_type', destinationType, { shouldDirty: false });
-        form.setValue('destination_id', destinationId, { shouldDirty: false });
-    }, [did, destType, form]);
+        setSavedDidId(did.id);
+    }, [did, numberForm, providerForm]);
+
 
     useEffect(() => {
-        if (!selectedDestinationId) return;
-        if (destinationOptionsWithCurrent.some((option) => option.id === selectedDestinationId)) return;
-        form.setValue('destination_id', '');
-    }, [destinationOptionsWithCurrent, selectedDestinationId, form]);
+        const emptyDestinationId = '00000000-0000-0000-0000-000000000000';
 
-    const mutation = useMutation({
-        mutationFn: async (values: DidFormValues) => {
-            if (isEdit) {
-                return api.put(`${organizationApiPrefix}/dids/${id}`, values);
+        if (destinationOptions.length === 0) {
+            if (selectedDestinationId !== emptyDestinationId) {
+                numberForm.setValue('destination_id', emptyDestinationId, {
+                    shouldValidate: true,
+                    shouldDirty: !currentDidId,
+                });
             }
-            return api.post(`${organizationApiPrefix}/dids`, values);
+            return;
+        }
+
+        if (!destinationOptions.some((option) => option.id === selectedDestinationId)) {
+            const nextDestinationId = destinationOptions[0].id;
+
+            if (selectedDestinationId !== nextDestinationId) {
+                numberForm.setValue('destination_id', nextDestinationId, {
+                    shouldValidate: true,
+                    shouldDirty: !currentDidId,
+                });
+            }
+        }
+    }, [currentDidId, destinationOptions, numberForm, selectedDestinationId]);
+
+    const saveNumberMutation = useMutation({
+        mutationFn: async (values: DidFormValues) => {
+            const payload = {
+                ...values,
+                description: values.description?.trim() || null,
+            };
+
+            if (currentDidId) {
+                const response = await api.put(`${organizationApiPrefix}/dids/${currentDidId}`, payload);
+                return response.data.data as DidResponse;
+            }
+
+            const response = await api.post(`${organizationApiPrefix}/dids`, payload);
+            return response.data.data as DidResponse;
         },
-        onSuccess: () => {
+        onSuccess: async (savedDid) => {
+            setSavedDidId(savedDid.id);
             queryClient.invalidateQueries({ queryKey: ['dids'] });
-            navigate('/admin/dids');
+            queryClient.setQueryData(['did', savedDid.id], savedDid);
+            numberForm.reset(toDidFormValues(savedDid));
+            toast.success(currentDidId ? 'Number updated.' : 'Number created.');
+
+            if (!currentDidId) {
+                navigate(`/admin/numbers/${savedDid.id}/edit`, { replace: true });
+            }
+        },
+        onError: (error) => {
+            const message = getApiErrorMessage(error, 'Failed to save number.');
+
+            if (isAxiosError(error)) {
+                const data = error.response?.data;
+                const errors = data && typeof data === 'object' ? Reflect.get(data, 'errors') : null;
+
+                if (errors && typeof errors === 'object') {
+                    for (const fieldName of ['number', 'description', 'destination_type', 'destination_id'] as const) {
+                        const fieldErrors = Reflect.get(errors, fieldName);
+                        const fieldMessage = Array.isArray(fieldErrors)
+                            ? fieldErrors.find((value) => typeof value === 'string')
+                            : typeof fieldErrors === 'string'
+                                ? fieldErrors
+                                : null;
+
+                        if (fieldMessage) {
+                            numberForm.setError(fieldName, { type: 'server', message: fieldMessage });
+                        }
+                    }
+                }
+            }
+
+            toast.error(message);
         },
     });
 
-    const onSubmit = (values: DidFormValues) => {
-        mutation.mutate(values);
+    const saveProviderMutation = useMutation({
+        mutationFn: async (values: ProviderFormValues) => {
+            if (!savedDidId) {
+                throw new Error('Save number first.');
+            }
+
+            if (did?.gateway_id) {
+                const response = await api.put(`${organizationApiPrefix}/dids/${savedDidId}/provider`, values);
+                return response.data.data as DidResponse;
+            }
+
+            const response = await api.post(`${organizationApiPrefix}/dids/${savedDidId}/provider`, values);
+            return response.data.data as DidResponse;
+        },
+        onSuccess: (updatedDid) => {
+            setSavedDidId(updatedDid.id);
+            queryClient.invalidateQueries({ queryKey: ['dids'] });
+            queryClient.setQueryData(['did', updatedDid.id], updatedDid);
+            providerForm.reset(toProviderFormValues(updatedDid.gateway));
+            toast.success('Provider saved.');
+        },
+        onError: (error) => {
+            toast.error(getApiErrorMessage(error, 'Failed to save provider.'));
+        },
+    });
+
+    const removeProviderMutation = useMutation({
+        mutationFn: async () => {
+            if (!savedDidId) return null;
+
+            const response = await api.delete(`${organizationApiPrefix}/dids/${savedDidId}/provider`);
+            return response.data.data as DidResponse;
+        },
+        onSuccess: (updatedDid) => {
+            if (!updatedDid) return;
+
+            queryClient.invalidateQueries({ queryKey: ['dids'] });
+            queryClient.setQueryData(['did', updatedDid.id], updatedDid);
+            providerForm.reset(emptyProviderValues);
+            toast.success('Provider removed from number.');
+        },
+        onError: (error) => {
+            toast.error(getApiErrorMessage(error, 'Failed to remove provider.'));
+        },
+    });
+
+    const onSubmitNumber = (values: DidFormValues) => {
+        if (destinationOptions.length === 0) {
+            numberForm.setError('destination_id', {
+                type: 'manual',
+                message: destType === 'flow'
+                    ? 'Create or publish a call flow before assigning this number.'
+                    : 'Create an extension before assigning this number.',
+            });
+            return;
+        }
+
+        saveNumberMutation.mutate({
+            ...values,
+            destination_id: destinationOptions.some((option) => option.id === values.destination_id)
+                ? values.destination_id
+                : destinationOptions[0].id,
+        });
     };
+
+    const onSubmitProvider = (values: ProviderFormValues) => {
+        if (!savedDidId) {
+            toast.message('Save number first. Provider draft stays on this page until number exists.');
+            return;
+        }
+
+        saveProviderMutation.mutate(values);
+    };
+
+    const hasSavedProvider = Boolean(did?.gateway_id);
+    const isBusy = saveNumberMutation.isPending || saveProviderMutation.isPending || removeProviderMutation.isPending;
 
     if (!activeOrganization) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dids')}>
+                <Button variant="ghost" size="icon" onClick={() => navigate('/admin/numbers')}>
                     <ArrowLeft className="size-4" />
                 </Button>
                 <div>
                     <p className="text-sm text-muted-foreground">
-                        {activeOrganization.name} &rsaquo; Routing
+                        {activeOrganization.name} &rsaquo; Numbers
                     </p>
                     <h1 className="text-2xl font-bold tracking-tight">
-                        {isEdit ? 'Edit Number' : 'Add Number'}
+                        {currentDidId ? 'Edit Number' : 'Add Number'}
                     </h1>
                 </div>
             </div>
 
-            <Card className="max-w-2xl">
-                <CardHeader>
-                    <CardTitle>Number Details</CardTitle>
-                    <CardDescription>
-                        Configure an inbound phone number and where calls should route.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {isFetching ? (
-                        <div className="flex h-32 items-center justify-center">
-                            <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        </div>
-                    ) : (
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                <FormField
-                                    control={form.control}
-                                    name="number"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Number</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. 18005551234" {...field} />
-                                            </FormControl>
-                                            <FormDescription>
-                                                Phone number customers dial to reach this route.
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'number' | 'provider')} className="space-y-6 max-w-4xl">
+                <TabsList>
+                    <TabsTrigger value="number">Number Details</TabsTrigger>
+                    <TabsTrigger value="provider">Provider</TabsTrigger>
+                </TabsList>
 
-                                <FormField
-                                    control={form.control}
-                                    name="description"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Description</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. Main Support Line" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <div className="grid gap-6 sm:grid-cols-2">
-                                    <FormField
-                                        control={form.control}
-                                        name="destination_type"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Destination Type</FormLabel>
-                                                <Select
-                                                    onValueChange={(value) => {
-                                                        field.onChange(value);
-                                                        form.setValue('destination_id', '');
-                                                    }}
-                                                    value={field.value}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select type" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="extension">Extension</SelectItem>
-                                                        <SelectItem value="flow">Call Flow</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {(destType === 'extension' || destType === 'flow') && (
+                <TabsContent value="number">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Number Details</CardTitle>
+                            <CardDescription>
+                                Configure inbound number details and where calls should route.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {isFetching ? (
+                                <div className="flex h-32 items-center justify-center">
+                                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                </div>
+                            ) : (
+                                <Form {...numberForm}>
+                                    <form onSubmit={numberForm.handleSubmit(onSubmitNumber)} className="space-y-6">
                                         <FormField
-                                            control={form.control}
-                                            name="destination_id"
+                                            control={numberForm.control}
+                                            name="number"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>
-                                                        {destType === 'flow' ? 'Destination Flow' : 'Destination Extension'}
-                                                    </FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder={destType === 'flow' ? 'Select flow' : 'Select extension'} />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {destinationOptionsWithCurrent.map((option) => (
-                                                                <SelectItem key={option.id} value={option.id}>
-                                                                    {option.label}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <FormLabel>Number</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="e.g. 18005551234" {...field} />
+                                                    </FormControl>
                                                     <FormDescription>
-                                                        {destType === 'flow'
-                                                            ? 'Choose flow that should answer inbound call and execute published routing graph.'
-                                                            : 'Choose extension that should receive inbound calls.'}
+                                                        Phone number customers dial to reach this route.
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
-                                    )}
-                                </div>
 
-                                <div className="flex justify-end">
-                                    <Button type="submit" disabled={mutation.isPending}>
-                                        <Save className="mr-2 size-4" />
-                                        {mutation.isPending ? 'Saving...' : 'Save Number'}
-                                    </Button>
+                                        <FormField
+                                            control={numberForm.control}
+                                            name="description"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Description</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="e.g. Main Support Line" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <div className="grid gap-6 sm:grid-cols-2">
+                                            <FormField
+                                                control={numberForm.control}
+                                                name="destination_type"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Destination Type</FormLabel>
+                                                        <Select
+                                                            onValueChange={(value) => {
+                                                                const nextType = value === 'flow' ? 'flow' : 'extension';
+                                                                field.onChange(nextType);
+                                                                const nextOptions = getDestinationOptions(nextType, extensions, flows);
+                                                                numberForm.setValue(
+                                                                    'destination_id',
+                                                                    nextOptions[0]?.id ?? '00000000-0000-0000-0000-000000000000',
+                                                                    { shouldValidate: true, shouldDirty: true },
+                                                                );
+                                                            }}
+                                                            value={field.value}
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select type" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="extension">Extension</SelectItem>
+                                                                <SelectItem value="flow">Call Flow</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={numberForm.control}
+                                                name="destination_id"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {destType === 'flow' ? 'Destination Flow' : 'Destination Extension'}
+                                                        </FormLabel>
+                                                        <Select
+                                                            onValueChange={field.onChange}
+                                                            value={destinationOptionsWithCurrent.some((option) => option.id === field.value) ? field.value : ''}
+                                                            disabled={destinationOptions.length === 0}
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder={destType === 'flow' ? 'Select flow' : 'Select extension'} />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                {destinationOptionsWithCurrent.length > 0 ? (
+                                                                    destinationOptionsWithCurrent.map((option) => (
+                                                                        <SelectItem key={option.id} value={option.id}>
+                                                                            {option.label}
+                                                                        </SelectItem>
+                                                                    ))
+                                                                ) : (
+                                                                    <SelectItem value="__empty" disabled>
+                                                                        {destType === 'flow'
+                                                                            ? 'Create or publish a call flow first'
+                                                                            : 'Create an extension first'}
+                                                                    </SelectItem>
+                                                                )}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormDescription>
+                                                            {destType === 'flow'
+                                                                ? 'Choose flow that should answer inbound call and execute published routing graph.'
+                                                                : 'Choose extension that should receive inbound calls.'}
+                                                        </FormDescription>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+
+                                        <FormField
+                                            control={numberForm.control}
+                                            name="is_active"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                                    <FormControl>
+                                                        <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
+                                                    </FormControl>
+                                                    <div className="space-y-1 leading-none">
+                                                        <FormLabel>Active</FormLabel>
+                                                        <FormDescription>
+                                                            Inactive numbers stay saved but will not be treated as active routes.
+                                                        </FormDescription>
+                                                    </div>
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <div className="flex justify-end">
+                                            <Button type="submit" disabled={isBusy || destinationOptions.length === 0}>
+                                                <Save className="mr-2 size-4" />
+                                                {saveNumberMutation.isPending ? 'Saving...' : 'Save Number'}
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </Form>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="provider">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Provider</CardTitle>
+                            <CardDescription>
+                                Save provider settings separately from number routing. Before first number save, provider details stay as draft on this page only.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {isFetching ? (
+                                <div className="flex h-32 items-center justify-center">
+                                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                                 </div>
-                            </form>
-                        </Form>
-                    )}
-                </CardContent>
-            </Card>
+                            ) : (
+                                <Form {...providerForm}>
+                                    <form onSubmit={providerForm.handleSubmit(onSubmitProvider)} className="space-y-6">
+                                        {!savedDidId && (
+                                            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                                Save number first to create provider connection. Anything entered here stays in memory until then.
+                                            </div>
+                                        )}
+
+                                        <FormField
+                                            control={providerForm.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Provider Name</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="e.g. Twilio Elastic SIP" {...field} />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        Friendly name used for this number's provider connection.
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={providerForm.control}
+                                            name="host"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>SIP Host</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="e.g. sip.twilio.com" {...field} />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        Primary SIP server hostname or IP address for this provider.
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <div className="grid gap-6 sm:grid-cols-2">
+                                            <FormField
+                                                control={providerForm.control}
+                                                name="username"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Username</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="Optional" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={providerForm.control}
+                                                name="password"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Password</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="password" placeholder="Optional" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+
+                                        <FormField
+                                            control={providerForm.control}
+                                            name="register"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                                    <FormControl>
+                                                        <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
+                                                    </FormControl>
+                                                    <div className="space-y-1 leading-none">
+                                                        <FormLabel>Register</FormLabel>
+                                                        <FormDescription>
+                                                            Send SIP REGISTER requests to this provider.
+                                                        </FormDescription>
+                                                    </div>
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={providerForm.control}
+                                            name="is_active"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                                    <FormControl>
+                                                        <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
+                                                    </FormControl>
+                                                    <div className="space-y-1 leading-none">
+                                                        <FormLabel>Active</FormLabel>
+                                                        <FormDescription>
+                                                            Keep provider enabled for this number.
+                                                        </FormDescription>
+                                                    </div>
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                                            {hasSavedProvider && savedDidId && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className="text-destructive"
+                                                    disabled={isBusy}
+                                                    onClick={() => removeProviderMutation.mutate()}
+                                                >
+                                                    <Trash2 className="mr-2 size-4" />
+                                                    {removeProviderMutation.isPending ? 'Removing...' : 'Remove Provider'}
+                                                </Button>
+                                            )}
+                                            <Button type="submit" disabled={isBusy}>
+                                                <Save className="mr-2 size-4" />
+                                                {saveProviderMutation.isPending ? 'Saving...' : 'Save Provider'}
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </Form>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

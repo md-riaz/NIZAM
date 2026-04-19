@@ -24,8 +24,6 @@ const UserPermissionsPage = lazy(() => import('@/pages/admin/UserPermissionsPage
 const ExtensionsPage = lazy(() => import('@/pages/admin/ExtensionsPage'));
 const ExtensionFormPage = lazy(() => import('@/pages/admin/ExtensionFormPage'));
 const ExtensionDetailPage = lazy(() => import('@/pages/admin/ExtensionDetailPage'));
-const GatewaysPage = lazy(() => import('@/pages/admin/GatewaysPage'));
-const GatewayFormPage = lazy(() => import('@/pages/admin/GatewayFormPage'));
 const DidsPage = lazy(() => import('@/pages/admin/DidsPage'));
 const DidFormPage = lazy(() => import('@/pages/admin/DidFormPage'));
 const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
@@ -160,9 +158,9 @@ const router = createBrowserRouter(
                 <Route path="ring-groups" element={<RingGroupsPage />} />
                 <Route path="ring-groups/create" element={<RingGroupFormPage />} />
                 <Route path="ring-groups/:id/edit" element={<RingGroupFormPage />} />
-                <Route path="dids" element={<DidsPage />} />
-                <Route path="dids/create" element={<DidFormPage />} />
-                <Route path="dids/:id/edit" element={<DidFormPage />} />
+                <Route path="numbers" element={<DidsPage />} />
+                <Route path="numbers/create" element={<DidFormPage />} />
+                <Route path="numbers/:id/edit" element={<DidFormPage />} />
                 <Route path="flows" element={<FlowsPage />} />
                 <Route path="flows/create" element={<FlowEditorPage />} />
                 <Route path="flows/:id/edit" element={<FlowEditorPage />} />
@@ -178,11 +176,6 @@ const router = createBrowserRouter(
                 <Route path="queues/create" element={<QueueFormPage />} />
                 <Route path="queues/:id/edit" element={<QueueFormPage />} />
                 <Route path="queues/:id" element={<QueueDetailPage />} />
-
-                {/* Connectivity (organization-scoped) */}
-                <Route path="gateways" element={<GatewaysPage />} />
-                <Route path="gateways/create" element={<GatewayFormPage />} />
-                <Route path="gateways/:id/edit" element={<GatewayFormPage />} />
 
                 {/* Call History (organization-scoped) */}
                 <Route path="call-history" element={<CallHistoryPage />} />

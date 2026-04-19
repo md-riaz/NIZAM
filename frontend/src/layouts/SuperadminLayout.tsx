@@ -76,7 +76,7 @@ const NAV_SECTIONS: NavSection[] = [
             { label: 'Extensions', icon: Phone, href: '/admin/extensions', organizationRequired: true },
             { label: 'Call Flows', icon: Route, href: '/admin/flows', organizationRequired: true },
             { label: 'Ring Groups', icon: GitBranch, href: '/admin/ring-groups', organizationRequired: true },
-            { label: 'Numbers', icon: Hash, href: '/admin/dids', adminOnly: true, organizationRequired: true },
+            { label: 'Numbers', icon: Hash, href: '/admin/numbers', adminOnly: true, organizationRequired: true },
         ],
     },
     {
@@ -91,7 +91,7 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Connectivity',
         items: [
             // Providers remain visible globally for Platform Admins to control shared connectivity
-            { label: (hasOrganization) => hasOrganization ? 'Providers' : 'Platform Providers', icon: Globe, href: '/admin/gateways', adminOnly: true },
+            { label: (hasOrganization) => hasOrganization ? 'Providers' : 'Platform Providers', icon: Globe, href: '/admin/providers', adminOnly: true },
         ],
     },
     {

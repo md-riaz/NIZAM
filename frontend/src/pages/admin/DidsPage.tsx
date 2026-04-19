@@ -81,7 +81,7 @@ export default function DidsPage() {
                         Manage inbound phone numbers and where they route.
                     </p>
                 </div>
-                <Button onClick={() => navigate('/admin/dids/create')}>
+                <Button onClick={() => navigate('/admin/numbers/create')}>
                     <Plus className="size-4" />
                     Add Number
                 </Button>
@@ -143,7 +143,7 @@ export default function DidsPage() {
                                                 <Button 
                                                     variant="ghost" 
                                                     size="icon"
-                                                    onClick={() => navigate(`/admin/dids/${did.id}/edit`)}
+                                                    onClick={() => navigate(`/admin/numbers/${did.id}/edit`)}
                                                 >
                                                     <Pencil className="size-4" />
                                                 </Button>

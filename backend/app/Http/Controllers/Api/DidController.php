@@ -7,12 +7,12 @@ use App\Http\Requests\StoreDidRequest;
 use App\Http\Requests\UpdateDidRequest;
 use App\Http\Resources\DidResource;
 use App\Models\Did;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API controller for managing DIDs scoped to a tenant.
+ * API controller for managing DIDs scoped to a organization.
  */
 class DidController extends Controller
 {
@@ -21,31 +21,31 @@ class DidController extends Controller
     ) {}
 
     /**
-     * List DIDs for a tenant (paginated).
+     * List DIDs for an organization (paginated).
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', Did::class);
 
-        return DidResource::collection($tenant->dids()->paginate(15));
+        return DidResource::collection($organization->dids()->with('gateway')->paginate(15));
     }
 
     /**
-     * Create a new DID for a tenant.
+     * Create a new DID for an organization.
      */
-    public function store(StoreDidRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreDidRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', Did::class);
 
-        if ($tenant->max_dids > 0 && $tenant->dids()->count() >= $tenant->max_dids) {
+        if ($organization->max_dids > 0 && $organization->dids()->count() >= $organization->max_dids) {
             return response()->json([
-                'message' => 'DID quota exceeded. Maximum allowed: '.$tenant->max_dids,
+                'message' => 'DID quota exceeded. Maximum allowed: '.$organization->max_dids,
             ], 422);
         }
 
-        $did = $tenant->dids()->create($request->validated());
+        $did = $organization->dids()->create($request->validated());
 
-        $this->webhookDispatcher->dispatch($tenant->id, 'did.created', [
+        $this->webhookDispatcher->dispatch($organization->id, 'did.created', [
             'did_id' => $did->id,
             'number' => $did->number,
         ]);
@@ -56,13 +56,15 @@ class DidController extends Controller
     /**
      * Show a single DID.
      */
-    public function show(Tenant $tenant, Did $did): JsonResponse|DidResource
+    public function show(Organization $organization, Did $did): JsonResponse|DidResource
     {
-        if ($did->tenant_id !== $tenant->id) {
+        if ($did->organization_id !== $organization->id) {
             return response()->json(['message' => 'DID not found.'], 404);
         }
 
         $this->authorize('view', $did);
+
+        $did->loadMissing('gateway');
 
         return new DidResource($did);
     }
@@ -70,9 +72,9 @@ class DidController extends Controller
     /**
      * Update an existing DID.
      */
-    public function update(UpdateDidRequest $request, Tenant $tenant, Did $did): JsonResponse|DidResource
+    public function update(UpdateDidRequest $request, Organization $organization, Did $did): JsonResponse|DidResource
     {
-        if ($did->tenant_id !== $tenant->id) {
+        if ($did->organization_id !== $organization->id) {
             return response()->json(['message' => 'DID not found.'], 404);
         }
 
@@ -80,10 +82,12 @@ class DidController extends Controller
 
         $did->update($request->validated());
 
-        $this->webhookDispatcher->dispatch($tenant->id, 'did.updated', [
+        $this->webhookDispatcher->dispatch($organization->id, 'did.updated', [
             'did_id' => $did->id,
             'number' => $did->number,
         ]);
+
+        $did->loadMissing('gateway');
 
         return new DidResource($did);
     }
@@ -91,9 +95,9 @@ class DidController extends Controller
     /**
      * Delete a DID.
      */
-    public function destroy(Tenant $tenant, Did $did): JsonResponse
+    public function destroy(Organization $organization, Did $did): JsonResponse
     {
-        if ($did->tenant_id !== $tenant->id) {
+        if ($did->organization_id !== $organization->id) {
             return response()->json(['message' => 'DID not found.'], 404);
         }
 
@@ -103,7 +107,7 @@ class DidController extends Controller
         $didId = $did->id;
         $did->delete();
 
-        $this->webhookDispatcher->dispatch($tenant->id, 'did.deleted', [
+        $this->webhookDispatcher->dispatch($organization->id, 'did.deleted', [
             'did_id' => $didId,
             'number' => $didNumber,
         ]);
