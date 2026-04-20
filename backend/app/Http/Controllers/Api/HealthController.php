@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\EslConnectionManager;
+use App\Services\TelephonyRuntimeHealthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class HealthController extends Controller
 {
+    public function __construct(
+        protected TelephonyRuntimeHealthService $telephonyRuntimeHealth,
+    ) {}
+
     /**
      * Return health status for the platform including FreeSWITCH, database, and cache connectivity.
      */
@@ -18,13 +23,21 @@ class HealthController extends Controller
         $dbStatus = $this->checkDatabase();
         $cacheStatus = $this->checkRedis();
         $switchStatus = $this->checkFreeSwitch();
+        $sipRuntime = $this->telephonyRuntimeHealth->evaluate(
+            $switchStatus['sofia_status_raw'] ?? null,
+            $switchStatus['connected'],
+            $switchStatus['message'] ?? null,
+        );
 
-        $healthy = $dbStatus['status'] === 'ok'
-            && $cacheStatus['status'] === 'ok'
-            && $switchStatus['status'] === 'ok';
+        $status = 'healthy';
+        if (in_array('fatal', [$dbStatus['status'], $cacheStatus['status'], $sipRuntime['status']], true)) {
+            $status = 'fatal';
+        } elseif ($dbStatus['status'] !== 'ok' || $cacheStatus['status'] !== 'ok' || $sipRuntime['status'] !== 'healthy') {
+            $status = 'degraded';
+        }
 
         return response()->json([
-            'status' => $healthy ? 'healthy' : 'degraded',
+            'status' => $status,
             'checks' => [
                 'app' => ['status' => 'ok'],
                 'database' => $dbStatus,
@@ -33,11 +46,12 @@ class HealthController extends Controller
                     'status' => $switchStatus['esl_status'],
                     'connected' => $switchStatus['connected'],
                 ],
+                'sip_runtime' => $sipRuntime,
                 'freeswitch' => $switchStatus['freeswitch'],
                 'gateways' => $switchStatus['gateways'],
                 'registrations' => $switchStatus['registrations'],
             ],
-        ], $healthy ? 200 : 503);
+        ], $status === 'healthy' ? 200 : 503);
     }
 
     protected function checkDatabase(): array
@@ -75,6 +89,8 @@ class HealthController extends Controller
                     'status' => 'unreachable',
                     'esl_status' => 'unreachable',
                     'connected' => false,
+                    'message' => 'FreeSWITCH ESL connection is unavailable.',
+                    'sofia_status_raw' => null,
                     'freeswitch' => ['raw' => null],
                     'gateways' => [
                         'status' => 'unreachable',
@@ -105,6 +121,8 @@ class HealthController extends Controller
                 'status' => 'ok',
                 'esl_status' => 'ok',
                 'connected' => true,
+                'message' => null,
+                'sofia_status_raw' => $gatewayResponse,
                 'freeswitch' => $this->parseFreeswitchStatus($statusResponse),
                 'gateways' => [
                     'status' => 'ok',
@@ -128,6 +146,7 @@ class HealthController extends Controller
                 'esl_status' => 'error',
                 'connected' => false,
                 'message' => $e->getMessage(),
+                'sofia_status_raw' => null,
                 'freeswitch' => ['raw' => null],
                 'gateways' => [
                     'status' => 'error',

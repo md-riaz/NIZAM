@@ -53,7 +53,7 @@ class SipProfileCompiler
 
         if ($profile->name === 'external') {
             $xml .= '  <gateways>'."\n";
-            $xml .= '    <X-PRE-PROCESS cmd="include" data="'.$safeName.'/*.xml"/>'."\n";
+            $xml .= '    <X-PRE-PROCESS cmd="include" data="/usr/local/freeswitch/db/sip_profiles/'.$safeName.'/*.xml"/>'."\n";
             $xml .= '  </gateways>'."\n";
         }
 

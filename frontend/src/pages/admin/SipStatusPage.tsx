@@ -72,6 +72,22 @@ interface SipRegistration {
     agent: string;
 }
 
+interface SipRuntimeHealth {
+    status: string;
+    message?: string;
+    recommended_action?: string | null;
+    expected_profiles?: string[];
+    loaded_profiles?: string[];
+    missing_profiles?: string[];
+}
+
+interface HealthResponse {
+    status: string;
+    checks?: {
+        sip_runtime?: SipRuntimeHealth;
+    };
+}
+
 // ─── SIP Status Page ─────────────────────────────────────────
 
 export default function SipStatusPage() {
@@ -80,6 +96,17 @@ export default function SipStatusPage() {
         type: string;
         data: any;
     } | null>(null);
+
+    const { data: health } = useQuery({
+        queryKey: ['health'],
+        queryFn: async () => {
+            const res = await api.get<HealthResponse>('/health');
+            return res.data;
+        },
+        refetchInterval: 10000,
+    });
+
+    const sipRuntime = health?.checks?.sip_runtime;
 
     // Fetch profiles
     const {
@@ -247,6 +274,32 @@ export default function SipStatusPage() {
                     Real-time monitoring of SIP profiles, gateways, and registrations.
                 </p>
             </div>
+
+            {sipRuntime?.status && sipRuntime.status !== 'healthy' && (
+                <Card className={sipRuntime.status === 'fatal' ? 'border-red-500/50 bg-red-500/5' : 'border-amber-300/40 bg-amber-500/5'}>
+                    <CardHeader>
+                        <CardTitle>
+                            {sipRuntime.status === 'fatal' ? 'Telephony runtime failure' : 'Telephony runtime degraded'}
+                        </CardTitle>
+                        <CardDescription>
+                            {sipRuntime.message}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm text-muted-foreground">
+                        {sipRuntime.expected_profiles && sipRuntime.loaded_profiles && (
+                            <p>
+                                Expected profiles: {sipRuntime.expected_profiles.join(', ') || 'none'} · Loaded profiles: {sipRuntime.loaded_profiles.join(', ') || 'none'}
+                            </p>
+                        )}
+                        {sipRuntime.missing_profiles && sipRuntime.missing_profiles.length > 0 && (
+                            <p>Missing profiles: {sipRuntime.missing_profiles.join(', ')}</p>
+                        )}
+                        {sipRuntime.recommended_action && (
+                            <p>Recommended action: {sipRuntime.recommended_action}</p>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Tabs */}
             <Tabs defaultValue="profiles" className="space-y-4">

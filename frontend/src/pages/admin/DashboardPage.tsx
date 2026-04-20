@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
     Activity,
+    AlertTriangle,
     ArrowUpRight,
     Building2,
     HardDrive,
@@ -63,6 +64,27 @@ interface AdminDashboardResponse {
     };
 }
 
+interface HealthCheckStatus {
+    status: string;
+}
+
+interface SipRuntimeHealth extends HealthCheckStatus {
+    message?: string;
+    fatal_reason?: string | null;
+    expected_profiles?: string[];
+    loaded_profiles?: string[];
+    missing_profiles?: string[];
+    recommended_action?: string | null;
+}
+
+interface HealthResponse {
+    status: string;
+    checks?: {
+        esl?: HealthCheckStatus & { connected?: boolean };
+        sip_runtime?: SipRuntimeHealth;
+    };
+}
+
 // ─── Stat Card Component ─────────────────────────────────────
 
 function StatCard({
@@ -119,13 +141,29 @@ export default function DashboardPage() {
     const { data: health } = useQuery({
         queryKey: ['health'],
         queryFn: async () => {
-            const res = await api.get('/health');
-            return res.data as Record<string, unknown>;
+            const res = await api.get<HealthResponse>('/health');
+            return res.data;
         },
         refetchInterval: 30_000,
     });
 
-    const eslStatus = (health?.checks as Record<string, { status: string }> | undefined)?.esl?.status;
+    const eslStatus = health?.checks?.esl?.status;
+    const sipRuntime = health?.checks?.sip_runtime;
+    const telephonyCardValue =
+        sipRuntime?.status === 'fatal'
+            ? 'Fatal'
+            : sipRuntime?.status === 'degraded'
+              ? 'Degraded'
+              : eslStatus === 'ok'
+                ? 'Healthy'
+                : 'Checking…';
+    const telephonyCardDescription = sipRuntime?.message ?? 'FreeSWITCH runtime health';
+    const telephonyCardClassName =
+        sipRuntime?.status === 'fatal'
+            ? 'border-red-500/50'
+            : sipRuntime?.status === 'degraded'
+              ? 'border-amber-300/40'
+              : '';
 
     const formatBytes = (bytes: number) => {
         if (!bytes) return '0 B';
@@ -153,6 +191,40 @@ export default function DashboardPage() {
                     Welcome back, {user?.name}. Here's what is happening across the platform.
                 </p>
             </div>
+
+            {sipRuntime?.status && sipRuntime.status !== 'healthy' && (
+                <Card className={cn(
+                    'border-l-4',
+                    sipRuntime.status === 'fatal' ? 'border-l-red-600 border-red-500/50' : 'border-l-amber-500 border-amber-300/40',
+                )}>
+                    <CardHeader className="pb-3">
+                        <div className="flex items-start gap-3">
+                            <div className={cn(
+                                'rounded-lg p-2',
+                                sipRuntime.status === 'fatal' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600',
+                            )}>
+                                <AlertTriangle className="size-5" />
+                            </div>
+                            <div className="space-y-1">
+                                <CardTitle>Telephony runtime {sipRuntime.status}</CardTitle>
+                                <CardDescription>
+                                    {sipRuntime.message}
+                                </CardDescription>
+                                {sipRuntime.recommended_action && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Recommended action: {sipRuntime.recommended_action}
+                                    </p>
+                                )}
+                                {sipRuntime.expected_profiles && sipRuntime.loaded_profiles && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Expected: {sipRuntime.expected_profiles.join(', ') || 'none'} · Loaded: {sipRuntime.loaded_profiles.join(', ') || 'none'}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </CardHeader>
+                </Card>
+            )}
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
@@ -182,11 +254,11 @@ export default function DashboardPage() {
                     icon={PhoneCall}
                 />
                 <StatCard
-                    title="ESL Status"
-                    value={eslStatus === 'ok' ? 'Connected' : 'Checking…'}
-                    description="FreeSWITCH link"
+                    title="Telephony Health"
+                    value={telephonyCardValue}
+                    description={telephonyCardDescription}
                     icon={Radio}
-                    className={eslStatus === 'ok' ? '' : 'border-amber-300/40'}
+                    className={telephonyCardClassName}
                 />
             </div>
 

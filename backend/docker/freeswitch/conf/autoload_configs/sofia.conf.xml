@@ -5,11 +5,12 @@
     <!-- <param name="auto-restart" value="false"/> -->
   </global_settings>
 
-  <!-- 
-    The sip_profiles directory is mounted from Laravel's storage folder.
-    This tells FreeSWITCH to include all compiled XML profiles.
+  <!--
+    Laravel compiles active Sofia profiles into an app-managed runtime path.
+    FreeSWITCH includes those generated profiles without replacing its core
+    config tree under /usr/local/freeswitch/conf.
   -->
   <profiles>
-    <X-PRE-PROCESS cmd="include" data="../sip_profiles/*.xml"/>
+    <X-PRE-PROCESS cmd="include" data="/usr/local/freeswitch/db/sip_profiles/*.xml"/>
   </profiles>
 </configuration>

@@ -59,7 +59,7 @@ services:
       - freeswitch_logs:/var/log/freeswitch
       - freeswitch_xml_cdr:/var/log/freeswitch/xml_cdr
       - certs_data:/usr/local/freeswitch/certs
-      - ./backend/storage/app/freeswitch/sip_profiles:/usr/local/freeswitch/conf/sip_profiles
+      - ./backend/storage/app/freeswitch/sip_profiles:/usr/local/freeswitch/db/sip_profiles
       - ./backend/docker/freeswitch/conf/autoload_configs/xml_curl.conf.xml:/usr/local/freeswitch/conf/autoload_configs/xml_curl.conf.xml
       - ./backend/docker/freeswitch/conf/autoload_configs/xml_cdr.conf.xml:/usr/local/freeswitch/conf/autoload_configs/xml_cdr.conf.xml
       - ./backend/docker/freeswitch/conf/autoload_configs/sofia.conf.xml:/usr/local/freeswitch/conf/autoload_configs/sofia.conf.xml
