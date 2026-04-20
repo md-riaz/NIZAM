@@ -108,8 +108,8 @@ class NwidartHarmonyTest extends TestCase
         $registry = $this->app->make(ModuleRegistry::class);
 
         $this->assertTrue($registry->isEnabled('voicemail'));
-        $this->assertTrue($registry->isEnabled('ai-transcription'));
         $this->assertTrue($registry->isEnabled('media-archive'));
+        $this->assertFalse($registry->isEnabled('ai-transcription'));
     }
 
     public function test_disabled_built_in_app_local_module_is_suppressed(): void
@@ -175,7 +175,6 @@ class NwidartHarmonyTest extends TestCase
     public function test_built_in_app_local_modules_use_configured_bootstrap_state(): void
     {
         config()->set('telephony.app_local_modules.voicemail.enabled', true);
-        config()->set('telephony.app_local_modules.ai-transcription.enabled', false);
         config()->set('telephony.app_local_modules.media-archive.enabled', true);
         config()->set('telephony.app_local_modules.messaging.enabled', false);
 
@@ -286,7 +285,6 @@ class NwidartHarmonyTest extends TestCase
     public function test_built_in_app_local_modules_are_registered_from_explicit_config(): void
     {
         config()->set('telephony.app_local_modules.voicemail.enabled', true);
-        config()->set('telephony.app_local_modules.ai-transcription.enabled', true);
         config()->set('telephony.app_local_modules.media-archive.enabled', false);
         config()->set('telephony.app_local_modules.messaging.enabled', true);
 
@@ -294,18 +292,17 @@ class NwidartHarmonyTest extends TestCase
         $registry = $this->app->make(ModuleRegistry::class);
 
         $this->assertTrue($registry->isEnabled('voicemail'));
-        $this->assertTrue($registry->isEnabled('ai-transcription'));
+        $this->assertFalse($registry->isEnabled('ai-transcription'));
         $this->assertFalse($registry->isEnabled('media-archive'));
         $this->assertTrue($registry->isEnabled('messaging'));
     }
 
-    public function test_built_in_app_local_module_catalog_includes_ai_transcription(): void
+    public function test_built_in_app_local_module_catalog_matches_current_provider_registration(): void
     {
         $provider = new AppServiceProvider($this->app);
 
         $this->assertSame([
             'voicemail',
-            'ai-transcription',
             'media-archive',
             'messaging',
         ], array_keys($provider->builtInAppLocalModules()));

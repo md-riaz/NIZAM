@@ -146,7 +146,7 @@ class PresenceAggregatorTest extends TestCase
         $organization = Organization::factory()->create();
         $user = User::factory()->create([
             'organization_id' => $organization->id,
-            'role' => 'user',
+            'role' => 'agent',
         ]);
         Extension::factory()->create([
             'organization_id' => $organization->id,

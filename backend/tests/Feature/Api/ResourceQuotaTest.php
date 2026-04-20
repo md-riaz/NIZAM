@@ -123,12 +123,12 @@ class ResourceQuotaTest extends TestCase
 
     public function test_quotas_can_be_set_on_organization_creation(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/organizations', [
                 'name' => 'Quota Organization',
-                'domain' => 'quota.example.com',
+                'domain_prefix' => 'quota',
                 'max_extensions' => 50,
                 'max_concurrent_calls' => 20,
                 'max_dids' => 10,

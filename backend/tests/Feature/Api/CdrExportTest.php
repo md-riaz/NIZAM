@@ -40,10 +40,17 @@ class CdrExportTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
-        $response->assertHeader('Content-Disposition', 'attachment; filename="cdrs.csv"');
+        $this->assertStringStartsWith(
+            'attachment; filename="cdrs_export_',
+            (string) $response->headers->get('Content-Disposition')
+        );
+        $this->assertStringEndsWith(
+            '.csv"',
+            (string) $response->headers->get('Content-Disposition')
+        );
 
         $content = $response->streamedContent();
-        $this->assertStringContainsString('uuid,caller_id_name,caller_id_number,destination_number,direction,start_stamp,answer_stamp,end_stamp,duration,billsec,hangup_cause', $content);
+        $this->assertStringContainsString('uuid,caller_id_name,caller_id_number,destination_number,direction,call_type,start_stamp,answer_stamp,end_stamp,duration,billsec,hangup_cause,quality_score,mos_score,packet_loss,jitter,latency,sip_user_agent,remote_media_ip', $content);
         $this->assertStringContainsString('test-uuid-1', $content);
     }
 

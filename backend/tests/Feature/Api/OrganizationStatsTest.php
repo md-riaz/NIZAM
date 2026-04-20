@@ -86,7 +86,7 @@ class OrganizationStatsTest extends TestCase
     {
         $user = User::factory()->create([
             'organization_id' => $this->organization->id,
-            'role' => 'user',
+            'role' => 'agent',
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -100,7 +100,7 @@ class OrganizationStatsTest extends TestCase
         $otherOrganization = Organization::factory()->create();
         $user = User::factory()->create([
             'organization_id' => $otherOrganization->id,
-            'role' => 'user',
+            'role' => 'agent',
         ]);
 
         $response = $this->actingAs($user, 'sanctum')

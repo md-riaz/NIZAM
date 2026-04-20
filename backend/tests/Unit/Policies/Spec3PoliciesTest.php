@@ -15,9 +15,9 @@ class Spec3PoliciesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_do_anything_on_call_routing_policy(): void
+    public function test_superadmin_can_do_anything_on_call_routing_policy(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
         $policy = new CallRoutingPolicyPolicy;
 
         $this->assertTrue($policy->before($admin, 'viewAny'));
@@ -26,9 +26,9 @@ class Spec3PoliciesTest extends TestCase
         $this->assertTrue($policy->before($admin, 'delete'));
     }
 
-    public function test_admin_can_do_anything_on_call_flow(): void
+    public function test_superadmin_can_do_anything_on_call_flow(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
         $policy = new FlowPolicy;
 
         $this->assertTrue($policy->before($admin, 'viewAny'));

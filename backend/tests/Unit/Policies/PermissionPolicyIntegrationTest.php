@@ -17,7 +17,7 @@ class PermissionPolicyIntegrationTest extends TestCase
     public function test_user_with_no_permissions_assigned_defaults_to_allow(): void
     {
         $organization = Organization::factory()->create();
-        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
         $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $policy = new ExtensionPolicy;
 
@@ -32,7 +32,7 @@ class PermissionPolicyIntegrationTest extends TestCase
     public function test_user_with_view_only_permission_cannot_create(): void
     {
         $organization = Organization::factory()->create();
-        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
         $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $policy = new ExtensionPolicy;
 
@@ -51,7 +51,7 @@ class PermissionPolicyIntegrationTest extends TestCase
     {
         $organization1 = Organization::factory()->create();
         $organization2 = Organization::factory()->create();
-        $user = User::factory()->create(['organization_id' => $organization1->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization1->id, 'role' => 'agent']);
         $extension = Extension::factory()->create(['organization_id' => $organization2->id]);
         $policy = new ExtensionPolicy;
 
@@ -61,14 +61,14 @@ class PermissionPolicyIntegrationTest extends TestCase
         $this->assertFalse($policy->delete($user, $extension));
     }
 
-    public function test_admin_bypasses_all_permission_checks(): void
+    public function test_superadmin_bypasses_all_permission_checks(): void
     {
         $organization = Organization::factory()->create();
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
         $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $policy = new ExtensionPolicy;
 
-        // Admin bypasses via before()
+        // Superadmin bypasses via before()
         $this->assertTrue($policy->before($admin, 'viewAny'));
     }
 }

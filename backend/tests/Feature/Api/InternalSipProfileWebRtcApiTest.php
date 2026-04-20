@@ -18,13 +18,14 @@ class InternalSipProfileWebRtcApiTest extends TestCase
     {
         $this->seed(SipProfileSeeder::class);
 
-        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
         $profile = SipProfile::query()->where('name', 'internal')->first();
         assertNotNull($profile);
 
         $payload = [
             'settings' => [
                 ['name' => 'wss-binding', 'value' => ':7443', 'is_enabled' => true],
+                ['name' => 'tls', 'value' => 'true', 'is_enabled' => true],
                 ['name' => 'tls-cert-dir', 'value' => '/secure/certs/dev', 'is_enabled' => true],
                 ['name' => 'dtls-srtp', 'value' => 'true', 'is_enabled' => true],
                 ['name' => 'enable-ice', 'value' => 'true', 'is_enabled' => true],
@@ -47,7 +48,7 @@ class InternalSipProfileWebRtcApiTest extends TestCase
     {
         $this->seed(SipProfileSeeder::class);
 
-        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
         $profile = SipProfile::query()->where('name', 'internal')->first();
         assertNotNull($profile);
 

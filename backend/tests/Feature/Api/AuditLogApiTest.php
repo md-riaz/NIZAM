@@ -29,7 +29,7 @@ class AuditLogApiTest extends TestCase
         ]);
         $this->user = User::factory()->create([
             'organization_id' => $this->organization->id,
-            'role' => 'user',
+            'role' => 'agent',
         ]);
     }
 

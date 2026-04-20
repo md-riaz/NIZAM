@@ -62,8 +62,8 @@ class OfficeFeatureApiTest extends TestCase
         ]);
 
         $admin = User::factory()->create([
-            'role' => 'admin',
-            'organization_id' => $organization->id,
+            'role' => 'superadmin',
+            'organization_id' => null,
         ]);
 
         $this->actingAs($admin, 'sanctum')

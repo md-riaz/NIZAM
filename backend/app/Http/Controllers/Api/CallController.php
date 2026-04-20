@@ -50,7 +50,7 @@ class CallController extends Controller
             return response()->json(['message' => 'Extension not found or inactive.'], 404);
         }
 
-        $esl = EslConnectionManager::fromConfig();
+        $esl = app(EslConnectionManager::class);
 
         if (! $esl->connect()) {
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
@@ -84,7 +84,7 @@ class CallController extends Controller
     public function status(Organization $organization): JsonResponse
     {
         Gate::authorize('viewStatus');
-        $esl = EslConnectionManager::fromConfig();
+        $esl = app(EslConnectionManager::class);
 
         if (! $esl->connect()) {
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
@@ -113,7 +113,7 @@ class CallController extends Controller
             'cause' => 'nullable|string|max:100',
         ]);
 
-        $esl = EslConnectionManager::fromConfig();
+        $esl = app(EslConnectionManager::class);
 
         if (! $esl->connect()) {
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
@@ -142,7 +142,7 @@ class CallController extends Controller
             'leg' => 'nullable|string|in:aleg,bleg,both',
         ]);
 
-        $esl = EslConnectionManager::fromConfig();
+        $esl = app(EslConnectionManager::class);
 
         if (! $esl->connect()) {
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
@@ -171,7 +171,7 @@ class CallController extends Controller
             'action' => 'required|string|in:start,stop',
         ]);
 
-        $esl = EslConnectionManager::fromConfig();
+        $esl = app(EslConnectionManager::class);
 
         if (! $esl->connect()) {
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
@@ -206,7 +206,7 @@ class CallController extends Controller
             'action' => 'required|string|in:hold,unhold',
         ]);
 
-        $esl = EslConnectionManager::fromConfig();
+        $esl = app(EslConnectionManager::class);
 
         if (! $esl->connect()) {
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);

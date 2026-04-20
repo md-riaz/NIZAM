@@ -17,7 +17,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     public function test_platform_admin_can_view_freeswitch_modules_status(): void
     {
         $admin = User::factory()->create([
-            'role' => 'admin',
+            'role' => 'superadmin',
             'organization_id' => null,
         ]);
 
@@ -65,7 +65,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     public function test_platform_admin_can_start_a_module(): void
     {
         $admin = User::factory()->create([
-            'role' => 'admin',
+            'role' => 'superadmin',
             'organization_id' => null,
         ]);
 
@@ -94,7 +94,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     public function test_platform_admin_can_stop_an_allowlisted_module(): void
     {
         $admin = User::factory()->create([
-            'role' => 'admin',
+            'role' => 'superadmin',
             'organization_id' => null,
         ]);
 
@@ -123,7 +123,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     public function test_platform_admin_cannot_stop_a_blocked_module(): void
     {
         $admin = User::factory()->create([
-            'role' => 'admin',
+            'role' => 'superadmin',
             'organization_id' => null,
         ]);
 
@@ -165,7 +165,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     public function test_platform_admin_receives_503_when_freeswitch_is_unreachable(): void
     {
         $admin = User::factory()->create([
-            'role' => 'admin',
+            'role' => 'superadmin',
             'organization_id' => null,
         ]);
 
@@ -196,7 +196,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     {
         $organization = Organization::factory()->create();
         $user = User::factory()->create([
-            'role' => 'user',
+            'role' => 'agent',
             'organization_id' => $organization->id,
         ]);
 

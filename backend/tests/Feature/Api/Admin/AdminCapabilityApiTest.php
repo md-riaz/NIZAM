@@ -21,7 +21,7 @@ class AdminCapabilityApiTest extends TestCase
 
     public function test_multi_registration_is_inactive_when_setting_absent(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $response = $this->actingAs($admin, 'sanctum')
             ->getJson('/api/v1/admin/capabilities');
@@ -40,7 +40,7 @@ class AdminCapabilityApiTest extends TestCase
 
     public function test_multi_registration_is_inactive_when_setting_exists_but_is_enabled_false(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $internalProfile = SipProfile::create([
             'name' => 'internal',
@@ -66,7 +66,7 @@ class AdminCapabilityApiTest extends TestCase
 
     public function test_multi_registration_is_active_when_internal_profile_setting_exists_with_value_contact_and_is_enabled_true(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $internalProfile = SipProfile::create([
             'name' => 'internal',
@@ -92,7 +92,7 @@ class AdminCapabilityApiTest extends TestCase
 
     public function test_custom_lua_scripts_are_listed_in_capability_registry(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $response = $this->actingAs($admin, 'sanctum')
             ->getJson('/api/v1/admin/capabilities');
@@ -126,7 +126,7 @@ class AdminCapabilityApiTest extends TestCase
 
     public function test_non_admin_cannot_get_platform_capabilities(): void
     {
-        $user = User::factory()->create(['role' => 'user']);
+        $user = User::factory()->create(['role' => 'agent']);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/v1/admin/capabilities');

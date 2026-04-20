@@ -43,7 +43,7 @@ class PermissionTest extends TestCase
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
         $perm = Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
 
         $user->permissions()->attach($perm->id);
@@ -77,7 +77,7 @@ class PermissionTest extends TestCase
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
 
         // Users with no explicit permissions default to allow (pre-sync state)
         $this->assertTrue($user->hasPermission('extensions.view'));
@@ -92,7 +92,7 @@ class PermissionTest extends TestCase
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
         Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
         Permission::create(['slug' => 'extensions.create', 'module' => 'core']);
 
@@ -111,7 +111,7 @@ class PermissionTest extends TestCase
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
         Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
         Permission::create(['slug' => 'extensions.create', 'module' => 'core']);
 
@@ -133,7 +133,7 @@ class PermissionTest extends TestCase
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
         Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
 
         $user->grantPermissions(['extensions.view']);

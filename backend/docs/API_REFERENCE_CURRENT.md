@@ -1252,7 +1252,7 @@ Content-Type: application/json
   "name": "Jane Doe",
   "email": "jane@example.com",
   "password": "password123",
-  "role": "user",
+  "role": "agent",
   "organization_id": "organization-uuid"
 }
 ```

@@ -90,8 +90,9 @@ class LogViewerController extends Controller
         }
 
         try {
-            $content = File::get($logFile);
-            $allLines = explode("\n", $content);
+            $content = $this->readTrailingBytes($logFile, min(max($lines * 512, 4096), 4 * 1024 * 1024));
+            $allLines = preg_split("/\r\n|\n|\r/", $content) ?: [];
+            $allLines = array_values(array_filter($allLines, static fn (string $line): bool => $line !== ''));
             $recentLines = array_slice($allLines, -$lines);
 
             return response()->json([

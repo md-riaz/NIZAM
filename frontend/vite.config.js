@@ -27,9 +27,27 @@ function resolveApiUrl(env) {
     return '';
 }
 
+function resolveProxyTarget(env) {
+    const explicitApiUrl = env.VITE_API_URL?.trim();
+    if (explicitApiUrl) {
+        return new URL(explicitApiUrl).origin;
+    }
+
+    const appUrl = env.APP_URL?.trim();
+    if (appUrl) {
+        return trimTrailingSlash(appUrl);
+    }
+
+    return 'http://127.0.0.1:8231';
+}
+
 export default defineConfig(({ mode }) => {
-    const envDir = path.resolve(__dirname, '..');
-    const env = loadEnv(mode, envDir, '');
+    const rootEnvDir = path.resolve(__dirname, '..');
+    const frontendEnvDir = __dirname;
+    const env = {
+        ...loadEnv(mode, rootEnvDir, ''),
+        ...loadEnv(mode, frontendEnvDir, ''),
+    };
     const htmlEnv = {
         ...brandingDefaults,
         ...env,
@@ -41,7 +59,7 @@ export default defineConfig(({ mode }) => {
     const htmlTitle = `${htmlEnv.VITE_APP_NAME} — ${htmlEnv.VITE_APP_TAGLINE}`;
 
     return {
-        envDir,
+        envDir: rootEnvDir,
         plugins: [
             {
                 name: 'html-branding-fallbacks',
@@ -68,6 +86,12 @@ export default defineConfig(({ mode }) => {
         server: {
             host: '0.0.0.0',
             port: 5173,
+            proxy: {
+                '/api/v1': {
+                    target: resolveProxyTarget(env),
+                    changeOrigin: true,
+                },
+            },
             watch: {
                 usePolling: true,
             },

@@ -40,10 +40,7 @@ class CallOriginateApiTest extends TestCase
         )->andReturn('+OK Job-UUID: test');
         $esl->shouldReceive('disconnect')->once();
 
-        Mockery::mock('alias:App\\Services\\EslConnectionManager')
-            ->shouldReceive('fromConfig')
-            ->once()
-            ->andReturn($esl);
+        $this->app->instance(\App\Services\EslConnectionManager::class, $esl);
 
         $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/organizations/{$organization->id}/calls/originate", [
             'extension' => '1001',
@@ -76,10 +73,7 @@ class CallOriginateApiTest extends TestCase
         ))->andReturn('+OK Job-UUID: test');
         $esl->shouldReceive('disconnect')->once();
 
-        Mockery::mock('alias:App\\Services\\EslConnectionManager')
-            ->shouldReceive('fromConfig')
-            ->once()
-            ->andReturn($esl);
+        $this->app->instance(\App\Services\EslConnectionManager::class, $esl);
 
         $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/organizations/{$organization->id}/calls/originate", [
             'extension' => '1001',

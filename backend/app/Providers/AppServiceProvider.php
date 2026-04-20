@@ -103,17 +103,7 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
-        Agent::observe(AgentObserver::class);
-        Extension::observe(ExtensionObserver::class);
         Gateway::observe(GatewayObserver::class);
-        Queue::observe(QueueObserver::class);
-        QueueEntry::observe(QueueEntryObserver::class);
-        Schedule::observe(ScheduleObserver::class);
-        ScheduleRule::observe(ScheduleRuleObserver::class);
-        ScheduleBreak::observe(ScheduleBreakObserver::class);
-        ScheduleException::observe(ScheduleExceptionObserver::class);
-        HolidayCalendar::observe(HolidayCalendarObserver::class);
-        Holiday::observe(HolidayObserver::class);
         \App\Models\Did::observe(\App\Observers\DidObserver::class);
         \App\Models\RingGroup::observe(\App\Observers\RingGroupObserver::class);
         \App\Models\Ivr::observe(\App\Observers\IvrObserver::class);

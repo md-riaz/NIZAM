@@ -13,7 +13,7 @@ class OrganizationLifecycleTest extends TestCase
 
     private function adminUser(): User
     {
-        return User::factory()->create(['role' => 'admin']);
+        return User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
     }
 
     public function test_organization_can_be_created_with_status(): void
@@ -23,13 +23,13 @@ class OrganizationLifecycleTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/organizations', [
                 'name' => 'Trial Organization',
-                'domain' => 'trial.example.com',
+                'domain_prefix' => 'trial',
                 'status' => 'trial',
             ]);
 
         $response->assertStatus(201);
         $response->assertJsonFragment(['status' => 'trial']);
-        $this->assertDatabaseHas('organizations', ['domain' => 'trial.example.com', 'status' => 'trial']);
+        $this->assertDatabaseHas('organizations', ['domain' => 'trial', 'status' => 'trial']);
     }
 
     public function test_organization_defaults_to_active_status(): void
@@ -39,7 +39,7 @@ class OrganizationLifecycleTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/organizations', [
                 'name' => 'Default Status Organization',
-                'domain' => 'default.example.com',
+                'domain_prefix' => 'default',
             ]);
 
         $response->assertStatus(201);
@@ -54,7 +54,7 @@ class OrganizationLifecycleTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->putJson("/api/v1/organizations/{$organization->id}", [
                 'name' => $organization->name,
-                'domain' => $organization->domain,
+                'domain_prefix' => $organization->domain,
                 'status' => 'suspended',
             ]);
 
@@ -69,7 +69,7 @@ class OrganizationLifecycleTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/organizations', [
                 'name' => 'Bad Status',
-                'domain' => 'bad.example.com',
+                'domain_prefix' => 'bad',
                 'status' => 'invalid_status',
             ]);
 

@@ -1329,7 +1329,7 @@ Query parameters: `organization_id`, `role`
 ```json
 {
   "data": [
-    { "id": 1, "name": "John Doe", "email": "john@example.com", "role": "user", "organization_id": "uuid" }
+    { "id": 1, "name": "John Doe", "email": "john@example.com", "role": "agent", "organization_id": "uuid" }
   ]
 }
 ```
@@ -1345,7 +1345,7 @@ Content-Type: application/json
   "name": "Jane Doe",
   "email": "jane@example.com",
   "password": "password123",
-  "role": "user",
+  "role": "agent",
   "organization_id": "organization-uuid"
 }
 ```

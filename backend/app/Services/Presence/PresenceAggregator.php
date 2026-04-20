@@ -48,7 +48,7 @@ class PresenceAggregator
             ->values();
 
         $primaryExtension = $extensions->firstWhere('is_primary', true) ?? $extensions->first();
-        $status = $this->resolveStatus($user->role ?? 'user', $registrationSnapshots, $activeCalls);
+        $status = $this->resolveStatus($user->role ?? 'agent', $registrationSnapshots, $activeCalls);
 
         return [
             'user_id' => $user->id,

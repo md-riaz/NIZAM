@@ -60,12 +60,12 @@ class SystemCheckpointAuditTest extends TestCase
 
         $this->userA = User::factory()->create([
             'organization_id' => $this->organizationA->id,
-            'role' => 'user',
+            'role' => 'agent',
         ]);
 
         $this->userB = User::factory()->create([
             'organization_id' => $this->organizationB->id,
-            'role' => 'user',
+            'role' => 'agent',
         ]);
 
         $this->adminUser = User::factory()->create([

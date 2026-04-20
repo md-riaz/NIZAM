@@ -11,9 +11,9 @@ class AdminDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_access_dashboard(): void
+    public function test_superadmin_can_access_dashboard(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         Organization::factory()->create(['status' => Organization::STATUS_ACTIVE]);
         Organization::factory()->create(['status' => Organization::STATUS_TRIAL]);
@@ -43,7 +43,7 @@ class AdminDashboardTest extends TestCase
     public function test_non_admin_cannot_access_dashboard(): void
     {
         $organization = Organization::factory()->create();
-        $user = User::factory()->create(['role' => 'user', 'organization_id' => $organization->id]);
+        $user = User::factory()->create(['role' => 'agent', 'organization_id' => $organization->id]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/v1/admin/dashboard');
@@ -60,7 +60,7 @@ class AdminDashboardTest extends TestCase
 
     public function test_dashboard_includes_per_organization_stats(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $organization = Organization::factory()->create(['status' => Organization::STATUS_ACTIVE]);
         $organization->extensions()->create([

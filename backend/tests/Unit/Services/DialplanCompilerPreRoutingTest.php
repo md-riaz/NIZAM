@@ -96,7 +96,7 @@ class DialplanCompilerPreRoutingTest extends TestCase
         $xml = $this->compiler->compileDialplan($organization->domain, '+15559999999', '5559876543');
 
         // Should proceed to normal DID routing
-        $this->assertStringContainsString('bridge', $xml);
+        $this->assertStringContainsString('application="transfer"', $xml);
         $this->assertStringNotContainsString('policy-reject', $xml);
     }
 
@@ -209,7 +209,7 @@ class DialplanCompilerPreRoutingTest extends TestCase
 
         $xml = $this->compiler->compileDialplan($organization->domain, '+15559999999');
 
-        $this->assertStringContainsString('bridge', $xml);
+        $this->assertStringContainsString('application="transfer"', $xml);
         $this->assertStringNotContainsString('policy-reject', $xml);
         $this->assertStringNotContainsString('policy-redirect', $xml);
     }

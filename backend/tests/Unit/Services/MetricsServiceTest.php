@@ -56,6 +56,7 @@ class MetricsServiceTest extends TestCase
             'extension_id' => $ext->id,
             'name' => fake()->name(),
             'state' => $state,
+            'is_active' => true,
         ]);
     }
 

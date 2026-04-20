@@ -18,7 +18,7 @@ class SipStatusControllerTest extends TestCase
     public function test_registrations_endpoint_parses_xml_and_includes_agent(): void
     {
         $admin = User::factory()->create([
-            'role' => 'admin',
+            'role' => 'superadmin',
             'organization_id' => null,
         ]);
 

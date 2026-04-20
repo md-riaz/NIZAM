@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->foreignUuid('organization_id')->nullable()->constrained('organizations')->nullOnDelete();
-            $table->string('role')->default('user')->after('organization_id');
+            $table->string('role')->default('agent')->after('organization_id');
         });
     }
 

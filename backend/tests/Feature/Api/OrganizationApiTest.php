@@ -13,12 +13,12 @@ class OrganizationApiTest extends TestCase
 
     private function adminUser(): User
     {
-        return User::factory()->create(['role' => 'admin']);
+        return User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
     }
 
     private function organizationUser(Organization $organization): User
     {
-        return User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        return User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
     }
 
     public function test_unauthenticated_requests_return_401(): void
@@ -73,7 +73,7 @@ class OrganizationApiTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/organizations', [
                 'name' => 'New Organization',
-                'domain' => 'new.example.com',
+                'domain_prefix' => 'new',
                 'max_extensions' => 100,
                 'is_active' => true,
             ]);
@@ -83,7 +83,7 @@ class OrganizationApiTest extends TestCase
 
         $this->assertDatabaseHas('organizations', [
             'name' => 'New Organization',
-            'domain' => 'new.example.com',
+            'domain' => 'new',
         ]);
         $this->assertDatabaseHas('schedules', [
             'organization_id' => $organizationId,
@@ -111,7 +111,7 @@ class OrganizationApiTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/organizations', [
                 'name' => 'New Organization',
-                'domain' => 'new.example.com',
+                'domain_prefix' => 'new',
             ]);
 
         $response->assertStatus(403);
@@ -145,7 +145,7 @@ class OrganizationApiTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->putJson("/api/v1/organizations/{$organization->id}", [
                 'name' => 'Updated Name',
-                'domain' => 'old.example.com',
+                'domain_prefix' => 'old',
             ]);
 
         $response->assertStatus(200);
@@ -176,7 +176,7 @@ class OrganizationApiTest extends TestCase
             ->postJson('/api/v1/organizations', []);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['name', 'domain']);
+        $response->assertJsonValidationErrors(['name', 'domain_prefix']);
     }
 
     public function test_organization_creation_provisions_default_business_phone_entrypoint(): void
@@ -186,7 +186,7 @@ class OrganizationApiTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/organizations', [
                 'name' => 'Provisioned Organization',
-                'domain' => 'provisioned.example.com',
+                'domain_prefix' => 'provisioned',
             ]);
 
         $response->assertStatus(201);

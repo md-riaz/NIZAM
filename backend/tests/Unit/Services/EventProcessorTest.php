@@ -6,6 +6,7 @@ use App\Events\CallDetailRecordCreated;
 use App\Events\CallEvent;
 use App\Listeners\ArchiveCallRecording;
 use App\Models\CallDetailRecord;
+use App\Models\CallEventLog;
 use App\Models\Extension;
 use App\Models\Recording;
 use App\Models\Organization;
@@ -105,9 +106,11 @@ class EventProcessorTest extends TestCase
 
         $this->processor->process($event);
 
-        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($organization) {
-            return $e->organizationId === $organization->id && $e->eventType === 'started';
-        });
+        $this->assertDatabaseHas('call_events', [
+            'organization_id' => $organization->id,
+            'call_uuid' => 'test-uuid-456',
+            'event_type' => CallEventLog::EVENT_CALL_CREATED,
+        ]);
     }
 
     public function test_dispatches_call_event_on_channel_answer(): void
@@ -127,9 +130,11 @@ class EventProcessorTest extends TestCase
 
         $this->processor->process($event);
 
-        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($organization) {
-            return $e->organizationId === $organization->id && $e->eventType === 'answered';
-        });
+        $this->assertDatabaseHas('call_events', [
+            'organization_id' => $organization->id,
+            'call_uuid' => 'test-uuid-789',
+            'event_type' => CallEventLog::EVENT_CALL_ANSWERED,
+        ]);
     }
 
     public function test_call_end_archive_listener_archives_recording_from_created_cdr(): void

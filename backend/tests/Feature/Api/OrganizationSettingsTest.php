@@ -22,8 +22,8 @@ class OrganizationSettingsTest extends TestCase
             'settings' => ['timezone' => 'UTC', 'language' => 'en'],
         ]);
         $this->admin = User::factory()->create([
-            'organization_id' => $this->organization->id,
-            'role' => 'admin',
+            'organization_id' => null,
+            'role' => 'superadmin',
         ]);
     }
 
@@ -55,7 +55,7 @@ class OrganizationSettingsTest extends TestCase
     {
         $user = User::factory()->create([
             'organization_id' => $this->organization->id,
-            'role' => 'user',
+            'role' => 'agent',
         ]);
 
         $response = $this->actingAs($user, 'sanctum')

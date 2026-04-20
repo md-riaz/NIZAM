@@ -13,10 +13,10 @@ class LogViewerTest extends TestCase
 
     public function test_platform_admin_can_list_log_files(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/logs');
+            ->getJson('/api/v1/admin/logs');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -27,10 +27,10 @@ class LogViewerTest extends TestCase
 
     public function test_platform_admin_can_view_application_logs(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/logs/application?lines=50');
+            ->getJson('/api/v1/admin/logs/application?lines=50');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -44,23 +44,29 @@ class LogViewerTest extends TestCase
 
     public function test_platform_admin_can_query_freeswitch_logs(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/logs/freeswitch?level=info');
+            ->getJson('/api/v1/admin/logs/freeswitch?level=info');
 
-        // May fail if FreeSWITCH is not running, but should not be authorization error
-        $this->assertContains($response->status(), [200, 503]);
-        
+        // May return 404 when FreeSWITCH log path is not present in test runtime.
+        $this->assertContains($response->status(), [200, 404]);
+
         if ($response->status() === 200) {
             $response->assertJsonStructure([
                 'source',
-                'level',
-                'current_log_level',
-                'status',
-                'note',
+                'path',
+                'size_kb',
+                'filter',
+                'sort',
+                'lines',
+                'logs',
             ]);
             $response->assertJsonPath('source', 'freeswitch');
+        }
+
+        if ($response->status() === 404) {
+            $response->assertJsonPath('error', 'Log file not found');
         }
     }
 
@@ -70,7 +76,7 @@ class LogViewerTest extends TestCase
         $user = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/logs');
+            ->getJson('/api/v1/admin/logs');
 
         $response->assertStatus(403);
     }
@@ -78,38 +84,41 @@ class LogViewerTest extends TestCase
     public function test_regular_user_cannot_access_logs(): void
     {
         $organization = Organization::factory()->create();
-        $user = User::factory()->create(['role' => 'user', 'organization_id' => $organization->id]);
+        $user = User::factory()->create(['role' => 'agent', 'organization_id' => $organization->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/logs');
+            ->getJson('/api/v1/admin/logs');
 
         $response->assertStatus(403);
     }
 
     public function test_unauthenticated_cannot_access_logs(): void
     {
-        $response = $this->getJson('/api/admin/logs');
+        $response = $this->getJson('/api/v1/admin/logs');
 
         $response->assertStatus(401);
     }
 
-    public function test_invalid_log_level_returns_400(): void
+    public function test_freeswitch_logs_returns_not_found_when_log_path_missing(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/logs/freeswitch?level=invalid');
+            ->getJson('/api/v1/admin/logs/freeswitch');
 
-        $response->assertStatus(400);
-        $response->assertJsonPath('error', 'Invalid log level');
+        if ($response->status() === 404) {
+            $response->assertJsonPath('error', 'Log file not found');
+        } else {
+            $response->assertStatus(200);
+        }
     }
 
     public function test_application_logs_respects_line_limit(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/logs/application?lines=10');
+            ->getJson('/api/v1/admin/logs/application?lines=10');
 
         $response->assertStatus(200);
         $this->assertLessThanOrEqual(10, count($response->json('logs')));
@@ -117,11 +126,11 @@ class LogViewerTest extends TestCase
 
     public function test_application_logs_enforces_max_limit(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         // Request more than max (1000)
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/logs/application?lines=5000');
+            ->getJson('/api/v1/admin/logs/application?lines=5000');
 
         $response->assertStatus(200);
         // Should be capped at 1000

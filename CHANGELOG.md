@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-04-20]
+
+### Changed
+- **Organization User Roles:** Replaced the legacy `user` organization role with `agent` across backend validation, admin user-management frontend flows, and role-based test fixtures.
+- **Role Data Migration:** Added a one-time database migration that rewrites stored `users.role='user'` rows to `agent` with no backwards-compatibility alias.
+
+---
+
 ## [2026-04-14]
 
 ### Changed

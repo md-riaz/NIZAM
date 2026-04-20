@@ -86,7 +86,7 @@ class MediaArchiveModuleTest extends TestCase
         $this->assertInstanceOf(Recording::class, $recording);
         $this->assertSame($recording->file_path, $recording->archive_metadata['storage_path']);
         $this->assertSame($recording->file_path, $recording->archive_metadata['storage_reference']);
-        $this->assertSame('archive/recordings/'.$organization->id.'/'.now()->format('Y/m/d').'/call-archive-paths.wav', $recording->storage_reference);
+        $this->assertSame('archive/recordings/'.$organization->id.'/2026/04/12/call-archive-paths.wav', $recording->storage_reference);
     }
 
     public function test_it_returns_null_when_source_file_is_missing(): void

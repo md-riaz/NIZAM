@@ -38,7 +38,7 @@ const userSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('A valid email is required'),
     password: z.string().optional(),
-    role: z.enum(['admin', 'user']),
+    role: z.enum(['admin', 'agent']),
     organization_id: z.string().optional(),
 });
 
@@ -66,7 +66,7 @@ export default function UserFormPage() {
             name: '',
             email: '',
             password: '',
-            role: 'user',
+            role: 'agent',
             organization_id: 'global',
         },
     });
@@ -94,7 +94,7 @@ export default function UserFormPage() {
                 name: user.name ?? '',
                 email: user.email ?? '',
                 password: '',
-                role: user.role === 'admin' ? 'admin' : 'user',
+                role: user.role === 'admin' ? 'admin' : 'agent',
                 organization_id: user.organization_id ?? 'global',
             });
         }
@@ -216,7 +216,7 @@ export default function UserFormPage() {
                                                     </FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="admin">Admin</SelectItem>
-                                                        <SelectItem value="user">User</SelectItem>
+                                                        <SelectItem value="agent">Agent</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />

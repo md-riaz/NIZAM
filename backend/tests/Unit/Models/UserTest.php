@@ -64,7 +64,7 @@ class UserTest extends TestCase
     public function test_has_correct_fillable_attributes(): void
     {
         $user = new User;
-        $expected = ['name', 'email', 'password', 'organization_id', 'role'];
+        $expected = ['name', 'email', 'password', 'organization_id', 'schedule_id', 'holiday_calendar_id', 'role'];
 
         $this->assertEquals($expected, $user->getFillable());
     }

@@ -50,7 +50,7 @@ class DialplanCompilerIsolationTest extends TestCase
         $xml = $this->compiler->compileDialplan($organization->domain, '+15551234567');
 
         $this->assertStringContainsString('application="limit"', $xml);
-        $this->assertStringContainsString('organization_calls 10', $xml);
+        $this->assertStringContainsString($organization->domain.' concurrent_calls 10', $xml);
         $this->assertStringContainsString('NORMAL_TEMPORARY_FAILURE', $xml);
     }
 
@@ -73,7 +73,7 @@ class DialplanCompilerIsolationTest extends TestCase
         $xml = $this->compiler->compileDialplan($organization->domain, '1001');
 
         $this->assertStringContainsString('application="limit"', $xml);
-        $this->assertStringContainsString('organization_calls 5', $xml);
+        $this->assertStringContainsString($organization->domain.' concurrent_calls 5', $xml);
     }
 
     public function test_no_concurrent_call_limit_when_zero(): void
@@ -95,7 +95,7 @@ class DialplanCompilerIsolationTest extends TestCase
         $xml = $this->compiler->compileDialplan($organization->domain, '1001');
 
         $this->assertStringNotContainsString('application="limit"', $xml);
-        $this->assertStringContainsString('application="bridge"', $xml);
+        $this->assertStringContainsString('application="transfer"', $xml);
     }
 
     public function test_recording_path_uses_organization_id(): void

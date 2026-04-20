@@ -22,8 +22,8 @@ class UserApiTest extends TestCase
     {
         parent::setUp();
         $this->organization = Organization::factory()->create();
-        $this->admin = User::factory()->create(['role' => 'admin']);
-        $this->user = User::factory()->create(['organization_id' => $this->organization->id, 'role' => 'user']);
+        $this->admin = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
+        $this->user = User::factory()->create(['organization_id' => $this->organization->id, 'role' => 'agent']);
     }
 
     public function test_admin_can_list_users(): void
@@ -49,7 +49,7 @@ class UserApiTest extends TestCase
                 'name' => 'New User',
                 'email' => 'newuser@example.com',
                 'password' => 'password123',
-                'role' => 'user',
+                'role' => 'agent',
                 'organization_id' => $this->organization->id,
             ]);
 

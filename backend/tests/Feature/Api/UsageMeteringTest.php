@@ -54,7 +54,7 @@ class UsageMeteringTest extends TestCase
     public function test_can_collect_usage_snapshot(): void
     {
         $organization = Organization::factory()->create();
-        $user = $this->adminUser($organization);
+        $user = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson("/api/v1/organizations/{$organization->id}/usage/collect");

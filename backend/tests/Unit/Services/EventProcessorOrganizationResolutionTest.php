@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Events\CallEvent;
+use App\Models\CallEventLog;
 use App\Models\Organization;
 use App\Services\EventProcessor;
 use App\Services\WebhookDispatcher;
@@ -45,9 +46,11 @@ class EventProcessorOrganizationResolutionTest extends TestCase
 
         $this->processor->process($event);
 
-        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($organization) {
-            return $e->organizationId === $organization->id && $e->eventType === 'started';
-        });
+        $this->assertDatabaseHas('call_events', [
+            'organization_id' => $organization->id,
+            'call_uuid' => 'uuid-no-ext',
+            'event_type' => CallEventLog::EVENT_CALL_CREATED,
+        ]);
     }
 
     public function test_ignores_events_for_suspended_organization(): void
