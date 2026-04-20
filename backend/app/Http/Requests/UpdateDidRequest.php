@@ -13,21 +13,21 @@ class UpdateDidRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenant = $this->route('tenant');
+        $organization = $this->route('organization');
         $did = $this->route('did');
 
         return [
             'number' => [
                 'required',
                 'string',
-                function ($attribute, $value, $fail) use ($tenant, $did) {
-                    $query = $tenant->dids()->where('number', $value);
+                function ($attribute, $value, $fail) use ($organization, $did) {
+                    $query = $organization->dids()->where('number', $value);
                     if ($did) {
                         $didId = $did instanceof \App\Models\Did ? $did->id : $did;
                         $query->where('id', '!=', $didId);
                     }
                     if ($query->exists()) {
-                        $fail('The DID number has already been taken for this tenant.');
+                        $fail('The DID number has already been taken for this organization.');
                     }
                 },
             ],

@@ -16,7 +16,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/context/AuthContext';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
 
@@ -29,30 +29,30 @@ interface Queue {
 }
 
 export default function QueuesPage() {
-    const { activeTenant } = useTenant();
+    const { activeOrganization } = useOrganization();
     const { user } = useAuth();
     const [queueToDelete, setQueueToDelete] = useState<Queue | null>(null);
 
     const { data: queues = [], isLoading } = useQuery<Queue[]>({
-        queryKey: ['queues', activeTenant?.id],
+        queryKey: ['queues', activeOrganization?.id],
         queryFn: async () => {
-            if (!activeTenant) return [];
-            const response = await api.get(`tenants/${activeTenant.id}/queues`);
+            if (!activeOrganization) return [];
+            const response = await api.get(`organizations/${activeOrganization.id}/queues`);
             return response.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
-            await api.delete(`tenants/${activeTenant?.id}/queues/${id}`);
+            await api.delete(`organizations/${activeOrganization?.id}/queues/${id}`);
         },
         successMessage: 'Queue deleted successfully',
-        invalidateQueries: [['queues', activeTenant?.id || '']],
+        invalidateQueries: [['queues', activeOrganization?.id || '']],
         onSettled: () => setQueueToDelete(null),
     });
 
-    if (!activeTenant) return null;
+    if (!activeOrganization) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">

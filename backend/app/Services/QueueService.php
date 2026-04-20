@@ -17,7 +17,7 @@ class QueueService
     public function addToQueue(Queue $queue, string $callUuid, array $callerData = []): QueueEntry
     {
         $entry = QueueEntry::create([
-            'tenant_id' => $queue->tenant_id,
+            'organization_id' => $queue->organization_id,
             'queue_id' => $queue->id,
             'call_uuid' => $callUuid,
             'caller_id_number' => $callerData['caller_id_number'] ?? null,
@@ -26,7 +26,7 @@ class QueueService
             'join_time' => now(),
         ]);
 
-        ContactCenterEvent::dispatch($queue->tenant_id, 'queue.call_joined', [
+        ContactCenterEvent::dispatch($queue->organization_id, 'queue.call_joined', [
             'queue_id' => $queue->id,
             'queue_name' => $queue->name,
             'call_uuid' => $callUuid,
@@ -82,7 +82,7 @@ class QueueService
 
         $agent->transitionState(Agent::STATE_BUSY);
 
-        ContactCenterEvent::dispatch($entry->tenant_id, 'queue.call_answered', [
+        ContactCenterEvent::dispatch($entry->organization_id, 'queue.call_answered', [
             'queue_id' => $entry->queue_id,
             'call_uuid' => $entry->call_uuid,
             'agent_id' => $agent->id,
@@ -111,7 +111,7 @@ class QueueService
             'abandon_reason' => $reason,
         ]);
 
-        ContactCenterEvent::dispatch($entry->tenant_id, 'queue.call_abandoned', [
+        ContactCenterEvent::dispatch($entry->organization_id, 'queue.call_abandoned', [
             'queue_id' => $entry->queue_id,
             'call_uuid' => $entry->call_uuid,
             'wait_duration' => $waitDuration,
@@ -140,7 +140,7 @@ class QueueService
             'abandon_reason' => 'max_wait_exceeded',
         ]);
 
-        ContactCenterEvent::dispatch($entry->tenant_id, 'queue.call_overflowed', [
+        ContactCenterEvent::dispatch($entry->organization_id, 'queue.call_overflowed', [
             'queue_id' => $entry->queue_id,
             'call_uuid' => $entry->call_uuid,
             'wait_duration' => $waitDuration,

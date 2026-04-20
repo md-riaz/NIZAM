@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\UsageRecord;
 use App\Services\UsageMeteringService;
 use Carbon\Carbon;
@@ -23,16 +23,16 @@ class UsageMeteringServiceTest extends TestCase
 
     public function test_can_record_usage_metric(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         $record = $this->service->record(
-            $tenant,
+            $organization,
             UsageRecord::METRIC_CALL_MINUTES,
             45.5,
         );
 
         $this->assertDatabaseHas('usage_records', [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'metric' => UsageRecord::METRIC_CALL_MINUTES,
         ]);
         $this->assertEquals(45.5, (float) $record->value);
@@ -40,9 +40,9 @@ class UsageMeteringServiceTest extends TestCase
 
     public function test_collect_snapshot_records_metrics(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
@@ -50,7 +50,7 @@ class UsageMeteringServiceTest extends TestCase
             'directory_last_name' => 'User',
         ]);
 
-        $records = $this->service->collectSnapshot($tenant);
+        $records = $this->service->collectSnapshot($organization);
 
         $this->assertCount(3, $records);
 
@@ -62,14 +62,14 @@ class UsageMeteringServiceTest extends TestCase
 
     public function test_get_summary_returns_aggregated_data(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
-        $this->service->record($tenant, UsageRecord::METRIC_CALL_MINUTES, 100, null, Carbon::parse('2026-02-10'));
-        $this->service->record($tenant, UsageRecord::METRIC_CALL_MINUTES, 200, null, Carbon::parse('2026-02-15'));
-        $this->service->record($tenant, UsageRecord::METRIC_CONCURRENT_CALL_PEAK, 10, null, Carbon::parse('2026-02-10'));
+        $this->service->record($organization, UsageRecord::METRIC_CALL_MINUTES, 100, null, Carbon::parse('2026-02-10'));
+        $this->service->record($organization, UsageRecord::METRIC_CALL_MINUTES, 200, null, Carbon::parse('2026-02-15'));
+        $this->service->record($organization, UsageRecord::METRIC_CONCURRENT_CALL_PEAK, 10, null, Carbon::parse('2026-02-10'));
 
         $summary = $this->service->getSummary(
-            $tenant,
+            $organization,
             Carbon::parse('2026-02-01'),
             Carbon::parse('2026-02-28')
         );
@@ -85,13 +85,13 @@ class UsageMeteringServiceTest extends TestCase
 
     public function test_summary_respects_date_range(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
-        $this->service->record($tenant, UsageRecord::METRIC_CALL_MINUTES, 100, null, Carbon::parse('2026-01-15'));
-        $this->service->record($tenant, UsageRecord::METRIC_CALL_MINUTES, 200, null, Carbon::parse('2026-02-15'));
+        $this->service->record($organization, UsageRecord::METRIC_CALL_MINUTES, 100, null, Carbon::parse('2026-01-15'));
+        $this->service->record($organization, UsageRecord::METRIC_CALL_MINUTES, 200, null, Carbon::parse('2026-02-15'));
 
         $summary = $this->service->getSummary(
-            $tenant,
+            $organization,
             Carbon::parse('2026-02-01'),
             Carbon::parse('2026-02-28')
         );

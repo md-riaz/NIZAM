@@ -4,7 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Bridge;
 use App\Models\Gateway;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,21 +14,21 @@ class BridgeApiTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
-        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id, 'role' => 'admin']);
+        $this->organization = Organization::factory()->create();
+        $this->user = User::factory()->create(['organization_id' => $this->organization->id, 'role' => 'admin']);
     }
 
-    public function test_can_list_bridges_for_a_tenant(): void
+    public function test_can_list_bridges_for_a_organization(): void
     {
-        Bridge::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
+        Bridge::factory()->count(3)->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/bridges");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/bridges");
 
         $response->assertOk();
         $response->assertJsonCount(3, 'data');
@@ -36,10 +36,10 @@ class BridgeApiTest extends TestCase
 
     public function test_can_create_a_gateway_bridge(): void
     {
-        $gateway = Gateway::factory()->create(['tenant_id' => $this->tenant->id]);
+        $gateway = Gateway::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/bridges", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/bridges", [
                 'name' => 'PSTN Out',
                 'bridge_type' => 'gateway',
                 'gateway_id' => $gateway->id,
@@ -50,7 +50,7 @@ class BridgeApiTest extends TestCase
         $response->assertCreated();
         $response->assertJsonPath('data.bridge_type', 'gateway');
         $this->assertDatabaseHas('bridges', [
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'PSTN Out',
             'gateway_id' => $gateway->id,
         ]);
@@ -58,10 +58,10 @@ class BridgeApiTest extends TestCase
 
     public function test_can_update_a_bridge(): void
     {
-        $bridge = Bridge::factory()->create(['tenant_id' => $this->tenant->id]);
+        $bridge = Bridge::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/v1/tenants/{$this->tenant->id}/bridges/{$bridge->id}", [
+            ->putJson("/api/v1/organizations/{$this->organization->id}/bridges/{$bridge->id}", [
                 'name' => 'Updated Bridge',
                 'destination_template' => '+15550001111',
             ]);
@@ -76,22 +76,22 @@ class BridgeApiTest extends TestCase
 
     public function test_can_delete_a_bridge(): void
     {
-        $bridge = Bridge::factory()->create(['tenant_id' => $this->tenant->id]);
+        $bridge = Bridge::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/bridges/{$bridge->id}");
+            ->deleteJson("/api/v1/organizations/{$this->organization->id}/bridges/{$bridge->id}");
 
         $response->assertNoContent();
         $this->assertDatabaseMissing('bridges', ['id' => $bridge->id]);
     }
 
-    public function test_returns_404_for_wrong_tenant(): void
+    public function test_returns_404_for_wrong_organization(): void
     {
-        $otherTenant = Tenant::factory()->create();
-        $bridge = Bridge::factory()->create(['tenant_id' => $otherTenant->id]);
+        $otherOrganization = Organization::factory()->create();
+        $bridge = Bridge::factory()->create(['organization_id' => $otherOrganization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/bridges/{$bridge->id}");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/bridges/{$bridge->id}");
 
         $response->assertStatus(404);
     }
@@ -99,7 +99,7 @@ class BridgeApiTest extends TestCase
     public function test_gateway_bridge_requires_gateway_id(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/bridges", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/bridges", [
                 'name' => 'Broken Gateway Bridge',
                 'bridge_type' => 'gateway',
                 'destination_template' => '+15551234567',
@@ -112,10 +112,10 @@ class BridgeApiTest extends TestCase
 
     public function test_raw_bridge_must_not_include_gateway_id(): void
     {
-        $gateway = Gateway::factory()->create(['tenant_id' => $this->tenant->id]);
+        $gateway = Gateway::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/bridges", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/bridges", [
                 'name' => 'Broken Raw Bridge',
                 'bridge_type' => 'raw',
                 'gateway_id' => $gateway->id,

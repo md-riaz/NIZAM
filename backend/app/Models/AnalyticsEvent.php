@@ -12,7 +12,7 @@ class AnalyticsEvent extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'call_uuid',
         'version',
         'wait_time',
@@ -41,8 +41,8 @@ class AnalyticsEvent extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 }

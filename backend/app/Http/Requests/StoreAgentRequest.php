@@ -15,17 +15,17 @@ class StoreAgentRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenant = $this->route('tenant');
+        $organization = $this->route('organization');
 
         return [
             'extension_id' => [
                 'required',
                 'uuid',
-                function ($attribute, $value, $fail) use ($tenant) {
-                    if (! $tenant->extensions()->where('id', $value)->exists()) {
-                        $fail('The extension does not belong to this tenant.');
+                function ($attribute, $value, $fail) use ($organization) {
+                    if (! $organization->extensions()->where('id', $value)->exists()) {
+                        $fail('The extension does not belong to this organization.');
                     }
-                    if ($tenant->agents()->where('extension_id', $value)->exists()) {
+                    if ($organization->agents()->where('extension_id', $value)->exists()) {
                         $fail('An agent already exists for this extension.');
                     }
                 },

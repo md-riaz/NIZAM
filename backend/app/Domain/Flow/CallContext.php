@@ -16,9 +16,9 @@ class CallContext
         return $this->callSession->call_uuid;
     }
 
-    public function tenantId(): string
+    public function organizationId(): string
     {
-        return $this->callSession->tenant_id;
+        return $this->callSession->organization_id;
     }
 
     public function currentNodeId(): ?string

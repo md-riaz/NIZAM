@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
 
@@ -45,7 +45,7 @@ export default function QueueFormPage() {
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
-    const { activeTenant } = useTenant();
+    const { activeOrganization } = useOrganization();
 
     const form = useForm<QueueFormValues>({
         resolver: zodResolver(queueSchema),
@@ -62,13 +62,13 @@ export default function QueueFormPage() {
     });
 
     const { data: queue, isLoading: isFetching } = useQuery({
-        queryKey: ['queue', activeTenant?.id, id],
+        queryKey: ['queue', activeOrganization?.id, id],
         queryFn: async () => {
-            if (!activeTenant) return null;
-            const response = await api.get(`tenants/${activeTenant.id}/queues/${id}`);
+            if (!activeOrganization) return null;
+            const response = await api.get(`organizations/${activeOrganization.id}/queues/${id}`);
             return response.data.data;
         },
-        enabled: isEdit && !!activeTenant,
+        enabled: isEdit && !!activeOrganization,
     });
 
     useEffect(() => {
@@ -88,18 +88,18 @@ export default function QueueFormPage() {
 
     const mutation = useApiMutation({
         mutationFn: async (values: QueueFormValues) => {
-            if (!activeTenant) throw new Error('No active tenant');
+            if (!activeOrganization) throw new Error('No active organization');
             if (isEdit) {
-                return api.put(`tenants/${activeTenant.id}/queues/${id}`, values);
+                return api.put(`organizations/${activeOrganization.id}/queues/${id}`, values);
             }
-            return api.post(`tenants/${activeTenant.id}/queues`, values);
+            return api.post(`organizations/${activeOrganization.id}/queues`, values);
         },
         successMessage: `Queue ${isEdit ? 'updated' : 'created'} successfully`,
-        invalidateQueries: [['queues', activeTenant?.id || '']],
+        invalidateQueries: [['queues', activeOrganization?.id || '']],
         onSuccess: () => navigate('/admin/queues'),
     });
 
-    if (!activeTenant) return null;
+    if (!activeOrganization) return null;
 
     const currentOverflowAction = form.watch('overflow_action');
 

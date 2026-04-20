@@ -7,7 +7,7 @@ use App\Models\DeviceRegistrationSnapshot;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
 use App\Models\PushNotificationLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +18,7 @@ class DeliveryAuditSupportModelsTest extends TestCase
     public function test_push_notification_log_casts_payload_and_relates_to_session_and_endpoint(): void
     {
         $callSession = CallSession::factory()->create();
-        $endpointBinding = EndpointBinding::factory()->create(['tenant_id' => $callSession->tenant_id]);
+        $endpointBinding = EndpointBinding::factory()->create(['organization_id' => $callSession->organization_id]);
 
         $log = PushNotificationLog::factory()->create([
             'call_session_id' => $callSession->id,
@@ -35,47 +35,47 @@ class DeliveryAuditSupportModelsTest extends TestCase
         $this->assertTrue($endpointBinding->pushNotificationLogs()->first()->is($log));
     }
 
-    public function test_device_registration_snapshot_casts_fields_and_relates_to_tenant_endpoint_and_extension(): void
+    public function test_device_registration_snapshot_casts_fields_and_relates_to_organization_endpoint_and_extension(): void
     {
-        $tenant = Tenant::factory()->create();
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $endpointBinding = EndpointBinding::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
         ]);
 
         $snapshot = DeviceRegistrationSnapshot::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'endpoint_binding_id' => $endpointBinding->id,
             'extension_id' => $extension->id,
             'registered' => false,
-            'registration_key' => 'tenant-aor-1001',
+            'registration_key' => 'organization-aor-1001',
         ]);
 
         $snapshot->refresh();
 
         $this->assertFalse($snapshot->registered);
-        $this->assertSame('tenant-aor-1001', $snapshot->registration_key);
-        $this->assertTrue($snapshot->tenant->is($tenant));
+        $this->assertSame('organization-aor-1001', $snapshot->registration_key);
+        $this->assertTrue($snapshot->organization->is($organization));
         $this->assertTrue($snapshot->endpointBinding->is($endpointBinding));
         $this->assertTrue($snapshot->extension->is($extension));
-        $this->assertTrue($tenant->deviceRegistrationSnapshots()->first()->is($snapshot));
+        $this->assertTrue($organization->deviceRegistrationSnapshots()->first()->is($snapshot));
         $this->assertTrue($endpointBinding->deviceRegistrationSnapshots()->first()->is($snapshot));
         $this->assertTrue($extension->deviceRegistrationSnapshots()->first()->is($snapshot));
     }
 
     public function test_registration_snapshot_allows_audit_entries_without_endpoint_or_extension_links(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         $snapshot = DeviceRegistrationSnapshot::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'endpoint_binding_id' => null,
             'extension_id' => null,
         ]);
 
         $this->assertNull($snapshot->endpointBinding);
         $this->assertNull($snapshot->extension);
-        $this->assertTrue($snapshot->tenant->is($tenant));
+        $this->assertTrue($snapshot->organization->is($organization));
     }
 }

@@ -22,10 +22,10 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $query = User::with('tenant');
+        $query = User::with('organization');
 
-        if ($request->filled('tenant_id')) {
-            $query->where('tenant_id', $request->input('tenant_id'));
+        if ($request->filled('organization_id')) {
+            $query->where('organization_id', $request->input('organization_id'));
         }
 
         if ($request->filled('role')) {
@@ -39,7 +39,7 @@ class UserController extends Controller
     {
         $this->authorize('view', $user);
 
-        return new UserResource($user->load('tenant', 'permissions'));
+        return new UserResource($user->load('organization', 'permissions'));
     }
 
     public function store(Request $request): JsonResponse
@@ -51,7 +51,7 @@ class UserController extends Controller
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'sometimes|string|in:admin,user',
-            'tenant_id' => 'nullable|exists:tenants,id',
+            'organization_id' => 'nullable|exists:organizations,id',
         ]);
 
         $user = User::create([
@@ -59,7 +59,7 @@ class UserController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'] ?? 'user',
-            'tenant_id' => $validated['tenant_id'] ?? null,
+            'organization_id' => $validated['organization_id'] ?? null,
         ]);
 
         return response()->json(new UserResource($user), 201);
@@ -74,7 +74,7 @@ class UserController extends Controller
             'email' => 'sometimes|string|email|unique:users,email,'.$user->id,
             'password' => 'sometimes|string|min:8',
             'role' => 'sometimes|string|in:admin,user',
-            'tenant_id' => 'nullable|exists:tenants,id',
+            'organization_id' => 'nullable|exists:organizations,id',
         ]);
 
         if (isset($validated['password'])) {
@@ -83,7 +83,7 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return new UserResource($user->fresh()->load('tenant'));
+        return new UserResource($user->fresh()->load('organization'));
     }
 
     public function destroy(User $user): JsonResponse

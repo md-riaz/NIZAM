@@ -6,7 +6,7 @@ use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
 use App\Models\Permission;
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,7 +15,7 @@ class ResourcePolicyTest extends TestCase
 {
     use RefreshDatabase;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     private User $admin;
 
@@ -24,13 +24,13 @@ class ResourcePolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
+        $this->organization = Organization::factory()->create();
         $this->admin = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'role' => 'admin',
         ]);
         $this->user = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'role' => 'user',
         ]);
     }
@@ -68,31 +68,31 @@ class ResourcePolicyTest extends TestCase
         $this->assertTrue($this->admin->can('viewAny', Recording::class));
     }
 
-    public function test_user_can_view_own_tenant_recording(): void
+    public function test_user_can_view_own_organization_recording(): void
     {
-        $recording = Recording::factory()->create(['tenant_id' => $this->tenant->id]);
+        $recording = Recording::factory()->create(['organization_id' => $this->organization->id]);
 
         $this->assertTrue($this->user->can('view', $recording));
     }
 
-    public function test_user_cannot_view_other_tenant_recording(): void
+    public function test_user_cannot_view_other_organization_recording(): void
     {
-        $otherTenant = Tenant::factory()->create();
-        $recording = Recording::factory()->create(['tenant_id' => $otherTenant->id]);
+        $otherOrganization = Organization::factory()->create();
+        $recording = Recording::factory()->create(['organization_id' => $otherOrganization->id]);
 
         $this->assertFalse($this->user->can('view', $recording));
     }
 
-    public function test_user_can_download_own_tenant_recording(): void
+    public function test_user_can_download_own_organization_recording(): void
     {
-        $recording = Recording::factory()->create(['tenant_id' => $this->tenant->id]);
+        $recording = Recording::factory()->create(['organization_id' => $this->organization->id]);
 
         $this->assertTrue($this->user->can('download', $recording));
     }
 
-    public function test_user_can_delete_own_tenant_recording(): void
+    public function test_user_can_delete_own_organization_recording(): void
     {
-        $recording = Recording::factory()->create(['tenant_id' => $this->tenant->id]);
+        $recording = Recording::factory()->create(['organization_id' => $this->organization->id]);
 
         $this->assertTrue($this->user->can('delete', $recording));
     }
@@ -102,17 +102,17 @@ class ResourcePolicyTest extends TestCase
         $this->assertTrue($this->admin->can('viewAny', CallDetailRecord::class));
     }
 
-    public function test_user_can_view_own_tenant_cdr(): void
+    public function test_user_can_view_own_organization_cdr(): void
     {
-        $cdr = CallDetailRecord::factory()->create(['tenant_id' => $this->tenant->id]);
+        $cdr = CallDetailRecord::factory()->create(['organization_id' => $this->organization->id]);
 
         $this->assertTrue($this->user->can('view', $cdr));
     }
 
-    public function test_user_cannot_view_other_tenant_cdr(): void
+    public function test_user_cannot_view_other_organization_cdr(): void
     {
-        $otherTenant = Tenant::factory()->create();
-        $cdr = CallDetailRecord::factory()->create(['tenant_id' => $otherTenant->id]);
+        $otherOrganization = Organization::factory()->create();
+        $cdr = CallDetailRecord::factory()->create(['organization_id' => $otherOrganization->id]);
 
         $this->assertFalse($this->user->can('view', $cdr));
     }

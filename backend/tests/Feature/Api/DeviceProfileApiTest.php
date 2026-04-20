@@ -4,7 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\DeviceProfile;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,21 +15,21 @@ class DeviceProfileApiTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
-        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->organization = Organization::factory()->create();
+        $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
     }
 
-    public function test_can_list_device_profiles_for_a_tenant(): void
+    public function test_can_list_device_profiles_for_a_organization(): void
     {
-        DeviceProfile::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
+        DeviceProfile::factory()->count(3)->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/device-profiles");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/device-profiles");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -38,7 +38,7 @@ class DeviceProfileApiTest extends TestCase
     public function test_can_create_a_device_profile(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/device-profiles", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/device-profiles", [
                 'name' => 'Lobby Phone',
                 'vendor' => 'polycom',
                 'mac_address' => 'AA:BB:CC:DD:EE:FF',
@@ -47,7 +47,7 @@ class DeviceProfileApiTest extends TestCase
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('device_profiles', [
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Lobby Phone',
             'vendor' => 'polycom',
         ]);
@@ -55,10 +55,10 @@ class DeviceProfileApiTest extends TestCase
 
     public function test_can_show_a_device_profile(): void
     {
-        $profile = DeviceProfile::factory()->create(['tenant_id' => $this->tenant->id]);
+        $profile = DeviceProfile::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/device-profiles/{$profile->id}");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/device-profiles/{$profile->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => $profile->name]);
@@ -66,10 +66,10 @@ class DeviceProfileApiTest extends TestCase
 
     public function test_can_update_a_device_profile(): void
     {
-        $profile = DeviceProfile::factory()->create(['tenant_id' => $this->tenant->id]);
+        $profile = DeviceProfile::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/v1/tenants/{$this->tenant->id}/device-profiles/{$profile->id}", [
+            ->putJson("/api/v1/organizations/{$this->organization->id}/device-profiles/{$profile->id}", [
                 'name' => 'Updated Phone',
                 'vendor' => 'yealink',
             ]);
@@ -84,10 +84,10 @@ class DeviceProfileApiTest extends TestCase
 
     public function test_can_delete_a_device_profile(): void
     {
-        $profile = DeviceProfile::factory()->create(['tenant_id' => $this->tenant->id]);
+        $profile = DeviceProfile::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/device-profiles/{$profile->id}");
+            ->deleteJson("/api/v1/organizations/{$this->organization->id}/device-profiles/{$profile->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('device_profiles', ['id' => $profile->id]);
@@ -96,7 +96,7 @@ class DeviceProfileApiTest extends TestCase
     public function test_validates_required_fields_on_create(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/device-profiles", []);
+            ->postJson("/api/v1/organizations/{$this->organization->id}/device-profiles", []);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name', 'vendor']);
@@ -104,10 +104,10 @@ class DeviceProfileApiTest extends TestCase
 
     public function test_can_create_with_extension_assignment(): void
     {
-        $extension = Extension::factory()->create(['tenant_id' => $this->tenant->id]);
+        $extension = Extension::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/device-profiles", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/device-profiles", [
                 'name' => 'Desk Phone',
                 'vendor' => 'grandstream',
                 'mac_address' => '11:22:33:44:55:66',
@@ -121,13 +121,13 @@ class DeviceProfileApiTest extends TestCase
         ]);
     }
 
-    public function test_returns_404_for_wrong_tenant(): void
+    public function test_returns_404_for_wrong_organization(): void
     {
-        $otherTenant = Tenant::factory()->create();
-        $profile = DeviceProfile::factory()->create(['tenant_id' => $otherTenant->id]);
+        $otherOrganization = Organization::factory()->create();
+        $profile = DeviceProfile::factory()->create(['organization_id' => $otherOrganization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/device-profiles/{$profile->id}");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/device-profiles/{$profile->id}");
 
         $response->assertStatus(404);
     }

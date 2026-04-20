@@ -5,7 +5,7 @@ namespace Tests\Unit\Services\SupervisorReports;
 use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\SupervisorReports\VoicemailsNeedingFollowUpReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,10 +16,10 @@ class VoicemailsNeedingFollowUpReportServiceTest extends TestCase
 
     public function test_reports_pending_voicemail_follow_up_when_no_returned_call_exists(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         $event = CallEventLog::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'vm-001',
             'event_id' => 'evt-001',
             'event_type' => CallEventLog::EVENT_VOICEMAIL_RECEIVED,
@@ -36,7 +36,7 @@ class VoicemailsNeedingFollowUpReportServiceTest extends TestCase
         ]);
 
         $recording = Recording::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'vm-001',
             'file_path' => 'voicemail/test/1001/msg.wav',
             'needs_review' => true,
@@ -44,7 +44,7 @@ class VoicemailsNeedingFollowUpReportServiceTest extends TestCase
         ]);
 
         $report = app(VoicemailsNeedingFollowUpReportService::class)->generate(
-            $tenant,
+            $organization,
             now()->parse('2026-04-01'),
             now()->parse('2026-04-03'),
         );
@@ -62,10 +62,10 @@ class VoicemailsNeedingFollowUpReportServiceTest extends TestCase
 
     public function test_reports_voicemail_as_returned_when_outbound_follow_up_exists(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         CallEventLog::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'vm-002',
             'event_id' => 'evt-002',
             'event_type' => CallEventLog::EVENT_VOICEMAIL_RECEIVED,
@@ -81,14 +81,14 @@ class VoicemailsNeedingFollowUpReportServiceTest extends TestCase
         ]);
 
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'direction' => 'outbound',
             'destination_number' => '(555) 999-8888',
             'start_stamp' => '2026-04-03 11:30:00',
         ]);
 
         $report = app(VoicemailsNeedingFollowUpReportService::class)->generate(
-            $tenant,
+            $organization,
             now()->parse('2026-04-01'),
             now()->parse('2026-04-03'),
         );

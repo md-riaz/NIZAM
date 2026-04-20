@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\UsageRecord;
 use App\Models\User;
 use Carbon\Carbon;
@@ -16,25 +16,25 @@ class UsageReconcileApiTest extends TestCase
 
     public function test_reconcile_endpoint_returns_comparison(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
         $today = Carbon::today();
 
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'billsec' => 120,
             'start_stamp' => $today->copy()->setTime(10, 0),
         ]);
 
         UsageRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'metric' => UsageRecord::METRIC_CALL_MINUTES,
             'value' => 2.0,
             'recorded_date' => $today->toDateString(),
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$tenant->id}/usage/reconcile");
+            ->getJson("/api/v1/organizations/{$organization->id}/usage/reconcile");
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -50,9 +50,9 @@ class UsageReconcileApiTest extends TestCase
 
     public function test_unauthenticated_cannot_access_reconcile(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
-        $response = $this->getJson("/api/v1/tenants/{$tenant->id}/usage/reconcile");
+        $response = $this->getJson("/api/v1/organizations/{$organization->id}/usage/reconcile");
 
         $response->assertStatus(401);
     }

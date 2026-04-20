@@ -33,7 +33,7 @@ Design a modern light-theme SaaS admin interface for **NIZAM**, a communications
 ## Prompt Pack A: App shell and auth
 
 ### Prompt A1: App shell
-Create the full application shell for NIZAM. Include a left sidebar with one-level submenu navigation, tenant switcher, environment chip support, and top sections Dashboard, Phone System, Routing, Connectivity, Calls, Contact Center, Integrations, and Admin. Add a top header with breadcrumbs, global search, alerts, quick actions, tenant context, and profile menu. Use a modern light-theme B2B operations design with strong typography, subtle cards, dense layout, and blue-indigo accents.
+Create the full application shell for NIZAM. Include a left sidebar with one-level submenu navigation, organization switcher, environment chip support, and top sections Dashboard, Phone System, Routing, Connectivity, Calls, Contact Center, Integrations, and Admin. Add a top header with breadcrumbs, global search, alerts, quick actions, organization context, and profile menu. Use a modern light-theme B2B operations design with strong typography, subtle cards, dense layout, and blue-indigo accents.
 
 ### Prompt A2: Login page
 Design a login screen for NIZAM. Use a clean enterprise SaaS auth layout with logo, title, email field, password field, remember me, forgot password link, sign-in button, and minimal supporting copy. Include optional environment badge and version footer. Light theme, clean, calm, modern.
@@ -41,8 +41,8 @@ Design a login screen for NIZAM. Use a clean enterprise SaaS auth layout with lo
 ### Prompt A3: Forgot password and reset flow
 Design two auth screens for NIZAM: Forgot Password and Reset Password. The Forgot Password screen asks for email and sends a reset link. The Reset Password screen includes email, new password, confirm password, and primary reset action. Keep styling consistent with the login screen and the main app design system.
 
-### Prompt A4: First admin / first tenant setup
-Design a first-run bootstrap screen for NIZAM. This page collects admin name, admin email, password, tenant name, and tenant domain or slug. The layout should feel like onboarding for a serious SaaS control plane, not a consumer app.
+### Prompt A4: First admin / first organization setup
+Design a first-run bootstrap screen for NIZAM. This page collects admin name, admin email, password, organization name, and organization domain or slug. The layout should feel like onboarding for a serious SaaS control plane, not a consumer app.
 
 ### Prompt A5: Welcome / getting started page
 Design a post-login getting started page for NIZAM with cards for Create Extension, Add DID, Add Gateway, Create Bridge, Create Flow, and Open Route Explorer. Include a progress checklist and links to documentation.
@@ -70,7 +70,7 @@ Design a Calls overview page for NIZAM. Show cards for active calls, answered to
 Design a Contact Center overview page for NIZAM. Show queue load, waiting callers, available agents, service level, abandon rate, and longest wait. Include wallboard-style status blocks but keep it modern and clean.
 
 ### Prompt B7: Admin overview
-Design an Admin overview page for NIZAM. Show active users, tenant count, recent permission changes, audit volume, usage summary, and platform warnings. This page should feel like an operations control page for privileged users.
+Design an Admin overview page for NIZAM. Show active users, organization count, recent permission changes, audit volume, usage summary, and platform warnings. This page should feel like an operations control page for privileged users.
 
 ---
 
@@ -114,7 +114,7 @@ Design the NIZAM Flow Editor. Use a three-column workspace with node list on the
 Design Bridges List and Bridge Detail pages for NIZAM. Explain bridge as a reusable outbound destination. Include tabs Overview, Target, Usage, Runtime. Show bridge type, target gateway, destination template, used-by table, and runtime preview.
 
 ### Prompt D5: Route Explorer
-Design a flagship Route Explorer for NIZAM. Use a three-column workspace: left input form, center route-resolution timeline, right warnings and dependency rail. Inputs include number, caller ID, gateway, registration, tenant, and datetime. Output should show DID match, precedence selection, policy evaluation, flow traversal, bridge selection, and final destination.
+Design a flagship Route Explorer for NIZAM. Use a three-column workspace: left input form, center route-resolution timeline, right warnings and dependency rail. Inputs include number, caller ID, gateway, registration, organization, and datetime. Output should show DID match, precedence selection, policy evaluation, flow traversal, bridge selection, and final destination.
 
 ### Prompt D6: Simulations workspace
 Design a Simulations page for NIZAM with tabs for DID Simulation, Policy Simulation, Flow Simulation, and Time Preview. Each tab should use left inputs, center results, and right notes/warnings.
@@ -161,7 +161,7 @@ Design CDR List and CDR Detail pages for NIZAM. The detail page should include t
 Design a Recordings list and detail view for NIZAM. Include playback, download, metadata, linked CDR, retention state, and delete actions.
 
 ### Prompt F5: Event Log page
-Design an Event Log page for NIZAM. Show timestamp, event type, call UUID, tenant, payload preview, and actions. Event detail should show structured summary plus raw JSON.
+Design an Event Log page for NIZAM. Show timestamp, event type, call UUID, organization, payload preview, and actions. Event detail should show structured summary plus raw JSON.
 
 ### Prompt F6: Trace Viewer
 Design a Trace Viewer for NIZAM as a forensic call timeline. Show call created, DID resolved, policy matched, flow traversed, bridge selected, queue/agent actions, hangup cause, and recording link. Include right-rail warnings and export action.
@@ -201,14 +201,14 @@ Design an Event Streams overview page for NIZAM. Show stream type, auth mode, cl
 ### Prompt H4: Users and permissions pages
 Design Users List, User Detail, and Roles & Permissions pages for NIZAM. User Detail should include tabs Overview, Access, Permissions, Activity, Tokens. Role pages should include a permission matrix and assigned users.
 
-### Prompt H5: Tenants and tenant settings pages
-Design Tenants List, Tenant Detail, and Tenant Settings pages for NIZAM. Tenant Settings should include General, Branding, Telephony Defaults, Security, Usage, and Advanced.
+### Prompt H5: Organizations and organization settings pages
+Design Organizations List, Organization Detail, and Organization Settings pages for NIZAM. Organization Settings should include General, Branding, Telephony Defaults, Security, Usage, and Advanced.
 
 ### Prompt H6: Usage summary page
-Design a Usage page for NIZAM showing tenant usage summary, charts, collect/reconcile actions, and breakdown by call volume, storage, and API usage.
+Design a Usage page for NIZAM showing organization usage summary, charts, collect/reconcile actions, and breakdown by call volume, storage, and API usage.
 
 ### Prompt H7: Audit logs pages
-Design Audit Log List and Audit Log Detail pages for NIZAM. Show actor, object, action, time, tenant, and diff preview. Detail should show before/after JSON and linked objects.
+Design Audit Log List and Audit Log Detail pages for NIZAM. Show actor, object, action, time, organization, and diff preview. Detail should show before/after JSON and linked objects.
 
 ### Prompt H8: Admin dashboard and system settings
 Design an Admin Dashboard and System Settings page for NIZAM. Include platform health, recent permission changes, usage summary, SSL, SIP profiles, blocked destinations, and system warnings.
@@ -250,5 +250,5 @@ Design a complete modern light-theme SaaS admin UI for NIZAM, a communications c
 4. Flow editor + Route Explorer
 5. Live Calls + CDR detail + Trace Viewer
 6. Queue + Agent + Wallboard
-7. Webhooks + Users + Audit Logs + Tenant Settings
+7. Webhooks + Users + Audit Logs + Organization Settings
 8. State pages pack

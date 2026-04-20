@@ -59,9 +59,9 @@ class SipProfileCompiler
 
         $xml .= '  <domains>'."\n";
 
-        // Map all active tenant domains as aliases to this profile
+        // Map all active organization domains as aliases to this profile
         // This ensures user_data 1001@domain correctly routes to the directory lookup
-        $domains = \App\Models\Tenant::where('is_active', true)->pluck('domain');
+        $domains = \App\Models\Organization::where('is_active', true)->pluck('domain');
         foreach ($domains as $domain) {
             $xml .= '    <domain name="'.htmlspecialchars($domain, ENT_QUOTES | ENT_XML1).'" alias="true" parse="true"/>'."\n";
         }

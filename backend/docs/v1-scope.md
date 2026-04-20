@@ -7,11 +7,11 @@ Any capability not listed as Included is either a roadmap item or unsupported.
 
 ## Included in v1.0
 
-### Multi-Tenant SaaS Core
-- Domain-based tenant isolation enforced at middleware, policy, and query level
-- Per-tenant resource limits and suspension controls
-- Cross-tenant access blocked by authorization policies
-- Tenant lifecycle management (create, suspend, activate, delete)
+### Multi-Organization SaaS Core
+- Domain-based organization isolation enforced at middleware, policy, and query level
+- Per-organization resource limits and suspension controls
+- Cross-organization access blocked by authorization policies
+- Organization lifecycle management (create, suspend, activate, delete)
 
 ### Extension Management
 - SIP user provisioning with credential management
@@ -35,7 +35,7 @@ Any capability not listed as Included is either a roadmap item or unsupported.
 
 ### Policy Engine
 - Time Condition routing (time-of-day, day-of-week, day-of-month, month)
-- Tenant suspension policy (blocks routing immediately)
+- Organization suspension policy (blocks routing immediately)
 - Blacklist policy
 
 ### Event Bus (Versioned)
@@ -48,7 +48,7 @@ Any capability not listed as Included is either a roadmap item or unsupported.
 ### Webhooks (Signed + Retry)
 - HMAC-SHA256 signed payloads
 - Configurable retry with exponential backoff
-- Per-tenant webhook configurations
+- Per-organization webhook configurations
 - Delivery log with success/failure status
 
 ### Contact Center Core
@@ -77,13 +77,13 @@ Any capability not listed as Included is either a roadmap item or unsupported.
 ### Provisioning
 - Device profile templates (vendor-agnostic)
 - MAC-address-based provisioning endpoint
-- Profile variables with tenant scoping
+- Profile variables with organization scoping
 
 ### Analytics Baseline (Non-ML)
-- CDR (Call Detail Records) with per-tenant scoping
+- CDR (Call Detail Records) with per-organization scoping
 - Call event log with replay support
 - Feature extraction from event stream
-- Aggregated metrics per tenant and queue
+- Aggregated metrics per organization and queue
 
 ### SwitchNode Abstraction (Single-Node)
 - FreeSWITCH ESL listener with automatic reconnection and exponential backoff
@@ -93,7 +93,7 @@ Any capability not listed as Included is either a roadmap item or unsupported.
 ### API-First Control
 - All operations available via REST API
 - Sanctum token authentication
-- Role-based authorization (admin bypass, tenant isolation)
+- Role-based authorization (superadmin bypass, organization isolation)
 - Rate limiting enforced
 - API versioned under `/api/v1`
 - OpenAPI specification published

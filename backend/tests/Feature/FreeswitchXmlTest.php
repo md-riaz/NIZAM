@@ -5,8 +5,8 @@ namespace Tests\Feature;
 use App\Models\CallSession;
 use App\Models\Did;
 use App\Models\SipProfile;
-use App\Models\Tenant;
-use App\Models\TenantDialplanManifest;
+use App\Models\Organization;
+use App\Models\OrganizationDialplanManifest;
 use Database\Seeders\SipProfileSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -26,13 +26,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_returns_xml_for_directory_section_request(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -53,13 +53,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_returns_filtered_directory_entry_for_specific_user_lookup(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Lookup Tenant',
+        $organization = Organization::create([
+            'name' => 'Lookup Organization',
             'domain' => 'lookup.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -67,7 +67,7 @@ class FreeswitchXmlTest extends TestCase
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret5678',
             'directory_first_name' => 'Jane',
@@ -89,13 +89,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_returns_filtered_directory_entry_when_mod_xml_curl_uses_id_parameter(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'ID Lookup Tenant',
+        $organization = Organization::create([
+            'name' => 'ID Lookup Organization',
             'domain' => 'idlookup.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '2001',
             'password' => 'secret1234',
             'directory_first_name' => 'Alice',
@@ -103,7 +103,7 @@ class FreeswitchXmlTest extends TestCase
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '2002',
             'password' => 'secret5678',
             'directory_first_name' => 'Bob',
@@ -125,13 +125,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_returns_empty_users_when_specific_directory_user_is_missing(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Missing Lookup Tenant',
+        $organization = Organization::create([
+            'name' => 'Missing Lookup Organization',
             'domain' => 'missinglookup.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '3001',
             'password' => 'secret1234',
             'directory_first_name' => 'Chris',
@@ -153,13 +153,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_dialplan_routes_self_call_without_delivery_orchestrator(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Self Call Tenant',
+        $organization = Organization::create([
+            'name' => 'Self Call Organization',
             'domain' => 'selfcall.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'Self',
@@ -182,13 +182,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_dialplan_routes_self_call_to_voicemail_check(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Self Call Parity Tenant',
+        $organization = Organization::create([
+            'name' => 'Self Call Parity Organization',
             'domain' => 'parity.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'Self',
@@ -210,13 +210,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_dialplan_keeps_orchestrator_for_non_self_extension_calls(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Internal Call Tenant',
+        $organization = Organization::create([
+            'name' => 'Internal Call Organization',
             'domain' => 'internalcall.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'Caller',
@@ -224,7 +224,7 @@ class FreeswitchXmlTest extends TestCase
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret5678',
             'directory_first_name' => 'Callee',
@@ -247,8 +247,8 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_dialplan_returns_directed_pickup_xml(): void
     {
-        Tenant::create([
-            'name' => 'Pickup Tenant',
+        Organization::create([
+            'name' => 'Pickup Organization',
             'domain' => 'pickup.example.com',
             'is_active' => true,
         ]);
@@ -261,13 +261,13 @@ class FreeswitchXmlTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_intercept.lua $1"', $response->getContent());
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/custom/_directed_pickup.lua $1"', $response->getContent());
     }
 
     public function test_dialplan_returns_parking_xml_for_auto_and_orbit_pickup(): void
     {
-        Tenant::create([
-            'name' => 'Parking Tenant',
+        Organization::create([
+            'name' => 'Parking Organization',
             'domain' => 'parking.example.com',
             'is_active' => true,
         ]);
@@ -281,7 +281,7 @@ class FreeswitchXmlTest extends TestCase
 
         $autoResponse->assertStatus(200);
         $this->assertStringContainsString('application="set" data="nizam_parking_lot=park"', $autoResponse->getContent());
-        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_valet_park.lua park *5900 5901 5999"', $autoResponse->getContent());
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/custom/_valet_park.lua park *5900 5901 5999"', $autoResponse->getContent());
 
         $orbitResponse = $this->post('/freeswitch/xml-curl', [
             'section' => 'dialplan',
@@ -335,13 +335,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_internal_profile_dial_string_targets_internal_profile_contacts_only(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Dial String Tenant',
+        $organization = Organization::create([
+            'name' => 'Dial String Organization',
             'domain' => 'dialstring.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '4001',
             'password' => 'secret1234',
             'directory_first_name' => 'Dial',
@@ -362,13 +362,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_non_self_extension_dialplan_response_uses_orchestrator(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -391,8 +391,8 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_xml_curl_returns_convenience_service_route_dialplan(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Convenience XML Tenant',
+        $organization = Organization::create([
+            'name' => 'Convenience XML Organization',
             'domain' => 'xml-convenience.example.com',
             'is_active' => true,
             'settings' => [
@@ -403,7 +403,7 @@ class FreeswitchXmlTest extends TestCase
             ],
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'Primary',
@@ -412,7 +412,7 @@ class FreeswitchXmlTest extends TestCase
             'is_primary' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '2000',
             'password' => 'secret1234',
             'directory_first_name' => 'Operator',
@@ -420,7 +420,7 @@ class FreeswitchXmlTest extends TestCase
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '3000',
             'password' => 'secret1234',
             'directory_first_name' => 'Voicemail',
@@ -445,13 +445,13 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_xml_curl_returns_intercom_and_paging_convenience_dialplan(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Intercom XML Tenant',
+        $organization = Organization::create([
+            'name' => 'Intercom XML Organization',
             'domain' => 'xml-intercom.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'Primary',
@@ -479,8 +479,8 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_manifest_builder_persists_convenience_routes_in_active_manifest(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Manifest Convenience Tenant',
+        $organization = Organization::create([
+            'name' => 'Manifest Convenience Organization',
             'domain' => 'manifest-convenience.example.com',
             'is_active' => true,
             'settings' => [
@@ -490,7 +490,7 @@ class FreeswitchXmlTest extends TestCase
             ],
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '6100',
             'password' => 'secret1234',
             'directory_first_name' => 'Front',
@@ -499,10 +499,10 @@ class FreeswitchXmlTest extends TestCase
             'is_primary' => true,
         ]);
 
-        app(\App\Services\TenantManifestBuilder::class)->buildAndActivate($tenant->fresh());
+        app(\App\Services\OrganizationManifestBuilder::class)->buildAndActivate($organization->fresh());
 
-        $manifest = TenantDialplanManifest::query()
-            ->where('tenant_id', $tenant->id)
+        $manifest = OrganizationDialplanManifest::query()
+            ->where('organization_id', $organization->id)
             ->where('manifest_type', 'inbound_routing')
             ->where('is_active', true)
             ->first();
@@ -525,7 +525,7 @@ class FreeswitchXmlTest extends TestCase
         $this->assertStringContainsString('<result status="not found"/>', $response->getContent());
     }
 
-    public function test_returns_valid_empty_xml_when_no_tenant_matches_domain(): void
+    public function test_returns_valid_empty_xml_when_no_organization_matches_domain(): void
     {
         $response = $this->post('/freeswitch/xml-curl', [
             'section' => 'directory',
@@ -562,17 +562,17 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_dialplan_persists_webrtc_endpoint_type_on_call_session(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
         $did = Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15559990001',
             'destination_type' => 'extension',
-            'destination_id' => $tenant->extensions()->create([
+            'destination_id' => $organization->extensions()->create([
                 'extension' => '2001',
                 'password' => 'pass1234',
                 'directory_first_name' => 'Jane',
@@ -599,17 +599,17 @@ class FreeswitchXmlTest extends TestCase
 
     public function test_dialplan_persists_sip_endpoint_type_on_call_session(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test2.example.com',
             'is_active' => true,
         ]);
 
         $did = Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15559990002',
             'destination_type' => 'extension',
-            'destination_id' => $tenant->extensions()->create([
+            'destination_id' => $organization->extensions()->create([
                 'extension' => '2002',
                 'password' => 'pass1234',
                 'directory_first_name' => 'Bob',

@@ -7,7 +7,7 @@ use App\Models\FlowVersion;
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -31,14 +31,14 @@ class DialplanCompilerPolicyTest extends TestCase
 
     public function test_compiles_did_routing_via_call_routing_policy(): void
     {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
+        $organization = Organization::factory()->create(['is_active' => true]);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
 
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'conditions' => [
                 ['type' => 'time_of_day', 'params' => ['start' => '09:00', 'end' => '17:00']],
             ],
@@ -49,58 +49,58 @@ class DialplanCompilerPolicyTest extends TestCase
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15551000000',
             'destination_type' => 'call_routing_policy',
             'destination_id' => $policy->id,
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15551000000');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15551000000');
 
         $this->assertStringContainsString('time-of-day="09:00-17:00"', $xml);
         $this->assertStringContainsString('nizam_delivery_target_type=extension', $xml);
         $this->assertStringContainsString('nizam_delivery_target_id='.$extension->id, $xml);
-        $this->assertStringContainsString('call_delivery_entrypoint XML '.$tenant->domain, $xml);
+        $this->assertStringContainsString('call_delivery_entrypoint XML '.$organization->domain, $xml);
         $this->assertStringNotContainsString('application="bridge" data="user/', $xml);
     }
 
     public function test_compiles_did_routing_via_call_flow(): void
     {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
+        $organization = Organization::factory()->create(['is_active' => true]);
 
         $flow = Flow::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15552000000',
             'destination_type' => 'flow',
             'destination_id' => $flow->id,
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15552000000');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15552000000');
 
         $this->assertStringContainsString('<action application="transfer"', $xml);
-        $this->assertStringContainsString('data="flow_' . $flow->id . ' XML ' . $tenant->domain . '"', $xml);
+        $this->assertStringContainsString('data="flow_' . $flow->id . ' XML ' . $organization->domain . '"', $xml);
     }
 
     public function test_policy_with_no_match_destination_generates_anti_action(): void
     {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
+        $organization = Organization::factory()->create(['is_active' => true]);
         $matchExt = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
         $noMatchExt = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
 
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'conditions' => [
                 ['type' => 'time_of_day', 'params' => ['start' => '09:00', 'end' => '17:00']],
             ],
@@ -111,33 +111,33 @@ class DialplanCompilerPolicyTest extends TestCase
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15553000000',
             'destination_type' => 'call_routing_policy',
             'destination_id' => $policy->id,
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15553000000');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15553000000');
 
         $this->assertStringContainsString('<action application="set" data="nizam_delivery_target_type=extension"', $xml);
         $this->assertStringContainsString('<anti-action application="set" data="nizam_delivery_target_type=extension"', $xml);
         $this->assertStringContainsString('nizam_delivery_target_id='.$matchExt->id, $xml);
         $this->assertStringContainsString('nizam_delivery_target_id='.$noMatchExt->id, $xml);
-        $this->assertStringContainsString('call_delivery_entrypoint XML '.$tenant->domain, $xml);
+        $this->assertStringContainsString('call_delivery_entrypoint XML '.$organization->domain, $xml);
         $this->assertStringNotContainsString('application="bridge" data="user/', $xml);
     }
 
     public function test_policy_with_day_of_week_condition(): void
     {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
+        $organization = Organization::factory()->create(['is_active' => true]);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
 
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'conditions' => [
                 ['type' => 'day_of_week', 'params' => ['days' => ['mon', 'tue', 'wed', 'thu', 'fri']]],
             ],
@@ -146,14 +146,14 @@ class DialplanCompilerPolicyTest extends TestCase
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15556000000',
             'destination_type' => 'call_routing_policy',
             'destination_id' => $policy->id,
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15556000000');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15556000000');
 
         $this->assertStringContainsString('wday="mon,tue,wed,thu,fri"', $xml);
     }

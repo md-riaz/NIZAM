@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('call_sessions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('call_uuid')->unique();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('did_id')->nullable()->constrained('dids')->nullOnDelete();
             $table->foreignUuid('call_flow_id')->nullable()->constrained('call_flows')->nullOnDelete();
             $table->string('flow_version_id')->nullable();
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamp('ended_at')->nullable()->index();
             $table->timestamps();
 
-            $table->index(['tenant_id', 'state']);
+            $table->index(['organization_id', 'state']);
         });
     }
 

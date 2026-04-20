@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\AnalyticsEvent;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,29 +13,29 @@ class AnalyticsEventTest extends TestCase
 
     public function test_create_analytics_event(): void
     {
-        $tenant = Tenant::factory()->create();
-        $event = AnalyticsEvent::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $event = AnalyticsEvent::factory()->create(['organization_id' => $organization->id]);
 
         $this->assertDatabaseHas('analytics_events', ['id' => $event->id]);
-        $this->assertEquals($tenant->id, $event->tenant_id);
+        $this->assertEquals($organization->id, $event->organization_id);
     }
 
-    public function test_belongs_to_tenant(): void
+    public function test_belongs_to_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $event = AnalyticsEvent::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $event = AnalyticsEvent::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertInstanceOf(Tenant::class, $event->tenant);
-        $this->assertEquals($tenant->id, $event->tenant->id);
+        $this->assertInstanceOf(Organization::class, $event->organization);
+        $this->assertEquals($organization->id, $event->organization->id);
     }
 
     public function test_idempotent_key_constraint(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $callUuid = fake()->uuid();
 
         AnalyticsEvent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => $callUuid,
             'version' => 1,
         ]);
@@ -43,7 +43,7 @@ class AnalyticsEventTest extends TestCase
         $this->expectException(\Illuminate\Database\QueryException::class);
 
         AnalyticsEvent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => $callUuid,
             'version' => 1,
         ]);
@@ -51,17 +51,17 @@ class AnalyticsEventTest extends TestCase
 
     public function test_allows_different_versions(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $callUuid = fake()->uuid();
 
         AnalyticsEvent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => $callUuid,
             'version' => 1,
         ]);
 
         $event2 = AnalyticsEvent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => $callUuid,
             'version' => 2,
         ]);

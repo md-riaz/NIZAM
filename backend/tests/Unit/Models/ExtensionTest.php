@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\DeviceProfile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,19 +21,19 @@ class ExtensionTest extends TestCase
         ]);
     }
 
-    private function createTenant(): Tenant
+    private function createOrganization(): Organization
     {
-        return Tenant::create([
-            'name' => 'Test Tenant',
+        return Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
         ]);
     }
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -47,31 +47,31 @@ class ExtensionTest extends TestCase
         $this->assertDatabaseHas('extensions', [
             'extension' => '1001',
             'directory_first_name' => 'John',
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
         $this->assertNotNull($extension->id);
     }
 
-    public function test_belongs_to_a_tenant(): void
+    public function test_belongs_to_a_organization(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
             'directory_last_name' => 'Doe',
         ]);
 
-        $this->assertInstanceOf(Tenant::class, $extension->tenant);
-        $this->assertEquals($tenant->id, $extension->tenant->id);
+        $this->assertInstanceOf(Organization::class, $extension->organization);
+        $this->assertEquals($organization->id, $extension->organization->id);
     }
 
     public function test_password_field_is_hidden_from_serialization(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -84,9 +84,9 @@ class ExtensionTest extends TestCase
 
     public function test_voicemail_pin_field_is_hidden_from_serialization(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -100,9 +100,9 @@ class ExtensionTest extends TestCase
 
     public function test_voicemail_enabled_is_cast_to_boolean(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -116,9 +116,9 @@ class ExtensionTest extends TestCase
 
     public function test_password_is_encrypted_at_rest(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -137,9 +137,9 @@ class ExtensionTest extends TestCase
 
     public function test_voicemail_pin_is_encrypted_at_rest(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -159,10 +159,10 @@ class ExtensionTest extends TestCase
 
     public function test_extension_optionally_belongs_to_a_user_and_can_resolve_primary_device_profile(): void
     {
-        $tenant = $this->createTenant();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = $this->createOrganization();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'user_id' => $user->id,
             'extension' => '1002',
             'password' => 'secret1234',
@@ -172,7 +172,7 @@ class ExtensionTest extends TestCase
         ]);
 
         $deviceProfile = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'is_active' => true,
         ]);

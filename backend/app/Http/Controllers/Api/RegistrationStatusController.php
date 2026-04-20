@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Extension;
 use App\Models\Gateway;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\EslConnectionManager;
 use App\Services\SipRegistrationService;
 use Illuminate\Http\JsonResponse;
@@ -21,18 +21,18 @@ class RegistrationStatusController extends Controller
     ) {}
 
     /**
-     * Get bulk registration status for all extensions in a tenant.
+     * Get bulk registration status for all extensions in a organization.
      *
      * Queries FreeSWITCH each active SIP profile using XML status
-     * and filters for the tenant's domain, returning a map of extension => status.
+     * and filters for the organization's domain, returning a map of extension => status.
      */
-    public function bulkExtensionStatus(Tenant $tenant): JsonResponse
+    public function bulkExtensionStatus(Organization $organization): JsonResponse
     {
         $allRegistrations = $this->registrationService->getAllRegistrations();
-        $domain = $tenant->domain;
+        $domain = $organization->domain;
 
         $statusMap = [];
-        foreach ($tenant->extensions as $ext) {
+        foreach ($organization->extensions as $ext) {
             $statusMap[$ext->extension] = [
                 'extension' => $ext->extension,
                 'registered' => false,
@@ -63,13 +63,13 @@ class RegistrationStatusController extends Controller
     /**
      * Get registration status for a single extension.
      */
-    public function extensionStatus(Tenant $tenant, Extension $extension): JsonResponse
+    public function extensionStatus(Organization $organization, Extension $extension): JsonResponse
     {
-        if ($extension->tenant_id !== $tenant->id) {
+        if ($extension->organization_id !== $organization->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
         }
 
-        $command = "sofia status profile internal reg {$extension->extension}@{$tenant->domain}";
+        $command = "sofia status profile internal reg {$extension->extension}@{$organization->domain}";
         $response = $this->esl->api($command);
 
         if (! $response) {
@@ -104,9 +104,9 @@ class RegistrationStatusController extends Controller
     /**
      * Get registration status for a gateway.
      */
-    public function gatewayStatus(Tenant $tenant, Gateway $gateway): JsonResponse
+    public function gatewayStatus(Organization $organization, Gateway $gateway): JsonResponse
     {
-        if ($gateway->tenant_id !== $tenant->id) {
+        if ($gateway->organization_id !== $organization->id) {
             return response()->json(['message' => 'Gateway not found.'], 404);
         }
 

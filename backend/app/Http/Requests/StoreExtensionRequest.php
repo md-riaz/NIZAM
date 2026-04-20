@@ -13,15 +13,15 @@ class StoreExtensionRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenant = $this->route('tenant');
+        $organization = $this->route('organization');
 
         return [
             'extension' => [
                 'required',
                 'string',
-                function ($attribute, $value, $fail) use ($tenant) {
-                    if ($tenant->extensions()->where('extension', $value)->exists()) {
-                        $fail('The extension has already been taken for this tenant.');
+                function ($attribute, $value, $fail) use ($organization) {
+                    if ($organization->extensions()->where('extension', $value)->exists()) {
+                        $fail('The extension has already been taken for this organization.');
                     }
                 },
             ],

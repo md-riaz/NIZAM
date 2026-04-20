@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Models\DeviceRegistrationSnapshot;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,15 +17,15 @@ class DeviceRegistrationSnapshotFactory extends Factory
 
     public function definition(): array
     {
-        $tenant = Tenant::factory();
+        $organization = Organization::factory();
 
         return [
-            'tenant_id' => $tenant,
+            'organization_id' => $organization,
             'endpoint_binding_id' => EndpointBinding::factory()->state(fn (array $attributes): array => [
-                'tenant_id' => $attributes['tenant_id'],
+                'organization_id' => $attributes['organization_id'],
             ]),
             'extension_id' => Extension::factory()->state(fn (array $attributes): array => [
-                'tenant_id' => $attributes['tenant_id'],
+                'organization_id' => $attributes['organization_id'],
             ]),
             'registration_key' => fake()->bothify('reg-########'),
             'registered' => true,

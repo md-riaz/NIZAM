@@ -7,36 +7,36 @@ use App\Http\Requests\StoreCallRoutingPolicyRequest;
 use App\Http\Requests\UpdateCallRoutingPolicyRequest;
 use App\Http\Resources\CallRoutingPolicyResource;
 use App\Models\CallRoutingPolicy;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\PolicyEvaluator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * API controller for managing call routing policies scoped to a tenant.
+ * API controller for managing call routing policies scoped to a organization.
  */
 class CallRoutingPolicyController extends Controller
 {
     /**
-     * List call routing policies for a tenant (paginated).
+     * List call routing policies for an organization (paginated).
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', CallRoutingPolicy::class);
 
         return CallRoutingPolicyResource::collection(
-            $tenant->callRoutingPolicies()->orderBy('priority')->paginate(15)
+            $organization->callRoutingPolicies()->orderBy('priority')->paginate(15)
         );
     }
 
     /**
-     * Create a new call routing policy for a tenant.
+     * Create a new call routing policy for an organization.
      */
-    public function store(StoreCallRoutingPolicyRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreCallRoutingPolicyRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', CallRoutingPolicy::class);
 
-        $policy = $tenant->callRoutingPolicies()->create($request->validated());
+        $policy = $organization->callRoutingPolicies()->create($request->validated());
 
         return (new CallRoutingPolicyResource($policy))->response()->setStatusCode(201);
     }
@@ -44,9 +44,9 @@ class CallRoutingPolicyController extends Controller
     /**
      * Show a single call routing policy.
      */
-    public function show(Tenant $tenant, CallRoutingPolicy $callRoutingPolicy): JsonResponse|CallRoutingPolicyResource
+    public function show(Organization $organization, CallRoutingPolicy $callRoutingPolicy): JsonResponse|CallRoutingPolicyResource
     {
-        if ($callRoutingPolicy->tenant_id !== $tenant->id) {
+        if ($callRoutingPolicy->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call routing policy not found.'], 404);
         }
 
@@ -58,9 +58,9 @@ class CallRoutingPolicyController extends Controller
     /**
      * Update an existing call routing policy.
      */
-    public function update(UpdateCallRoutingPolicyRequest $request, Tenant $tenant, CallRoutingPolicy $callRoutingPolicy): JsonResponse|CallRoutingPolicyResource
+    public function update(UpdateCallRoutingPolicyRequest $request, Organization $organization, CallRoutingPolicy $callRoutingPolicy): JsonResponse|CallRoutingPolicyResource
     {
-        if ($callRoutingPolicy->tenant_id !== $tenant->id) {
+        if ($callRoutingPolicy->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call routing policy not found.'], 404);
         }
 
@@ -74,9 +74,9 @@ class CallRoutingPolicyController extends Controller
     /**
      * Delete a call routing policy.
      */
-    public function destroy(Tenant $tenant, CallRoutingPolicy $callRoutingPolicy): JsonResponse
+    public function destroy(Organization $organization, CallRoutingPolicy $callRoutingPolicy): JsonResponse
     {
-        if ($callRoutingPolicy->tenant_id !== $tenant->id) {
+        if ($callRoutingPolicy->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call routing policy not found.'], 404);
         }
 
@@ -92,9 +92,9 @@ class CallRoutingPolicyController extends Controller
      *
      * Allows external systems to test policy decisions without routing a real call.
      */
-    public function evaluate(Request $request, Tenant $tenant, CallRoutingPolicy $callRoutingPolicy): JsonResponse
+    public function evaluate(Request $request, Organization $organization, CallRoutingPolicy $callRoutingPolicy): JsonResponse
     {
-        if ($callRoutingPolicy->tenant_id !== $tenant->id) {
+        if ($callRoutingPolicy->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call routing policy not found.'], 404);
         }
 
@@ -108,7 +108,7 @@ class CallRoutingPolicyController extends Controller
         ]);
 
         $context = [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'did' => $validated['did'] ?? '',
             'caller_id' => $validated['caller_id'] ?? '',
             'now' => isset($validated['time']) ? \Carbon\Carbon::parse($validated['time']) : now(),

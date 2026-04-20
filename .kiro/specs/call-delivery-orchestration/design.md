@@ -121,12 +121,12 @@ Purpose: accepts caller legs for any human-target route, creates or loads the `C
 Interface:
 
 ```pascal
-PROCEDURE enterHumanDelivery(call_uuid, tenant_id, delivery_target_type, delivery_target_id, metadata)
+PROCEDURE enterHumanDelivery(call_uuid, organization_id, delivery_target_type, delivery_target_id, metadata)
   INPUT: inbound call identifiers and route metadata
   OUTPUT: call_session_id
 
   SEQUENCE
-    call_session ← findOrCreateCallSession(call_uuid, tenant_id, metadata)
+    call_session ← findOrCreateCallSession(call_uuid, organization_id, metadata)
     storeDeliveryMetadata(call_session, delivery_target_type, delivery_target_id)
     parkCallerLegInControlledState(call_session)
     orchestrateDelivery(call_session)
@@ -137,7 +137,7 @@ END PROCEDURE
 
 Responsibilities:
 - normalize route handoff from extension, DID, ring group, queue, and flow paths
-- create or load the correlated `CallSession` using the inbound call UUID and tenant context
+- create or load the correlated `CallSession` using the inbound call UUID and organization context
 - persist stable orchestration metadata on `CallSession.variables`
 - ensure caller leg is held until a winner is elected or all branches fail
 - make entrypoint execution idempotent for repeated FreeSWITCH lookups on the same active caller leg
@@ -180,7 +180,7 @@ Interface:
 ```pascal
 STRUCTURE EndpointBinding
   id: UUID
-  tenant_id: UUID
+  organization_id: UUID
   extension_id: UUID OR NULL
   agent_id: UUID OR NULL
   type: String
@@ -248,7 +248,7 @@ PROCEDURE resolveReachability(call_session, endpoint_candidates)
   OUTPUT: reachability_decisions
 
   SEQUENCE
-    registrations ← readRedisCacheOrQueryESL(call_session.tenant_id)
+    registrations ← readRedisCacheOrQueryESL(call_session.organization_id)
     FOR each candidate IN endpoint_candidates DO
       classify candidate as online_sip, dormant_push, pstn_forward, or unavailable
     END FOR
@@ -258,7 +258,7 @@ END PROCEDURE
 ```
 
 Responsibilities:
-- use Redis reachability cache keyed by tenant and extension or endpoint binding
+- use Redis reachability cache keyed by organization and extension or endpoint binding
 - fall back to existing ESL-backed registration visibility when cache is cold
 - separate online-now reachability from push wake eligibility
 
@@ -390,7 +390,7 @@ Responsibilities:
 ```pascal
 STRUCTURE EndpointBinding
   id: UUID
-  tenant_id: UUID
+  organization_id: UUID
   extension_id: UUID OR NULL
   agent_id: UUID OR NULL
   type: ENUM(desk_phone, mobile_app, pstn_forward, softphone, agent_endpoint)
@@ -414,7 +414,7 @@ END STRUCTURE
 ```
 
 Validation rules:
-- must belong to exactly one tenant
+- must belong to exactly one organization
 - at least one of `extension_id` or `agent_id` must be present for human-target routing
 - `push_token` or `voip_push_token` required when `is_push_capable = true`
 - `forward_number` required only for `pstn_forward` type
@@ -460,7 +460,7 @@ END STRUCTURE
 
 STRUCTURE DeviceRegistrationSnapshot
   id: UUID
-  tenant_id: UUID
+  organization_id: UUID
   endpoint_binding_id: UUID OR NULL
   extension_id: UUID OR NULL
   registration_key: String
@@ -528,7 +528,7 @@ END PROCEDURE
 ```
 
 Preconditions:
-- `call_session` exists and belongs to an operational tenant
+- `call_session` exists and belongs to an operational organization
 - route metadata identifies a human-target delivery path
 - all required repository integrations are available: ESL control, event ingestion, persistence, and Redis cache
 
@@ -583,8 +583,8 @@ END PROCEDURE
 ```
 
 Preconditions:
-- registration event is trusted and tenant-scoped
-- the endpoint binding belongs to the same tenant as the call session
+- registration event is trusted and organization-scoped
+- the endpoint binding belongs to the same organization as the call session
 
 Postconditions:
 - a late SIP leg is added at most once per eligible endpoint during wake window
@@ -654,7 +654,7 @@ PROCEDURE resolveDeliveryTargets(call_session)
 Preconditions:
 - `call_session.variables.nizam_delivery_target_type` is present
 - `call_session.variables.nizam_delivery_target_id` is present
-- target belongs to the same tenant as the call session
+- target belongs to the same organization as the call session
 
 Postconditions:
 - returns a canonical target set for one route origin
@@ -672,7 +672,7 @@ PROCEDURE resolveReachability(call_session, endpoint_candidates)
 ```
 
 Preconditions:
-- all endpoint candidates are tenant-scoped and enabled
+- all endpoint candidates are organization-scoped and enabled
 - Redis and ESL accessors are available, even if one source is degraded
 
 Postconditions:
@@ -693,7 +693,7 @@ PROCEDURE executePlan(delivery_plan)
 
 Preconditions:
 - plan references an existing active call session
-- all endpoint bindings in the plan are enabled and tenant-scoped
+- all endpoint bindings in the plan are enabled and organization-scoped
 
 Postconditions:
 - every initiated offer yields a persisted `CallDeliveryAttempt`
@@ -734,7 +734,7 @@ SEQUENCE
 
   call_session_id ← enterHumanDelivery(
     "fs-call-uuid",
-    "tenant-1",
+    "organization-1",
     metadata.nizam_delivery_target_type,
     metadata.nizam_delivery_target_id,
     metadata
@@ -756,7 +756,7 @@ SEQUENCE
     allow_late_join_after_push: true
   }
 
-  registerMobileDevice(tenant_id, device_registration_payload)
+  registerMobileDevice(organization_id, device_registration_payload)
 END SEQUENCE
 ```
 
@@ -876,7 +876,7 @@ Integration tests should cover:
 
 ## Performance Considerations
 
-- Redis reachability cache should be the hot path for online/offline checks keyed by tenant and extension or endpoint binding.
+- Redis reachability cache should be the hot path for online/offline checks keyed by organization and extension or endpoint binding.
 - ESL fallback queries should be bounded and batched to avoid blocking active call setup.
 - Delivery attempt writes should be append-friendly with indexes on `call_session_id`, `status`, and `freeswitch_leg_uuid`.
 - Late join windows should be short-lived and enforced with cheap timestamp comparisons rather than polling-heavy loops.
@@ -884,11 +884,11 @@ Integration tests should cover:
 
 ## Security Considerations
 
-- all mobile device APIs must remain tenant-scoped under existing `auth:sanctum` and `tenant.access` protections
+- all mobile device APIs must remain organization-scoped under existing `auth:sanctum` and `organization.access` protections
 - push tokens and VoIP tokens are sensitive device credentials and should be stored, logged, and rotated carefully
 - do not trust client heartbeats or capabilities alone as proof of reachability; runtime registration and event data remain authoritative
 - PSTN forwarding must require explicit confirmation to reduce voicemail hijack risk
-- answered-elsewhere and cancellation flows must avoid leaking call metadata across tenants or unrelated devices
+- answered-elsewhere and cancellation flows must avoid leaking call metadata across organizations or unrelated devices
 
 ## Dependencies
 
@@ -899,4 +899,4 @@ Integration tests should cover:
 - existing `RegistrationStatusController` and ESL data paths for live registration visibility
 - existing `QueueService` and `Agent` models for queue eligibility and strategy inputs
 - new Redis reachability cache
-- new mobile push provider abstraction and tenant-scoped runtime mobile device APIs
+- new mobile push provider abstraction and organization-scoped runtime mobile device APIs

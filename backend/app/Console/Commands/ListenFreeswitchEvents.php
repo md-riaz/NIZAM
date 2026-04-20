@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\WebhookDispatcher;
 use Illuminate\Console\Command;
 
@@ -113,7 +113,7 @@ class ListenFreeswitchEvents extends Command
     }
 
     /**
-     * Process a FreeSWITCH event by resolving the tenant and dispatching webhooks.
+     * Process a FreeSWITCH event by resolving the organization and dispatching webhooks.
      */
     protected function processEvent(string $eventName, array $headers): void
     {
@@ -122,11 +122,11 @@ class ListenFreeswitchEvents extends Command
 
         $this->info("Event: {$eventName} → {$webhookEvent} (Call: {$uniqueId})");
 
-        // Resolve tenant from the FreeSWITCH domain/context
-        $tenant = $this->resolveTenant($headers);
+        // Resolve organization from the FreeSWITCH domain/context
+        $organization = $this->resolveOrganization($headers);
 
-        if (! $tenant) {
-            $this->warn("  → Could not resolve tenant for call {$uniqueId}, skipping webhook.");
+        if (! $organization) {
+            $this->warn("  → Could not resolve organization for call {$uniqueId}, skipping webhook.");
             return;
         }
 
@@ -140,40 +140,40 @@ class ListenFreeswitchEvents extends Command
             'channel_state'      => $headers['Channel-State'] ?? '',
             'hangup_cause'       => $headers['Hangup-Cause'] ?? null,
             'duration'           => $headers['variable_billsec'] ?? null,
-            'tenant_domain'      => $tenant->domain,
+            'organization_domain'      => $organization->domain,
         ];
 
         // Dispatch via the existing WebhookDispatcher service
-        $this->webhookDispatcher->dispatch($tenant->id, $webhookEvent, $payload);
+        $this->webhookDispatcher->dispatch($organization->id, $webhookEvent, $payload);
 
-        $this->info("  → Dispatched '{$webhookEvent}' webhook for tenant '{$tenant->name}'");
+        $this->info("  → Dispatched '{$webhookEvent}' webhook for organization '{$organization->name}'");
     }
 
     /**
-     * Resolve the tenant from FreeSWITCH event headers.
+     * Resolve the organization from FreeSWITCH event headers.
      *
      * Strategy:
      * 1. Try the variable_domain_name (set by FreeSWITCH context)
-     * 2. Try the Caller-Context (the FreeSWITCH context name, which matches tenant domain)
-     * 3. Try to find the extension in the database and get its tenant
+     * 2. Try the Caller-Context (the FreeSWITCH context name, which matches organization domain)
+     * 3. Try to find the extension in the database and get its organization
      */
-    protected function resolveTenant(array $headers): ?Tenant
+    protected function resolveOrganization(array $headers): ?Organization
     {
         // Strategy 1: Domain name variable
         $domain = $headers['variable_domain_name'] ?? null;
         if ($domain) {
-            $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
-            if ($tenant) {
-                return $tenant;
+            $organization = Organization::where('domain', $domain)->where('is_active', true)->first();
+            if ($organization) {
+                return $organization;
             }
         }
 
-        // Strategy 2: Caller context (FreeSWITCH context = tenant domain)
+        // Strategy 2: Caller context (FreeSWITCH context = organization domain)
         $context = $headers['Caller-Context'] ?? null;
         if ($context && $context !== 'default' && $context !== 'public') {
-            $tenant = Tenant::where('domain', $context)->where('is_active', true)->first();
-            if ($tenant) {
-                return $tenant;
+            $organization = Organization::where('domain', $context)->where('is_active', true)->first();
+            if ($organization) {
+                return $organization;
             }
         }
 
@@ -185,7 +185,7 @@ class ListenFreeswitchEvents extends Command
                 ->first();
 
             if ($extension) {
-                return $extension->tenant;
+                return $extension->organization;
             }
         }
 

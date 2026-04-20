@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Jobs\DeliverWebhook;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\Webhook;
 use App\Services\WebhookDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,14 +26,14 @@ class WebhookDispatcherTest extends TestCase
     {
         Queue::fake();
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         Webhook::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'events' => ['call.created', 'call.hangup'],
             'is_active' => true,
         ]);
 
-        $this->dispatcher->dispatch($tenant->id, 'call.created', ['uuid' => 'test-123']);
+        $this->dispatcher->dispatch($organization->id, 'call.created', ['uuid' => 'test-123']);
 
         Queue::assertPushed(DeliverWebhook::class);
     }
@@ -42,14 +42,14 @@ class WebhookDispatcherTest extends TestCase
     {
         Queue::fake();
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         Webhook::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'events' => ['call.created'],
             'is_active' => false,
         ]);
 
-        $this->dispatcher->dispatch($tenant->id, 'call.created', ['uuid' => 'test-123']);
+        $this->dispatcher->dispatch($organization->id, 'call.created', ['uuid' => 'test-123']);
 
         Queue::assertNotPushed(DeliverWebhook::class);
     }
@@ -58,14 +58,14 @@ class WebhookDispatcherTest extends TestCase
     {
         Queue::fake();
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         Webhook::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'events' => ['call.hangup'],
             'is_active' => true,
         ]);
 
-        $this->dispatcher->dispatch($tenant->id, 'call.created', ['uuid' => 'test-123']);
+        $this->dispatcher->dispatch($organization->id, 'call.created', ['uuid' => 'test-123']);
 
         Queue::assertNotPushed(DeliverWebhook::class);
     }

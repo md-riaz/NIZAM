@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('sms_messages', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('tenant_domain')->index();
+            $table->string('organization_domain')->index();
             $table->string('direction');
             $table->string('from_number');
             $table->string('to_number');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['tenant_domain', 'created_at']);
+            $table->index(['organization_domain', 'created_at']);
         });
     }
 

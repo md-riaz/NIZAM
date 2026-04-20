@@ -24,32 +24,32 @@ export const FlowStudioNode = memo(({ data, selected }: NodeProps<{ flowNode: Fl
         >
             <Handle
                 type="target"
-                position={Position.Top}
-                className="!h-3 !w-3 !border-2 !border-background !bg-primary/70"
+                position={Position.Left}
+                className="!-left-3 !h-5 !w-5 !border-[3px] !border-background !bg-primary shadow-sm transition-transform hover:scale-110"
             />
 
             <div className="mb-3 flex items-start justify-between gap-3">
-                <div className="space-y-2">
-                    <div className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold', definition?.accentClassName)}>
-                        {definition?.label ?? flowNode.type}
+                <div className="min-w-0 space-y-2">
+                    <div className={cn('inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold', definition?.accentClassName)}>
+                        <span className="truncate">{definition?.label ?? flowNode.type}</span>
                     </div>
-                    <p className="text-sm font-semibold leading-5 text-foreground">
+                    <p className="break-words text-sm font-semibold leading-5 text-foreground">
                         {flowNode.name ?? definition?.defaultName ?? 'Unnamed node'}
                     </p>
                 </div>
                 {definition && (
-                    <div className={cn('rounded-xl border p-2', definition.accentClassName)}>
+                    <div className={cn('shrink-0 rounded-xl border p-2', definition.accentClassName)}>
                         <definition.icon className="size-4" />
                     </div>
                 )}
             </div>
 
-            <p className="text-xs leading-5 text-muted-foreground">{subtitle}</p>
+            <p className="break-words text-xs leading-5 text-muted-foreground">{subtitle}</p>
 
             <Handle
                 type="source"
-                position={Position.Bottom}
-                className="!h-3 !w-3 !border-2 !border-background !bg-primary/70"
+                position={Position.Right}
+                className="!-right-3 !h-5 !w-5 !border-[3px] !border-background !bg-primary shadow-sm transition-transform hover:scale-110"
             />
         </div>
     );

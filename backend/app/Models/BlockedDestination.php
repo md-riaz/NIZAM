@@ -12,13 +12,13 @@ class BlockedDestination extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'pattern',
         'description',
     ];
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 }

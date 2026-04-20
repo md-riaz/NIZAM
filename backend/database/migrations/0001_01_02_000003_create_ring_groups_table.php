@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('ring_groups', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->string('name');
             $table->string('strategy')->default('simultaneous');
             $table->integer('ring_timeout')->default(30);

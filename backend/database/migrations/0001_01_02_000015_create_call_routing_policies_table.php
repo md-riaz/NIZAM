@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('call_routing_policies', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('description')->nullable();
             $table->json('conditions');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->index(['tenant_id', 'priority']);
+            $table->index(['organization_id', 'priority']);
         });
     }
 

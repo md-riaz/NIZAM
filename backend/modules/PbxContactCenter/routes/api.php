@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('api/v1')->middleware(['auth:sanctum', 'throttle:api'])->group(function () {
-    Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
+    Route::prefix('organizations/{organization}')->middleware('organization.access')->group(function () {
         // Agents
         Route::apiResource('agents', AgentController::class);
         Route::post('agents/{agent}/state', [AgentController::class, 'changeState'])->name('agents.state');

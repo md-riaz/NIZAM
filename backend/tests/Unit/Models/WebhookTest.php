@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\Webhook;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,10 +13,10 @@ class WebhookTest extends TestCase
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         $webhook = Webhook::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'url' => 'https://example.com/webhook',
             'events' => ['call.created', 'call.hangup'],
             'is_active' => true,
@@ -24,18 +24,18 @@ class WebhookTest extends TestCase
 
         $this->assertDatabaseHas('webhooks', [
             'url' => 'https://example.com/webhook',
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
         $this->assertNotNull($webhook->id);
     }
 
-    public function test_belongs_to_a_tenant(): void
+    public function test_belongs_to_a_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $webhook = Webhook::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $webhook = Webhook::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertInstanceOf(Tenant::class, $webhook->tenant);
-        $this->assertEquals($tenant->id, $webhook->tenant->id);
+        $this->assertInstanceOf(Organization::class, $webhook->organization);
+        $this->assertEquals($organization->id, $webhook->organization->id);
     }
 
     public function test_secret_field_is_hidden(): void

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\OutboundOriginateService;
 use App\Services\EslConnectionManager;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +22,7 @@ class CallController extends Controller
     /**
      * Originate a call via FreeSWITCH.
      */
-    public function originate(Request $request, Tenant $tenant): JsonResponse
+    public function originate(Request $request, Organization $organization): JsonResponse
     {
         Gate::authorize('originate');
         $validated = $request->validate([
@@ -33,15 +33,15 @@ class CallController extends Controller
             'gateway_id' => [
                 'nullable',
                 'uuid',
-                function ($attribute, $value, $fail) use ($tenant) {
-                    if ($value && ! $tenant->gateways()->where('id', $value)->where('is_active', true)->exists()) {
-                        $fail('The selected gateway is invalid for this tenant.');
+                function ($attribute, $value, $fail) use ($organization) {
+                    if ($value && ! $organization->gateways()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('The selected gateway is invalid for this organization.');
                     }
                 },
             ],
         ]);
 
-        $extension = $tenant->extensions()
+        $extension = $organization->extensions()
             ->where('extension', $validated['extension'])
             ->where('is_active', true)
             ->first();
@@ -57,11 +57,11 @@ class CallController extends Controller
         }
 
         $gateway = ! empty($validated['gateway_id'])
-            ? $tenant->gateways()->find($validated['gateway_id'])
+            ? $organization->gateways()->find($validated['gateway_id'])
             : null;
 
         $originateString = $this->outboundOriginateService->buildCommand(
-            tenant: $tenant,
+            organization: $organization,
             extension: $extension,
             destination: $validated['destination'],
             callerIdName: $validated['caller_id_name'] ?? null,
@@ -81,7 +81,7 @@ class CallController extends Controller
     /**
      * Get active channels/calls status.
      */
-    public function status(Tenant $tenant): JsonResponse
+    public function status(Organization $organization): JsonResponse
     {
         Gate::authorize('viewStatus');
         $esl = EslConnectionManager::fromConfig();
@@ -104,7 +104,7 @@ class CallController extends Controller
     /**
      * Hangup a call by UUID.
      */
-    public function hangup(Request $request, Tenant $tenant): JsonResponse
+    public function hangup(Request $request, Organization $organization): JsonResponse
     {
         Gate::authorize('callControl');
 
@@ -132,7 +132,7 @@ class CallController extends Controller
     /**
      * Transfer a call by UUID.
      */
-    public function transfer(Request $request, Tenant $tenant): JsonResponse
+    public function transfer(Request $request, Organization $organization): JsonResponse
     {
         Gate::authorize('callControl');
 
@@ -150,7 +150,7 @@ class CallController extends Controller
 
         $leg = $validated['leg'] ?? '';
         $legFlag = $leg ? "-{$leg} " : '';
-        $response = $esl->api("uuid_transfer {$validated['uuid']} {$legFlag}{$validated['destination']} XML {$tenant->domain}");
+        $response = $esl->api("uuid_transfer {$validated['uuid']} {$legFlag}{$validated['destination']} XML {$organization->domain}");
         $esl->disconnect();
 
         return response()->json([
@@ -162,7 +162,7 @@ class CallController extends Controller
     /**
      * Toggle recording on a live call by UUID.
      */
-    public function toggleRecording(Request $request, Tenant $tenant): JsonResponse
+    public function toggleRecording(Request $request, Organization $organization): JsonResponse
     {
         Gate::authorize('callControl');
 
@@ -178,7 +178,7 @@ class CallController extends Controller
         }
 
         $basePath = config('filesystems.disks.recordings.root', storage_path('app/recordings'));
-        $recordingPath = "{$basePath}/{$tenant->id}/{$validated['uuid']}.wav";
+        $recordingPath = "{$basePath}/{$organization->id}/{$validated['uuid']}.wav";
 
         if ($validated['action'] === 'start') {
             $response = $esl->api("uuid_record {$validated['uuid']} start {$recordingPath}");
@@ -197,7 +197,7 @@ class CallController extends Controller
     /**
      * Hold or unhold a call by UUID.
      */
-    public function hold(Request $request, Tenant $tenant): JsonResponse
+    public function hold(Request $request, Organization $organization): JsonResponse
     {
         Gate::authorize('callControl');
 

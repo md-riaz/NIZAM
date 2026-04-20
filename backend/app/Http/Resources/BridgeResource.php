@@ -11,7 +11,7 @@ class BridgeResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'name' => $this->name,
             'bridge_type' => $this->bridge_type,
             'gateway_id' => $this->gateway_id,

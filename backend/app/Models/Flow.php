@@ -14,15 +14,15 @@ class Flow extends Model
     use HasUuids, \Illuminate\Database\Eloquent\Factories\HasFactory;
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'name',
         'description',
         'active_version_id',
     ];
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function versions(): HasMany

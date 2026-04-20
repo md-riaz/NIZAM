@@ -12,7 +12,7 @@ class AuditLog extends Model
     use HasUuids;
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'user_id',
         'action',
         'auditable_type',
@@ -31,9 +31,9 @@ class AuditLog extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function auditable(): MorphTo
@@ -53,7 +53,7 @@ class AuditLog extends Model
         $user = auth()->user();
 
         return static::create([
-            'tenant_id' => $model->tenant_id ?? $user?->tenant_id,
+            'organization_id' => $model->organization_id ?? $user?->organization_id,
             'user_id' => $user?->id,
             'action' => $action,
             'auditable_type' => $model->getMorphClass(),

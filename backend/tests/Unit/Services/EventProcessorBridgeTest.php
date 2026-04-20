@@ -7,7 +7,7 @@ use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\CallOfferExecutor;
 use App\Services\Call\ReachabilityCache;
 use App\Services\EventProcessor;
@@ -36,25 +36,25 @@ class EventProcessorBridgeTest extends TestCase
         $this->processor = new EventProcessor($this->dispatcher);
     }
 
-    private function createTenantWithExtension(): array
+    private function createOrganizationWithExtension(): array
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'is_active' => true,
         ]);
 
-        return [$tenant, $extension];
+        return [$organization, $extension];
     }
 
     public function test_dispatches_bridge_event_on_channel_bridge(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -70,14 +70,14 @@ class EventProcessorBridgeTest extends TestCase
 
         $this->processor->process($event);
 
-        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($tenant) {
-            return $e->tenantId === $tenant->id && $e->eventType === 'call.bridged';
+        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($organization) {
+            return $e->organizationId === $organization->id && $e->eventType === 'call.bridged';
         });
     }
 
     public function test_bridge_event_includes_other_leg_uuid(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -102,13 +102,13 @@ class EventProcessorBridgeTest extends TestCase
 
     public function test_bridge_event_dispatches_webhook(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $this->dispatcher = $this->createMock(WebhookDispatcher::class);
         $this->dispatcher->expects($this->once())
             ->method('dispatch')
-            ->with($tenant->id, 'call.bridged', $this->anything());
+            ->with($organization->id, 'call.bridged', $this->anything());
 
         $processor = new EventProcessor($this->dispatcher);
 
@@ -128,7 +128,7 @@ class EventProcessorBridgeTest extends TestCase
 
     public function test_handles_registration_event(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
@@ -146,14 +146,14 @@ class EventProcessorBridgeTest extends TestCase
 
         $this->processor->process($event);
 
-        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($tenant) {
-            return $e->tenantId === $tenant->id && $e->eventType === 'device.registered';
+        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($organization) {
+            return $e->organizationId === $organization->id && $e->eventType === 'device.registered';
         });
     }
 
     public function test_handles_unregistration_event(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
@@ -168,14 +168,14 @@ class EventProcessorBridgeTest extends TestCase
 
         $this->processor->process($event);
 
-        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($tenant) {
-            return $e->tenantId === $tenant->id && $e->eventType === 'device.unregistered';
+        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($organization) {
+            return $e->organizationId === $organization->id && $e->eventType === 'device.unregistered';
         });
     }
 
     public function test_registration_dispatches_webhook(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
@@ -184,7 +184,7 @@ class EventProcessorBridgeTest extends TestCase
         $this->dispatcher = $this->createMock(WebhookDispatcher::class);
         $this->dispatcher->expects($this->once())
             ->method('dispatch')
-            ->with($tenant->id, 'device.registered', $this->anything());
+            ->with($organization->id, 'device.registered', $this->anything());
 
         $processor = new EventProcessor($this->dispatcher);
 
@@ -216,14 +216,14 @@ class EventProcessorBridgeTest extends TestCase
 
     public function test_registration_updates_reachability_and_originates_single_late_join_attempt_when_session_is_eligible(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $binding = EndpointBinding::factory()->forExtension($extension)->create([
             'allow_late_join_after_push' => true,
             'is_push_capable' => true,
             'push_token' => 'push-token',
         ]);
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'caller-leg-register-late-join',
             'state' => 'parked',
             'variables' => [
@@ -248,7 +248,7 @@ class EventProcessorBridgeTest extends TestCase
         $cache->expects($this->once())
             ->method('markRegistered')
             ->with(
-                $tenant->id,
+                $organization->id,
                 $this->callback(fn ($candidate): bool => $candidate->endpointBindingId === $binding->id),
                 $this->callback(fn (array $attributes): bool => ($attributes['contact'] ?? null) === 'sip:1001@192.168.1.100:5060')
             );
@@ -282,12 +282,12 @@ class EventProcessorBridgeTest extends TestCase
 
     public function test_registration_skips_duplicate_late_join_when_active_sip_attempt_already_exists(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $binding = EndpointBinding::factory()->forExtension($extension)->create([
             'allow_late_join_after_push' => true,
         ]);
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'caller-leg-register-duplicate',
             'state' => 'parked',
             'variables' => [
@@ -325,12 +325,12 @@ class EventProcessorBridgeTest extends TestCase
 
     public function test_registration_skips_late_join_when_winner_is_already_committed(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $binding = EndpointBinding::factory()->forExtension($extension)->create([
             'allow_late_join_after_push' => true,
         ]);
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'caller-leg-register-winner-exists',
             'state' => 'bridged',
             'variables' => [
@@ -369,14 +369,14 @@ class EventProcessorBridgeTest extends TestCase
 
     public function test_unregistration_updates_reachability_without_originating_late_join(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $binding = EndpointBinding::factory()->forExtension($extension)->create();
 
         $cache = $this->createMock(ReachabilityCache::class);
         $cache->expects($this->once())
             ->method('markUnregistered')
             ->with(
-                $tenant->id,
+                $organization->id,
                 $this->callback(fn ($candidate): bool => $candidate->endpointBindingId === $binding->id),
                 $this->anything()
             );

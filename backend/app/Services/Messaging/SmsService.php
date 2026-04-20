@@ -19,7 +19,7 @@ class SmsService
         if ($adapter === null) {
             return $this->store->store(new SmsMessageRecord(
                 id: (string) Str::uuid(),
-                tenantDomain: $request->tenantDomain,
+                organizationDomain: $request->organizationDomain,
                 direction: SmsMessageRecord::DIRECTION_OUTBOUND,
                 from: $request->from,
                 to: $request->to,
@@ -40,7 +40,7 @@ class SmsService
 
         return $this->store->store(new SmsMessageRecord(
             id: (string) Str::uuid(),
-            tenantDomain: $request->tenantDomain,
+            organizationDomain: $request->organizationDomain,
             direction: SmsMessageRecord::DIRECTION_OUTBOUND,
             from: $request->from,
             to: $request->to,
@@ -61,8 +61,8 @@ class SmsService
     /**
      * @return array<SmsMessageRecord>
      */
-    public function historyForTenant(string $tenantDomain): array
+    public function historyForOrganization(string $organizationDomain): array
     {
-        return $this->store->forTenant($tenantDomain);
+        return $this->store->forOrganization($organizationDomain);
     }
 }

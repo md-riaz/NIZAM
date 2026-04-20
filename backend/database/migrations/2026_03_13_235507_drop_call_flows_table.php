@@ -26,7 +26,7 @@ return new class extends Migration
     {
         Schema::create('call_flows', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->uuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->jsonb('nodes')->default('[]');

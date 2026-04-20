@@ -17,7 +17,7 @@ class Recording extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'call_uuid',
         'file_path',
         'file_name',
@@ -60,9 +60,9 @@ class Recording extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     /**

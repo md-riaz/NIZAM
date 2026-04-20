@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\RingGroup;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,7 +16,7 @@ class RingGroupFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'name' => fake()->randomElement([
                 'Sales Team', 'Support', 'Billing', 'Engineering', 'Front Desk',
                 'Operations', 'Management', 'Help Desk', 'Customer Service',

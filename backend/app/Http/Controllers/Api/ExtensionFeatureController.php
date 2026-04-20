@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\ExtensionFeatureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,9 +16,9 @@ class ExtensionFeatureController extends Controller
         protected ExtensionFeatureService $extensionFeatureService,
     ) {}
 
-    public function update(Request $request, Tenant $tenant, Extension $extension): JsonResponse
+    public function update(Request $request, Organization $organization, Extension $extension): JsonResponse
     {
-        if ($extension->tenant_id !== $tenant->id) {
+        if ($extension->organization_id !== $organization->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
         }
 
@@ -44,7 +44,7 @@ class ExtensionFeatureController extends Controller
         return response()->json([
             'data' => [
                 'id' => $extension->id,
-                'tenant_id' => $extension->tenant_id,
+                'organization_id' => $extension->organization_id,
                 'follow_me_enabled' => $extension->follow_me_enabled,
                 'follow_me_destination' => $extension->follow_me_destination,
                 'dnd_enabled' => $extension->dnd_enabled,

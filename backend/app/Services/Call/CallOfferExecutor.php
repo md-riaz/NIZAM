@@ -25,7 +25,7 @@ class CallOfferExecutor
     public function executePlan(DeliveryPlan $deliveryPlan, array $context = []): array
     {
         /** @var CallSession $callSession */
-        $callSession = CallSession::query()->with('tenant')->findOrFail($deliveryPlan->callSessionId);
+        $callSession = CallSession::query()->with('organization')->findOrFail($deliveryPlan->callSessionId);
 
         $results = [
             'sip_attempt_ids' => [],
@@ -202,7 +202,7 @@ class CallOfferExecutor
             'caller_leg_uuid' => data_get($context, 'caller_leg_uuid', $callSession->call_uuid),
             'caller_id_name' => (string) data_get($context, 'caller_id_name', data_get($sessionVariables, 'caller_id_name', 'Inbound Call')),
             'caller_id_number' => (string) data_get($context, 'caller_id_number', data_get($sessionVariables, 'caller_id_number', 'unknown')),
-            'tenant_domain' => data_get($callSession->tenant, 'domain'),
+            'organization_domain' => data_get($callSession->organization, 'domain'),
             'wave' => $item->wave,
             'auto_answer_enabled' => (bool) data_get($sessionVariables, 'nizam_auto_answer_enabled', false),
             'auto_answer_call_info' => data_get($sessionVariables, 'nizam_auto_answer_call_info'),
@@ -259,7 +259,7 @@ class CallOfferExecutor
             'late_join_window_until' => $item->lateJoinWindowUntil,
             'caller_id_name' => (string) data_get($context, 'caller_id_name', data_get($callSession->variables, 'caller_id_name')),
             'caller_id_number' => (string) data_get($context, 'caller_id_number', data_get($callSession->variables, 'caller_id_number')),
-            'tenant_domain' => data_get($callSession->tenant, 'domain'),
+            'organization_domain' => data_get($callSession->organization, 'domain'),
         ];
     }
 }

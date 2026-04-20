@@ -30,7 +30,7 @@ class QueueEntry extends Model
     ];
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'queue_id',
         'call_uuid',
         'caller_id_number',
@@ -54,9 +54,9 @@ class QueueEntry extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function queue(): BelongsTo

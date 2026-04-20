@@ -41,7 +41,7 @@ class CallEventLog extends Model
 
     protected $fillable = [
         'call_session_id',
-        'tenant_id',
+        'organization_id',
         'call_uuid',
         'event_id',
         'event_type',
@@ -65,9 +65,9 @@ class CallEventLog extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function callSession(): BelongsTo

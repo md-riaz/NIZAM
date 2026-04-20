@@ -6,7 +6,7 @@ use App\Models\Flow;
 use App\Models\FlowEdge;
 use App\Models\FlowNode;
 use App\Models\FlowVersion;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Routing\RoutingGraphCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,8 +17,8 @@ class RoutingGraphCompilerTest extends TestCase
 
     public function test_compiler_builds_deterministic_routing_graph_artifact(): void
     {
-        $tenant = Tenant::factory()->create();
-        $flow = Flow::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $flow = Flow::factory()->create(['organization_id' => $organization->id]);
         $flowVersion = FlowVersion::factory()->create(['flow_id' => $flow->id]);
 
         $startNode = FlowNode::factory()->create([
@@ -69,8 +69,8 @@ class RoutingGraphCompilerTest extends TestCase
 
     public function test_compiler_reports_missing_required_branch_and_unreachable_node(): void
     {
-        $tenant = Tenant::factory()->create();
-        $flow = Flow::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $flow = Flow::factory()->create(['organization_id' => $organization->id]);
         $flowVersion = FlowVersion::factory()->create(['flow_id' => $flow->id]);
 
         $startNode = FlowNode::factory()->create([

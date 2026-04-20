@@ -49,7 +49,7 @@
       </condition>
     </extension>
 
-    <!-- Forward inbound DID calls to xml_curl for tenant-specific routing -->
+    <!-- Forward inbound DID calls to xml_curl for organization-specific routing -->
     <extension name="inbound_did_to_xml_curl">
       <condition field="destination_number" expression="^\+1\d{10}$">
 	<action application="set" data="domain_name=demo.nizam.local"/>

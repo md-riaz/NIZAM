@@ -8,13 +8,13 @@ use App\Http\Requests\StoreExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
 use App\Http\Resources\ExtensionResource;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\WebRtcConfigService;
 use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API controller for managing extensions scoped to a tenant.
+ * API controller for managing extensions scoped to a organization.
  */
 class ExtensionController extends Controller
 {
@@ -24,31 +24,31 @@ class ExtensionController extends Controller
     ) {}
 
     /**
-     * List extensions for a tenant (paginated).
+     * List extensions for an organization (paginated).
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', Extension::class);
 
-        return ExtensionResource::collection($tenant->extensions()->paginate(15));
+        return ExtensionResource::collection($organization->extensions()->paginate(15));
     }
 
     /**
-     * Create a new extension for a tenant.
+     * Create a new extension for an organization.
      */
-    public function store(StoreExtensionRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreExtensionRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', Extension::class);
 
-        if ($tenant->max_extensions > 0 && $tenant->extensions()->count() >= $tenant->max_extensions) {
+        if ($organization->max_extensions > 0 && $organization->extensions()->count() >= $organization->max_extensions) {
             return response()->json([
-                'message' => 'Extension quota exceeded. Maximum allowed: '.$tenant->max_extensions,
+                'message' => 'Extension quota exceeded. Maximum allowed: '.$organization->max_extensions,
             ], 422);
         }
 
-        $extension = $tenant->extensions()->create(ExtensionData::fromArray($request->validated())->attributes);
+        $extension = $organization->extensions()->create(ExtensionData::fromArray($request->validated())->attributes);
 
-        $this->webhookDispatcher->dispatch($tenant->id, 'extension.created', [
+        $this->webhookDispatcher->dispatch($organization->id, 'extension.created', [
             'extension_id' => $extension->id,
             'extension' => $extension->extension,
         ]);
@@ -59,9 +59,9 @@ class ExtensionController extends Controller
     /**
      * Show a single extension.
      */
-    public function show(Tenant $tenant, Extension $extension): JsonResponse|ExtensionResource
+    public function show(Organization $organization, Extension $extension): JsonResponse|ExtensionResource
     {
-        if ($extension->tenant_id !== $tenant->id) {
+        if ($extension->organization_id !== $organization->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
         }
 
@@ -73,9 +73,9 @@ class ExtensionController extends Controller
     /**
      * Update an existing extension.
      */
-    public function update(UpdateExtensionRequest $request, Tenant $tenant, Extension $extension): JsonResponse|ExtensionResource
+    public function update(UpdateExtensionRequest $request, Organization $organization, Extension $extension): JsonResponse|ExtensionResource
     {
-        if ($extension->tenant_id !== $tenant->id) {
+        if ($extension->organization_id !== $organization->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
         }
 
@@ -83,7 +83,7 @@ class ExtensionController extends Controller
 
         $extension->update(ExtensionData::fromArray($request->validated())->attributes);
 
-        $this->webhookDispatcher->dispatch($tenant->id, 'extension.updated', [
+        $this->webhookDispatcher->dispatch($organization->id, 'extension.updated', [
             'extension_id' => $extension->id,
             'extension' => $extension->extension,
         ]);
@@ -94,9 +94,9 @@ class ExtensionController extends Controller
     /**
      * Delete an extension.
      */
-    public function destroy(Tenant $tenant, Extension $extension): JsonResponse
+    public function destroy(Organization $organization, Extension $extension): JsonResponse
     {
-        if ($extension->tenant_id !== $tenant->id) {
+        if ($extension->organization_id !== $organization->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
         }
 
@@ -106,7 +106,7 @@ class ExtensionController extends Controller
         $extensionId = $extension->id;
         $extension->delete();
 
-        $this->webhookDispatcher->dispatch($tenant->id, 'extension.deleted', [
+        $this->webhookDispatcher->dispatch($organization->id, 'extension.deleted', [
             'extension_id' => $extensionId,
             'extension' => $extensionNumber,
         ]);
@@ -120,15 +120,15 @@ class ExtensionController extends Controller
      * Returns standard SIP client credentials and a WebRTC status indicator.
      * Settings are derived from the internal SIP profile.
      */
-    public function sipConfig(Tenant $tenant, Extension $extension): JsonResponse
+    public function sipConfig(Organization $organization, Extension $extension): JsonResponse
     {
-        if ($extension->tenant_id !== $tenant->id) {
+        if ($extension->organization_id !== $organization->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
         }
 
         $this->authorize('view', $extension);
 
-        $config = $this->webRtcConfigService->forExtension($extension->loadMissing('tenant'), config('app.url'));
+        $config = $this->webRtcConfigService->forExtension($extension->loadMissing('organization'), config('app.url'));
 
         return response()->json(['data' => $config]);
     }

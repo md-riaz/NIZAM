@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CallSessionResource;
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\CallTraceAnalyzer;
 use Illuminate\Http\JsonResponse;
 
@@ -15,14 +15,14 @@ use Illuminate\Http\JsonResponse;
 class CallSessionController extends Controller
 {
     /**
-     * List call sessions for a tenant.
+     * List call sessions for an organization.
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         // Assuming Gate::authorize('viewAny', CallSession::class) logic can be wired later
-        // Currently keeping it simple and tenant scoped
+        // Currently keeping it simple and organization scoped
         return CallSessionResource::collection(
-            $tenant->callSessions()
+            $organization->callSessions()
                 ->with([
                     'winningDeliveryAttempt.endpointBinding',
                 ])
@@ -34,9 +34,9 @@ class CallSessionController extends Controller
     /**
      * Show a specific call session with its trace events.
      */
-    public function show(Tenant $tenant, CallSession $callSession): JsonResponse|CallSessionResource
+    public function show(Organization $organization, CallSession $callSession): JsonResponse|CallSessionResource
     {
-        if ($callSession->tenant_id !== $tenant->id) {
+        if ($callSession->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call session not found.'], 404);
         }
 
@@ -63,9 +63,9 @@ class CallSessionController extends Controller
     /**
      * Return computed replay timeline and node metrics for a call session.
      */
-    public function analyze(Tenant $tenant, CallSession $callSession, CallTraceAnalyzer $analyzer): JsonResponse
+    public function analyze(Organization $organization, CallSession $callSession, CallTraceAnalyzer $analyzer): JsonResponse
     {
-        if ($callSession->tenant_id !== $tenant->id) {
+        if ($callSession->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call session not found.'], 404);
         }
 

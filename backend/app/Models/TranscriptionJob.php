@@ -27,7 +27,7 @@ class TranscriptionJob extends Model
     ];
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'recording_id',
         'status',
         'provider',
@@ -50,9 +50,9 @@ class TranscriptionJob extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function recording(): BelongsTo

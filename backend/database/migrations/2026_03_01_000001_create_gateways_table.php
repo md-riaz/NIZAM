@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('gateways', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->string('name');
             $table->string('host');
             $table->integer('port')->default(5060);
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->index(['tenant_id', 'is_active']);
+            $table->index(['organization_id', 'is_active']);
         });
     }
 

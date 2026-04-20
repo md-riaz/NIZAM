@@ -12,9 +12,9 @@ class FlowApplicationService
         protected FlowPublishService $flowPublishService,
     ) {}
 
-    public function create(string $tenantId, FlowData $data): Flow
+    public function create(string $organizationId, FlowData $data): Flow
     {
-        return $this->flowGraphService->createFlowWithVersion($tenantId, $data);
+        return $this->flowGraphService->createFlowWithVersion($organizationId, $data);
     }
 
     public function update(Flow $flow, FlowData $data): Flow

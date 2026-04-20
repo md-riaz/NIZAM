@@ -9,27 +9,27 @@ use App\Http\Requests\StoreAgentRequest;
 use App\Http\Requests\UpdateAgentRequest;
 use App\Http\Resources\AgentResource;
 use App\Models\Agent;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 class AgentController extends Controller
 {
     /**
-     * List agents for a tenant.
+     * List agents for an organization.
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         return AgentResource::collection(
-            $tenant->agents()->with('extension')->paginate(15)
+            $organization->agents()->with('extension')->paginate(15)
         );
     }
 
     /**
      * Create a new agent.
      */
-    public function store(StoreAgentRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreAgentRequest $request, Organization $organization): JsonResponse
     {
-        $agent = $tenant->agents()->create($request->validated());
+        $agent = $organization->agents()->create($request->validated());
         $agent->load('extension');
 
         return (new AgentResource($agent))->response()->setStatusCode(201);
@@ -38,9 +38,9 @@ class AgentController extends Controller
     /**
      * Show a single agent.
      */
-    public function show(Tenant $tenant, Agent $agent): JsonResponse|AgentResource
+    public function show(Organization $organization, Agent $agent): JsonResponse|AgentResource
     {
-        if ($agent->tenant_id !== $tenant->id) {
+        if ($agent->organization_id !== $organization->id) {
             return response()->json(['message' => 'Agent not found.'], 404);
         }
 
@@ -52,9 +52,9 @@ class AgentController extends Controller
     /**
      * Update an agent.
      */
-    public function update(UpdateAgentRequest $request, Tenant $tenant, Agent $agent): JsonResponse|AgentResource
+    public function update(UpdateAgentRequest $request, Organization $organization, Agent $agent): JsonResponse|AgentResource
     {
-        if ($agent->tenant_id !== $tenant->id) {
+        if ($agent->organization_id !== $organization->id) {
             return response()->json(['message' => 'Agent not found.'], 404);
         }
 
@@ -67,9 +67,9 @@ class AgentController extends Controller
     /**
      * Delete an agent.
      */
-    public function destroy(Tenant $tenant, Agent $agent): JsonResponse
+    public function destroy(Organization $organization, Agent $agent): JsonResponse
     {
-        if ($agent->tenant_id !== $tenant->id) {
+        if ($agent->organization_id !== $organization->id) {
             return response()->json(['message' => 'Agent not found.'], 404);
         }
 
@@ -81,9 +81,9 @@ class AgentController extends Controller
     /**
      * Change agent state via API.
      */
-    public function changeState(AgentStateChangeRequest $request, Tenant $tenant, Agent $agent): JsonResponse|AgentResource
+    public function changeState(AgentStateChangeRequest $request, Organization $organization, Agent $agent): JsonResponse|AgentResource
     {
-        if ($agent->tenant_id !== $tenant->id) {
+        if ($agent->organization_id !== $organization->id) {
             return response()->json(['message' => 'Agent not found.'], 404);
         }
 
@@ -94,7 +94,7 @@ class AgentController extends Controller
 
         $agent->load('extension');
 
-        ContactCenterEvent::dispatch($tenant->id, 'agent.state_changed', [
+        ContactCenterEvent::dispatch($organization->id, 'agent.state_changed', [
             'agent_id' => $agent->id,
             'state' => $agent->state,
             'pause_reason' => $agent->pause_reason,

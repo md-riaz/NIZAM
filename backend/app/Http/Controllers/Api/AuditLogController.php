@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,13 +14,13 @@ use Illuminate\Http\Request;
 class AuditLogController extends Controller
 {
     /**
-     * List audit logs for a tenant.
+     * List audit logs for an organization.
      */
-    public function index(Request $request, Tenant $tenant): JsonResponse
+    public function index(Request $request, Organization $organization): JsonResponse
     {
         $this->authorize('viewAny', AuditLog::class);
 
-        $query = AuditLog::where('tenant_id', $tenant->id)
+        $query = AuditLog::where('organization_id', $organization->id)
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('action')) {
@@ -51,11 +51,11 @@ class AuditLogController extends Controller
     /**
      * Show a single audit log entry.
      */
-    public function show(Tenant $tenant, AuditLog $auditLog): JsonResponse
+    public function show(Organization $organization, AuditLog $auditLog): JsonResponse
     {
         $this->authorize('view', $auditLog);
 
-        if ($auditLog->tenant_id !== $tenant->id) {
+        if ($auditLog->organization_id !== $organization->id) {
             return response()->json(['message' => 'Audit log not found.'], 404);
         }
 

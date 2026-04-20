@@ -4,7 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\AuditLog;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,18 +17,18 @@ class AuditLogApiTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
+        $this->organization = Organization::factory()->create();
         $this->admin = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'role' => 'admin',
         ]);
         $this->user = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'role' => 'user',
         ]);
     }
@@ -37,7 +37,7 @@ class AuditLogApiTest extends TestCase
     {
         // Create an audit log via the model
         AuditLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'user_id' => $this->admin->id,
             'action' => 'created',
             'auditable_type' => Extension::class,
@@ -47,7 +47,7 @@ class AuditLogApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['action' => 'created']);
@@ -56,7 +56,7 @@ class AuditLogApiTest extends TestCase
     public function test_user_can_list_audit_logs_default_open(): void
     {
         AuditLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'user_id' => $this->admin->id,
             'action' => 'updated',
             'auditable_type' => Extension::class,
@@ -64,7 +64,7 @@ class AuditLogApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs");
 
         $response->assertStatus(200);
     }
@@ -72,20 +72,20 @@ class AuditLogApiTest extends TestCase
     public function test_can_filter_audit_logs_by_action(): void
     {
         AuditLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'action' => 'created',
             'auditable_type' => Extension::class,
             'auditable_id' => 'test-1',
         ]);
         AuditLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'action' => 'deleted',
             'auditable_type' => Extension::class,
             'auditable_id' => 'test-2',
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs?action=created");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs?action=created");
 
         $response->assertStatus(200);
         $data = $response->json('data');
@@ -96,38 +96,38 @@ class AuditLogApiTest extends TestCase
     public function test_can_filter_audit_logs_by_auditable_type(): void
     {
         AuditLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'action' => 'created',
             'auditable_type' => Extension::class,
             'auditable_id' => 'test-1',
         ]);
         AuditLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'action' => 'created',
-            'auditable_type' => Tenant::class,
+            'auditable_type' => Organization::class,
             'auditable_id' => 'test-2',
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs?auditable_type=".urlencode(Extension::class));
+            ->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs?auditable_type=".urlencode(Extension::class));
 
         $response->assertStatus(200);
         $data = $response->json('data');
         $this->assertCount(1, $data);
     }
 
-    public function test_audit_logs_are_tenant_scoped(): void
+    public function test_audit_logs_are_organization_scoped(): void
     {
-        $otherTenant = Tenant::factory()->create();
+        $otherOrganization = Organization::factory()->create();
         AuditLog::create([
-            'tenant_id' => $otherTenant->id,
+            'organization_id' => $otherOrganization->id,
             'action' => 'created',
             'auditable_type' => Extension::class,
-            'auditable_id' => 'other-tenant',
+            'auditable_id' => 'other-organization',
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs");
 
         $response->assertStatus(200);
         $this->assertCount(0, $response->json('data'));
@@ -136,7 +136,7 @@ class AuditLogApiTest extends TestCase
     public function test_can_show_single_audit_log(): void
     {
         $log = AuditLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'action' => 'updated',
             'auditable_type' => Extension::class,
             'auditable_id' => 'test-id',
@@ -145,7 +145,7 @@ class AuditLogApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs/{$log->id}");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs/{$log->id}");
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.action', 'updated');
@@ -153,7 +153,7 @@ class AuditLogApiTest extends TestCase
 
     public function test_audit_log_requires_authentication(): void
     {
-        $response = $this->getJson("/api/v1/tenants/{$this->tenant->id}/audit-logs");
+        $response = $this->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs");
 
         $response->assertStatus(401);
     }

@@ -16,11 +16,11 @@ class InMemorySmsMessageStore implements SmsMessageStoreInterface
         return $message;
     }
 
-    public function forTenant(string $tenantDomain): array
+    public function forOrganization(string $organizationDomain): array
     {
         return array_values(array_filter(
             $this->messages,
-            fn (SmsMessageRecord $message): bool => $message->tenantDomain === $tenantDomain,
+            fn (SmsMessageRecord $message): bool => $message->organizationDomain === $organizationDomain,
         ));
     }
 }

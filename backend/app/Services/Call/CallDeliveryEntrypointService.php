@@ -3,7 +3,7 @@
 namespace App\Services\Call;
 
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 
 class CallDeliveryEntrypointService
 {
@@ -20,14 +20,14 @@ class CallDeliveryEntrypointService
     /**
      * @param  array<string, mixed>  $context
      */
-    public function enter(Tenant $tenant, string $callUuid, array $context = []): CallSession
+    public function enter(Organization $organization, string $callUuid, array $context = []): CallSession
     {
         $session = $this->callSessionService->getOrCreateInboundSession(
-            tenant: $tenant,
+            organization: $organization,
             callUuid: $callUuid,
             did: null,
             variables: $this->sessionVariables($context),
-        )->loadMissing('tenant');
+        )->loadMissing('organization');
 
         $this->persistEntrypointMetadata($session, $context);
 
@@ -37,7 +37,7 @@ class CallDeliveryEntrypointService
                 'call_uuid' => $callUuid,
             ]);
 
-            return $session->fresh(['tenant']);
+            return $session->fresh(['organization']);
         }
 
         if ($this->callSessionService->hasActiveDeliveryAttempts($session)) {
@@ -47,7 +47,7 @@ class CallDeliveryEntrypointService
                 'active_attempt_count' => $session->activeDeliveryAttempts()->count(),
             ]);
 
-            return $session->fresh(['tenant']);
+            return $session->fresh(['organization']);
         }
 
         $targetSet = $this->deliveryTargetResolver->resolve($session);
@@ -93,7 +93,7 @@ class CallDeliveryEntrypointService
             'attempt_results' => $attemptResults,
         ]);
 
-        return $session->fresh(['tenant']);
+        return $session->fresh(['organization']);
     }
 
     /**

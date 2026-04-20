@@ -8,7 +8,7 @@ use App\Models\CallEventLog;
 use App\Models\CallSession;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\CallOfferExecutor;
 use App\Services\Call\CallWinnerService;
 use App\Services\Call\ReachabilityCache;
@@ -36,25 +36,25 @@ class EventProcessorEventLogTest extends TestCase
         $this->processor = new EventProcessor($dispatcher);
     }
 
-    private function createTenantWithExtension(): array
+    private function createOrganizationWithExtension(): array
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'is_active' => true,
         ]);
 
-        return [$tenant, $extension];
+        return [$organization, $extension];
     }
 
     public function test_channel_create_persists_call_event(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -70,7 +70,7 @@ class EventProcessorEventLogTest extends TestCase
         $this->processor->process($event);
 
         $this->assertDatabaseHas('call_events', [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'uuid-create-log',
             'event_type' => CallEventLog::EVENT_CALL_CREATED,
         ]);
@@ -78,7 +78,7 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_channel_answer_persists_call_event(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -101,7 +101,7 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_channel_bridge_persists_call_event(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -125,7 +125,7 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_channel_hangup_persists_call_event(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -151,7 +151,7 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_registration_persists_call_event(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
@@ -168,14 +168,14 @@ class EventProcessorEventLogTest extends TestCase
         $this->processor->process($event);
 
         $this->assertDatabaseHas('call_events', [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'event_type' => CallEventLog::EVENT_DEVICE_REGISTERED,
         ]);
     }
 
     public function test_call_event_payload_contains_data(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -198,7 +198,7 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_full_call_lifecycle_creates_ordered_events(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $uuid = 'uuid-lifecycle-test';
@@ -235,9 +235,9 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_channel_answer_attaches_event_to_orchestrated_session_marks_attempt_answered_and_elects_winner(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'caller-leg-uuid',
             'state' => 'parked',
         ]);
@@ -294,9 +294,9 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_channel_bridge_persists_orchestrated_bridge_metadata(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'caller-leg-bridge',
             'state' => 'parked',
             'variables' => [
@@ -344,9 +344,9 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_channel_bridge_finalizes_committed_winner_bridge_metadata_only_for_winner(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'caller-leg-winning-bridge',
             'state' => 'bridged',
             'variables' => [
@@ -398,9 +398,9 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_channel_bridge_for_non_winning_leg_does_not_finalize_winner_bridge_metadata(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'caller-leg-non-winning-bridge',
             'state' => 'bridged',
         ]);
@@ -458,9 +458,9 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_channel_hangup_marks_awaiting_pstn_confirmation_attempt_as_confirmation_failure(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'caller-leg-pstn-confirmation-failure',
             'state' => 'parked',
         ]);
@@ -508,9 +508,9 @@ class EventProcessorEventLogTest extends TestCase
 
     public function test_channel_hangup_for_winner_cleans_up_other_attempts_and_ends_session_when_no_active_attempts_remain(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'caller-leg-winning-hangup',
             'state' => 'bridged',
             'variables' => [

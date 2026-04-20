@@ -15,7 +15,7 @@
 ### Backend analytics read layer
 - `backend/app/Services/Interaction/InteractionOverviewService.php` — aggregate one interaction/session into a UI-friendly view model
 - `backend/app/Services/Interaction/InteractionTimelineBuilder.php` — convert trace events, call events, delivery attempts, and push logs into ordered timeline segments
-- `backend/app/Http/Controllers/Api/InteractionController.php` — tenant-scoped interaction overview endpoint(s)
+- `backend/app/Http/Controllers/Api/InteractionController.php` — organization-scoped interaction overview endpoint(s)
 - `backend/tests/Unit/Services/Interaction/InteractionTimelineBuilderTest.php`
 - `backend/tests/Unit/Services/Interaction/InteractionOverviewServiceTest.php`
 - `backend/tests/Feature/Api/InteractionApiTest.php`
@@ -146,7 +146,7 @@ git commit -m "feat: add interaction timeline builder"
 namespace Tests\Unit\Services\Interaction;
 
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Interaction\InteractionOverviewService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -157,14 +157,14 @@ class InteractionOverviewServiceTest extends TestCase
 
     public function test_it_builds_business_readable_interaction_overview(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'call-123',
         ]);
 
         $service = app(InteractionOverviewService::class);
-        $overview = $service->build($tenant, $session);
+        $overview = $service->build($organization, $session);
 
         $this->assertSame('call-123', $overview['call_uuid']);
         $this->assertArrayHasKey('summary', $overview);
@@ -194,7 +194,7 @@ Example structure:
 namespace App\Services\Interaction;
 
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\CallTraceAnalyzer;
 
 class InteractionOverviewService
@@ -204,9 +204,9 @@ class InteractionOverviewService
         protected CallTraceAnalyzer $traceAnalyzer,
     ) {}
 
-    public function build(Tenant $tenant, CallSession $session): array
+    public function build(Organization $organization, CallSession $session): array
     {
-        abort_unless($session->tenant_id === $tenant->id, 404);
+        abort_unless($session->organization_id === $organization->id, 404);
 
         $session->load([
             'traceEvents',
@@ -260,7 +260,7 @@ git commit -m "feat: add interaction overview service"
 namespace Tests\Feature\Api;
 
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -269,14 +269,14 @@ class InteractionApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_tenant_admin_can_view_interaction_overview(): void
+    public function test_organization_admin_can_view_interaction_overview(): void
     {
-        $tenant = Tenant::factory()->create();
-        $admin = User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
-        $session = CallSession::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
+        $session = CallSession::factory()->create(['organization_id' => $organization->id]);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->getJson("/api/v1/tenants/{$tenant->id}/interactions/{$session->id}");
+            ->getJson("/api/v1/organizations/{$organization->id}/interactions/{$session->id}");
 
         $response->assertOk();
         $response->assertJsonStructure([
@@ -305,20 +305,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Interaction\InteractionOverviewService;
 use Illuminate\Http\JsonResponse;
 
 class InteractionController extends Controller
 {
-    public function show(Tenant $tenant, CallSession $callSession, InteractionOverviewService $service): JsonResponse
+    public function show(Organization $organization, CallSession $callSession, InteractionOverviewService $service): JsonResponse
     {
-        if ($callSession->tenant_id !== $tenant->id) {
+        if ($callSession->organization_id !== $organization->id) {
             return response()->json(['message' => 'Interaction not found.'], 404);
         }
 
         return response()->json([
-            'data' => $service->build($tenant, $callSession),
+            'data' => $service->build($organization, $callSession),
         ]);
     }
 }
@@ -388,20 +388,20 @@ Minimal page shape:
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import api from '@/lib/api';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import type { InteractionOverview } from '@/types/models';
 
 export default function InteractionDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { tenantApiPrefix, activeTenant } = useTenant();
+  const { organizationApiPrefix, activeOrganization } = useOrganization();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['interaction', activeTenant?.id, id],
+    queryKey: ['interaction', activeOrganization?.id, id],
     queryFn: async () => {
-      const res = await api.get<{ data: InteractionOverview }>(`${tenantApiPrefix}/interactions/${id}`);
+      const res = await api.get<{ data: InteractionOverview }>(`${organizationApiPrefix}/interactions/${id}`);
       return res.data.data;
     },
-    enabled: !!activeTenant && !!id,
+    enabled: !!activeOrganization && !!id,
   });
 
   // render summary + timeline + detail table
@@ -477,7 +477,7 @@ git commit -m "feat: link CDRs to interaction analytics view"
 - [ ] **Step 1: Add failing docs checklist**
 
 Confirm missing docs for:
-- `GET /api/v1/tenants/{tenantId}/interactions/{callSessionId}`
+- `GET /api/v1/organizations/{organizationId}/interactions/{callSessionId}`
 - interaction overview response schema
 
 Expected: missing docs entries.
@@ -486,7 +486,7 @@ Expected: missing docs entries.
 
 Add path:
 ```yaml
-  /tenants/{tenantId}/interactions/{callSessionId}:
+  /organizations/{organizationId}/interactions/{callSessionId}:
     get:
       tags: [Calls]
       summary: Get detailed interaction overview
@@ -535,7 +535,7 @@ git commit -m "docs: add interaction analytics API documentation"
 ### Spec coverage
 This plan covers:
 - backend interaction analytics read layer
-- tenant-scoped interaction API
+- organization-scoped interaction API
 - frontend interaction detail view
 - CDR linkage into the richer interaction view
 - OpenAPI and prose docs

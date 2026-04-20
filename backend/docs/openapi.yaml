@@ -23,7 +23,7 @@ security:
 tags:
   - name: Authentication
   - name: Health
-  - name: Tenants
+  - name: Organizations
   - name: Extensions
   - name: DIDs
   - name: Ring Groups
@@ -187,88 +187,88 @@ paths:
         '204':
           description: Token revoked
 
-  /tenants:
+  /organizations:
     get:
-      tags: [Tenants]
-      summary: List tenants
-      operationId: listTenants
+      tags: [Organizations]
+      summary: List organizations
+      operationId: listOrganizations
       responses:
         '200':
-          description: Tenant list
+          description: Organization list
     post:
-      tags: [Tenants]
-      summary: Create tenant
-      operationId: createTenant
+      tags: [Organizations]
+      summary: Create organization
+      operationId: createOrganization
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TenantInput'
+              $ref: '#/components/schemas/OrganizationInput'
       responses:
         '201':
-          description: Tenant created
+          description: Organization created
 
-  /tenants/provision:
+  /organizations/provision:
     post:
-      tags: [Tenants]
-      summary: Provision tenant with automated setup
-      operationId: provisionTenant
+      tags: [Organizations]
+      summary: Provision organization with automated setup
+      operationId: provisionOrganization
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TenantProvisionRequest'
+              $ref: '#/components/schemas/OrganizationProvisionRequest'
       responses:
         '201':
-          description: Tenant provisioned
+          description: Organization provisioned
 
-  /tenants/{tenantId}:
+  /organizations/{organizationId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
-      tags: [Tenants]
-      summary: Get tenant
-      operationId: getTenant
+      tags: [Organizations]
+      summary: Get organization
+      operationId: getOrganization
       responses:
         '200':
-          description: Tenant details
+          description: Organization details
     put:
-      tags: [Tenants]
-      summary: Update tenant
-      operationId: updateTenant
+      tags: [Organizations]
+      summary: Update organization
+      operationId: updateOrganization
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TenantInput'
+              $ref: '#/components/schemas/OrganizationInput'
       responses:
         '200':
-          description: Tenant updated
+          description: Organization updated
     delete:
-      tags: [Tenants]
-      summary: Delete tenant
-      operationId: deleteTenant
+      tags: [Organizations]
+      summary: Delete organization
+      operationId: deleteOrganization
       responses:
         '204':
-          description: Tenant deleted
+          description: Organization deleted
 
-  /tenants/{tenantId}/settings:
+  /organizations/{organizationId}/settings:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
-      tags: [Tenants]
-      summary: Get tenant settings
-      operationId: getTenantSettings
+      tags: [Organizations]
+      summary: Get organization settings
+      operationId: getOrganizationSettings
       responses:
         '200':
           description: Settings response
     put:
-      tags: [Tenants]
-      summary: Merge-update tenant settings
-      operationId: updateTenantSettings
+      tags: [Organizations]
+      summary: Merge-update organization settings
+      operationId: updateOrganizationSettings
       requestBody:
         required: true
         content:
@@ -383,7 +383,7 @@ paths:
       summary: List blocked destinations
       operationId: listBlockedDestinations
       parameters:
-        - name: tenant_id
+        - name: organization_id
           in: query
           schema: { type: string, format: uuid }
       responses:
@@ -544,20 +544,20 @@ paths:
         '200':
           description: Available permissions
 
-  /tenants/{tenantId}/stats:
+  /organizations/{organizationId}/stats:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
-      tags: [Tenants]
-      summary: Get tenant stats
-      operationId: tenantStats
+      tags: [Organizations]
+      summary: Get organization stats
+      operationId: organizationStats
       responses:
         '200':
-          description: Tenant statistics
+          description: Organization statistics
 
-  /tenants/{tenantId}/usage/summary:
+  /organizations/{organizationId}/usage/summary:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Usage]
       summary: Get usage summary
@@ -566,9 +566,9 @@ paths:
         '200':
           description: Usage summary
 
-  /tenants/{tenantId}/usage/collect:
+  /organizations/{organizationId}/usage/collect:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     post:
       tags: [Usage]
       summary: Collect usage snapshot
@@ -577,9 +577,9 @@ paths:
         '200':
           description: Usage snapshot collected
 
-  /tenants/{tenantId}/usage/reconcile:
+  /organizations/{organizationId}/usage/reconcile:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Usage]
       summary: Reconcile usage against CDRs
@@ -588,9 +588,9 @@ paths:
         '200':
           description: Usage reconciliation
 
-  /tenants/{tenantId}/extensions:
+  /organizations/{organizationId}/extensions:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Extensions]
       summary: List extensions
@@ -612,9 +612,9 @@ paths:
         '201':
           description: Extension created
 
-  /tenants/{tenantId}/extensions/{extensionId}:
+  /organizations/{organizationId}/extensions/{extensionId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/ExtensionId'
     get:
       tags: [Extensions]
@@ -644,9 +644,9 @@ paths:
         '204':
           description: Extension deleted
 
-  /tenants/{tenantId}/extensions/status/all:
+  /organizations/{organizationId}/extensions/status/all:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Extensions]
       summary: Get real-time SIP registration status for all extensions
@@ -659,9 +659,9 @@ paths:
               schema:
                 type: object
 
-  /tenants/{tenantId}/extensions/{extensionId}/status:
+  /organizations/{organizationId}/extensions/{extensionId}/status:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/ExtensionId'
     get:
       tags: [Extensions]
@@ -675,14 +675,14 @@ paths:
               schema:
                 type: object
 
-  /tenants/{tenantId}/extensions/{extensionId}/webrtc-config:
+  /organizations/{organizationId}/extensions/{extensionId}/webrtc-config:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/ExtensionId'
     get:
       tags: [Extensions]
       summary: Get WebRTC configuration for extension
-      description: Returns runtime WebRTC registration settings for a tenant extension. If WebRTC is disabled system-wide, the endpoint responds with 403.
+      description: Returns runtime WebRTC registration settings for a organization extension. If WebRTC is disabled system-wide, the endpoint responds with 403.
       operationId: getWebRtcConfig
       responses:
         '200':
@@ -704,9 +704,9 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /tenants/{tenantId}/holiday-calendars:
+  /organizations/{organizationId}/holiday-calendars:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Holiday Calendars]
       summary: List holiday calendars
@@ -728,9 +728,9 @@ paths:
         '201':
           description: Holiday calendar created
 
-  /tenants/{tenantId}/holiday-calendars/{holidayCalendarId}:
+  /organizations/{organizationId}/holiday-calendars/{holidayCalendarId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/HolidayCalendarId'
     get:
       tags: [Holiday Calendars]
@@ -760,9 +760,9 @@ paths:
         '204':
           description: Holiday calendar deleted
 
-  /tenants/{tenantId}/schedules:
+  /organizations/{organizationId}/schedules:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Schedules]
       summary: List schedules
@@ -784,9 +784,9 @@ paths:
         '201':
           description: Schedule created
 
-  /tenants/{tenantId}/schedules/{scheduleId}:
+  /organizations/{organizationId}/schedules/{scheduleId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/ScheduleId'
     get:
       tags: [Schedules]
@@ -816,9 +816,9 @@ paths:
         '204':
           description: Schedule deleted
 
-  /tenants/{tenantId}/teams:
+  /organizations/{organizationId}/teams:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Teams]
       summary: List teams
@@ -840,9 +840,9 @@ paths:
         '201':
           description: Team created
 
-  /tenants/{tenantId}/teams/{teamId}:
+  /organizations/{organizationId}/teams/{teamId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TeamId'
     get:
       tags: [Teams]
@@ -872,9 +872,9 @@ paths:
         '204':
           description: Team deleted
 
-  /tenants/{tenantId}/flows:
+  /organizations/{organizationId}/flows:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Flows]
       summary: List flows
@@ -896,9 +896,9 @@ paths:
         '201':
           description: Flow created
 
-  /tenants/{tenantId}/flows/{flowId}:
+  /organizations/{organizationId}/flows/{flowId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/FlowId'
     get:
       tags: [Flows]
@@ -928,9 +928,9 @@ paths:
         '204':
           description: Flow deleted
 
-  /tenants/{tenantId}/flows/{flowId}/publish:
+  /organizations/{organizationId}/flows/{flowId}/publish:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/FlowId'
     post:
       tags: [Flows]
@@ -940,9 +940,9 @@ paths:
         '200':
           description: Flow published
 
-  /tenants/{tenantId}/calls:
+  /organizations/{organizationId}/calls:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Call Sessions]
       summary: List call sessions
@@ -951,9 +951,9 @@ paths:
         '200':
           description: Call session list
 
-  /tenants/{tenantId}/calls/{callSessionId}:
+  /organizations/{organizationId}/calls/{callSessionId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/CallSessionId'
     get:
       tags: [Call Sessions]
@@ -963,9 +963,9 @@ paths:
         '200':
           description: Call session details
 
-  /tenants/{tenantId}/calls/{callSessionId}/analyze:
+  /organizations/{organizationId}/calls/{callSessionId}/analyze:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/CallSessionId'
     get:
       tags: [Call Sessions]
@@ -975,9 +975,9 @@ paths:
         '200':
           description: Call session analysis
 
-  /tenants/{tenantId}/cdrs/export:
+  /organizations/{organizationId}/cdrs/export:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [CDRs]
       summary: Export CDRs (Simple)
@@ -1003,9 +1003,9 @@ paths:
         '200':
           description: CDR export file
 
-  /tenants/{tenantId}/cdrs:
+  /organizations/{organizationId}/cdrs:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [CDRs]
       summary: List CDRs with advanced filtering
@@ -1034,9 +1034,9 @@ paths:
         '200':
           description: CDR list with pagination and enrichment data
 
-  /tenants/{tenantId}/cdrs/analytics/summary:
+  /organizations/{organizationId}/cdrs/analytics/summary:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [CDRs]
       summary: Get CDR summary analytics (ASR, ACD)
@@ -1049,9 +1049,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/CdrAnalyticsSummary'
 
-  /tenants/{tenantId}/cdrs/analytics/volume:
+  /organizations/{organizationId}/cdrs/analytics/volume:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [CDRs]
       summary: Get call volume trends
@@ -1064,9 +1064,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/CdrAnalyticsVolume'
 
-  /tenants/{tenantId}/cdrs/analytics/quality:
+  /organizations/{organizationId}/cdrs/analytics/quality:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [CDRs]
       summary: Get quality trends (MOS, Packet Loss)
@@ -1079,9 +1079,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/CdrAnalyticsQuality'
 
-  /tenants/{tenantId}/cdrs/analytics/destinations:
+  /organizations/{organizationId}/cdrs/analytics/destinations:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [CDRs]
       summary: Get top call destinations
@@ -1094,9 +1094,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/CdrAnalyticsDestinations'
 
-  /tenants/{tenantId}/cdrs/{cdrId}:
+  /organizations/{organizationId}/cdrs/{cdrId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/CdrId'
     get:
       tags: [CDRs]
@@ -1110,9 +1110,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/CallDetailRecord'
 
-  /tenants/{tenantId}/call-routing-policies:
+  /organizations/{organizationId}/call-routing-policies:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Call Routing Policies]
       summary: List call routing policies
@@ -1134,9 +1134,9 @@ paths:
         '201':
           description: Policy created
 
-  /tenants/{tenantId}/call-routing-policies/{policyId}:
+  /organizations/{organizationId}/call-routing-policies/{policyId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/PolicyId'
     get:
       tags: [Call Routing Policies]
@@ -1166,9 +1166,9 @@ paths:
         '204':
           description: Policy deleted
 
-  /tenants/{tenantId}/call-routing-policies/{policyId}/evaluate:
+  /organizations/{organizationId}/call-routing-policies/{policyId}/evaluate:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/PolicyId'
     post:
       tags: [Call Routing Policies]
@@ -1184,9 +1184,9 @@ paths:
         '200':
           description: Evaluation result
 
-  /tenants/{tenantId}/dids:
+  /organizations/{organizationId}/dids:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [DIDs]
       summary: List DIDs
@@ -1208,9 +1208,9 @@ paths:
         '201':
           description: DID created
 
-  /tenants/{tenantId}/dids/{didId}:
+  /organizations/{organizationId}/dids/{didId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/DidId'
     get:
       tags: [DIDs]
@@ -1240,9 +1240,9 @@ paths:
         '204':
           description: DID deleted
 
-  /tenants/{tenantId}/ring-groups:
+  /organizations/{organizationId}/ring-groups:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Ring Groups]
       summary: List ring groups
@@ -1264,9 +1264,9 @@ paths:
         '201':
           description: Ring group created
 
-  /tenants/{tenantId}/ring-groups/{ringGroupId}:
+  /organizations/{organizationId}/ring-groups/{ringGroupId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/RingGroupId'
     get:
       tags: [Ring Groups]
@@ -1296,9 +1296,9 @@ paths:
         '204':
           description: Ring group deleted
 
-  /tenants/{tenantId}/ivrs:
+  /organizations/{organizationId}/ivrs:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [IVRs]
       summary: List IVRs
@@ -1320,9 +1320,9 @@ paths:
         '201':
           description: IVR created
 
-  /tenants/{tenantId}/ivrs/{ivrId}:
+  /organizations/{organizationId}/ivrs/{ivrId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/IvrId'
     get:
       tags: [IVRs]
@@ -1352,9 +1352,9 @@ paths:
         '204':
           description: IVR deleted
 
-  /tenants/{tenantId}/time-conditions:
+  /organizations/{organizationId}/time-conditions:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Time Conditions]
       summary: List time conditions
@@ -1376,9 +1376,9 @@ paths:
         '201':
           description: Time condition created
 
-  /tenants/{tenantId}/time-conditions/{timeConditionId}:
+  /organizations/{organizationId}/time-conditions/{timeConditionId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TimeConditionId'
     get:
       tags: [Time Conditions]
@@ -1408,9 +1408,9 @@ paths:
         '204':
           description: Time condition deleted
 
-  /tenants/{tenantId}/webhooks:
+  /organizations/{organizationId}/webhooks:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Webhooks]
       summary: List webhooks
@@ -1432,9 +1432,9 @@ paths:
         '201':
           description: Webhook created
 
-  /tenants/{tenantId}/webhooks/{webhookId}:
+  /organizations/{organizationId}/webhooks/{webhookId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/WebhookId'
     get:
       tags: [Webhooks]
@@ -1464,9 +1464,9 @@ paths:
         '204':
           description: Webhook deleted
 
-  /tenants/{tenantId}/webhooks/{webhookId}/delivery-attempts:
+  /organizations/{organizationId}/webhooks/{webhookId}/delivery-attempts:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/WebhookId'
     get:
       tags: [Webhooks]
@@ -1476,9 +1476,9 @@ paths:
         '200':
           description: Delivery attempt list
 
-  /tenants/{tenantId}/webhooks/{webhookId}/delivery-stats:
+  /organizations/{organizationId}/webhooks/{webhookId}/delivery-stats:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/WebhookId'
     get:
       tags: [Webhooks]
@@ -1488,9 +1488,9 @@ paths:
         '200':
           description: Delivery statistics
 
-  /tenants/{tenantId}/call-events:
+  /organizations/{organizationId}/call-events:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Call Events]
       summary: List call events
@@ -1499,9 +1499,9 @@ paths:
         '200':
           description: Call event list
 
-  /tenants/{tenantId}/call-events/stream:
+  /organizations/{organizationId}/call-events/stream:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Call Events]
       summary: Stream call events via SSE
@@ -1514,9 +1514,9 @@ paths:
               schema:
                 type: string
 
-  /tenants/{tenantId}/call-events/{callUuid}/trace:
+  /organizations/{organizationId}/call-events/{callUuid}/trace:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/CallUuid'
     get:
       tags: [Call Events]
@@ -1526,9 +1526,9 @@ paths:
         '200':
           description: Call trace
 
-  /tenants/{tenantId}/call-events/replay/{eventId}:
+  /organizations/{organizationId}/call-events/replay/{eventId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/EventId'
     get:
       tags: [Call Events]
@@ -1538,9 +1538,9 @@ paths:
         '200':
           description: Event payload
 
-  /tenants/{tenantId}/call-events/redispatch/{eventId}:
+  /organizations/{organizationId}/call-events/redispatch/{eventId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/EventId'
     post:
       tags: [Call Events]
@@ -1550,9 +1550,9 @@ paths:
         '200':
           description: Redispatch result
 
-  /tenants/{tenantId}/calls/originate:
+  /organizations/{organizationId}/calls/originate:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     post:
       tags: [Calls]
       summary: Originate a call
@@ -1567,9 +1567,9 @@ paths:
         '200':
           description: Call initiated
 
-  /tenants/{tenantId}/calls/status:
+  /organizations/{organizationId}/calls/status:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Calls]
       summary: Get active call status
@@ -1578,9 +1578,9 @@ paths:
         '200':
           description: Call status
 
-  /tenants/{tenantId}/calls/hangup:
+  /organizations/{organizationId}/calls/hangup:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     post:
       tags: [Calls]
       summary: Hang up a call
@@ -1595,9 +1595,9 @@ paths:
         '200':
           description: Call terminated
 
-  /tenants/{tenantId}/calls/transfer:
+  /organizations/{organizationId}/calls/transfer:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     post:
       tags: [Calls]
       summary: Transfer a call
@@ -1612,9 +1612,9 @@ paths:
         '200':
           description: Call transferred
 
-  /tenants/{tenantId}/calls/recording:
+  /organizations/{organizationId}/calls/recording:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     post:
       tags: [Calls]
       summary: Start or stop call recording
@@ -1629,9 +1629,9 @@ paths:
         '200':
           description: Recording action applied
 
-  /tenants/{tenantId}/calls/hold:
+  /organizations/{organizationId}/calls/hold:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     post:
       tags: [Calls]
       summary: Hold or unhold a call
@@ -1646,9 +1646,9 @@ paths:
         '200':
           description: Hold action applied
 
-  /tenants/{tenantId}/recordings:
+  /organizations/{organizationId}/recordings:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Recordings]
       summary: List recordings
@@ -1657,9 +1657,9 @@ paths:
         '200':
           description: Recording list
 
-  /tenants/{tenantId}/recordings/{recordingId}:
+  /organizations/{organizationId}/recordings/{recordingId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/RecordingId'
     get:
       tags: [Recordings]
@@ -1676,9 +1676,9 @@ paths:
         '204':
           description: Recording deleted
 
-  /tenants/{tenantId}/recordings/{recordingId}/download:
+  /organizations/{organizationId}/recordings/{recordingId}/download:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/RecordingId'
     get:
       tags: [Recordings]
@@ -1688,9 +1688,9 @@ paths:
         '200':
           description: Recording file stream
 
-  /tenants/{tenantId}/device-profiles:
+  /organizations/{organizationId}/device-profiles:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Device Profiles]
       summary: List device profiles
@@ -1712,9 +1712,9 @@ paths:
         '201':
           description: Device profile created
 
-  /tenants/{tenantId}/device-profiles/{deviceProfileId}:
+  /organizations/{organizationId}/device-profiles/{deviceProfileId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/DeviceProfileId'
     get:
       tags: [Device Profiles]
@@ -1744,9 +1744,9 @@ paths:
         '204':
           description: Device profile deleted
 
-  /tenants/{tenantId}/gateways:
+  /organizations/{organizationId}/gateways:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Gateways]
       summary: List gateways
@@ -1768,9 +1768,9 @@ paths:
         '201':
           description: Gateway created
 
-  /tenants/{tenantId}/gateways/{gatewayId}:
+  /organizations/{organizationId}/gateways/{gatewayId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/GatewayId'
     get:
       tags: [Gateways]
@@ -1800,9 +1800,9 @@ paths:
         '204':
           description: Gateway deleted
 
-  /tenants/{tenantId}/gateways/{gatewayId}/status:
+  /organizations/{organizationId}/gateways/{gatewayId}/status:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/GatewayId'
     get:
       tags: [Registration Status]
@@ -1825,9 +1825,9 @@ paths:
               schema:
                 type: object
 
-  /tenants/{tenantId}/bridges:
+  /organizations/{organizationId}/bridges:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Bridges]
       summary: List bridges
@@ -1849,9 +1849,9 @@ paths:
         '201':
           description: Bridge created
 
-  /tenants/{tenantId}/bridges/{bridgeId}:
+  /organizations/{organizationId}/bridges/{bridgeId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/BridgeId'
     get:
       tags: [Bridges]
@@ -1881,9 +1881,9 @@ paths:
         '204':
           description: Bridge deleted
 
-  /tenants/{tenantId}/codec-metrics:
+  /organizations/{organizationId}/codec-metrics:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Codec Metrics]
       summary: Get codec metrics
@@ -1892,9 +1892,9 @@ paths:
         '200':
           description: Codec metrics
 
-  /tenants/{tenantId}/system-media:
+  /organizations/{organizationId}/system-media:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [System Media]
       summary: List system media (audio prompts/MOH)
@@ -1921,9 +1921,9 @@ paths:
         '201':
           description: Media uploaded
 
-  /tenants/{tenantId}/system-media/{mediaId}:
+  /organizations/{organizationId}/system-media/{mediaId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/MediaId'
     get:
       tags: [System Media]
@@ -1947,9 +1947,9 @@ paths:
         '204':
           description: Media deleted
 
-  /tenants/{tenantId}/agents:
+  /organizations/{organizationId}/agents:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Agents]
       summary: List agents
@@ -1971,9 +1971,9 @@ paths:
         '201':
           description: Agent created
 
-  /tenants/{tenantId}/agents/{agentId}:
+  /organizations/{organizationId}/agents/{agentId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/AgentId'
     get:
       tags: [Agents]
@@ -2003,9 +2003,9 @@ paths:
         '204':
           description: Agent deleted
 
-  /tenants/{tenantId}/agents/{agentId}/state:
+  /organizations/{organizationId}/agents/{agentId}/state:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/AgentId'
     post:
       tags: [Agents]
@@ -2021,9 +2021,9 @@ paths:
         '200':
           description: Agent state changed
 
-  /tenants/{tenantId}/queues:
+  /organizations/{organizationId}/queues:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Queues]
       summary: List queues
@@ -2045,9 +2045,9 @@ paths:
         '201':
           description: Queue created
 
-  /tenants/{tenantId}/queues/{queueId}:
+  /organizations/{organizationId}/queues/{queueId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/QueueId'
     get:
       tags: [Queues]
@@ -2077,9 +2077,9 @@ paths:
         '204':
           description: Queue deleted
 
-  /tenants/{tenantId}/queues/{queueId}/members:
+  /organizations/{organizationId}/queues/{queueId}/members:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/QueueId'
     get:
       tags: [Queues]
@@ -2102,9 +2102,9 @@ paths:
         '200':
           description: Queue member added
 
-  /tenants/{tenantId}/queues/{queueId}/members/{agentId}:
+  /organizations/{organizationId}/queues/{queueId}/members/{agentId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/QueueId'
       - $ref: '#/components/parameters/AgentId'
     delete:
@@ -2115,9 +2115,9 @@ paths:
         '204':
           description: Queue member removed
 
-  /tenants/{tenantId}/queues/{queueId}/metrics/realtime:
+  /organizations/{organizationId}/queues/{queueId}/metrics/realtime:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/QueueId'
     get:
       tags: [Queue Metrics]
@@ -2127,9 +2127,9 @@ paths:
         '200':
           description: Realtime queue metrics
 
-  /tenants/{tenantId}/queues/{queueId}/metrics/aggregate:
+  /organizations/{organizationId}/queues/{queueId}/metrics/aggregate:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/QueueId'
     post:
       tags: [Queue Metrics]
@@ -2139,9 +2139,9 @@ paths:
         '200':
           description: Aggregated queue metrics
 
-  /tenants/{tenantId}/queues/{queueId}/metrics/history:
+  /organizations/{organizationId}/queues/{queueId}/metrics/history:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/QueueId'
     get:
       tags: [Queue Metrics]
@@ -2151,20 +2151,20 @@ paths:
         '200':
           description: Queue metric history
 
-  /tenants/{tenantId}/wallboard:
+  /organizations/{organizationId}/wallboard:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Queue Metrics]
-      summary: Wallboard data for tenant queues
+      summary: Wallboard data for organization queues
       operationId: wallboard
       responses:
         '200':
           description: Wallboard metrics
 
-  /tenants/{tenantId}/agent-states:
+  /organizations/{organizationId}/agent-states:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Queue Metrics]
       summary: Agent state overview
@@ -2173,9 +2173,9 @@ paths:
         '200':
           description: Agent states
 
-  /tenants/{tenantId}/audit-logs:
+  /organizations/{organizationId}/audit-logs:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Audit Logs]
       summary: List audit logs
@@ -2184,9 +2184,9 @@ paths:
         '200':
           description: Audit log list
 
-  /tenants/{tenantId}/audit-logs/{auditLogId}:
+  /organizations/{organizationId}/audit-logs/{auditLogId}:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/AuditLogId'
     get:
       tags: [Audit Logs]
@@ -2196,14 +2196,14 @@ paths:
         '200':
           description: Audit log details
 
-  /tenants/{tenantId}/supervisor-reports/call-summary:
+  /organizations/{organizationId}/supervisor-reports/call-summary:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Admin]
       summary: Get supervisor call summary report
       description: |
-        Returns aggregated tenant call totals for the requested inclusive date range.
+        Returns aggregated organization call totals for the requested inclusive date range.
         Query parameters: `date_from` and `date_to` in YYYY-MM-DD format.
       operationId: supervisorCallSummary
       responses:
@@ -2214,9 +2214,9 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  /tenants/{tenantId}/supervisor-reports/missed-returned-calls:
+  /organizations/{organizationId}/supervisor-reports/missed-returned-calls:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Admin]
       summary: Get supervisor missed and returned calls report
@@ -2236,9 +2236,9 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  /tenants/{tenantId}/supervisor-reports/voicemails-needing-follow-up:
+  /organizations/{organizationId}/supervisor-reports/voicemails-needing-follow-up:
     parameters:
-      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/OrganizationId'
     get:
       tags: [Admin]
       summary: Get supervisor voicemails needing follow-up report
@@ -2266,7 +2266,7 @@ components:
       bearerFormat: Token
 
   parameters:
-    TenantId: { name: tenantId, in: path, required: true, schema: { type: string, format: uuid } }
+    OrganizationId: { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
     TokenId: { name: tokenId, in: path, required: true, schema: { type: integer } }
     UserId: { name: userId, in: path, required: true, schema: { type: integer } }
     ExtensionId: { name: extensionId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -2350,7 +2350,7 @@ components:
         name: { type: string }
         email: { type: string, format: email }
         role: { type: string }
-        tenant_id: { type: string, format: uuid, nullable: true }
+        organization_id: { type: string, format: uuid, nullable: true }
 
     RegisterRequest:
       type: object
@@ -2377,7 +2377,7 @@ components:
           type: array
           items: { type: string }
 
-    TenantInput:
+    OrganizationInput:
       type: object
       required: [name, domain]
       properties:
@@ -2391,7 +2391,7 @@ components:
         status: { type: string }
         settings: { type: object }
 
-    TenantProvisionRequest:
+    OrganizationProvisionRequest:
       type: object
       required: [name, domain]
       properties:
@@ -2405,7 +2405,7 @@ components:
         status: { type: string }
         settings: { type: object }
 
-    Tenant:
+    Organization:
       type: object
       properties:
         id: { type: string, format: uuid }
@@ -2485,7 +2485,7 @@ components:
         email: { type: string, format: email }
         password: { type: string, format: password }
         role: { type: string }
-        tenant_id: { type: string, format: uuid, nullable: true }
+        organization_id: { type: string, format: uuid, nullable: true }
 
     WebRtcTlsMode:
       type: object
@@ -2932,6 +2932,6 @@ components:
       type: object
       required: [pattern]
       properties:
-        tenant_id: { type: string, format: uuid, nullable: true }
+        organization_id: { type: string, format: uuid, nullable: true }
         pattern: { type: string }
         description: { type: string }

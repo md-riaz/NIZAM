@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\CallEventIngestionService;
 use App\Services\Call\EventNormalizer;
 use App\Services\EslConnectionManager;
@@ -51,17 +51,17 @@ class EslListenerCommand extends Command
                 if ($normalized) {
                     $domain = $normalized['domain'];
                     if ($domain) {
-                        // Cache tenant lookups to reduce DB hits in this tight loop
-                        $tenantId = Cache::remember("tenant_domain_{$domain}", 60, function () use ($domain) {
-                            return Tenant::where('domain', $domain)->where('is_active', true)->value('id');
+                        // Cache organization lookups to reduce DB hits in this tight loop
+                        $organizationId = Cache::remember("organization_domain_{$domain}", 60, function () use ($domain) {
+                            return Organization::where('domain', $domain)->where('is_active', true)->value('id');
                         });
 
-                        if ($tenantId) {
-                            $tenant = new Tenant(['id' => $tenantId]);
-                            $tenant->exists = true;
+                        if ($organizationId) {
+                            $organization = new Organization(['id' => $organizationId]);
+                            $organization->exists = true;
 
                             $ingestion->ingest(
-                                $tenant,
+                                $organization,
                                 $normalized['type'],
                                 $normalized['call_uuid'],
                                 array_merge($normalized['payload'], ['event_id' => $rawEvent['Event-UUID'] ?? null]),

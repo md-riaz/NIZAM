@@ -11,7 +11,7 @@ class DatabaseSmsMessageStore implements SmsMessageStoreInterface
         SmsMessage::query()->updateOrCreate(
             ['id' => $message->id],
             [
-                'tenant_domain' => $message->tenantDomain,
+                'organization_domain' => $message->organizationDomain,
                 'direction' => $message->direction,
                 'from_number' => $message->from,
                 'to_number' => $message->to,
@@ -29,15 +29,15 @@ class DatabaseSmsMessageStore implements SmsMessageStoreInterface
         return $message;
     }
 
-    public function forTenant(string $tenantDomain): array
+    public function forOrganization(string $organizationDomain): array
     {
         return SmsMessage::query()
-            ->where('tenant_domain', $tenantDomain)
+            ->where('organization_domain', $organizationDomain)
             ->orderBy('created_at')
             ->get()
             ->map(fn (SmsMessage $message): SmsMessageRecord => new SmsMessageRecord(
                 id: $message->id,
-                tenantDomain: $message->tenant_domain,
+                organizationDomain: $message->organization_domain,
                 direction: $message->direction,
                 from: $message->from_number,
                 to: $message->to_number,

@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\TimeCondition;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,22 +13,22 @@ class TimeConditionTest extends TestCase
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        $tenant = Tenant::factory()->create();
-        $tc = TimeCondition::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $tc = TimeCondition::factory()->create(['organization_id' => $organization->id]);
 
         $this->assertDatabaseHas('time_conditions', [
             'id' => $tc->id,
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
     }
 
-    public function test_belongs_to_a_tenant(): void
+    public function test_belongs_to_a_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $tc = TimeCondition::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $tc = TimeCondition::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertInstanceOf(Tenant::class, $tc->tenant);
-        $this->assertEquals($tenant->id, $tc->tenant->id);
+        $this->assertInstanceOf(Organization::class, $tc->organization);
+        $this->assertEquals($organization->id, $tc->organization->id);
     }
 
     public function test_conditions_is_cast_to_array(): void
@@ -54,7 +54,7 @@ class TimeConditionTest extends TestCase
     {
         $tc = new TimeCondition;
         $expected = [
-            'tenant_id', 'name', 'conditions',
+            'organization_id', 'name', 'conditions',
             'match_destination_type', 'match_destination_id',
             'no_match_destination_type', 'no_match_destination_id',
             'is_active',

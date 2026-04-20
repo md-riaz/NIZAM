@@ -31,12 +31,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 
 type BlockedDestination = {
     id: string;
-    tenant_id: string | null;
+    organization_id: string | null;
     pattern: string;
     description: string | null;
     created_at?: string;
@@ -56,7 +56,7 @@ const EMPTY_FORM: BlockedDestinationForm = {
 function normalizeBlockedDestination(raw: any): BlockedDestination {
     return {
         id: String(raw.id),
-        tenant_id: raw.tenant_id ? String(raw.tenant_id) : null,
+        organization_id: raw.organization_id ? String(raw.organization_id) : null,
         pattern: String(raw.pattern ?? ''),
         description: raw.description ?? null,
         created_at: raw.created_at,
@@ -66,7 +66,7 @@ function normalizeBlockedDestination(raw: any): BlockedDestination {
 
 export default function BlockedDestinationsPage() {
     const queryClient = useQueryClient();
-    const { activeTenant } = useTenant();
+    const { activeOrganization } = useOrganization();
     const [formState, setFormState] = useState<BlockedDestinationForm>(EMPTY_FORM);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [itemToDelete, setItemToDelete] = useState<BlockedDestination | null>(null);
@@ -75,9 +75,9 @@ export default function BlockedDestinationsPage() {
     const firstInputRef = useRef<HTMLInputElement>(null);
 
     const { data: blockedDestinations = [], isLoading } = useQuery({
-        queryKey: ['admin-blocked-destinations', activeTenant?.id],
+        queryKey: ['admin-blocked-destinations', activeOrganization?.id],
         queryFn: async () => {
-            const params = activeTenant ? { tenant_id: activeTenant.id } : undefined;
+            const params = activeOrganization ? { organization_id: activeOrganization.id } : undefined;
             const res = await api.get<any[]>('admin/blocked-destinations', { params });
             return (res.data ?? []).map(normalizeBlockedDestination);
         },
@@ -89,7 +89,7 @@ export default function BlockedDestinationsPage() {
     );
 
     const saveMutation = useMutation({
-        mutationFn: async (payload: { id?: string; pattern: string; description?: string; tenant_id?: string }) => {
+        mutationFn: async (payload: { id?: string; pattern: string; description?: string; organization_id?: string }) => {
             if (payload.id) {
                 const { id, ...updatePayload } = payload;
                 const res = await api.put(`admin/blocked-destinations/${id}`, updatePayload);
@@ -158,7 +158,7 @@ export default function BlockedDestinationsPage() {
 
         await saveMutation.mutateAsync({
             id: editingId ?? undefined,
-            tenant_id: activeTenant?.id,
+            organization_id: activeOrganization?.id,
             pattern,
             description: formState.description.trim() || undefined,
         });
@@ -267,8 +267,8 @@ export default function BlockedDestinationsPage() {
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">{item.description ?? '—'}</TableCell>
                                         <TableCell>
-                                            <Badge variant={item.tenant_id ? 'secondary' : 'default'}>
-                                                {item.tenant_id ? 'Tenant' : 'Global'}
+                                            <Badge variant={item.organization_id ? 'secondary' : 'default'}>
+                                                {item.organization_id ? 'Organization' : 'Global'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">

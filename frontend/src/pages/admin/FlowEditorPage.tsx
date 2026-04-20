@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Rocket, Save } from 'lucide-react';
-import { type Connection } from '@xyflow/react';
+import { ReactFlowProvider, type Connection, type XYPosition } from '@xyflow/react';
 
 import { FlowCanvas } from '@/components/flow-builder/FlowCanvas';
 import { FlowInspector } from '@/components/flow-builder/FlowInspector';
 import { FlowNodePalette, type BuilderNodeType } from '@/components/flow-builder/FlowNodePalette';
 import { createBuilderNode, getBuilderNodeDefinition } from '@/components/flow-builder/nodeRegistry';
 import { Button } from '@/components/ui/button';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { getErrorMessage } from '@/lib/api-hooks';
 import { cn } from '@/lib/utils';
@@ -92,32 +92,33 @@ export default function FlowEditorPage() {
     const isEdit = Boolean(id);
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
 
     const [name, setName] = useState('Untitled Flow');
     const [description, setDescription] = useState('');
     const [nodes, setNodes] = useState<FlowNode[]>([createNode('start', 0)]);
     const [edges, setEdges] = useState<FlowEdge[]>([]);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+    const [draggedNodeType, setDraggedNodeType] = useState<BuilderNodeType | null>(null);
     const [initializedFromServer, setInitializedFromServer] = useState(false);
 
     const { data: flow, isLoading } = useQuery<Flow | null>({
-        queryKey: ['flow', activeTenant?.id, id],
+        queryKey: ['flow', activeOrganization?.id, id],
         queryFn: async () => {
             if (!id) return null;
-            const response = await api.get<{ data: Flow }>(`${tenantApiPrefix}/flows/${id}`);
+            const response = await api.get<{ data: Flow }>(`${organizationApiPrefix}/flows/${id}`);
             return response.data.data;
         },
-        enabled: isEdit && !!activeTenant,
+        enabled: isEdit && !!activeOrganization,
     });
 
     const { data: teamOptions = [] } = useQuery<Array<{ id: string; name: string }>>({
-        queryKey: ['ring-groups', activeTenant?.id],
+        queryKey: ['ring-groups', activeOrganization?.id],
         queryFn: async () => {
-            const response = await api.get<{ data: RingGroup[] }>(`${tenantApiPrefix}/ring-groups`);
+            const response = await api.get<{ data: RingGroup[] }>(`${organizationApiPrefix}/ring-groups`);
             return response.data.data.map((team) => ({ id: team.id, name: team.name }));
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const saveMutation = useMutation({
@@ -135,14 +136,14 @@ export default function FlowEditorPage() {
             };
 
             if (isEdit) {
-                return api.put(`${tenantApiPrefix}/flows/${id}`, payload);
+                return api.put(`${organizationApiPrefix}/flows/${id}`, payload);
             }
 
-            return api.post(`${tenantApiPrefix}/flows`, payload);
+            return api.post(`${organizationApiPrefix}/flows`, payload);
         },
         onSuccess: async (response, publish) => {
             const savedFlow = response.data.data as Flow;
-            await queryClient.invalidateQueries({ queryKey: ['flows', activeTenant?.id] });
+            await queryClient.invalidateQueries({ queryKey: ['flows', activeOrganization?.id] });
             await queryClient.invalidateQueries({ queryKey: ['flow'] });
 
             if (!isEdit) {
@@ -157,9 +158,9 @@ export default function FlowEditorPage() {
     });
 
     const publishMutation = useMutation({
-        mutationFn: async () => api.post(`${tenantApiPrefix}/flows/${id}/publish`),
+        mutationFn: async () => api.post(`${organizationApiPrefix}/flows/${id}/publish`),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['flows', activeTenant?.id] });
+            await queryClient.invalidateQueries({ queryKey: ['flows', activeOrganization?.id] });
             await queryClient.invalidateQueries({ queryKey: ['flow'] });
             navigate('/admin/flows');
         },
@@ -212,11 +213,27 @@ export default function FlowEditorPage() {
 
     const selectedDefinition = selectedNode ? getBuilderNodeDefinition(selectedNode.type) : null;
 
-    if (!activeTenant) return null;
+    function addNode(type: BuilderNodeType, position?: XYPosition) {
+        const next = createNode(type, nodes.length);
+        const positionedNode = position
+            ? {
+                ...next,
+                position_x: position.x,
+                position_y: position.y,
+            }
+            : next;
+
+        setNodes((current) => [...current, positionedNode]);
+        setSelectedNodeId(String(positionedNode.id));
+        setDraggedNodeType(null);
+    }
+
+    if (!activeOrganization) return null;
 
     return (
-        <div className="min-h-screen bg-background p-4 lg:p-6">
-            <section className={cn(studioPanelClass, 'relative overflow-hidden p-3')}>
+        <ReactFlowProvider>
+            <div className="min-h-screen bg-background p-4 lg:p-6">
+                <section className={cn(studioPanelClass, 'relative overflow-hidden p-3')}>
                 {isLoading ? (
                     <div className="flex h-[82vh] items-center justify-center rounded-2xl bg-background/70 text-sm text-muted-foreground">
                         Loading flow definition...
@@ -255,11 +272,8 @@ export default function FlowEditorPage() {
 
                         <div className={cn(panelClass, libraryPanelClass)}>
                             <FlowNodePalette
-                                onAddNode={(type) => {
-                                    const next = createNode(type, nodes.length);
-                                    setNodes((current) => [...current, next]);
-                                    setSelectedNodeId(String(next.id));
-                                }}
+                                onAddNode={addNode}
+                                onDragNodeStart={setDraggedNodeType}
                             />
                         </div>
 
@@ -281,6 +295,8 @@ export default function FlowEditorPage() {
                                     },
                                 ]);
                             }}
+                            draggedNodeType={draggedNodeType}
+                            onDropNode={addNode}
                             onSelectNode={setSelectedNodeId}
                         />
 
@@ -320,5 +336,6 @@ export default function FlowEditorPage() {
                 )}
             </section>
         </div>
+        </ReactFlowProvider>
     );
 }

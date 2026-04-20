@@ -4,8 +4,8 @@ namespace Tests\Unit\Observers;
 
 use App\Models\Holiday;
 use App\Models\HolidayCalendar;
-use App\Models\Tenant;
-use App\Services\TenantManifestBuilder;
+use App\Models\Organization;
+use App\Services\OrganizationManifestBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,11 +15,11 @@ class HolidayObserverTest extends TestCase
 
     public function test_holiday_created_triggers_manifest_rebuild(): void
     {
-        $tenant = Tenant::factory()->create();
-        $calendar = HolidayCalendar::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $calendar = HolidayCalendar::factory()->create(['organization_id' => $organization->id]);
 
-        $builder = $this->mock(TenantManifestBuilder::class);
-        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($tenant));
+        $builder = $this->mock(OrganizationManifestBuilder::class);
+        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($organization));
 
         $holiday = Holiday::create([
             'holiday_calendar_id' => $calendar->id,
@@ -33,12 +33,12 @@ class HolidayObserverTest extends TestCase
 
     public function test_holiday_updated_triggers_manifest_rebuild(): void
     {
-        $tenant = Tenant::factory()->create();
-        $calendar = HolidayCalendar::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $calendar = HolidayCalendar::factory()->create(['organization_id' => $organization->id]);
         $holiday = Holiday::factory()->create(['holiday_calendar_id' => $calendar->id]);
 
-        $builder = $this->mock(TenantManifestBuilder::class);
-        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($tenant));
+        $builder = $this->mock(OrganizationManifestBuilder::class);
+        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($organization));
 
         $holiday->update(['name' => 'Updated Holiday']);
 
@@ -50,12 +50,12 @@ class HolidayObserverTest extends TestCase
 
     public function test_holiday_deleted_triggers_manifest_rebuild(): void
     {
-        $tenant = Tenant::factory()->create();
-        $calendar = HolidayCalendar::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $calendar = HolidayCalendar::factory()->create(['organization_id' => $organization->id]);
         $holiday = Holiday::factory()->create(['holiday_calendar_id' => $calendar->id]);
 
-        $builder = $this->mock(TenantManifestBuilder::class);
-        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($tenant));
+        $builder = $this->mock(OrganizationManifestBuilder::class);
+        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($organization));
 
         $holiday->delete();
 

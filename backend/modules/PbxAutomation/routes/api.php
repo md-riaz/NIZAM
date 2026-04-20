@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('api/v1')->middleware(['auth:sanctum', 'throttle:api'])->group(function () {
-    Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
+    Route::prefix('organizations/{organization}')->middleware('organization.access')->group(function () {
         // Webhooks
         Route::apiResource('webhooks', WebhookController::class);
         Route::get('webhooks/{webhook}/delivery-attempts', [WebhookController::class, 'deliveryAttempts'])

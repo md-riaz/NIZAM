@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('queue_metrics', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('queue_id')->constrained('queues')->cascadeOnDelete();
             $table->string('period'); // hourly, daily
             $table->timestamp('period_start');

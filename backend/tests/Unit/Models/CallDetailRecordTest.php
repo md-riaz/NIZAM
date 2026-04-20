@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,22 +13,22 @@ class CallDetailRecordTest extends TestCase
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        $tenant = Tenant::factory()->create();
-        $cdr = CallDetailRecord::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $cdr = CallDetailRecord::factory()->create(['organization_id' => $organization->id]);
 
         $this->assertDatabaseHas('call_detail_records', [
             'id' => $cdr->id,
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
     }
 
-    public function test_belongs_to_a_tenant(): void
+    public function test_belongs_to_a_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $cdr = CallDetailRecord::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $cdr = CallDetailRecord::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertInstanceOf(Tenant::class, $cdr->tenant);
-        $this->assertEquals($tenant->id, $cdr->tenant->id);
+        $this->assertInstanceOf(Organization::class, $cdr->organization);
+        $this->assertEquals($organization->id, $cdr->organization->id);
     }
 
     public function test_timestamps_are_cast_to_datetime(): void
@@ -64,7 +64,7 @@ class CallDetailRecordTest extends TestCase
     {
         $cdr = new CallDetailRecord;
         $expected = [
-            'tenant_id', 'uuid', 'caller_id_name', 'caller_id_number',
+            'organization_id', 'uuid', 'caller_id_name', 'caller_id_number',
             'destination_number', 'context', 'start_stamp', 'answer_stamp',
             'end_stamp', 'duration', 'billsec', 'hangup_cause', 'direction',
             'recording_path', 'read_codec', 'write_codec', 'negotiated_codec',

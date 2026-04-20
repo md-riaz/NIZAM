@@ -14,7 +14,7 @@ class StoreGatewayRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tenant_id' => 'nullable|uuid|exists:tenants,id',
+            'organization_id' => 'nullable|uuid|exists:organizations,id',
             'name' => 'required|string|max:255',
             'vendor' => 'nullable|string|max:100',
             'host' => 'required|string|max:255',

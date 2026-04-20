@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -26,13 +26,13 @@ class DialplanCompilerIsolationTest extends TestCase
 
     public function test_concurrent_call_limit_included_in_did_routing(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
             'max_concurrent_calls' => 10,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
@@ -40,29 +40,29 @@ class DialplanCompilerIsolationTest extends TestCase
             'directory_last_name' => 'User',
         ]);
 
-        $tenant->dids()->create([
+        $organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15551234567');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15551234567');
 
         $this->assertStringContainsString('application="limit"', $xml);
-        $this->assertStringContainsString('tenant_calls 10', $xml);
+        $this->assertStringContainsString('organization_calls 10', $xml);
         $this->assertStringContainsString('NORMAL_TEMPORARY_FAILURE', $xml);
     }
 
     public function test_concurrent_call_limit_included_in_extension_routing(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
             'max_concurrent_calls' => 5,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
@@ -70,21 +70,21 @@ class DialplanCompilerIsolationTest extends TestCase
             'directory_last_name' => 'User',
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '1001');
+        $xml = $this->compiler->compileDialplan($organization->domain, '1001');
 
         $this->assertStringContainsString('application="limit"', $xml);
-        $this->assertStringContainsString('tenant_calls 5', $xml);
+        $this->assertStringContainsString('organization_calls 5', $xml);
     }
 
     public function test_no_concurrent_call_limit_when_zero(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
             'max_concurrent_calls' => 0,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
@@ -92,17 +92,17 @@ class DialplanCompilerIsolationTest extends TestCase
             'directory_last_name' => 'User',
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '1001');
+        $xml = $this->compiler->compileDialplan($organization->domain, '1001');
 
         $this->assertStringNotContainsString('application="limit"', $xml);
         $this->assertStringContainsString('application="bridge"', $xml);
     }
 
-    public function test_recording_path_uses_tenant_id(): void
+    public function test_recording_path_uses_organization_id(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
         $compiler = new DialplanCompiler(
@@ -111,11 +111,11 @@ class DialplanCompilerIsolationTest extends TestCase
             app(\App\Services\Routing\BridgeCompiler::class),
             app(\App\Services\Routing\RoutingGraphCompiler::class),
         );
-        $method = new \ReflectionMethod($compiler, 'tenantRecordingPath');
+        $method = new \ReflectionMethod($compiler, 'organizationRecordingPath');
 
-        $path = $method->invoke($compiler, $tenant);
+        $path = $method->invoke($compiler, $organization);
 
-        $this->assertStringContainsString($tenant->id, $path);
+        $this->assertStringContainsString($organization->id, $path);
         $this->assertStringContainsString('recordings', $path);
     }
 }

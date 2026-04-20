@@ -5,7 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,7 +14,7 @@ class SupervisorReportApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     private User $user;
 
@@ -22,9 +22,9 @@ class SupervisorReportApiTest extends TestCase
     {
         parent::setUp();
 
-        $this->tenant = Tenant::factory()->create();
+        $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'role' => 'admin',
         ]);
     }
@@ -32,14 +32,14 @@ class SupervisorReportApiTest extends TestCase
     public function test_can_fetch_supervisor_call_summary_report(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'direction' => 'inbound',
             'start_stamp' => '2026-04-10 10:00:00',
             'answer_stamp' => '2026-04-10 10:00:05',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/supervisor-reports/call-summary?date_from=2026-04-10&date_to=2026-04-10");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/supervisor-reports/call-summary?date_from=2026-04-10&date_to=2026-04-10");
 
         $response->assertStatus(200)
             ->assertJsonPath('data.totals.calls', 1)
@@ -49,7 +49,7 @@ class SupervisorReportApiTest extends TestCase
     public function test_can_fetch_missed_returned_calls_report(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'direction' => 'inbound',
             'caller_id_number' => '+15551231234',
             'start_stamp' => '2026-04-10 09:00:00',
@@ -57,14 +57,14 @@ class SupervisorReportApiTest extends TestCase
         ]);
 
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'direction' => 'outbound',
             'destination_number' => '15551231234',
             'start_stamp' => '2026-04-11 09:00:00',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/supervisor-reports/missed-returned-calls?date_from=2026-04-10&date_to=2026-04-10");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/supervisor-reports/missed-returned-calls?date_from=2026-04-10&date_to=2026-04-10");
 
         $response->assertStatus(200)
             ->assertJsonPath('data.summary.missed_calls', 1)
@@ -75,7 +75,7 @@ class SupervisorReportApiTest extends TestCase
     public function test_can_fetch_voicemails_needing_follow_up_report(): void
     {
         CallEventLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'call_uuid' => 'vm-api-001',
             'event_id' => 'evt-api-001',
             'event_type' => CallEventLog::EVENT_VOICEMAIL_RECEIVED,
@@ -92,7 +92,7 @@ class SupervisorReportApiTest extends TestCase
         ]);
 
         Recording::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'call_uuid' => 'vm-api-001',
             'file_path' => 'voicemail/api/2001/msg.wav',
             'needs_review' => true,
@@ -100,7 +100,7 @@ class SupervisorReportApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/supervisor-reports/voicemails-needing-follow-up?date_from=2026-04-10&date_to=2026-04-10");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/supervisor-reports/voicemails-needing-follow-up?date_from=2026-04-10&date_to=2026-04-10");
 
         $response->assertStatus(200)
             ->assertJsonPath('data.summary.voicemails', 1)

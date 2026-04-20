@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Events\CallEvent;
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\UsageRecord;
 use App\Services\EventProcessor;
 use App\Services\UsageMeteringService;
@@ -20,10 +20,10 @@ class CallMinutesMeteringTest extends TestCase
 
     public function test_hangup_event_records_call_minutes(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'meter.example.com',
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
         Event::fake([CallEvent::class]);
@@ -52,11 +52,11 @@ class CallMinutesMeteringTest extends TestCase
         $processor->process($event);
 
         $this->assertDatabaseHas('usage_records', [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'metric' => UsageRecord::METRIC_CALL_MINUTES,
         ]);
 
-        $record = UsageRecord::where('tenant_id', $tenant->id)
+        $record = UsageRecord::where('organization_id', $organization->id)
             ->where('metric', UsageRecord::METRIC_CALL_MINUTES)
             ->first();
 
@@ -66,10 +66,10 @@ class CallMinutesMeteringTest extends TestCase
 
     public function test_hangup_with_zero_billsec_does_not_record_call_minutes(): void
     {
-        Tenant::factory()->create([
+        Organization::factory()->create([
             'domain' => 'zero.example.com',
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
         Event::fake([CallEvent::class]);
@@ -100,31 +100,31 @@ class CallMinutesMeteringTest extends TestCase
 
     public function test_reconcile_call_minutes_matches(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
         $today = Carbon::today();
 
         // Create CDR records
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'billsec' => 120,
             'start_stamp' => $today->copy()->setTime(10, 0),
         ]);
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'billsec' => 180,
             'start_stamp' => $today->copy()->setTime(11, 0),
         ]);
 
         // Record matching usage
         $metering = new UsageMeteringService;
-        $metering->record($tenant, UsageRecord::METRIC_CALL_MINUTES, 2.0, null, $today);
-        $metering->record($tenant, UsageRecord::METRIC_CALL_MINUTES, 3.0, null, $today);
+        $metering->record($organization, UsageRecord::METRIC_CALL_MINUTES, 2.0, null, $today);
+        $metering->record($organization, UsageRecord::METRIC_CALL_MINUTES, 3.0, null, $today);
 
-        $result = $metering->reconcileCallMinutes($tenant, $today, $today);
+        $result = $metering->reconcileCallMinutes($organization, $today, $today);
 
         $this->assertEquals(300, $result['cdr_total_seconds']);
         $this->assertEquals(5.0, $result['cdr_total_minutes']);
@@ -134,25 +134,25 @@ class CallMinutesMeteringTest extends TestCase
 
     public function test_reconcile_detects_mismatch(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
         $today = Carbon::today();
 
         // Create CDR with 300 seconds = 5 minutes
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'billsec' => 300,
             'start_stamp' => $today->copy()->setTime(10, 0),
         ]);
 
         // Record only 3 minutes (mismatch)
         $metering = new UsageMeteringService;
-        $metering->record($tenant, UsageRecord::METRIC_CALL_MINUTES, 3.0, null, $today);
+        $metering->record($organization, UsageRecord::METRIC_CALL_MINUTES, 3.0, null, $today);
 
-        $result = $metering->reconcileCallMinutes($tenant, $today, $today);
+        $result = $metering->reconcileCallMinutes($organization, $today, $today);
 
         $this->assertEquals(5.0, $result['cdr_total_minutes']);
         $this->assertEquals(3.0, $result['metered_minutes']);

@@ -13,8 +13,8 @@ class BlockedDestinationController extends Controller
     {
         $query = BlockedDestination::query();
 
-        if ($request->has('tenant_id')) {
-            $query->where('tenant_id', $request->tenant_id);
+        if ($request->has('organization_id')) {
+            $query->where('organization_id', $request->organization_id);
         } elseif (!$request->user()->is_superadmin) { // Assuming a superadmin check exists
              // Basic multi-tenancy check if not superadmin (though these routes are currently admin prefixed)
         }
@@ -25,7 +25,7 @@ class BlockedDestinationController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'tenant_id' => 'nullable|uuid|exists:tenants,id',
+            'organization_id' => 'nullable|uuid|exists:organizations,id',
             'pattern' => 'required|string',
             'description' => 'nullable|string',
         ]);
@@ -43,7 +43,7 @@ class BlockedDestinationController extends Controller
     public function update(Request $request, BlockedDestination $blockedDestination)
     {
         $validated = $request->validate([
-            'tenant_id' => 'sometimes|nullable|uuid|exists:tenants,id',
+            'organization_id' => 'sometimes|nullable|uuid|exists:organizations,id',
             'pattern' => 'sometimes|string',
             'description' => 'nullable|string',
         ]);

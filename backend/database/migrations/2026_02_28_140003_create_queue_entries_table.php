@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('queue_entries', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('queue_id')->constrained('queues')->cascadeOnDelete();
             $table->string('call_uuid');
             $table->string('caller_id_number')->nullable();
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('abandon_reason')->nullable();
             $table->timestamps();
             $table->index(['queue_id', 'status']);
-            $table->index(['tenant_id', 'created_at']);
+            $table->index(['organization_id', 'created_at']);
         });
     }
 

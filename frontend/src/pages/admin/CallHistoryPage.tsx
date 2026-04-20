@@ -29,7 +29,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import type { CallSessionSummary } from '@/types/models';
 
@@ -88,21 +88,21 @@ function sessionOutcome(session: CallSessionSummary): string {
 }
 
 export default function CallHistoryPage() {
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
 
     const { data: sessions = [], isLoading } = useQuery({
-        queryKey: ['calls', activeTenant?.id],
+        queryKey: ['calls', activeOrganization?.id],
         queryFn: async () => {
-            const response = await api.get<{ data: CallSessionSummary[] }>(`${tenantApiPrefix}/calls`);
+            const response = await api.get<{ data: CallSessionSummary[] }>(`${organizationApiPrefix}/calls`);
             return response.data.data;
         },
-        enabled: Boolean(activeTenant),
+        enabled: Boolean(activeOrganization),
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select a tenant to view call history.
+                Select a organization to view call history.
             </div>
         );
     }
@@ -112,7 +112,7 @@ export default function CallHistoryPage() {
             <PageHeader
                 title="Call History"
                 description="Unified view of all calls and their interaction journeys."
-                breadcrumbs={`${activeTenant.name} › Calls`}
+                breadcrumbs={`${activeOrganization.name} › Calls`}
             />
 
             <div className="grid gap-4 md:grid-cols-4">

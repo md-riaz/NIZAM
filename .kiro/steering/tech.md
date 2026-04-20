@@ -32,7 +32,7 @@ Primary commands:
 
 ## Working rules for assistants
 - Prefer Laravel conventions: Form Requests, Policies, Services, Jobs, Resources, Eloquent relationships
-- Keep tenant-aware behavior explicit; do not bypass tenant scoping casually
+- Keep organization-aware behavior explicit; do not bypass organization scoping casually
 - Reuse existing service classes and observers before introducing new abstractions
 - Prefer tests in `tests/Feature` for HTTP and integration behavior, and `tests/Unit` for service/domain logic
 - Use existing module infrastructure for modular telecom capabilities instead of scattering logic across unrelated areas

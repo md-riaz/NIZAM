@@ -12,7 +12,7 @@ class WallboardQueueProjection extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'queue_id',
         'queue_name',
         'waiting_count',
@@ -41,9 +41,9 @@ class WallboardQueueProjection extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function queue(): BelongsTo

@@ -3,16 +3,16 @@
 namespace App\Services\SupervisorReports;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 class CallSummaryReportService
 {
-    public function generate(Tenant $tenant, CarbonInterface $from, CarbonInterface $to): array
+    public function generate(Organization $organization, CarbonInterface $from, CarbonInterface $to): array
     {
         $query = CallDetailRecord::query()
-            ->where('tenant_id', $tenant->id)
+            ->where('organization_id', $organization->id)
             ->whereBetween('start_stamp', [$from->copy()->startOfDay(), $to->copy()->endOfDay()]);
 
         $totalCalls = (clone $query)->count();

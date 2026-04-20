@@ -15,16 +15,16 @@ class StoreQueueRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenant = $this->route('tenant');
+        $organization = $this->route('organization');
 
         return [
             'name' => [
                 'required',
                 'string',
                 'max:255',
-                function ($attribute, $value, $fail) use ($tenant) {
-                    if ($tenant->queues()->where('name', $value)->exists()) {
-                        $fail('A queue with this name already exists for this tenant.');
+                function ($attribute, $value, $fail) use ($organization) {
+                    if ($organization->queues()->where('name', $value)->exists()) {
+                        $fail('A queue with this name already exists for this organization.');
                     }
                 },
             ],

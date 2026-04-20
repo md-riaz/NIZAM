@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('agents', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('extension_id')->constrained('extensions')->cascadeOnDelete();
             $table->string('name');
             $table->string('role')->default('agent'); // agent, supervisor
@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamp('state_changed_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->unique(['tenant_id', 'extension_id']);
+            $table->unique(['organization_id', 'extension_id']);
         });
     }
 

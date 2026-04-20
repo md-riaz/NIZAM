@@ -83,7 +83,7 @@ Core weakness:
 # 3. Where NIZAM Is Today
 
 ## What NIZAM already has architecturally
-- tenant-aware control plane
+- organization-aware control plane
 - layered DID precedence
 - call routing policies
 - flows
@@ -91,7 +91,7 @@ Core weakness:
 - generated gateway provisioning
 - runtime event ingestion
 - trace potential
-- compiled tenant-local dialplan generation
+- compiled organization-local dialplan generation
 - gateway-aware originate
 - ring-group fallback logic
 - bridge-aware routing surfaces
@@ -320,7 +320,7 @@ Visual language should be:
 ### NIZAM recommendation
 First-run setup should be:
 1. create admin
-2. create tenant
+2. create organization
 3. create extension
 4. add gateway
 5. add DID
@@ -379,8 +379,8 @@ Admin pages should be:
 This includes:
 - users
 - roles/permissions
-- tenants
-- tenant settings
+- organizations
+- organization settings
 - usage
 - SSL
 - SIP profiles
@@ -389,7 +389,7 @@ This includes:
 
 ### NIZAM must avoid
 - overloading admin pages with telephony runtime noise
-- mixing advanced routing builder concepts into user/tenant administration
+- mixing advanced routing builder concepts into user/organization administration
 
 ---
 
@@ -437,7 +437,7 @@ Primary domains:
 - users
 - queues
 - agents
-- tenant settings
+- organization settings
 - gateways
 - webhooks
 - audit logs
@@ -479,7 +479,7 @@ Borrow these heavily:
 - admin shell structure
 - list/detail page discipline
 - queue and user management UX
-- tenant/admin/settings ergonomics
+- organization/admin/settings ergonomics
 - safe create/edit workflows
 - business-readable labels and summaries
 - KPI and dashboard surface style
@@ -521,7 +521,7 @@ These should feel operator-first:
 - onboarding
 - dashboard
 - users
-- tenants
+- organizations
 - settings
 - extensions
 - DIDs basic setup

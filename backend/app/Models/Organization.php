@@ -1,0 +1,259 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+
+class Organization extends Model implements HasMedia
+{
+    use Auditable, HasFactory, HasUuids, InteractsWithMedia;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    public const STATUS_TRIAL = 'trial';
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_SUSPENDED = 'suspended';
+
+    public const STATUS_TERMINATED = 'terminated';
+
+    public const VALID_STATUSES = [
+        self::STATUS_TRIAL,
+        self::STATUS_ACTIVE,
+        self::STATUS_SUSPENDED,
+        self::STATUS_TERMINATED,
+    ];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'domain',
+        'default_schedule_id',
+        'default_holiday_calendar_id',
+        'settings',
+        'codec_policy',
+        'max_extensions',
+        'max_concurrent_calls',
+        'max_dids',
+        'max_ring_groups',
+        'recording_retention_days',
+        'max_calls_per_minute',
+        'is_active',
+        'status',
+    ];
+
+    protected $attributes = [
+        'status' => self::STATUS_ACTIVE,
+        'max_concurrent_calls' => 0,
+        'max_dids' => 0,
+        'max_ring_groups' => 0,
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'settings' => 'array',
+            'codec_policy' => 'array',
+            'max_extensions' => 'integer',
+            'max_concurrent_calls' => 'integer',
+            'max_dids' => 'integer',
+            'max_ring_groups' => 'integer',
+            'recording_retention_days' => 'integer',
+            'max_calls_per_minute' => 'integer',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    public function isOperational(): bool
+    {
+        return in_array($this->status, [self::STATUS_TRIAL, self::STATUS_ACTIVE]);
+    }
+
+    public function extensions(): HasMany
+    {
+        return $this->hasMany(Extension::class);
+    }
+
+    public function dids(): HasMany
+    {
+        return $this->hasMany(Did::class);
+    }
+
+    public function ringGroups(): HasMany
+    {
+        return $this->hasMany(RingGroup::class);
+    }
+
+    public function ivrs(): HasMany
+    {
+        return $this->hasMany(Ivr::class);
+    }
+
+    public function timeConditions(): HasMany
+    {
+        return $this->hasMany(TimeCondition::class);
+    }
+
+    public function cdrs(): HasMany
+    {
+        return $this->hasMany(CallDetailRecord::class);
+    }
+
+    public function deviceProfiles(): HasMany
+    {
+        return $this->hasMany(DeviceProfile::class);
+    }
+
+    public function endpointBindings(): HasMany
+    {
+        return $this->hasMany(EndpointBinding::class);
+    }
+
+    public function deviceRegistrationSnapshots(): HasMany
+    {
+        return $this->hasMany(DeviceRegistrationSnapshot::class);
+    }
+
+    public function webhooks(): HasMany
+    {
+        return $this->hasMany(Webhook::class);
+    }
+
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function recordings(): HasMany
+    {
+        return $this->hasMany(Recording::class);
+    }
+
+    public function callRoutingPolicies(): HasMany
+    {
+        return $this->hasMany(CallRoutingPolicy::class);
+    }
+
+    public function usageRecords(): HasMany
+    {
+        return $this->hasMany(UsageRecord::class);
+    }
+
+    public function agents(): HasMany
+    {
+        return $this->hasMany(Agent::class);
+    }
+
+    public function queues(): HasMany
+    {
+        return $this->hasMany(Queue::class);
+    }
+
+    public function analyticsEvents(): HasMany
+    {
+        return $this->hasMany(AnalyticsEvent::class);
+    }
+
+    public function alertPolicies(): HasMany
+    {
+        return $this->hasMany(AlertPolicy::class);
+    }
+
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(Alert::class);
+    }
+
+    public function gateways(): HasMany
+    {
+        return $this->hasMany(Gateway::class);
+    }
+
+    public function bridges(): HasMany
+    {
+        return $this->hasMany(Bridge::class);
+    }
+
+    public function callSessions(): HasMany
+    {
+        return $this->hasMany(CallSession::class);
+    }
+
+    public function callEventLogs(): HasMany
+    {
+        return $this->hasMany(CallEventLog::class);
+    }
+
+    public function holidayCalendars(): HasMany
+    {
+        return $this->hasMany(HolidayCalendar::class);
+    }
+
+    public function defaultHolidayCalendar(): BelongsTo
+    {
+        return $this->belongsTo(HolidayCalendar::class, 'default_holiday_calendar_id');
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function defaultSchedule(): BelongsTo
+    {
+        return $this->belongsTo(Schedule::class, 'default_schedule_id');
+    }
+
+    public function teams(): HasMany
+    {
+        return $this->hasMany(Team::class);
+    }
+
+    public function flows(): HasMany
+    {
+        return $this->hasMany(Flow::class);
+    }
+
+    /**
+     * Register Spatie media collections for system prompts.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('prompts')
+            ->acceptsMimeTypes([
+                'audio/wav',
+                'audio/x-wav',
+                'audio/mpeg',
+                'audio/mp3',
+                'audio/ogg',
+            ]);
+
+        $this->addMediaCollection('moh')
+            ->acceptsMimeTypes([
+                'audio/wav',
+                'audio/x-wav',
+                'audio/mpeg',
+                'audio/mp3',
+            ]);
+    }
+}

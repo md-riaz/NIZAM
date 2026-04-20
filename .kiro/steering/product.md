@@ -4,10 +4,10 @@ NIZAM is an API-first communications control platform built around FreeSWITCH an
 
 It separates telephony media handling from business logic:
 - FreeSWITCH handles SIP, RTP, WebRTC, bridging, recording, and conferencing
-- Laravel is the control plane for tenants, routing, provisioning, permissions, events, and APIs
+- Laravel is the control plane for organizations, routing, provisioning, permissions, events, and APIs
 
-The product is multi-tenant and telecom-focused. Core areas in the codebase include:
-- tenant and user management
+The product is multi-organization and telecom-focused. Core areas in the codebase include:
+- organization and user management
 - extensions, DIDs, ring groups, IVRs, schedules, and time conditions
 - call routing policies and flow execution
 - gateway and bridge management
@@ -16,7 +16,7 @@ The product is multi-tenant and telecom-focused. Core areas in the codebase incl
 
 When assisting in this repo, prefer changes that preserve:
 - API-first design
-- tenant isolation
+- organization isolation
 - database-backed source of truth
 - FreeSWITCH as execution/media layer, not business-state owner
 - modular extension points instead of one-off feature sprawl

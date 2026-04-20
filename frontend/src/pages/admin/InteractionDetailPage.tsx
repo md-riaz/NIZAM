@@ -23,7 +23,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import type {
     InteractionDeliveryAttempt,
@@ -275,7 +275,7 @@ function TimelineRow({ event }: { event: InteractionTimelineEvent }) {
 export default function InteractionDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
 
     const {
         data: interaction,
@@ -283,20 +283,20 @@ export default function InteractionDetailPage() {
         isError,
         error,
     } = useQuery({
-        queryKey: ['interaction', activeTenant?.id, id],
+        queryKey: ['interaction', activeOrganization?.id, id],
         queryFn: async () => {
             const response = await api.get<{ data: InteractionOverview }>(
-                `${tenantApiPrefix}/interactions/${id}`,
+                `${organizationApiPrefix}/interactions/${id}`,
             );
             return response.data.data;
         },
-        enabled: Boolean(activeTenant) && Boolean(id),
+        enabled: Boolean(activeOrganization) && Boolean(id),
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select a tenant to view interaction details.
+                Select a organization to view interaction details.
             </div>
         );
     }
@@ -318,7 +318,7 @@ export default function InteractionDetailPage() {
                         <span className="sr-only">Back to calls</span>
                     </Button>
                     <div>
-                        <p className="text-sm text-muted-foreground">{activeTenant.name} › Call Sessions</p>
+                        <p className="text-sm text-muted-foreground">{activeOrganization.name} › Call Sessions</p>
                         <h1 className="text-2xl font-bold tracking-tight">Interaction Details</h1>
                     </div>
                 </div>
@@ -348,7 +348,7 @@ export default function InteractionDetailPage() {
                         <span className="sr-only">Back to calls</span>
                     </Button>
                     <div>
-                        <p className="text-sm text-muted-foreground">{activeTenant.name} › Call Sessions</p>
+                        <p className="text-sm text-muted-foreground">{activeOrganization.name} › Call Sessions</p>
                         <h1 className="text-2xl font-bold tracking-tight">Interaction Details</h1>
                         <p className="text-muted-foreground">
                             Session-level analytics and delivery timeline for call session {interaction.id}.

@@ -4,7 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Agent;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,7 +15,7 @@ class AgentApiTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     private Extension $extension;
 
@@ -23,17 +23,17 @@ class AgentApiTest extends TestCase
     {
         parent::setUp();
 
-        $this->tenant = Tenant::create([
+        $this->organization = Organization::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
         ]);
 
         $this->user = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
         ]);
 
-        $this->extension = $this->tenant->extensions()->create([
+        $this->extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'John',
@@ -44,13 +44,13 @@ class AgentApiTest extends TestCase
     public function test_can_list_agents(): void
     {
         Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/agents");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/agents");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
@@ -59,7 +59,7 @@ class AgentApiTest extends TestCase
     public function test_can_create_agent(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/agents", [
                 'extension_id' => $this->extension->id,
                 'name' => 'Agent Smith',
                 'role' => 'agent',
@@ -69,7 +69,7 @@ class AgentApiTest extends TestCase
             ->assertJsonFragment(['name' => 'Agent Smith', 'role' => 'agent']);
 
         $this->assertDatabaseHas('agents', [
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
         ]);
@@ -78,13 +78,13 @@ class AgentApiTest extends TestCase
     public function test_cannot_create_duplicate_agent_for_extension(): void
     {
         Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/agents", [
                 'extension_id' => $this->extension->id,
                 'name' => 'Agent Jones',
             ]);
@@ -96,13 +96,13 @@ class AgentApiTest extends TestCase
     public function test_can_show_agent(): void
     {
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/agents/{$agent->id}");
 
         $response->assertStatus(200)
             ->assertJsonFragment(['name' => 'Agent Smith']);
@@ -111,13 +111,13 @@ class AgentApiTest extends TestCase
     public function test_can_update_agent(): void
     {
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}", [
+            ->putJson("/api/v1/organizations/{$this->organization->id}/agents/{$agent->id}", [
                 'name' => 'Agent Jones',
                 'role' => 'supervisor',
             ]);
@@ -129,13 +129,13 @@ class AgentApiTest extends TestCase
     public function test_can_delete_agent(): void
     {
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}");
+            ->deleteJson("/api/v1/organizations/{$this->organization->id}/agents/{$agent->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('agents', ['id' => $agent->id]);
@@ -144,14 +144,14 @@ class AgentApiTest extends TestCase
     public function test_can_change_agent_state(): void
     {
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
             'state' => Agent::STATE_OFFLINE,
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/agents/{$agent->id}/state", [
                 'state' => 'available',
             ]);
 
@@ -167,14 +167,14 @@ class AgentApiTest extends TestCase
     public function test_can_pause_agent_with_reason(): void
     {
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
             'state' => Agent::STATE_AVAILABLE,
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/agents/{$agent->id}/state", [
                 'state' => 'paused',
                 'pause_reason' => 'lunch',
             ]);
@@ -186,14 +186,14 @@ class AgentApiTest extends TestCase
     public function test_pause_requires_reason(): void
     {
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
             'state' => Agent::STATE_AVAILABLE,
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/agents/{$agent->id}/state", [
                 'state' => 'paused',
             ]);
 
@@ -204,13 +204,13 @@ class AgentApiTest extends TestCase
     public function test_invalid_state_rejected(): void
     {
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $this->extension->id,
             'name' => 'Agent Smith',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/agents/{$agent->id}/state", [
                 'state' => 'invalid_state',
             ]);
 
@@ -218,15 +218,15 @@ class AgentApiTest extends TestCase
             ->assertJsonValidationErrors('state');
     }
 
-    public function test_tenant_isolation_for_agents(): void
+    public function test_organization_isolation_for_agents(): void
     {
-        $otherTenant = Tenant::create([
+        $otherOrganization = Organization::create([
             'name' => 'Other Corp',
             'domain' => 'other.example.com',
             'max_extensions' => 50,
         ]);
 
-        $otherExt = $otherTenant->extensions()->create([
+        $otherExt = $otherOrganization->extensions()->create([
             'extension' => '2001',
             'password' => 'secret123',
             'directory_first_name' => 'Jane',
@@ -234,13 +234,13 @@ class AgentApiTest extends TestCase
         ]);
 
         $otherAgent = Agent::create([
-            'tenant_id' => $otherTenant->id,
+            'organization_id' => $otherOrganization->id,
             'extension_id' => $otherExt->id,
             'name' => 'Other Agent',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/agents/{$otherAgent->id}");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/agents/{$otherAgent->id}");
 
         $response->assertStatus(404);
     }

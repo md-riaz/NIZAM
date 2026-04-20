@@ -5,13 +5,13 @@ namespace App\Services\Call;
 use App\Jobs\ProcessCallEventJob;
 use App\Models\CallEventLog;
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Support\Str;
 
 class CallEventIngestionService
 {
     public function ingest(
-        Tenant $tenant,
+        Organization $organization,
         string $eventType,
         string $callUuid,
         array $payload,
@@ -27,7 +27,7 @@ class CallEventIngestionService
             ],
             [
                 'call_session_id' => $callSession?->id,
-                'tenant_id' => $tenant->id,
+                'organization_id' => $organization->id,
                 'event_type' => $eventType,
                 'source' => $source,
                 'payload' => $payload,

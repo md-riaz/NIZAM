@@ -10,8 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - **Frontend Branding:** Replaced hardcoded project branding in the login page, document title, and meta description with Vite environment-driven branding values (`VITE_APP_NAME`, `VITE_APP_TAGLINE`, `VITE_APP_DESCRIPTION`, `VITE_LOGIN_EMAIL_PLACEHOLDER`).
-- **Browser Storage Keys:** Centralized frontend storage key generation behind a shared branding config so auth, tenant selection, and theme persistence no longer depend on project-name-specific localStorage keys.
-- **Admin Labels:** Clarified account labeling in the admin shell so global admins display as **Platform Admin** and tenant-bound admins display as **Tenant Admin** while preserving existing superadmin access rules.
+- **Browser Storage Keys:** Centralized frontend storage key generation behind a shared branding config so auth, organization selection, and theme persistence no longer depend on project-name-specific localStorage keys.
+- **Admin Labels:** Clarified account labeling in the admin shell so global admins display as **Platform Admin** and organization-bound admins display as **Organization Admin** while preserving existing superadmin access rules.
 
 ---
 
@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **Self-Call Parity**: Updated self-call behavior to match FusionPBX; calling your own extension now correctly answers and enters the voicemail management (check) menu instead of attempting a redundant local bridge.
 - **SIP Credentials UI**: Added "Domain / Realm" to the SIP Credentials display on the extension detail page and included it in the "Copy credentials" action.
-- **SIP Configuration**: Updated the extension SIP configuration endpoint to return the current application host for the SIP server instead of the tenant domain, improving compatibility with softphones registering from external networks.
+- **SIP Configuration**: Updated the extension SIP configuration endpoint to return the current application host for the SIP server instead of the organization domain, improving compatibility with softphones registering from external networks.
 - **SIP Port Mapping**: Refactored `WebRtcConfigService` to prioritize SIP Profile database settings while allowing optional environment variable overrides (`FREESWITCH_SIP_PORT`, `FREESWITCH_WSS_PORT`) for Docker port-mapped environments.
 - **WebRTC Transport Decoupling**: Refactored `SipProfileController` and `WebRtcConfigService` to independently manage WS and WSS transports. Enabling plain WS no longer requires SSL certificates or triggers WSS/TLS configuration in FreeSWITCH.
 - **SIP Profile Automation**: Updated `SipProfileSetting` runtime hooks to trigger `reloadxml` plus a profile-specific Sofia restart when SIP transport settings change.
@@ -34,13 +34,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 - **Runtime Configuration**: Refined the `reloadProfile` logic in `GatewayProvisioningService` to ensure dynamic gateway changes are applied correctly at runtime.
-- **Database Seeding**: Resolved a unique constraint conflict where the platform admin and tenant admin were assigned the same email address. The platform admin now uses a `system@` prefix.
+- **Database Seeding**: Resolved a unique constraint conflict where the platform admin and organization admin were assigned the same email address. The platform admin now uses a `system@` prefix.
 - **Test Isolation**: Isolated FreeSWITCH gateway provisioning during tests. Tests now write XML profiles to a temporary directory (`storage/framework/testing/gateways`) instead of the real configuration, preventing "orphan" registrations and "fail wait" loops in development.
 - **Gateway Sync**: Corrected the configuration key used in `GatewayProvisioningServiceTest` and `GatewayCodecRenderingTest` to correctly redirect filesystem output during unit tests.
 - **Registration Visibility**: Switched active registration lookups to `sofia xmlstatus profile <profile> reg` so the SIP status APIs now expose the real extension user agent and preserve correct profile names like `internal` and `external`.
 - **FusionPBX Registration Parity**: Added a shared `SipRegistrationService` that centralizes FreeSWITCH registration parsing and applies FusionPBX-style normalization, including LAN IP derivation, `expsecs(...)` expiry parsing, and cleaner registration status output across the SIP status APIs.
 - **Self-Call Routing**: Internal self-extension calls now bypass the external delivery orchestrator and bridge directly with FusionPBX-style `user/<extension>@<domain>` routing, while non-self extension calls continue to use orchestrated delivery for push-notification wake-up scenarios.
-- **Directory Lookups**: XML-CURL directory responses now honor specific `user` and `id` lookups so SIP authentication and registration requests do not fetch the entire tenant directory unnecessarily.
+- **Directory Lookups**: XML-CURL directory responses now honor specific `user` and `id` lookups so SIP authentication and registration requests do not fetch the entire organization directory unnecessarily.
 - **SIP Profile Includes**: Stopped emitting gateway include directives for the `internal` Sofia profile; only the `external` profile now owns gateway include trees, eliminating the `No files to include .../sip_profiles/internal/*.xml` warning.
 - **Local Dev NAT Compatibility**: Enabled `aggressive-nat-detection` on the seeded internal SIP profile for better softphone behavior in local Docker environments.
 - **SIP Profile Setting Hooks**: Fixed the `SipProfileSetting` model event hook to use the saved/deleted model instance correctly instead of referencing `$this` from static context.
@@ -76,7 +76,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XML directory and dialplan endpoints for FreeSWITCH.
 - ESL listener service with automatic reconnection.
 #### Core Telephony
-- Multi-tenant Extension, DID, Ring Group, IVR, and Time Condition models.
+- Multi-organization Extension, DID, Ring Group, IVR, and Time Condition models.
 #### Security & Permissions
 - Sanctum token auth and granular role-based permissions.
 - Audit log system for tracking all model changes.
@@ -89,10 +89,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [2026-03-01]
 
 ### Summary
-NIZAM v1.0.0 stable release. Established frozen API contract and operational readiness for multi-tenant deployments.
+NIZAM v1.0.0 stable release. Established frozen API contract and operational readiness for multi-organization deployments.
 
 ### Added
 - MIT License and contributor governance.
 - Full architectural documentation and API reference.
 - PHP SDK for external integrations.
-- Multi-tenant routing and isolation enforcement.
+- Multi-organization routing and isolation enforcement.

@@ -20,7 +20,7 @@ abstract class BaseModule implements NizamModule
 
     public function boot(): void {}
 
-    public function dialplanContributions(string $tenantDomain, string $destination): array
+    public function dialplanContributions(string $organizationDomain, string $destination): array
     {
         return [];
     }

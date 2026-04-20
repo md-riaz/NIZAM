@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\RingGroup;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,22 +13,22 @@ class RingGroupTest extends TestCase
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        $tenant = Tenant::factory()->create();
-        $ringGroup = RingGroup::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $ringGroup = RingGroup::factory()->create(['organization_id' => $organization->id]);
 
         $this->assertDatabaseHas('ring_groups', [
             'id' => $ringGroup->id,
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
     }
 
-    public function test_belongs_to_a_tenant(): void
+    public function test_belongs_to_a_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $ringGroup = RingGroup::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $ringGroup = RingGroup::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertInstanceOf(Tenant::class, $ringGroup->tenant);
-        $this->assertEquals($tenant->id, $ringGroup->tenant->id);
+        $this->assertInstanceOf(Organization::class, $ringGroup->organization);
+        $this->assertEquals($organization->id, $ringGroup->organization->id);
     }
 
     public function test_members_is_cast_to_array(): void
@@ -60,7 +60,7 @@ class RingGroupTest extends TestCase
     public function test_has_correct_fillable_attributes(): void
     {
         $ringGroup = new RingGroup;
-        $expected = ['tenant_id', 'name', 'strategy', 'ring_timeout', 'members', 'fallback_destination_type', 'fallback_destination_id', 'is_active'];
+        $expected = ['organization_id', 'name', 'strategy', 'ring_timeout', 'members', 'fallback_destination_type', 'fallback_destination_id', 'is_active'];
 
         $this->assertEquals($expected, $ringGroup->getFillable());
     }

@@ -226,7 +226,7 @@ class ModuleRegistry
      *
      * @return array<int, string>
      */
-    public function collectDialplanContributions(string $tenantDomain, string $destination): array
+    public function collectDialplanContributions(string $organizationDomain, string $destination): array
     {
         $contributions = [];
 
@@ -235,7 +235,7 @@ class ModuleRegistry
                 continue;
             }
 
-            foreach ($module->dialplanContributions($tenantDomain, $destination) as $priority => $xml) {
+            foreach ($module->dialplanContributions($organizationDomain, $destination) as $priority => $xml) {
                 $contributions[$priority] = $xml;
             }
         }

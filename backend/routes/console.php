@@ -21,7 +21,7 @@ Artisan::command('inspire', function () {
 */
 
 // Enforce recording retention policies — runs daily at midnight UTC.
-// Tenants without a recording_retention_days value are skipped automatically.
+// Organizations without a recording_retention_days value are skipped automatically.
 Schedule::command('nizam:prune-recordings')
     ->dailyAt('00:00')
     ->withoutOverlapping()

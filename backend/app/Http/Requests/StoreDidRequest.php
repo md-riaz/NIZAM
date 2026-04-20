@@ -13,15 +13,15 @@ class StoreDidRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenant = $this->route('tenant');
+        $organization = $this->route('organization');
 
         return [
             'number' => [
                 'required',
                 'string',
-                function ($attribute, $value, $fail) use ($tenant) {
-                    if ($tenant->dids()->where('number', $value)->exists()) {
-                        $fail('The DID number has already been taken for this tenant.');
+                function ($attribute, $value, $fail) use ($organization) {
+                    if ($organization->dids()->where('number', $value)->exists()) {
+                        $fail('The DID number has already been taken for this organization.');
                     }
                 },
             ],

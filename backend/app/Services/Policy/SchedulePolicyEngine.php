@@ -5,7 +5,7 @@ namespace App\Services\Policy;
 use App\Models\HolidayCalendar;
 use App\Models\Schedule;
 use App\Models\Team;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Services\Schedule\ScheduleEngine;
 use Carbon\CarbonImmutable;
@@ -19,7 +19,7 @@ class SchedulePolicyEngine
     ) {}
 
     /**
-     * @param  Tenant|Team|User  $target
+     * @param  Organization|Team|User  $target
      * @return array{
      *     open: bool,
      *     state: string,
@@ -29,7 +29,7 @@ class SchedulePolicyEngine
      *     evaluated_at: CarbonImmutable
      * }
      */
-    public function evaluate(Tenant|Team|User $target, DateTimeInterface|string|null $at = null): array
+    public function evaluate(Organization|Team|User $target, DateTimeInterface|string|null $at = null): array
     {
         $context = $this->resolveContext($target);
         $evaluatedAt = $this->resolveMoment($at, $context['timezone']);
@@ -45,18 +45,18 @@ class SchedulePolicyEngine
         ];
     }
 
-    public function isOpenNow(Tenant|Team|User $target, DateTimeInterface|string|null $at = null): bool
+    public function isOpenNow(Organization|Team|User $target, DateTimeInterface|string|null $at = null): bool
     {
         return $this->evaluate($target, $at)['open'];
     }
 
     /**
-     * @param  Tenant|Team|User  $target
+     * @param  Organization|Team|User  $target
      * @return array{schedule: ?Schedule, holiday_calendar: ?HolidayCalendar, inherited_from: string, timezone: string}
      */
-    public function resolveContext(Tenant|Team|User $target): array
+    public function resolveContext(Organization|Team|User $target): array
     {
-        if ($target instanceof Tenant) {
+        if ($target instanceof Organization) {
             $schedule = $this->resolveScheduleById($target->default_schedule_id);
             $holidayCalendar = $this->resolveHolidayCalendarById($target->default_holiday_calendar_id)
                 ?: $schedule?->holidayCalendar;

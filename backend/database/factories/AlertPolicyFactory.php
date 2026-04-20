@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\AlertPolicy;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,7 +16,7 @@ class AlertPolicyFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'name' => fake()->words(3, true).' alert',
             'metric' => fake()->randomElement(AlertPolicy::VALID_METRICS),
             'condition' => AlertPolicy::CONDITION_GT,

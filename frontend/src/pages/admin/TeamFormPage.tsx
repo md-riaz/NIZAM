@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
 
@@ -40,7 +40,7 @@ export default function TeamFormPage() {
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
-    const { activeTenant } = useTenant();
+    const { activeOrganization } = useOrganization();
 
     const form = useForm<TeamFormValues>({
         resolver: zodResolver(teamSchema),
@@ -53,13 +53,13 @@ export default function TeamFormPage() {
     });
 
     const { data: team, isLoading: isFetching } = useQuery({
-        queryKey: ['team', activeTenant?.id, id],
+        queryKey: ['team', activeOrganization?.id, id],
         queryFn: async () => {
-            if (!activeTenant) return null;
-            const response = await api.get(`tenants/${activeTenant.id}/teams/${id}`);
+            if (!activeOrganization) return null;
+            const response = await api.get(`organizations/${activeOrganization.id}/teams/${id}`);
             return response.data.data;
         },
-        enabled: isEdit && !!activeTenant,
+        enabled: isEdit && !!activeOrganization,
     });
 
     useEffect(() => {
@@ -75,18 +75,18 @@ export default function TeamFormPage() {
 
     const mutation = useApiMutation({
         mutationFn: async (values: TeamFormValues) => {
-            if (!activeTenant) throw new Error('No active tenant');
+            if (!activeOrganization) throw new Error('No active organization');
             if (isEdit) {
-                return api.put(`tenants/${activeTenant.id}/teams/${id}`, values);
+                return api.put(`organizations/${activeOrganization.id}/teams/${id}`, values);
             }
-            return api.post(`tenants/${activeTenant.id}/teams`, values);
+            return api.post(`organizations/${activeOrganization.id}/teams`, values);
         },
         successMessage: `Team ${isEdit ? 'updated' : 'created'} successfully`,
-        invalidateQueries: [['teams', activeTenant?.id || '']],
+        invalidateQueries: [['teams', activeOrganization?.id || '']],
         onSuccess: () => navigate('/admin/teams'),
     });
 
-    if (!activeTenant) return null;
+    if (!activeOrganization) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">

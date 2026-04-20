@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\Bridge;
 use App\Models\Gateway;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Routing\CodecResolutionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -27,14 +27,14 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_default_policy_uses_gateway_preferred_codecs(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'preferred_codecs' => ['PCMU', 'PCMA'],
             'outbound_codecs' => ['G722', 'PCMU'],
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'default',
         ]);
@@ -48,14 +48,14 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_default_policy_falls_back_to_outbound_codecs_when_preferred_is_empty(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'preferred_codecs' => [],
             'outbound_codecs' => ['G722', 'PCMU'],
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'default',
         ]);
@@ -80,13 +80,13 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_restricted_policy_intersects_bridge_list_with_gateway_outbound(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'outbound_codecs' => ['PCMU', 'PCMA'],
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'restricted',
             'codec_list' => ['PCMU', 'G722'],
@@ -100,13 +100,13 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_restricted_policy_warns_when_no_shared_codec(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'outbound_codecs' => ['G729'],
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'restricted',
             'codec_list' => ['PCMU', 'G722'],
@@ -124,13 +124,13 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_preferred_policy_uses_bridge_order_within_gateway_codecs(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'outbound_codecs' => ['PCMU', 'PCMA', 'G722'],
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'preferred',
             'codec_list' => ['G722', 'PCMU'],
@@ -149,13 +149,13 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_exact_policy_uses_bridge_codec_list_without_gateway_filter(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'outbound_codecs' => ['PCMU'],
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'exact',
             'codec_list' => ['G729'],
@@ -174,10 +174,10 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_inherit_policy_sets_inherit_codec_flag_and_no_fs_variable(): void
     {
-        $tenant = Tenant::factory()->create();
-        $gateway = Gateway::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $gateway = Gateway::factory()->create(['organization_id' => $organization->id]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'inherit',
         ]);
@@ -195,14 +195,14 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_transcoding_required_when_no_shared_codec(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'preferred_codecs' => ['G729'],
             'allow_transcoding' => true,
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'default',
             'transcode_policy' => 'allow',
@@ -216,14 +216,14 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_transcode_policy_none_disables_transcoding_regardless_of_gateway(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'preferred_codecs' => ['G729'],
             'allow_transcoding' => true,
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'default',
             'transcode_policy' => 'none',
@@ -237,14 +237,14 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_web_only_transcode_policy_allows_transcoding_for_webrtc(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'preferred_codecs' => ['PCMU'],
             'allow_transcoding' => false,
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'default',
             'transcode_policy' => 'web_only',
@@ -282,13 +282,13 @@ class CodecResolutionServiceTest extends TestCase
 
     public function test_no_transcoding_required_when_shared_codec_exists(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $gateway = Gateway::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'preferred_codecs' => ['PCMU', 'PCMA'],
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'codec_policy' => 'default',
         ]);

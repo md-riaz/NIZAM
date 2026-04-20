@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,14 +21,14 @@ class ExtensionFeatureApiTest extends TestCase
         ]);
     }
 
-    public function test_tenant_admin_can_update_extension_features(): void
+    public function test_organization_admin_can_update_extension_features(): void
     {
-        $tenant = Tenant::factory()->create();
-        $admin = User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->putJson("/api/v1/tenants/{$tenant->id}/extensions/{$extension->id}/features", [
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}/features", [
                 'follow_me_enabled' => true,
                 'follow_me_destination' => '+8801712345678',
                 'dnd_enabled' => false,
@@ -36,14 +36,14 @@ class ExtensionFeatureApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.id', $extension->id)
-            ->assertJsonPath('data.tenant_id', $tenant->id)
+            ->assertJsonPath('data.organization_id', $organization->id)
             ->assertJsonPath('data.follow_me_enabled', true)
             ->assertJsonPath('data.follow_me_destination', '+8801712345678')
             ->assertJsonPath('data.dnd_enabled', false);
 
         $this->assertDatabaseHas('extensions', [
             'id' => $extension->id,
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'follow_me_enabled' => true,
             'follow_me_destination' => '+8801712345678',
             'dnd_enabled' => false,
@@ -52,12 +52,12 @@ class ExtensionFeatureApiTest extends TestCase
 
     public function test_it_returns_validation_error_when_follow_me_enabled_without_destination(): void
     {
-        $tenant = Tenant::factory()->create();
-        $admin = User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->putJson("/api/v1/tenants/{$tenant->id}/extensions/{$extension->id}/features", [
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}/features", [
                 'follow_me_enabled' => true,
             ]);
 
@@ -65,15 +65,15 @@ class ExtensionFeatureApiTest extends TestCase
             ->assertJsonValidationErrors(['follow_me_destination']);
     }
 
-    public function test_it_returns_not_found_for_extension_outside_tenant_scope(): void
+    public function test_it_returns_not_found_for_extension_outside_organization_scope(): void
     {
-        $tenant = Tenant::factory()->create();
-        $otherTenant = Tenant::factory()->create();
-        $admin = User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
-        $extension = Extension::factory()->create(['tenant_id' => $otherTenant->id]);
+        $organization = Organization::factory()->create();
+        $otherOrganization = Organization::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
+        $extension = Extension::factory()->create(['organization_id' => $otherOrganization->id]);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->putJson("/api/v1/tenants/{$tenant->id}/extensions/{$extension->id}/features", [
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}/features", [
                 'dnd_enabled' => true,
             ]);
 
@@ -82,17 +82,17 @@ class ExtensionFeatureApiTest extends TestCase
 
     public function test_it_applies_service_precedence_when_dnd_is_enabled(): void
     {
-        $tenant = Tenant::factory()->create();
-        $admin = User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'follow_me_enabled' => true,
             'follow_me_destination' => '+8801712345678',
             'dnd_enabled' => false,
         ]);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->putJson("/api/v1/tenants/{$tenant->id}/extensions/{$extension->id}/features", [
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}/features", [
                 'dnd_enabled' => true,
             ]);
 
@@ -104,14 +104,14 @@ class ExtensionFeatureApiTest extends TestCase
 
     public function test_it_accepts_combined_follow_me_and_dnd_request_by_normalizing_to_dnd_precedence(): void
     {
-        $tenant = Tenant::factory()->create();
-        $admin = User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->putJson("/api/v1/tenants/{$tenant->id}/extensions/{$extension->id}/features", [
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}/features", [
                 'follow_me_enabled' => true,
                 'dnd_enabled' => true,
             ]);

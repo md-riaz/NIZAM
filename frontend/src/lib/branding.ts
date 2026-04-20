@@ -13,7 +13,7 @@ export const branding = {
     appTagline: env.VITE_APP_TAGLINE?.trim() || 'Communications Control Plane',
     appDescription:
         env.VITE_APP_DESCRIPTION?.trim()
-        || 'Manage tenants, extensions, call flows, and communications infrastructure.',
+        || 'Manage organizations, extensions, call flows, and communications infrastructure.',
     loginEmailPlaceholder:
         env.VITE_LOGIN_EMAIL_PLACEHOLDER?.trim() || 'admin@example.com',
     devLoginCredentials: hasDevLoginCredentials
@@ -25,7 +25,7 @@ export const branding = {
     storagePrefix,
     storageKeys: {
         token: `${storagePrefix}.token`,
-        activeTenant: `${storagePrefix}.activeTenant`,
+        activeOrganization: `${storagePrefix}.activeOrganization`,
         theme: `${storagePrefix}.theme`,
     },
 } as const;

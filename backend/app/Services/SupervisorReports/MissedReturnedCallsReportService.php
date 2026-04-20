@@ -3,7 +3,7 @@
 namespace App\Services\SupervisorReports;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Carbon\CarbonInterface;
 
 class MissedReturnedCallsReportService
@@ -12,22 +12,22 @@ class MissedReturnedCallsReportService
         protected ReturnedCallResolver $returnedCallResolver,
     ) {}
 
-    public function generate(Tenant $tenant, CarbonInterface $from, CarbonInterface $to, ?int $windowDays = null): array
+    public function generate(Organization $organization, CarbonInterface $from, CarbonInterface $to, ?int $windowDays = null): array
     {
         $windowDays ??= $this->returnedCallResolver->defaultWindowDays();
 
         $missedCalls = CallDetailRecord::query()
-            ->where('tenant_id', $tenant->id)
+            ->where('organization_id', $organization->id)
             ->where('direction', 'inbound')
             ->whereNull('answer_stamp')
             ->whereBetween('start_stamp', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
             ->orderByDesc('start_stamp')
             ->get();
 
-        $items = $missedCalls->map(function (CallDetailRecord $cdr) use ($tenant, $windowDays): array {
+        $items = $missedCalls->map(function (CallDetailRecord $cdr) use ($organization, $windowDays): array {
             $normalizedCallerNumber = $this->returnedCallResolver->normalizeNumber($cdr->caller_id_number);
             $returnedCall = $this->returnedCallResolver->findReturnedCall(
-                $tenant,
+                $organization,
                 $normalizedCallerNumber,
                 $cdr->start_stamp,
                 $windowDays,

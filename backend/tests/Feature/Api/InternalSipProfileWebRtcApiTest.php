@@ -18,7 +18,7 @@ class InternalSipProfileWebRtcApiTest extends TestCase
     {
         $this->seed(SipProfileSeeder::class);
 
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
         $profile = SipProfile::query()->where('name', 'internal')->first();
         assertNotNull($profile);
 
@@ -47,7 +47,7 @@ class InternalSipProfileWebRtcApiTest extends TestCase
     {
         $this->seed(SipProfileSeeder::class);
 
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
         $profile = SipProfile::query()->where('name', 'internal')->first();
         assertNotNull($profile);
 

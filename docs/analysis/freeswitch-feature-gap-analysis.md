@@ -17,7 +17,7 @@ This is a repo-based analysis, not a runtime audit. Conclusions are based on the
 FusionPBX and FSPBX are featureful not because they radically replace FreeSWITCH internals, but because they add a **full PBX control plane** on top of FreeSWITCH:
 
 - database-driven configuration instead of hand-managed XML
-- multi-tenant domain/account management
+- multi-organization domain/account management
 - admin UIs for trunks, extensions, IVRs, queues, recordings, ACL/security, and live status
 - dynamic dialplan generation and switch reload workflows
 - endpoint provisioning for desk phones
@@ -27,7 +27,7 @@ FusionPBX and FSPBX are featureful not because they radically replace FreeSWITCH
 **Nizam already has much of the modern control-plane foundation**:
 
 - dynamic XML generation via `mod_xml_curl`
-- tenant-scoped routing and configuration
+- organization-scoped routing and configuration
 - SIP profile and gateway management
 - ESL-backed event ingestion and webhooks
 - admin UI pages for platform control
@@ -59,10 +59,10 @@ Out of the box, FreeSWITCH gives you a highly capable media and signaling engine
 
 What it **does not provide by default** in a polished way is the full management layer operators want:
 
-- multi-tenant SaaS administration
+- multi-organization SaaS administration
 - business-friendly CRUD UIs for PBX entities
 - opinionated provisioning workflows
-- tenant billing/reporting/admin workflows
+- organization billing/reporting/admin workflows
 - rich guardrails around security and operations
 - turnkey hosted PBX feature depth
 
@@ -72,7 +72,7 @@ That missing layer is exactly what FusionPBX and FSPBX add.
 
 ## What FusionPBX Adds on Top of Default FreeSWITCH
 
-### 1. Multi-tenant PBX management model
+### 1. Multi-organization PBX management model
 
 FusionPBX turns FreeSWITCH into a hosted PBX platform by introducing domain-scoped management for nearly everything.
 
@@ -83,7 +83,7 @@ Evidence:
 What this adds beyond default FreeSWITCH:
 - domain isolation
 - per-domain settings and permissions
-- super-admin vs tenant-admin boundaries
+- super-admin vs organization-admin boundaries
 - a reusable schema for hosted PBX operation
 
 ### 2. Database-driven dialplan and configuration management
@@ -180,7 +180,7 @@ Evidence:
 
 What this adds beyond default FreeSWITCH:
 - framework-native compilation of PBX config
-- tenant/domain bootstrapping
+- organization/domain bootstrapping
 - easier change management and consistency
 
 ### 2. Stronger provisioning and device lifecycle workflows
@@ -256,7 +256,7 @@ They do not treat FreeSWITCH as a config folder. They treat it as a runtime engi
 
 ### B. They cover operator workflows, not just telephony primitives
 They include the things operators do every day:
-- add tenants
+- add organizations
 - provision phones
 - inspect registrations
 - edit trunks
@@ -288,14 +288,14 @@ Evidence:
 Notable details:
 - dynamic directory generation per domain/user
 - dynamic inbound dialplan generation
-- tenant-scoped lookup and operational gating
+- organization-scoped lookup and operational gating
 - FusionPBX-parity comments around `dial-string`, `user_context`, and `accountcode`
 
 This is a major “non-default” layer already.
 
-### 2. Multi-tenant architecture
+### 2. Multi-organization architecture
 
-Nizam clearly treats tenants/domains as first-class routing and authorization boundaries.
+Nizam clearly treats organizations/domains as first-class routing and authorization boundaries.
 
 Evidence:
 - `backend/app/Services/DialplanCompiler.php:35`
@@ -486,7 +486,7 @@ Compared with those stacks, Nizam likely still needs more built-in workflows aro
 - switch maintenance and recovery routines
 - richer trunk diagnostics
 - emergency notifications / telecom incident workflows
-- tenant bootstrap defaults
+- organization bootstrap defaults
 - admin-side troubleshooting wizards
 - richer recording lifecycle / storage offload workflows
 - more built-in reports and export surfaces
@@ -527,9 +527,9 @@ Nizam looks more like a modern software platform than a legacy PHP PBX admin con
 
 The presence of `backend/docs/KNOWN_LIMITATIONS.md` is a strength. It shows the team understands production boundaries clearly.
 
-### 4. Tenant-aware platform thinking
+### 4. Organization-aware platform thinking
 
-Nizam seems intentionally designed as a multi-tenant communications platform, not just a single-office PBX UI.
+Nizam seems intentionally designed as a multi-organization communications platform, not just a single-office PBX UI.
 
 ---
 
@@ -575,7 +575,7 @@ If the goal is to close the “featureful PBX” gap fastest, the highest-value 
 - event-guard / abuse prevention tooling
 - firewall/security admin workflows
 - richer trunk diagnostics and health dashboards
-- more mature tenant bootstrap/default templates
+- more mature organization bootstrap/default templates
 
 ### Tier 4: Hardware and ecosystem gaps
 - broader provisioning library and vendor/model depth
@@ -591,7 +591,7 @@ If the goal is to close the “featureful PBX” gap fastest, the highest-value 
 They add:
 - database-driven PBX management
 - dynamic config compilation
-- tenant-aware control surfaces
+- organization-aware control surfaces
 - provisioning and live switch operations
 - extensive admin modules
 - lots of accumulated real-world PBX edge-case support

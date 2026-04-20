@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\NumberLookupService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -22,9 +22,9 @@ class NumberLookupServiceTest extends TestCase
 
     public function test_returns_null_when_no_lookup_url_configured(): void
     {
-        $tenant = Tenant::factory()->create(['settings' => []]);
+        $organization = Organization::factory()->create(['settings' => []]);
 
-        $result = $this->service->lookup($tenant, '+15551234567');
+        $result = $this->service->lookup($organization, '+15551234567');
 
         $this->assertNull($result);
     }
@@ -38,18 +38,18 @@ class NumberLookupServiceTest extends TestCase
             ], 200),
         ]);
 
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'settings' => ['number_lookup_url' => 'https://lookup.example.com/lookup'],
         ]);
 
-        $result = $this->service->lookup($tenant, '+15551234567');
+        $result = $this->service->lookup($organization, '+15551234567');
 
         $this->assertNotNull($result);
         $this->assertEquals('John Doe', $result['name']);
         $this->assertEquals('mobile', $result['type']);
 
-        Http::assertSent(function ($request) use ($tenant) {
-            return $request->hasHeader('X-Tenant-Id', $tenant->id)
+        Http::assertSent(function ($request) use ($organization) {
+            return $request->hasHeader('X-Organization-Id', $organization->id)
                 && $request['number'] === '+15551234567';
         });
     }
@@ -60,11 +60,11 @@ class NumberLookupServiceTest extends TestCase
             'https://lookup.example.com/*' => Http::response(null, 500),
         ]);
 
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'settings' => ['number_lookup_url' => 'https://lookup.example.com/lookup'],
         ]);
 
-        $result = $this->service->lookup($tenant, '+15551234567');
+        $result = $this->service->lookup($organization, '+15551234567');
 
         $this->assertNull($result);
     }
@@ -77,11 +77,11 @@ class NumberLookupServiceTest extends TestCase
             },
         ]);
 
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'settings' => ['number_lookup_url' => 'https://lookup.example.com/lookup'],
         ]);
 
-        $result = $this->service->lookup($tenant, '+15551234567');
+        $result = $this->service->lookup($organization, '+15551234567');
 
         $this->assertNull($result);
     }

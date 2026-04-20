@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\Bridge;
 use App\Models\Did;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,8 +15,8 @@ class DialplanCompilerEndpointTypeTest extends TestCase
 
     public function test_did_bridge_uses_webrtc_codec_defaults_for_wss_calls(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'tenant.example.com', 'is_active' => true]);
-        $gateway = $tenant->gateways()->create([
+        $organization = Organization::factory()->create(['domain' => 'organization.example.com', 'is_active' => true]);
+        $gateway = $organization->gateways()->create([
             'name' => 'Carrier A',
             'host' => 'sip.carrier.test',
             'port' => 5060,
@@ -26,7 +26,7 @@ class DialplanCompilerEndpointTypeTest extends TestCase
             'is_active' => true,
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'destination_template' => '+15550123456',
             'bridge_type' => 'gateway',
@@ -35,7 +35,7 @@ class DialplanCompilerEndpointTypeTest extends TestCase
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15550002222',
             'destination_type' => 'bridge',
             'destination_id' => $bridge->id,
@@ -43,7 +43,7 @@ class DialplanCompilerEndpointTypeTest extends TestCase
         ]);
 
         $xml = app(DialplanCompiler::class)->compileDialplan(
-            $tenant->domain,
+            $organization->domain,
             '+15550002222',
             null,
             ['variable_sip_via_protocol' => 'wss'],
@@ -55,8 +55,8 @@ class DialplanCompilerEndpointTypeTest extends TestCase
 
     public function test_did_bridge_uses_sip_codec_defaults_for_non_webrtc_calls(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'tenant.example.com', 'is_active' => true]);
-        $gateway = $tenant->gateways()->create([
+        $organization = Organization::factory()->create(['domain' => 'organization.example.com', 'is_active' => true]);
+        $gateway = $organization->gateways()->create([
             'name' => 'Carrier A',
             'host' => 'sip.carrier.test',
             'port' => 5060,
@@ -66,7 +66,7 @@ class DialplanCompilerEndpointTypeTest extends TestCase
             'is_active' => true,
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'destination_template' => '+15550123456',
             'bridge_type' => 'gateway',
@@ -75,7 +75,7 @@ class DialplanCompilerEndpointTypeTest extends TestCase
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15550002222',
             'destination_type' => 'bridge',
             'destination_id' => $bridge->id,
@@ -83,7 +83,7 @@ class DialplanCompilerEndpointTypeTest extends TestCase
         ]);
 
         $xml = app(DialplanCompiler::class)->compileDialplan(
-            $tenant->domain,
+            $organization->domain,
             '+15550002222',
             null,
             ['variable_sip_via_protocol' => 'udp'],

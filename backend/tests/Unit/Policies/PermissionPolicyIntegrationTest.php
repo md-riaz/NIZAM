@@ -4,7 +4,7 @@ namespace Tests\Unit\Policies;
 
 use App\Models\Extension;
 use App\Models\Permission;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Policies\ExtensionPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,9 +16,9 @@ class PermissionPolicyIntegrationTest extends TestCase
 
     public function test_user_with_no_permissions_assigned_defaults_to_allow(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $policy = new ExtensionPolicy;
 
         // No permissions assigned → default-open
@@ -31,9 +31,9 @@ class PermissionPolicyIntegrationTest extends TestCase
 
     public function test_user_with_view_only_permission_cannot_create(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $policy = new ExtensionPolicy;
 
         Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
@@ -47,15 +47,15 @@ class PermissionPolicyIntegrationTest extends TestCase
         $this->assertFalse($policy->create($user)); // Missing create permission
     }
 
-    public function test_user_cannot_access_other_tenant_even_with_permission(): void
+    public function test_user_cannot_access_other_organization_even_with_permission(): void
     {
-        $tenant1 = Tenant::factory()->create();
-        $tenant2 = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant1->id, 'role' => 'user']);
-        $extension = Extension::factory()->create(['tenant_id' => $tenant2->id]);
+        $organization1 = Organization::factory()->create();
+        $organization2 = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization1->id, 'role' => 'user']);
+        $extension = Extension::factory()->create(['organization_id' => $organization2->id]);
         $policy = new ExtensionPolicy;
 
-        // Even with no specific permissions (default-open), tenant boundary is enforced
+        // Even with no specific permissions (default-open), organization boundary is enforced
         $this->assertFalse($policy->view($user, $extension));
         $this->assertFalse($policy->update($user, $extension));
         $this->assertFalse($policy->delete($user, $extension));
@@ -63,9 +63,9 @@ class PermissionPolicyIntegrationTest extends TestCase
 
     public function test_admin_bypasses_all_permission_checks(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $admin = User::factory()->create(['role' => 'admin']);
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $policy = new ExtensionPolicy;
 
         // Admin bypasses via before()

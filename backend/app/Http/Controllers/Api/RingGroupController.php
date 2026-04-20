@@ -7,38 +7,38 @@ use App\Http\Requests\StoreRingGroupRequest;
 use App\Http\Requests\UpdateRingGroupRequest;
 use App\Http\Resources\RingGroupResource;
 use App\Models\RingGroup;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API controller for managing ring groups scoped to a tenant.
+ * API controller for managing ring groups scoped to a organization.
  */
 class RingGroupController extends Controller
 {
     /**
-     * List ring groups for a tenant (paginated).
+     * List ring groups for an organization (paginated).
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', RingGroup::class);
 
-        return RingGroupResource::collection($tenant->ringGroups()->paginate(15));
+        return RingGroupResource::collection($organization->ringGroups()->paginate(15));
     }
 
     /**
-     * Create a new ring group for a tenant.
+     * Create a new ring group for an organization.
      */
-    public function store(StoreRingGroupRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreRingGroupRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', RingGroup::class);
 
-        if ($tenant->max_ring_groups > 0 && $tenant->ringGroups()->count() >= $tenant->max_ring_groups) {
+        if ($organization->max_ring_groups > 0 && $organization->ringGroups()->count() >= $organization->max_ring_groups) {
             return response()->json([
-                'message' => 'Ring group quota exceeded. Maximum allowed: '.$tenant->max_ring_groups,
+                'message' => 'Ring group quota exceeded. Maximum allowed: '.$organization->max_ring_groups,
             ], 422);
         }
 
-        $ringGroup = $tenant->ringGroups()->create($request->validated());
+        $ringGroup = $organization->ringGroups()->create($request->validated());
 
         return (new RingGroupResource($ringGroup))->response()->setStatusCode(201);
     }
@@ -46,9 +46,9 @@ class RingGroupController extends Controller
     /**
      * Show a single ring group.
      */
-    public function show(Tenant $tenant, RingGroup $ringGroup): JsonResponse|RingGroupResource
+    public function show(Organization $organization, RingGroup $ringGroup): JsonResponse|RingGroupResource
     {
-        if ($ringGroup->tenant_id !== $tenant->id) {
+        if ($ringGroup->organization_id !== $organization->id) {
             return response()->json(['message' => 'Ring group not found.'], 404);
         }
 
@@ -60,9 +60,9 @@ class RingGroupController extends Controller
     /**
      * Update an existing ring group.
      */
-    public function update(UpdateRingGroupRequest $request, Tenant $tenant, RingGroup $ringGroup): JsonResponse|RingGroupResource
+    public function update(UpdateRingGroupRequest $request, Organization $organization, RingGroup $ringGroup): JsonResponse|RingGroupResource
     {
-        if ($ringGroup->tenant_id !== $tenant->id) {
+        if ($ringGroup->organization_id !== $organization->id) {
             return response()->json(['message' => 'Ring group not found.'], 404);
         }
 
@@ -76,9 +76,9 @@ class RingGroupController extends Controller
     /**
      * Delete a ring group.
      */
-    public function destroy(Tenant $tenant, RingGroup $ringGroup): JsonResponse
+    public function destroy(Organization $organization, RingGroup $ringGroup): JsonResponse
     {
-        if ($ringGroup->tenant_id !== $tenant->id) {
+        if ($ringGroup->organization_id !== $organization->id) {
             return response()->json(['message' => 'Ring group not found.'], 404);
         }
 

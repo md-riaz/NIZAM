@@ -16,7 +16,7 @@ class CallDeliveryAttemptTest extends TestCase
     {
         $callSession = CallSession::factory()->create();
         $endpointBinding = EndpointBinding::factory()->create([
-            'tenant_id' => $callSession->tenant_id,
+            'organization_id' => $callSession->organization_id,
         ]);
 
         $attempt = CallDeliveryAttempt::factory()
@@ -32,13 +32,13 @@ class CallDeliveryAttemptTest extends TestCase
     {
         $callSession = CallSession::factory()->create();
         $winningBinding = EndpointBinding::factory()->create([
-            'tenant_id' => $callSession->tenant_id,
+            'organization_id' => $callSession->organization_id,
         ]);
         $activeBinding = EndpointBinding::factory()->create([
-            'tenant_id' => $callSession->tenant_id,
+            'organization_id' => $callSession->organization_id,
         ]);
         $terminalBinding = EndpointBinding::factory()->create([
-            'tenant_id' => $callSession->tenant_id,
+            'organization_id' => $callSession->organization_id,
         ]);
 
         $winner = CallDeliveryAttempt::factory()
@@ -70,7 +70,7 @@ class CallDeliveryAttemptTest extends TestCase
     {
         $endpointBinding = EndpointBinding::factory()->create();
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $endpointBinding->tenant_id,
+            'organization_id' => $endpointBinding->organization_id,
         ]);
 
         CallDeliveryAttempt::factory()
@@ -86,7 +86,7 @@ class CallDeliveryAttemptTest extends TestCase
     {
         $callSession = CallSession::factory()->create();
         $binding = EndpointBinding::factory()->create([
-            'tenant_id' => $callSession->tenant_id,
+            'organization_id' => $callSession->organization_id,
         ]);
 
         $active = CallDeliveryAttempt::factory()

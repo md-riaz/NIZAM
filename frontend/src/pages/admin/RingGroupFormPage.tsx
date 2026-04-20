@@ -33,7 +33,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 
 const ringGroupSchema = z.object({
@@ -74,7 +74,7 @@ export default function RingGroupFormPage() {
     const isEdit = Boolean(id);
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
 
     const form = useForm<RingGroupFormValues>({
         resolver: zodResolver(ringGroupSchema),
@@ -90,12 +90,12 @@ export default function RingGroupFormPage() {
     });
 
     const { data: group, isLoading: isFetching } = useQuery({
-        queryKey: ['ring-group', activeTenant?.id, id],
+        queryKey: ['ring-group', activeOrganization?.id, id],
         queryFn: async () => {
-            const response = await api.get(`${tenantApiPrefix}/ring-groups/${id}`);
+            const response = await api.get(`${organizationApiPrefix}/ring-groups/${id}`);
             return response.data.data;
         },
-        enabled: Boolean(id) && Boolean(activeTenant),
+        enabled: Boolean(id) && Boolean(activeOrganization),
     });
 
     useEffect(() => {
@@ -125,21 +125,21 @@ export default function RingGroupFormPage() {
             };
 
             if (isEdit) {
-                return api.put(`${tenantApiPrefix}/ring-groups/${id}`, payload);
+                return api.put(`${organizationApiPrefix}/ring-groups/${id}`, payload);
             }
 
-            return api.post(`${tenantApiPrefix}/ring-groups`, payload);
+            return api.post(`${organizationApiPrefix}/ring-groups`, payload);
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['ring-groups', activeTenant?.id] });
+            await queryClient.invalidateQueries({ queryKey: ['ring-groups', activeOrganization?.id] });
             navigate('/admin/ring-groups');
         },
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select a tenant to manage ring groups.
+                Select a organization to manage ring groups.
             </div>
         );
     }
@@ -152,7 +152,7 @@ export default function RingGroupFormPage() {
                     <span className="sr-only">Back to ring groups</span>
                 </Button>
                 <div>
-                    <p className="text-sm text-muted-foreground">{activeTenant.name} › Routing</p>
+                    <p className="text-sm text-muted-foreground">{activeOrganization.name} › Routing</p>
                     <h1 className="text-2xl font-bold tracking-tight">
                         {isEdit ? 'Edit Ring Group' : 'Create Ring Group'}
                     </h1>

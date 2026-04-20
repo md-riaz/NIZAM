@@ -9,7 +9,7 @@ use App\Models\FlowNode;
 use App\Models\Queue;
 use App\Models\Team;
 use App\Models\TeamMember;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\TimeCondition;
 use App\Services\QueueService;
 use App\Services\Schedule\ScheduleEngine;
@@ -51,7 +51,7 @@ class DeliveryTargetResolver
         }
 
         return $this->resolveTarget(
-            tenant: $callSession->tenant,
+            organization: $callSession->organization,
             targetType: $targetType,
             targetId: $targetId,
             sourcePath: [[
@@ -67,21 +67,21 @@ class DeliveryTargetResolver
      * @param  list<array<string, mixed>>  $sourcePath
      */
     protected function resolveTarget(
-        Tenant $tenant,
+        Organization $organization,
         string $targetType,
         string $targetId,
         array $sourcePath,
         ?DateTimeInterface $evaluatedAt = null,
     ): DeliveryTargetSet {
         return match ($targetType) {
-            'extension' => $this->resolveExtension($tenant, $targetId, $sourcePath),
-            'ring_group' => $this->resolveRingGroup($tenant, $targetId, $sourcePath, $evaluatedAt),
-            'queue' => $this->resolveQueue($tenant, $targetId, $sourcePath),
-            'agent' => $this->resolveAgent($tenant, $targetId, $sourcePath),
-            'did' => $this->resolveDid($tenant, $targetId, $sourcePath, $evaluatedAt),
-            'time_condition' => $this->resolveTimeCondition($tenant, $targetId, $sourcePath, $evaluatedAt),
-            'flow' => $this->resolveFlow($tenant, $targetId, $sourcePath, $evaluatedAt),
-            'team' => $this->resolveTeam($tenant, $targetId, $sourcePath),
+            'extension' => $this->resolveExtension($organization, $targetId, $sourcePath),
+            'ring_group' => $this->resolveRingGroup($organization, $targetId, $sourcePath, $evaluatedAt),
+            'queue' => $this->resolveQueue($organization, $targetId, $sourcePath),
+            'agent' => $this->resolveAgent($organization, $targetId, $sourcePath),
+            'did' => $this->resolveDid($organization, $targetId, $sourcePath, $evaluatedAt),
+            'time_condition' => $this->resolveTimeCondition($organization, $targetId, $sourcePath, $evaluatedAt),
+            'flow' => $this->resolveFlow($organization, $targetId, $sourcePath, $evaluatedAt),
+            'team' => $this->resolveTeam($organization, $targetId, $sourcePath),
             default => $this->emptySet($sourcePath, [
                 'final_target_type' => $targetType,
                 'final_target_id' => $targetId,
@@ -93,9 +93,9 @@ class DeliveryTargetResolver
     /**
      * @param  list<array<string, mixed>>  $sourcePath
      */
-    protected function resolveExtension(Tenant $tenant, string $extensionId, array $sourcePath): DeliveryTargetSet
+    protected function resolveExtension(Organization $organization, string $extensionId, array $sourcePath): DeliveryTargetSet
     {
-        $extension = $tenant->extensions()
+        $extension = $organization->extensions()
             ->whereKey($extensionId)
             ->where('is_active', true)
             ->first();
@@ -126,9 +126,9 @@ class DeliveryTargetResolver
     /**
      * @param  list<array<string, mixed>>  $sourcePath
      */
-    protected function resolveRingGroup(Tenant $tenant, string $ringGroupId, array $sourcePath, ?DateTimeInterface $evaluatedAt = null): DeliveryTargetSet
+    protected function resolveRingGroup(Organization $organization, string $ringGroupId, array $sourcePath, ?DateTimeInterface $evaluatedAt = null): DeliveryTargetSet
     {
-        $ringGroup = $tenant->ringGroups()
+        $ringGroup = $organization->ringGroups()
             ->whereKey($ringGroupId)
             ->where('is_active', true)
             ->first();
@@ -138,7 +138,7 @@ class DeliveryTargetResolver
         }
 
         $memberIds = collect($ringGroup->members ?? [])->filter()->values()->all();
-        $extensions = $tenant->extensions()
+        $extensions = $organization->extensions()
             ->whereIn('id', $memberIds)
             ->where('is_active', true)
             ->get();
@@ -146,7 +146,7 @@ class DeliveryTargetResolver
         if ($extensions->isEmpty()) {
             if ($this->isHumanTargetType($ringGroup->fallback_destination_type) && filled($ringGroup->fallback_destination_id)) {
                 return $this->resolveTarget(
-                    tenant: $tenant,
+                    organization: $organization,
                     targetType: (string) $ringGroup->fallback_destination_type,
                     targetId: (string) $ringGroup->fallback_destination_id,
                     sourcePath: $this->appendSourcePath($sourcePath, [
@@ -197,9 +197,9 @@ class DeliveryTargetResolver
     /**
      * @param  list<array<string, mixed>>  $sourcePath
      */
-    protected function resolveQueue(Tenant $tenant, string $queueId, array $sourcePath): DeliveryTargetSet
+    protected function resolveQueue(Organization $organization, string $queueId, array $sourcePath): DeliveryTargetSet
     {
-        $queue = $tenant->queues()
+        $queue = $organization->queues()
             ->whereKey($queueId)
             ->where('is_active', true)
             ->first();
@@ -252,9 +252,9 @@ class DeliveryTargetResolver
     /**
      * @param  list<array<string, mixed>>  $sourcePath
      */
-    protected function resolveAgent(Tenant $tenant, string $agentId, array $sourcePath): DeliveryTargetSet
+    protected function resolveAgent(Organization $organization, string $agentId, array $sourcePath): DeliveryTargetSet
     {
-        $agent = $tenant->agents()
+        $agent = $organization->agents()
             ->whereKey($agentId)
             ->where('is_active', true)
             ->first();
@@ -285,9 +285,9 @@ class DeliveryTargetResolver
     /**
      * @param  list<array<string, mixed>>  $sourcePath
      */
-    protected function resolveDid(Tenant $tenant, string $didId, array $sourcePath, ?DateTimeInterface $evaluatedAt = null): DeliveryTargetSet
+    protected function resolveDid(Organization $organization, string $didId, array $sourcePath, ?DateTimeInterface $evaluatedAt = null): DeliveryTargetSet
     {
-        $did = $tenant->dids()
+        $did = $organization->dids()
             ->whereKey($didId)
             ->where('is_active', true)
             ->first();
@@ -305,7 +305,7 @@ class DeliveryTargetResolver
         }
 
         return $this->resolveTarget(
-            tenant: $tenant,
+            organization: $organization,
             targetType: (string) $did->destination_type,
             targetId: (string) $did->destination_id,
             sourcePath: $this->appendSourcePath($sourcePath, [
@@ -322,9 +322,9 @@ class DeliveryTargetResolver
     /**
      * @param  list<array<string, mixed>>  $sourcePath
      */
-    protected function resolveTimeCondition(Tenant $tenant, string $timeConditionId, array $sourcePath, ?DateTimeInterface $evaluatedAt = null): DeliveryTargetSet
+    protected function resolveTimeCondition(Organization $organization, string $timeConditionId, array $sourcePath, ?DateTimeInterface $evaluatedAt = null): DeliveryTargetSet
     {
-        $timeCondition = $tenant->timeConditions()
+        $timeCondition = $organization->timeConditions()
             ->whereKey($timeConditionId)
             ->where('is_active', true)
             ->first();
@@ -355,7 +355,7 @@ class DeliveryTargetResolver
         }
 
         return $this->resolveTarget(
-            tenant: $tenant,
+            organization: $organization,
             targetType: $destinationType,
             targetId: $destinationId,
             sourcePath: $this->appendSourcePath($sourcePath, [
@@ -371,9 +371,9 @@ class DeliveryTargetResolver
     /**
      * @param  list<array<string, mixed>>  $sourcePath
      */
-    protected function resolveFlow(Tenant $tenant, string $flowId, array $sourcePath, ?DateTimeInterface $evaluatedAt = null): DeliveryTargetSet
+    protected function resolveFlow(Organization $organization, string $flowId, array $sourcePath, ?DateTimeInterface $evaluatedAt = null): DeliveryTargetSet
     {
-        $flow = $tenant->flows()
+        $flow = $organization->flows()
             ->whereKey($flowId)
             ->first();
 
@@ -408,7 +408,7 @@ class DeliveryTargetResolver
                 }
 
                 return $this->resolveTarget(
-                    tenant: $tenant,
+                    organization: $organization,
                     targetType: 'team',
                     targetId: $teamId,
                     sourcePath: $this->appendSourcePath($sourcePath, $nodePath),
@@ -424,7 +424,7 @@ class DeliveryTargetResolver
             }
 
             if (in_array($currentNode->type, ['schedule_check', 'business_hours'], true)) {
-                [$branch, $nextNode] = $this->resolveFlowScheduleBranch($tenant, $currentNode, $evaluatedAt);
+                [$branch, $nextNode] = $this->resolveFlowScheduleBranch($organization, $currentNode, $evaluatedAt);
 
                 if (! $nextNode) {
                     return $this->emptySet($sourcePath, [
@@ -452,9 +452,9 @@ class DeliveryTargetResolver
     /**
      * @param  list<array<string, mixed>>  $sourcePath
      */
-    protected function resolveTeam(Tenant $tenant, string $teamId, array $sourcePath): DeliveryTargetSet
+    protected function resolveTeam(Organization $organization, string $teamId, array $sourcePath): DeliveryTargetSet
     {
-        $team = $tenant->teams()
+        $team = $organization->teams()
             ->whereKey($teamId)
             ->where('is_active', true)
             ->first();
@@ -506,13 +506,13 @@ class DeliveryTargetResolver
     /**
      * @return array{0: string, 1: ?FlowNode}
      */
-    protected function resolveFlowScheduleBranch(Tenant $tenant, FlowNode $node, ?DateTimeInterface $evaluatedAt = null): array
+    protected function resolveFlowScheduleBranch(Organization $organization, FlowNode $node, ?DateTimeInterface $evaluatedAt = null): array
     {
         $scheduleId = (string) data_get($node->config_json, 'schedule_id', '');
         $branch = 'default';
 
         if ($scheduleId !== '') {
-            $schedule = $tenant->schedules()
+            $schedule = $organization->schedules()
                 ->whereKey($scheduleId)
                 ->where('is_active', true)
                 ->first();

@@ -5,7 +5,7 @@ namespace Tests\Unit\Console;
 use App\Events\CallDetailRecordCreated;
 use App\Models\CallDetailRecord;
 use App\Models\ProcessedCdrFile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
@@ -39,13 +39,13 @@ class IngestXmlCdrCommandTest extends TestCase
     {
         Event::fake([CallDetailRecordCreated::class]);
 
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'command.example.com',
         ]);
 
         File::put($this->directory.'/command.xml', $this->xmlFor([
             'uuid' => 'command-call',
-            'domain_name' => $tenant->domain,
+            'domain_name' => $organization->domain,
         ]));
 
         $this->artisan('cdr:ingest-xml', ['--once' => true])
@@ -53,7 +53,7 @@ class IngestXmlCdrCommandTest extends TestCase
 
         $this->assertDatabaseHas('call_detail_records', [
             'uuid' => 'command-call',
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
         $this->assertDatabaseHas('processed_cdr_files', [
             'file_name' => 'command.xml',
@@ -70,7 +70,7 @@ class IngestXmlCdrCommandTest extends TestCase
 
         File::put($this->directory.'/failed.xml', $this->xmlFor([
             'uuid' => 'failed-call',
-            'domain_name' => 'missing-tenant.example.com',
+            'domain_name' => 'missing-organization.example.com',
         ]));
 
         $this->artisan('cdr:ingest-xml', ['--once' => true])
@@ -92,14 +92,14 @@ class IngestXmlCdrCommandTest extends TestCase
     {
         Event::fake([CallDetailRecordCreated::class]);
 
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'dedupe.example.com',
         ]);
 
         $path = $this->directory.'/dedupe.xml';
         File::put($path, $this->xmlFor([
             'uuid' => 'dedupe-call',
-            'domain_name' => $tenant->domain,
+            'domain_name' => $organization->domain,
         ]));
 
         $this->artisan('cdr:ingest-xml', ['--once' => true])

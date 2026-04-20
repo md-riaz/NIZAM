@@ -134,8 +134,8 @@ export default function DidsPage() {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={did.enabled !== false ? 'success' : 'secondary'}>
-                                                {did.enabled !== false ? 'Active' : 'Disabled'}
+                                            <Badge variant={did.is_active !== false ? 'success' : 'secondary'}>
+                                                {did.is_active !== false ? 'Active' : 'Disabled'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">

@@ -7,7 +7,7 @@
 
 - [x] 2. Fix hot-path performance services
   - [x] 2.1 Refactor MetricsService to use database aggregation instead of collection-heavy fan-out
-  - [x] 2.2 Add tenant-scoped caching for wallboard and agent-state reads
+  - [x] 2.2 Add organization-scoped caching for wallboard and agent-state reads
   - [x] 2.3 Refactor CallTraceAnalyzer and call-session read paths to avoid redundant queries
 
 - [x] 3. Fix controller-service-model boundaries

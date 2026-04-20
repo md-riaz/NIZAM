@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Did;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -15,18 +15,18 @@ class DidUniquenessTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
-        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->organization = Organization::factory()->create();
+        $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
     }
 
-    public function test_cannot_create_duplicate_did_number_within_same_tenant(): void
+    public function test_cannot_create_duplicate_did_number_within_same_organization(): void
     {
-        $this->tenant->dids()->create([
+        $this->organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
             'destination_id' => Str::uuid()->toString(),
@@ -34,7 +34,7 @@ class DidUniquenessTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/dids", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/dids", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
                 'destination_id' => Str::uuid()->toString(),
@@ -45,22 +45,22 @@ class DidUniquenessTest extends TestCase
         $response->assertJsonValidationErrors(['number']);
     }
 
-    public function test_same_did_number_allowed_across_different_tenants(): void
+    public function test_same_did_number_allowed_across_different_organizations(): void
     {
-        $tenantB = Tenant::factory()->create();
-        $userB = User::factory()->create(['tenant_id' => $tenantB->id]);
+        $organizationB = Organization::factory()->create();
+        $userB = User::factory()->create(['organization_id' => $organizationB->id]);
 
-        // Create DID in tenant A
-        $this->tenant->dids()->create([
+        // Create DID in organization A
+        $this->organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
             'destination_id' => Str::uuid()->toString(),
             'is_active' => true,
         ]);
 
-        // Create same DID number in tenant B — should succeed
+        // Create same DID number in organization B — should succeed
         $response = $this->actingAs($userB, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenantB->id}/dids", [
+            ->postJson("/api/v1/organizations/{$organizationB->id}/dids", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
                 'destination_id' => Str::uuid()->toString(),
@@ -72,7 +72,7 @@ class DidUniquenessTest extends TestCase
 
     public function test_can_update_did_to_keep_same_number(): void
     {
-        $did = $this->tenant->dids()->create([
+        $did = $this->organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
             'destination_id' => Str::uuid()->toString(),
@@ -80,7 +80,7 @@ class DidUniquenessTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/v1/tenants/{$this->tenant->id}/dids/{$did->id}", [
+            ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}", [
                 'number' => '+15551234567',
                 'description' => 'Updated description',
                 'destination_type' => 'voicemail',
@@ -90,16 +90,16 @@ class DidUniquenessTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_cannot_update_did_to_existing_number_in_same_tenant(): void
+    public function test_cannot_update_did_to_existing_number_in_same_organization(): void
     {
-        $this->tenant->dids()->create([
+        $this->organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
             'destination_id' => Str::uuid()->toString(),
             'is_active' => true,
         ]);
 
-        $did2 = $this->tenant->dids()->create([
+        $did2 = $this->organization->dids()->create([
             'number' => '+15559876543',
             'destination_type' => 'extension',
             'destination_id' => Str::uuid()->toString(),
@@ -107,7 +107,7 @@ class DidUniquenessTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/v1/tenants/{$this->tenant->id}/dids/{$did2->id}", [
+            ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did2->id}", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
                 'destination_id' => Str::uuid()->toString(),

@@ -9,7 +9,7 @@ use App\Http\Requests\UpdateQueueRequest;
 use App\Http\Resources\QueueResource;
 use App\Models\Agent;
 use App\Models\Queue;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\QueueMembershipService;
 use App\Services\QueueService;
 use Illuminate\Http\JsonResponse;
@@ -23,21 +23,21 @@ class QueueController extends Controller
     ) {}
 
     /**
-     * List queues for a tenant.
+     * List queues for an organization.
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         return QueueResource::collection(
-            $tenant->queues()->withCount('members')->paginate(15)
+            $organization->queues()->withCount('members')->paginate(15)
         );
     }
 
     /**
      * Create a new queue.
      */
-    public function store(StoreQueueRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreQueueRequest $request, Organization $organization): JsonResponse
     {
-        $queue = $tenant->queues()->create(QueueData::fromArray($request->validated())->attributes);
+        $queue = $organization->queues()->create(QueueData::fromArray($request->validated())->attributes);
 
         return (new QueueResource($queue))->response()->setStatusCode(201);
     }
@@ -45,9 +45,9 @@ class QueueController extends Controller
     /**
      * Show a single queue.
      */
-    public function show(Tenant $tenant, Queue $queue): JsonResponse|QueueResource
+    public function show(Organization $organization, Queue $queue): JsonResponse|QueueResource
     {
-        if ($queue->tenant_id !== $tenant->id) {
+        if ($queue->organization_id !== $organization->id) {
             return response()->json(['message' => 'Queue not found.'], 404);
         }
 
@@ -59,9 +59,9 @@ class QueueController extends Controller
     /**
      * Update a queue.
      */
-    public function update(UpdateQueueRequest $request, Tenant $tenant, Queue $queue): JsonResponse|QueueResource
+    public function update(UpdateQueueRequest $request, Organization $organization, Queue $queue): JsonResponse|QueueResource
     {
-        if ($queue->tenant_id !== $tenant->id) {
+        if ($queue->organization_id !== $organization->id) {
             return response()->json(['message' => 'Queue not found.'], 404);
         }
 
@@ -74,9 +74,9 @@ class QueueController extends Controller
     /**
      * Delete a queue.
      */
-    public function destroy(Tenant $tenant, Queue $queue): JsonResponse
+    public function destroy(Organization $organization, Queue $queue): JsonResponse
     {
-        if ($queue->tenant_id !== $tenant->id) {
+        if ($queue->organization_id !== $organization->id) {
             return response()->json(['message' => 'Queue not found.'], 404);
         }
 
@@ -88,9 +88,9 @@ class QueueController extends Controller
     /**
      * Add a member (agent) to a queue.
      */
-    public function addMember(Request $request, Tenant $tenant, Queue $queue): JsonResponse
+    public function addMember(Request $request, Organization $organization, Queue $queue): JsonResponse
     {
-        if ($queue->tenant_id !== $tenant->id) {
+        if ($queue->organization_id !== $organization->id) {
             return response()->json(['message' => 'Queue not found.'], 404);
         }
 
@@ -100,14 +100,14 @@ class QueueController extends Controller
         ]);
 
         $agent = $this->queueMembershipService->addMember(
-            $tenant,
+            $organization,
             $queue,
             $payload['agent_id'],
             $payload['priority'] ?? 0,
         );
 
         if (! $agent) {
-            $exists = $tenant->agents()->whereKey($payload['agent_id'])->exists();
+            $exists = $organization->agents()->whereKey($payload['agent_id'])->exists();
 
             return response()->json([
                 'message' => $exists
@@ -122,13 +122,13 @@ class QueueController extends Controller
     /**
      * Remove a member (agent) from a queue.
      */
-    public function removeMember(Tenant $tenant, Queue $queue, Agent $agent): JsonResponse
+    public function removeMember(Organization $organization, Queue $queue, Agent $agent): JsonResponse
     {
-        if ($queue->tenant_id !== $tenant->id) {
+        if ($queue->organization_id !== $organization->id) {
             return response()->json(['message' => 'Queue not found.'], 404);
         }
 
-        if ($agent->tenant_id !== $tenant->id) {
+        if ($agent->organization_id !== $organization->id) {
             return response()->json(['message' => 'Agent not found.'], 404);
         }
 
@@ -140,9 +140,9 @@ class QueueController extends Controller
     /**
      * List members of a queue.
      */
-    public function members(Tenant $tenant, Queue $queue): JsonResponse
+    public function members(Organization $organization, Queue $queue): JsonResponse
     {
-        if ($queue->tenant_id !== $tenant->id) {
+        if ($queue->organization_id !== $organization->id) {
             return response()->json(['message' => 'Queue not found.'], 404);
         }
 

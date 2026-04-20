@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,8 +16,8 @@ class TokenManagementTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $tenant = Tenant::factory()->create();
-        $this->user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $this->user = User::factory()->create(['organization_id' => $organization->id]);
     }
 
     public function test_can_list_tokens(): void
@@ -56,7 +56,7 @@ class TokenManagementTest extends TestCase
 
     public function test_cannot_revoke_another_users_token(): void
     {
-        $otherUser = User::factory()->create(['tenant_id' => $this->user->tenant_id]);
+        $otherUser = User::factory()->create(['organization_id' => $this->user->organization_id]);
         $token = $otherUser->createToken('other-token');
         $tokenId = $token->accessToken->id;
 

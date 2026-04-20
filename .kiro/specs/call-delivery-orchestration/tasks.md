@@ -1,9 +1,9 @@
 # Tasks: call-delivery-orchestration
 
 - [x] 1. Create runtime endpoint binding persistence and APIs
-  - [x] 1.1 Add endpoint binding data model, migration, and relationships for tenant-scoped runtime human delivery endpoints separate from DeviceProfile
-  - [x] 1.2 Add tenant-scoped mobile device API routes, controller actions, requests, and resources for register, update, delete, refresh-token, heartbeat, and capabilities
-  - [x] 1.3 Add token rotation, endpoint enablement, and runtime capability validation rules with coverage for tenant isolation
+  - [x] 1.1 Add endpoint binding data model, migration, and relationships for organization-scoped runtime human delivery endpoints separate from DeviceProfile
+  - [x] 1.2 Add organization-scoped mobile device API routes, controller actions, requests, and resources for register, update, delete, refresh-token, heartbeat, and capabilities
+  - [x] 1.3 Add token rotation, endpoint enablement, and runtime capability validation rules with coverage for organization isolation
 
 - [x] 2. Add delivery attempt persistence on top of CallSession
   - [x] 2.1 Add CallDeliveryAttempt model, migration, statuses, indexes, and CallSession relationships

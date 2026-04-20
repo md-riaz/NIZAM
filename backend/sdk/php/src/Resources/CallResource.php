@@ -6,7 +6,7 @@ class CallResource extends BaseResource
 {
     public function originate(string $extension, string $destination): array
     {
-        return $this->client->post($this->tenantPath('calls/originate'), [
+        return $this->client->post($this->organizationPath('calls/originate'), [
             'extension' => $extension,
             'destination' => $destination,
         ]);
@@ -14,19 +14,19 @@ class CallResource extends BaseResource
 
     public function status(array $query = []): array
     {
-        return $this->client->get($this->tenantPath('calls/status'), $query);
+        return $this->client->get($this->organizationPath('calls/status'), $query);
     }
 
     public function hangup(string $callUuid): array
     {
-        return $this->client->post($this->tenantPath('calls/hangup'), [
+        return $this->client->post($this->organizationPath('calls/hangup'), [
             'call_uuid' => $callUuid,
         ]);
     }
 
     public function transfer(string $callUuid, string $destination): array
     {
-        return $this->client->post($this->tenantPath('calls/transfer'), [
+        return $this->client->post($this->organizationPath('calls/transfer'), [
             'call_uuid' => $callUuid,
             'destination' => $destination,
         ]);
@@ -34,14 +34,14 @@ class CallResource extends BaseResource
 
     public function hold(string $callUuid): array
     {
-        return $this->client->post($this->tenantPath('calls/hold'), [
+        return $this->client->post($this->organizationPath('calls/hold'), [
             'call_uuid' => $callUuid,
         ]);
     }
 
     public function toggleRecording(string $callUuid): array
     {
-        return $this->client->post($this->tenantPath('calls/recording'), [
+        return $this->client->post($this->organizationPath('calls/recording'), [
             'call_uuid' => $callUuid,
         ]);
     }

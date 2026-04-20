@@ -35,7 +35,7 @@ class RingTeamNodeHandler implements NodeHandler
 
         $timeout = (int) data_get($node, 'config.timeout', 20);
         $team = $teamId
-            ? Team::query()->where('tenant_id', $context->tenantId())->whereKey($teamId)->where('is_active', true)->first()
+            ? Team::query()->where('organization_id', $context->organizationId())->whereKey($teamId)->where('is_active', true)->first()
             : null;
         $members = $team ? $this->teamRoutingService->resolveMembers($team) : [];
 

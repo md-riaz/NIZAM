@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\CallRoutingPolicy;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Carbon\Carbon;
 
 class PolicyEvaluator
@@ -24,13 +24,13 @@ class PolicyEvaluator
      */
     public function evaluatePolicy(CallRoutingPolicy $policy, array $context = []): array
     {
-        // Check tenant suspension
-        if (isset($context['tenant_id'])) {
-            $tenant = Tenant::find($context['tenant_id']);
-            if ($tenant && ! $tenant->isOperational()) {
+        // Check organization suspension
+        if (isset($context['organization_id'])) {
+            $organization = Organization::find($context['organization_id']);
+            if ($organization && ! $organization->isOperational()) {
                 return [
                     'decision' => self::DECISION_REJECT,
-                    'reason' => 'Tenant is suspended or terminated.',
+                    'reason' => 'Organization is suspended or terminated.',
                 ];
             }
         }

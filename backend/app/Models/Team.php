@@ -12,7 +12,7 @@ class Team extends Model
     use HasUuids;
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'schedule_id',
         'holiday_calendar_id',
         'name',
@@ -29,9 +29,9 @@ class Team extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function schedule(): BelongsTo
@@ -46,12 +46,12 @@ class Team extends Model
 
     public function effectiveSchedule(): ?Schedule
     {
-        return $this->schedule ?: $this->tenant?->defaultSchedule;
+        return $this->schedule ?: $this->organization?->defaultSchedule;
     }
 
     public function effectiveHolidayCalendar(): ?HolidayCalendar
     {
-        return $this->holidayCalendar ?: $this->effectiveSchedule()?->holidayCalendar ?: $this->tenant?->defaultHolidayCalendar;
+        return $this->holidayCalendar ?: $this->effectiveSchedule()?->holidayCalendar ?: $this->organization?->defaultHolidayCalendar;
     }
 
     public function members(): HasMany

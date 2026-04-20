@@ -4,7 +4,7 @@ namespace Tests\Unit\Modules;
 
 use App\Models\CallDetailRecord;
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Modules\Media\MediaArchiveModule;
 use App\Services\Storage\LocalFileSystemDriver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,9 +19,9 @@ class MediaArchiveModuleTest extends TestCase
     {
         Storage::fake('recordings');
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $cdr = CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'uuid' => 'call-archive-123',
             'recording_path' => storage_path('framework/testing/media-archive/call-archive-123.wav'),
             'metadata' => ['source' => 'test'],
@@ -34,7 +34,7 @@ class MediaArchiveModuleTest extends TestCase
         $module->register();
 
         $recording = $module->archiveFromCallEnd([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => $cdr->uuid,
             'recording_path' => $cdr->recording_path,
             'direction' => 'inbound',
@@ -64,7 +64,7 @@ class MediaArchiveModuleTest extends TestCase
     {
         Storage::fake('recordings');
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $sourcePath = storage_path('framework/testing/media-archive/windows-path.wav');
         @mkdir(dirname($sourcePath), 0777, true);
         file_put_contents($sourcePath, 'archived-audio');
@@ -73,7 +73,7 @@ class MediaArchiveModuleTest extends TestCase
         $module->register();
 
         $recording = $module->archiveFromCallEnd([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'call-archive-paths',
             'recording_path' => $sourcePath,
             'ended_at' => '2026-04-12T10:15:00+00:00',
@@ -86,19 +86,19 @@ class MediaArchiveModuleTest extends TestCase
         $this->assertInstanceOf(Recording::class, $recording);
         $this->assertSame($recording->file_path, $recording->archive_metadata['storage_path']);
         $this->assertSame($recording->file_path, $recording->archive_metadata['storage_reference']);
-        $this->assertSame('archive/recordings/'.$tenant->id.'/'.now()->format('Y/m/d').'/call-archive-paths.wav', $recording->storage_reference);
+        $this->assertSame('archive/recordings/'.$organization->id.'/'.now()->format('Y/m/d').'/call-archive-paths.wav', $recording->storage_reference);
     }
 
     public function test_it_returns_null_when_source_file_is_missing(): void
     {
         Storage::fake('recordings');
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $module = new MediaArchiveModule(new LocalFileSystemDriver(Storage::disk('recordings')));
         $module->register();
 
         $recording = $module->archiveFromCallEnd([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'missing-call',
             'recording_path' => storage_path('framework/testing/media-archive/missing.wav'),
         ]);

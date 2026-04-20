@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Queue;
 use App\Models\QueueEntry;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -18,7 +18,7 @@ class QueueEntryFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'queue_id' => Queue::factory(),
             'call_uuid' => (string) Str::uuid(),
             'caller_id_number' => fake()->e164PhoneNumber(),

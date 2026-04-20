@@ -21,7 +21,7 @@ return [
     | - "interpreted": PHP-based FlowExecutionService (v0, legacy)
     | - "compiled": FreeSWITCH dialplan + Lua helpers (v1, target)
     |
-    | Can be overridden per-flow or per-tenant via flow_version.runtime_mode.
+    | Can be overridden per-flow or per-organization via flow_version.runtime_mode.
     | Global default here allows gradual migration.
     |
     */
@@ -96,7 +96,7 @@ return [
     | enabled flags because they live inside app/Modules instead of nwidart.
     |
     | Then restart the application process for the change to take effect.
-    | Core functionality (tenants, auth, extensions, event bus, dialplan
+    | Core functionality (organizations, auth, extensions, event bus, dialplan
     | compiler, policy engine, FreeSWITCH adapter) is always active.
     |
     */
@@ -148,7 +148,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | WebRTC settings are configured at the application level (like FusionPBX
-    | super admin settings). All tenants share the same WebRTC infrastructure.
+    | super admin settings). All organizations share the same WebRTC infrastructure.
     |
     | STUN servers help WebRTC clients discover their public IP addresses.
     | TURN servers relay media when direct peer-to-peer connection fails.

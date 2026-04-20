@@ -70,7 +70,7 @@ curl -s http://localhost/api/health | jq .
 - [ ] Check `/var/log/freeswitch/freeswitch.log` for crash reason
 - [ ] Review core dump if available: `ls /tmp/cores/`
 - [ ] Check if configuration changes preceded the crash
-- [ ] Verify all tenants' dialplans are loaded: `fs_cli -x "xml_locate directory"`
+- [ ] Verify all organizations' dialplans are loaded: `fs_cli -x "xml_locate directory"`
 - [ ] Run smoke tests on call routing
 - [ ] Update incident log
 

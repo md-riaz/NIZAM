@@ -5,7 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\Alert;
 use App\Models\AlertPolicy;
 use App\Models\AnalyticsEvent;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\AnomalyDetectorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -24,10 +24,10 @@ class AnomalyDetectorServiceTest extends TestCase
 
     public function test_detect_abandon_rate_spike(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         $policy = AlertPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'metric' => AlertPolicy::METRIC_ABANDON_RATE,
             'condition' => AlertPolicy::CONDITION_GT,
             'threshold' => 20,
@@ -37,16 +37,16 @@ class AnomalyDetectorServiceTest extends TestCase
         // Create events with high abandon rate (4 out of 5 = 80%)
         for ($i = 0; $i < 4; $i++) {
             AnalyticsEvent::factory()->create([
-                'tenant_id' => $tenant->id,
+                'organization_id' => $organization->id,
                 'abandon' => true,
             ]);
         }
         AnalyticsEvent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'abandon' => false,
         ]);
 
-        $alerts = $this->service->detectAnomalies($tenant->id);
+        $alerts = $this->service->detectAnomalies($organization->id);
 
         $this->assertCount(1, $alerts);
         $this->assertEquals(AlertPolicy::METRIC_ABANDON_RATE, $alerts->first()->metric);
@@ -55,10 +55,10 @@ class AnomalyDetectorServiceTest extends TestCase
 
     public function test_no_alert_when_below_threshold(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         AlertPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'metric' => AlertPolicy::METRIC_ABANDON_RATE,
             'condition' => AlertPolicy::CONDITION_GT,
             'threshold' => 50,
@@ -67,27 +67,27 @@ class AnomalyDetectorServiceTest extends TestCase
 
         // Create events with low abandon rate (1 out of 10 = 10%)
         AnalyticsEvent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'abandon' => true,
         ]);
         for ($i = 0; $i < 9; $i++) {
             AnalyticsEvent::factory()->create([
-                'tenant_id' => $tenant->id,
+                'organization_id' => $organization->id,
                 'abandon' => false,
             ]);
         }
 
-        $alerts = $this->service->detectAnomalies($tenant->id);
+        $alerts = $this->service->detectAnomalies($organization->id);
 
         $this->assertCount(0, $alerts);
     }
 
     public function test_cooldown_prevents_duplicate_alerts(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         $policy = AlertPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'metric' => AlertPolicy::METRIC_ABANDON_RATE,
             'condition' => AlertPolicy::CONDITION_GT,
             'threshold' => 20,
@@ -97,21 +97,21 @@ class AnomalyDetectorServiceTest extends TestCase
         ]);
 
         AnalyticsEvent::factory()->count(5)->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'abandon' => true,
         ]);
 
-        $alerts = $this->service->detectAnomalies($tenant->id);
+        $alerts = $this->service->detectAnomalies($organization->id);
 
         $this->assertCount(0, $alerts);
     }
 
     public function test_inactive_policies_skipped(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         AlertPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'metric' => AlertPolicy::METRIC_ABANDON_RATE,
             'condition' => AlertPolicy::CONDITION_GT,
             'threshold' => 0,
@@ -119,22 +119,22 @@ class AnomalyDetectorServiceTest extends TestCase
         ]);
 
         AnalyticsEvent::factory()->count(5)->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'abandon' => true,
         ]);
 
-        $alerts = $this->service->detectAnomalies($tenant->id);
+        $alerts = $this->service->detectAnomalies($organization->id);
 
         $this->assertCount(0, $alerts);
     }
 
     public function test_severity_determination(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         // Create a policy with threshold 20, value will be 100% (critical deviation)
         $policy = AlertPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'metric' => AlertPolicy::METRIC_ABANDON_RATE,
             'condition' => AlertPolicy::CONDITION_GT,
             'threshold' => 20,
@@ -142,11 +142,11 @@ class AnomalyDetectorServiceTest extends TestCase
         ]);
 
         AnalyticsEvent::factory()->count(5)->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'abandon' => true,
         ]);
 
-        $alerts = $this->service->detectAnomalies($tenant->id);
+        $alerts = $this->service->detectAnomalies($organization->id);
 
         $this->assertCount(1, $alerts);
         $this->assertEquals(Alert::SEVERITY_CRITICAL, $alerts->first()->severity);
@@ -154,10 +154,10 @@ class AnomalyDetectorServiceTest extends TestCase
 
     public function test_alert_message_is_descriptive(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         $policy = AlertPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'High Abandon Rate',
             'metric' => AlertPolicy::METRIC_ABANDON_RATE,
             'condition' => AlertPolicy::CONDITION_GT,
@@ -166,7 +166,7 @@ class AnomalyDetectorServiceTest extends TestCase
         ]);
 
         AnalyticsEvent::factory()->count(5)->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'abandon' => true,
         ]);
 
@@ -179,10 +179,10 @@ class AnomalyDetectorServiceTest extends TestCase
 
     public function test_sla_drop_detection(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         $policy = AlertPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'metric' => AlertPolicy::METRIC_SLA_DROP,
             'condition' => AlertPolicy::CONDITION_LT,
             'threshold' => 80,
@@ -191,7 +191,7 @@ class AnomalyDetectorServiceTest extends TestCase
 
         // Create queue metrics with low SLA
         \App\Models\QueueMetric::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'service_level' => 50,
         ]);
 

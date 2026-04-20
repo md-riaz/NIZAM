@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\CallEventLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,19 +14,19 @@ class CallEventApiTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
-        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->organization = Organization::factory()->create();
+        $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
     }
 
-    public function test_can_list_call_events_for_tenant(): void
+    public function test_can_list_call_events_for_organization(): void
     {
         CallEventLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'call_uuid' => 'test-uuid-1',
             'event_type' => 'started',
             'payload' => ['caller_id_number' => '1001'],
@@ -34,7 +34,7 @@ class CallEventApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/call-events");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['call_uuid' => 'test-uuid-1']);
@@ -43,14 +43,14 @@ class CallEventApiTest extends TestCase
     public function test_can_filter_events_by_call_uuid(): void
     {
         CallEventLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'call_uuid' => 'uuid-a',
             'event_type' => 'started',
             'payload' => [],
             'occurred_at' => now(),
         ]);
         CallEventLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'call_uuid' => 'uuid-b',
             'event_type' => 'started',
             'payload' => [],
@@ -58,7 +58,7 @@ class CallEventApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events?call_uuid=uuid-a");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/call-events?call_uuid=uuid-a");
 
         $response->assertStatus(200);
         $data = $response->json('data');
@@ -72,7 +72,7 @@ class CallEventApiTest extends TestCase
 
         foreach (['started', 'answered', 'bridge', 'hangup'] as $type) {
             CallEventLog::create([
-                'tenant_id' => $this->tenant->id,
+                'organization_id' => $this->organization->id,
                 'call_uuid' => $uuid,
                 'event_type' => $type,
                 'payload' => ['test' => true],
@@ -81,7 +81,7 @@ class CallEventApiTest extends TestCase
         }
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/{$uuid}/trace");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/call-events/{$uuid}/trace");
 
         $response->assertStatus(200);
         $response->assertJsonPath('call_uuid', $uuid);
@@ -91,24 +91,24 @@ class CallEventApiTest extends TestCase
     public function test_trace_returns_404_for_unknown_uuid(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events/nonexistent-uuid/trace");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/call-events/nonexistent-uuid/trace");
 
         $response->assertStatus(404);
     }
 
-    public function test_call_events_are_tenant_scoped(): void
+    public function test_call_events_are_organization_scoped(): void
     {
-        $otherTenant = Tenant::factory()->create();
+        $otherOrganization = Organization::factory()->create();
         CallEventLog::create([
-            'tenant_id' => $otherTenant->id,
-            'call_uuid' => 'other-tenant-uuid',
+            'organization_id' => $otherOrganization->id,
+            'call_uuid' => 'other-organization-uuid',
             'event_type' => 'started',
             'payload' => [],
             'occurred_at' => now(),
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/call-events?call_uuid=other-tenant-uuid");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/call-events?call_uuid=other-organization-uuid");
 
         $response->assertStatus(200);
         $this->assertCount(0, $response->json('data'));

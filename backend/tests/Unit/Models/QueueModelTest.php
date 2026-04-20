@@ -5,7 +5,7 @@ namespace Tests\Unit\Models;
 use App\Models\Agent;
 use App\Models\Queue;
 use App\Models\QueueEntry;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -14,9 +14,9 @@ class QueueModelTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createTenant(): Tenant
+    private function createOrganization(): Organization
     {
-        return Tenant::create([
+        return Organization::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
@@ -25,10 +25,10 @@ class QueueModelTest extends TestCase
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support Queue',
             'strategy' => Queue::STRATEGY_ROUND_ROBIN,
             'max_wait_time' => 120,
@@ -43,16 +43,16 @@ class QueueModelTest extends TestCase
         ]);
     }
 
-    public function test_belongs_to_tenant(): void
+    public function test_belongs_to_organization(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support Queue',
         ]);
 
-        $this->assertEquals($tenant->id, $queue->tenant->id);
+        $this->assertEquals($organization->id, $queue->organization->id);
     }
 
     public function test_has_valid_strategy_constants(): void
@@ -71,15 +71,15 @@ class QueueModelTest extends TestCase
 
     public function test_has_entries_relationship(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support Queue',
         ]);
 
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'join_time' => now(),
@@ -90,15 +90,15 @@ class QueueModelTest extends TestCase
 
     public function test_waiting_entries_scope(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support Queue',
         ]);
 
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_WAITING,
@@ -106,7 +106,7 @@ class QueueModelTest extends TestCase
         ]);
 
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -118,14 +118,14 @@ class QueueModelTest extends TestCase
 
     public function test_has_members_relationship(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support Queue',
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'John',
@@ -133,7 +133,7 @@ class QueueModelTest extends TestCase
         ]);
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent 1',
         ]);

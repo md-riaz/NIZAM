@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +19,7 @@ class ExtensionFactory extends Factory
         $lastName = fake()->lastName();
 
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'user_id' => null,
             'extension' => (string) fake()->numberBetween(1000, 9999),
             'password' => fake()->password(8, 20),

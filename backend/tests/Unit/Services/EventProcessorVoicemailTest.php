@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Modules\ModuleRegistry;
 use App\Services\EventProcessor;
 use App\Services\WebhookDispatcher;
@@ -25,7 +25,7 @@ class EventProcessorVoicemailTest extends TestCase
 
     public function test_processes_voicemail_received_through_module_hook_and_webhook(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
@@ -34,7 +34,7 @@ class EventProcessorVoicemailTest extends TestCase
         $dispatcher->expects($this->once())
             ->method('dispatch')
             ->with(
-                $tenant->id,
+                $organization->id,
                 'voicemail.received',
                 $this->callback(function (array $payload): bool {
                     return ($payload['event_type'] ?? null) === 'voicemail.received'
@@ -49,8 +49,8 @@ class EventProcessorVoicemailTest extends TestCase
             ->once()
             ->with(
                 'voicemail.received',
-                Mockery::on(function (array $payload) use ($tenant): bool {
-                    return ($payload['tenant_id'] ?? null) === $tenant->id
+                Mockery::on(function (array $payload) use ($organization): bool {
+                    return ($payload['organization_id'] ?? null) === $organization->id
                         && ($payload['metadata']['user'] ?? null) === '1001';
                 })
             );
@@ -69,7 +69,7 @@ class EventProcessorVoicemailTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('call_events', [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'event_type' => 'voicemail.received',
             'call_uuid' => '1001',
         ]);

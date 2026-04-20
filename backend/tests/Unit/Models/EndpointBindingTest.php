@@ -5,7 +5,7 @@ namespace Tests\Unit\Models;
 use App\Models\Agent;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -34,25 +34,25 @@ class EndpointBindingTest extends TestCase
         $this->assertSame(['push' => 'token'], $binding->metadata);
     }
 
-    public function test_endpoint_binding_relates_to_tenant_extension_and_agent(): void
+    public function test_endpoint_binding_relates_to_organization_extension_and_agent(): void
     {
-        $tenant = Tenant::factory()->create();
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $agent = Agent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
         ]);
 
         $binding = EndpointBinding::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'agent_id' => $agent->id,
         ]);
 
-        $this->assertTrue($binding->tenant->is($tenant));
+        $this->assertTrue($binding->organization->is($organization));
         $this->assertTrue($binding->extension->is($extension));
         $this->assertTrue($binding->agent->is($agent));
-        $this->assertTrue($tenant->endpointBindings()->first()->is($binding));
+        $this->assertTrue($organization->endpointBindings()->first()->is($binding));
         $this->assertTrue($extension->endpointBindings()->first()->is($binding));
         $this->assertTrue($agent->endpointBindings()->first()->is($binding));
     }

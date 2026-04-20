@@ -13,12 +13,12 @@ use Illuminate\Support\Facades\DB;
 
 class WallboardProjectionService
 {
-    public function getWallboardData(string $tenantId): array
+    public function getWallboardData(string $organizationId): array
     {
-        $this->ensureTenantCoverage($tenantId);
+        $this->ensureOrganizationCoverage($organizationId);
 
         $agents = WallboardAgentProjection::query()
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -29,7 +29,7 @@ class WallboardProjectionService
 
         return [
             'queues' => WallboardQueueProjection::query()
-                ->where('tenant_id', $tenantId)
+                ->where('organization_id', $organizationId)
                 ->orderBy('queue_name')
                 ->get([
                     'queue_id',
@@ -95,7 +95,7 @@ class WallboardProjectionService
         $livePeriodStart = now()->subHour();
 
         $metric = QueueMetric::query()
-            ->where('tenant_id', $queue->tenant_id)
+            ->where('organization_id', $queue->organization_id)
             ->where('queue_id', $queue->id)
             ->where('period', QueueMetric::PERIOD_HOURLY)
             ->where('period_start', $currentHourStart)
@@ -139,7 +139,7 @@ class WallboardProjectionService
 
         WallboardQueueProjection::query()->updateOrCreate(
             [
-                'tenant_id' => $queue->tenant_id,
+                'organization_id' => $queue->organization_id,
                 'queue_id' => $queue->id,
             ],
             [
@@ -176,7 +176,7 @@ class WallboardProjectionService
 
         WallboardAgentProjection::query()->updateOrCreate(
             [
-                'tenant_id' => $agent->tenant_id,
+                'organization_id' => $agent->organization_id,
                 'agent_id' => $agent->id,
             ],
             [
@@ -212,33 +212,33 @@ class WallboardProjectionService
         }
     }
 
-    private function ensureTenantCoverage(string $tenantId): void
+    private function ensureOrganizationCoverage(string $organizationId): void
     {
         $activeQueueIds = Queue::query()
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->where('is_active', true)
             ->pluck('id');
 
         WallboardQueueProjection::query()
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->when($activeQueueIds->isNotEmpty(), fn ($query) => $query->whereNotIn('queue_id', $activeQueueIds), fn ($query) => $query)
             ->delete();
 
-        foreach ($activeQueueIds->diff(WallboardQueueProjection::query()->where('tenant_id', $tenantId)->pluck('queue_id')) as $queueId) {
+        foreach ($activeQueueIds->diff(WallboardQueueProjection::query()->where('organization_id', $organizationId)->pluck('queue_id')) as $queueId) {
             $this->refreshQueueProjection($queueId);
         }
 
         $agentIds = Agent::query()
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->where('is_active', true)
             ->pluck('id');
 
         WallboardAgentProjection::query()
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->when($agentIds->isNotEmpty(), fn ($query) => $query->whereNotIn('agent_id', $agentIds), fn ($query) => $query)
             ->delete();
 
-        foreach ($agentIds->diff(WallboardAgentProjection::query()->where('tenant_id', $tenantId)->pluck('agent_id')) as $agentId) {
+        foreach ($agentIds->diff(WallboardAgentProjection::query()->where('organization_id', $organizationId)->pluck('agent_id')) as $agentId) {
             $this->refreshAgentProjection($agentId);
         }
     }

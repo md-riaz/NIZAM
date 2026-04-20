@@ -11,7 +11,7 @@ class IvrResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'name' => $this->name,
             'greet_long' => $this->greet_long,
             'greet_short' => $this->greet_short,

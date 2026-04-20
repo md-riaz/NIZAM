@@ -61,7 +61,7 @@ class DispatchCallDeliveryPush implements ShouldQueue
             return;
         }
 
-        $binding = EndpointBinding::with('tenant', 'extension')->find($this->endpointBindingId);
+        $binding = EndpointBinding::with('organization', 'extension')->find($this->endpointBindingId);
 
         if (! $binding instanceof EndpointBinding) {
             $this->persistResult($log, PushDeliveryResult::failed('endpoint_binding_not_found'));

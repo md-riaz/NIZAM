@@ -63,7 +63,7 @@ class MessagingModuleTest extends TestCase
 
         $router = app(SmsRouter::class);
 
-        $this->assertInstanceOf(SignalWireSmsAdapter::class, $router->adapterFor($router->route(new \App\Services\Messaging\SmsSendRequest('tenant.example.com', '+1', '+2', 'hello'), 'signalwire')));
-        $this->assertInstanceOf(TelnyxSmsAdapter::class, $router->adapterFor($router->route(new \App\Services\Messaging\SmsSendRequest('tenant.example.com', '+1', '+2', 'hello'), 'telnyx')));
+        $this->assertInstanceOf(SignalWireSmsAdapter::class, $router->adapterFor($router->route(new \App\Services\Messaging\SmsSendRequest('organization.example.com', '+1', '+2', 'hello'), 'signalwire')));
+        $this->assertInstanceOf(TelnyxSmsAdapter::class, $router->adapterFor($router->route(new \App\Services\Messaging\SmsSendRequest('organization.example.com', '+1', '+2', 'hello'), 'telnyx')));
     }
 }

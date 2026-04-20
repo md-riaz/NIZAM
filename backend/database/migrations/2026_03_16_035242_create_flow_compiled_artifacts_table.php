@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('flow_compiled_artifacts', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('flow_version_id')->constrained()->cascadeOnDelete();
             $table->string('artifact_type')->default('dialplan_xml');
             $table->longText('content');

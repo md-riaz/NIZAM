@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,8 +13,8 @@ class GatewaySchemaApiTest extends TestCase
 
     public function test_gateway_can_store_extended_carrier_fields(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
 
         $payload = [
             'name' => 'Carrier A',
@@ -37,7 +37,7 @@ class GatewaySchemaApiTest extends TestCase
         ];
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/gateways", $payload);
+            ->postJson("/api/v1/organizations/{$organization->id}/gateways", $payload);
 
         $response->assertCreated()
             ->assertJsonPath('data.proxy', 'proxy.carrier.test:5060')

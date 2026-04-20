@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('tenants', function (Blueprint $table) {
+        Schema::table('organizations', function (Blueprint $table) {
             $table->foreignUuid('default_schedule_id')
                 ->nullable()
                 ->after('domain')
@@ -25,7 +25,7 @@ return new class extends Migration
         Schema::table('teams', function (Blueprint $table) {
             $table->foreignUuid('schedule_id')
                 ->nullable()
-                ->after('tenant_id')
+                ->after('organization_id')
                 ->constrained('schedules')
                 ->nullOnDelete();
 
@@ -39,7 +39,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->foreignUuid('schedule_id')
                 ->nullable()
-                ->after('tenant_id')
+                ->after('organization_id')
                 ->constrained('schedules')
                 ->nullOnDelete();
 
@@ -65,7 +65,7 @@ return new class extends Migration
             $table->dropColumn(['schedule_id', 'holiday_calendar_id']);
         });
 
-        Schema::table('tenants', function (Blueprint $table) {
+        Schema::table('organizations', function (Blueprint $table) {
             $table->dropForeign(['default_schedule_id']);
             $table->dropForeign(['default_holiday_calendar_id']);
             $table->dropColumn(['default_schedule_id', 'default_holiday_calendar_id']);

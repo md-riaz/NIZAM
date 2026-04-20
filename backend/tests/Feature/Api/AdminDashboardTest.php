@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,9 +15,9 @@ class AdminDashboardTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'admin']);
 
-        Tenant::factory()->create(['status' => Tenant::STATUS_ACTIVE]);
-        Tenant::factory()->create(['status' => Tenant::STATUS_TRIAL]);
-        Tenant::factory()->suspended()->create();
+        Organization::factory()->create(['status' => Organization::STATUS_ACTIVE]);
+        Organization::factory()->create(['status' => Organization::STATUS_TRIAL]);
+        Organization::factory()->suspended()->create();
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/v1/admin/dashboard');
@@ -25,25 +25,25 @@ class AdminDashboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonStructure([
             'data' => [
-                'total_tenants',
-                'tenants_by_status' => ['trial', 'active', 'suspended', 'terminated'],
+                'total_organizations',
+                'organizations_by_status' => ['trial', 'active', 'suspended', 'terminated'],
                 'total_extensions',
                 'total_active_extensions',
                 'total_dids',
                 'total_recordings_size',
-                'tenants',
+                'organizations',
             ],
         ]);
-        $response->assertJsonPath('data.total_tenants', 3);
-        $response->assertJsonPath('data.tenants_by_status.active', 1);
-        $response->assertJsonPath('data.tenants_by_status.trial', 1);
-        $response->assertJsonPath('data.tenants_by_status.suspended', 1);
+        $response->assertJsonPath('data.total_organizations', 3);
+        $response->assertJsonPath('data.organizations_by_status.active', 1);
+        $response->assertJsonPath('data.organizations_by_status.trial', 1);
+        $response->assertJsonPath('data.organizations_by_status.suspended', 1);
     }
 
     public function test_non_admin_cannot_access_dashboard(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['role' => 'user', 'tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['role' => 'user', 'organization_id' => $organization->id]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/v1/admin/dashboard');
@@ -58,12 +58,12 @@ class AdminDashboardTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function test_dashboard_includes_per_tenant_stats(): void
+    public function test_dashboard_includes_per_organization_stats(): void
     {
         $user = User::factory()->create(['role' => 'admin']);
 
-        $tenant = Tenant::factory()->create(['status' => Tenant::STATUS_ACTIVE]);
-        $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['status' => Organization::STATUS_ACTIVE]);
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,

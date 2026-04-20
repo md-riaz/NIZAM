@@ -10,18 +10,18 @@ use App\Models\Gateway;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API controller for managing SIP gateways globally across all tenants.
+ * API controller for managing SIP gateways globally across all organizations.
  */
 class AdminGatewayController extends Controller
 {
     /**
-     * List all gateways across all tenants.
+     * List all gateways across all organizations.
      */
     public function index()
     {
         $this->authorize('viewAny', Gateway::class);
 
-        return GatewayResource::collection(Gateway::with('tenant')->paginate(20));
+        return GatewayResource::collection(Gateway::with('organization')->paginate(20));
     }
 
     /**
@@ -31,7 +31,7 @@ class AdminGatewayController extends Controller
     {
         $this->authorize('create', Gateway::class);
 
-        // Required logic requires tenant_id from the JSON payload.
+        // Required logic requires organization_id from the JSON payload.
         $gateway = Gateway::create($request->validated());
 
         return (new GatewayResource($gateway))->response()->setStatusCode(201);

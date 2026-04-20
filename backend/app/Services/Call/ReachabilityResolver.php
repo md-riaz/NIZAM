@@ -3,7 +3,7 @@
 namespace App\Services\Call;
 
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Carbon\CarbonImmutable;
 
 class ReachabilityResolver
@@ -15,9 +15,9 @@ class ReachabilityResolver
 
     public function resolve(CallSession $callSession, EndpointCandidateSet $candidateSet): ReachabilityDecisionSet
     {
-        $tenant = $callSession->relationLoaded('tenant') && $callSession->tenant instanceof Tenant
-            ? $callSession->tenant
-            : $callSession->tenant()->firstOrFail();
+        $organization = $callSession->relationLoaded('organization') && $callSession->organization instanceof Organization
+            ? $callSession->organization
+            : $callSession->organization()->firstOrFail();
         $now = CarbonImmutable::now();
         $cacheTtlSeconds = max(1, (int) config('call_delivery.reachability.cache_ttl_seconds', 30));
         $liveFallbackRequired = false;
@@ -29,7 +29,7 @@ class ReachabilityResolver
                 continue;
             }
 
-            $snapshot = $this->cache->snapshotFor($tenant->id, $candidate, $cacheTtlSeconds);
+            $snapshot = $this->cache->snapshotFor($organization->id, $candidate, $cacheTtlSeconds);
 
             if ($snapshot !== null) {
                 $cachedSnapshots[$candidate->endpointBindingId] = $snapshot;
@@ -47,12 +47,12 @@ class ReachabilityResolver
 
         if ($sipCandidatesMissingFreshState !== []) {
             $liveFallbackUsed = true;
-            $liveVisibility = $this->liveRegistrationVisibility->forTenant($tenant);
+            $liveVisibility = $this->liveRegistrationVisibility->forOrganization($organization);
             $liveFallbackUnavailable = $liveVisibility === null;
             $liveRegistrations = $liveVisibility ?? [];
 
             if (! $liveFallbackUnavailable) {
-                $this->cache->rememberCandidateSnapshots($tenant->id, $sipCandidatesMissingFreshState, $liveRegistrations, $now);
+                $this->cache->rememberCandidateSnapshots($organization->id, $sipCandidatesMissingFreshState, $liveRegistrations, $now);
             }
         }
 

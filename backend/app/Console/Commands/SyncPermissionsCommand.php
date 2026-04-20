@@ -18,10 +18,10 @@ class SyncPermissionsCommand extends Command
      * @var array<string, string>
      */
     protected array $corePermissions = [
-        'tenants.view' => 'View tenants',
-        'tenants.create' => 'Create tenants',
-        'tenants.update' => 'Update tenants',
-        'tenants.delete' => 'Delete tenants',
+        'organizations.view' => 'View organizations',
+        'organizations.create' => 'Create organizations',
+        'organizations.update' => 'Update organizations',
+        'organizations.delete' => 'Delete organizations',
         'extensions.view' => 'View extensions',
         'extensions.create' => 'Create extensions',
         'extensions.update' => 'Update extensions',

@@ -13,9 +13,9 @@
 - `app/Http/Controllers/Api/` — API controllers; most product behavior is exposed here
 - `app/Http/Requests/` — validation layer for incoming API requests
 - `app/Http/Resources/` — response shaping and API serialization
-- `app/Models/` — Eloquent models for telecom, tenant, analytics, and system entities
+- `app/Models/` — Eloquent models for telecom, organization, analytics, and system entities
 - `app/Services/` — business logic and orchestration; check here before adding logic to controllers
-- `app/Policies/` — authorization rules, especially tenant/resource access
+- `app/Policies/` — authorization rules, especially organization/resource access
 - `app/Observers/` — model side effects and manifest rebuild triggers
 - `app/Jobs/` and `app/Events/` — async and event-driven behavior
 - `app/Domain/Flow/` — flow runtime and compiler-related domain code
@@ -35,7 +35,7 @@ Prefer adding isolated feature work to the appropriate module when the capabilit
 - `resources/js/pages/` — page-level screens
 - `resources/js/components/` — shared UI
 - `resources/js/lib/` — API client, query client, utilities
-- `resources/js/context/` — auth and tenant context
+- `resources/js/context/` — auth and organization context
 - `resources/views/app.blade.php` — Blade host for the SPA
 
 ## Testing layout
@@ -48,5 +48,5 @@ Prefer adding isolated feature work to the appropriate module when the capabilit
 - Put request validation in Form Requests, not controllers
 - Put authorization in Policies or middleware, not inline conditionals
 - Put business logic in Services/Domain code, not controllers or models unless it is true model behavior
-- Put tenant-sensitive side effects in observers/jobs/services where they are already expected
+- Put organization-sensitive side effects in observers/jobs/services where they are already expected
 - Follow existing naming and placement patterns before creating new directories or architectural styles

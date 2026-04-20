@@ -47,7 +47,7 @@ class EndpointResolver
     protected function resolveExtensionCandidates(DeliveryTarget $target, int $targetIndex): array
     {
         $extension = Extension::query()
-            ->with(['tenant', 'agent'])
+            ->with(['organization', 'agent'])
             ->whereKey($target->id)
             ->where('is_active', true)
             ->first();
@@ -57,8 +57,8 @@ class EndpointResolver
         }
 
         $query = EndpointBinding::query()
-            ->with(['tenant', 'extension', 'agent'])
-            ->where('tenant_id', $extension->tenant_id)
+            ->with(['organization', 'extension', 'agent'])
+            ->where('organization_id', $extension->organization_id)
             ->where(function ($query) use ($extension): void {
                 $query->where('extension_id', $extension->id);
 
@@ -82,7 +82,7 @@ class EndpointResolver
     protected function resolveAgentCandidates(DeliveryTarget $target, int $targetIndex): array
     {
         $agent = Agent::query()
-            ->with(['tenant', 'extension'])
+            ->with(['organization', 'extension'])
             ->whereKey($target->id)
             ->where('is_active', true)
             ->first();
@@ -92,8 +92,8 @@ class EndpointResolver
         }
 
         $query = EndpointBinding::query()
-            ->with(['tenant', 'extension', 'agent.extension'])
-            ->where('tenant_id', $agent->tenant_id)
+            ->with(['organization', 'extension', 'agent.extension'])
+            ->where('organization_id', $agent->organization_id)
             ->where(function ($query) use ($agent): void {
                 $query->where('agent_id', $agent->id);
 
@@ -149,11 +149,11 @@ class EndpointResolver
 
         $extension = $binding->extension ?? $binding->agent?->extension;
 
-        if (! $extension || blank($extension->extension) || blank($binding->tenant?->domain)) {
+        if (! $extension || blank($extension->extension) || blank($binding->organization?->domain)) {
             return null;
         }
 
-        return sprintf('sip:%s@%s', $extension->extension, $binding->tenant->domain);
+        return sprintf('sip:%s@%s', $extension->extension, $binding->organization->domain);
     }
 
     protected function bindingPriority(EndpointBinding $binding): int

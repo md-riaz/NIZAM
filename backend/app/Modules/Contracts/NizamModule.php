@@ -48,7 +48,7 @@ interface NizamModule
      *
      * @return array<int, string>
      */
-    public function dialplanContributions(string $tenantDomain, string $destination): array;
+    public function dialplanContributions(string $organizationDomain, string $destination): array;
 
     /**
      * Return event types this module subscribes to.

@@ -3,14 +3,14 @@
 namespace App\Services\Flow;
 
 use App\Models\FlowVersion;
-use App\Services\TenantManifestBuilder;
+use App\Services\OrganizationManifestBuilder;
 use Illuminate\Support\Facades\DB;
 
 class FlowPublishService
 {
     public function __construct(
         protected FlowArtifactService $artifactService,
-        protected TenantManifestBuilder $manifestBuilder,
+        protected OrganizationManifestBuilder $manifestBuilder,
     ) {}
 
     /**
@@ -37,7 +37,7 @@ class FlowPublishService
      * This method:
      * 1. Compiles the flow into IR and generates dialplan XML
      * 2. Stores the compiled artifact
-     * 3. Rebuilds and activates the tenant's complete dialplan manifest
+     * 3. Rebuilds and activates the organization's complete dialplan manifest
      *
      * If compilation fails, the publish fails and no changes are made.
      */
@@ -74,8 +74,8 @@ class FlowPublishService
             // Also need to ensure this is the active version for the flow
             $flowVersion->flow->update(['active_version_id' => $flowVersion->id]);
 
-            // Step 2 & 3: Rebuild and activate the tenant's complete manifest
-            $this->manifestBuilder->buildAndActivate($flowVersion->flow->tenant);
+            // Step 2 & 3: Rebuild and activate the organization's complete manifest
+            $this->manifestBuilder->buildAndActivate($flowVersion->flow->organization);
 
             return [
                 'success' => true,
@@ -107,7 +107,7 @@ class FlowPublishService
             }
             
             // Rebuild manifest without this flow version
-            $this->manifestBuilder->buildAndActivate($flowVersion->flow->tenant);
+            $this->manifestBuilder->buildAndActivate($flowVersion->flow->organization);
             
             return true;
         });

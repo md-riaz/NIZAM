@@ -66,7 +66,7 @@ vendor/bin/pint
 ### Architecture Guidelines
 
 - **API-first**: Every operation goes through the REST API. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-- **Multi-tenant by default**: Every resource is scoped to a tenant.
+- **Multi-organization by default**: Every resource is scoped to an organization.
 - **No business logic in controllers**: Controllers validate and delegate; services own logic.
 - **Dialplan as compiled artifact**: Never hand-author FreeSWITCH XML. Use the `DialplanCompiler`.
 - **Events as immutable records**: Append-only call event logs. No retroactive edits.

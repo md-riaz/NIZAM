@@ -5,7 +5,7 @@ namespace Tests\Unit\Models;
 use App\Models\Flow;
 use App\Models\FlowVersion;
 use App\Models\CallRoutingPolicy;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\Webhook;
 use App\Models\WebhookDeliveryAttempt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,12 +15,12 @@ class Spec3ModelsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_call_routing_policy_belongs_to_tenant(): void
+    public function test_call_routing_policy_belongs_to_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $policy = CallRoutingPolicy::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $policy = CallRoutingPolicy::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertTrue($policy->tenant->is($tenant));
+        $this->assertTrue($policy->organization->is($organization));
     }
 
     public function test_call_routing_policy_casts_conditions_as_array(): void
@@ -35,12 +35,12 @@ class Spec3ModelsTest extends TestCase
         $this->assertEquals('time_of_day', $policy->fresh()->conditions[0]['type']);
     }
 
-    public function test_flow_belongs_to_tenant(): void
+    public function test_flow_belongs_to_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $flow = Flow::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $flow = Flow::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertTrue($flow->tenant->is($tenant));
+        $this->assertTrue($flow->organization->is($organization));
     }
 
     public function test_flow_version_casts_definition_json_as_array(): void
@@ -73,19 +73,19 @@ class Spec3ModelsTest extends TestCase
         $this->assertCount(3, $webhook->deliveryAttempts);
     }
 
-    public function test_tenant_has_many_call_routing_policies(): void
+    public function test_organization_has_many_call_routing_policies(): void
     {
-        $tenant = Tenant::factory()->create();
-        CallRoutingPolicy::factory()->count(2)->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        CallRoutingPolicy::factory()->count(2)->create(['organization_id' => $organization->id]);
 
-        $this->assertCount(2, $tenant->callRoutingPolicies);
+        $this->assertCount(2, $organization->callRoutingPolicies);
     }
 
-    public function test_tenant_has_many_flows(): void
+    public function test_organization_has_many_flows(): void
     {
-        $tenant = Tenant::factory()->create();
-        Flow::factory()->count(2)->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        Flow::factory()->count(2)->create(['organization_id' => $organization->id]);
 
-        $this->assertCount(2, $tenant->flows);
+        $this->assertCount(2, $organization->flows);
     }
 }

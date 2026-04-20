@@ -22,7 +22,7 @@
 ### Backend DB indexing enforcement
 - `backend/database/migrations/2026_04_12_*.php` — additive index migrations for missing foreign-key indexes and targeted composite indexes
 - `backend/tests/Feature/Database/ForeignKeyIndexingTest.php` — validate FK indexes exist for required relations
-- `backend/tests/Feature/Database/ReportingIndexCoverageTest.php` — validate key tenant/reporting composites exist
+- `backend/tests/Feature/Database/ReportingIndexCoverageTest.php` — validate key organization/reporting composites exist
 
 ### Backend docs
 - `backend/docs/openapi.yaml` — add/modify endpoints and schemas
@@ -38,9 +38,9 @@
 
 ### Frontend PBX/defaults follow-through
 If current scope also includes “update frontend all of them” for recent default business-phone work, then update/admin pages for:
-- tenant creation/edit display of `default_schedule_id` / `default_holiday_calendar_id`
+- organization creation/edit display of `default_schedule_id` / `default_holiday_calendar_id`
 - supervisor reporting screens if not already exposed
-- any existing admin tenant page that should show bootstrap/default business-phone metadata
+- any existing admin organization page that should show bootstrap/default business-phone metadata
 
 ---
 
@@ -182,7 +182,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
 
     public function test_platform_admin_can_view_freeswitch_modules_status(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/v1/admin/freeswitch/modules');
@@ -387,12 +387,12 @@ class ForeignKeyIndexingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_foreign_keys_have_indexes_on_core_multitenant_tables(): void
+    public function test_foreign_keys_have_indexes_on_core_multiorganization_tables(): void
     {
-        $this->assertTrue($this->hasIndex('extensions', 'extensions_tenant_id_index'));
+        $this->assertTrue($this->hasIndex('extensions', 'extensions_organization_id_index'));
         $this->assertTrue($this->hasIndex('device_profiles', 'device_profiles_extension_id_index'));
-        $this->assertTrue($this->hasIndex('dids', 'dids_tenant_id_index'));
-        $this->assertTrue($this->hasIndex('recordings', 'recordings_tenant_id_index'));
+        $this->assertTrue($this->hasIndex('dids', 'dids_organization_id_index'));
+        $this->assertTrue($this->hasIndex('recordings', 'recordings_organization_id_index'));
     }
 
     private function hasIndex(string $table, string $indexName): bool
@@ -419,23 +419,23 @@ Expected: FAIL on missing indexes
 Create migration adding indexes only where absent, for example:
 ```php
 Schema::table('extensions', function (Blueprint $table) {
-    $table->index('tenant_id');
+    $table->index('organization_id');
     $table->index('user_id');
 });
 
 Schema::table('device_profiles', function (Blueprint $table) {
-    $table->index('tenant_id');
+    $table->index('organization_id');
     $table->index('user_id');
     $table->index('extension_id');
 });
 
 Schema::table('dids', function (Blueprint $table) {
-    $table->index('tenant_id');
+    $table->index('organization_id');
     $table->index('gateway_id');
 });
 
 Schema::table('flows', function (Blueprint $table) {
-    $table->index('tenant_id');
+    $table->index('organization_id');
     $table->index('active_version_id');
 });
 ```
@@ -478,10 +478,10 @@ class ReportingIndexCoverageTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_reporting_tables_have_tenant_time_indexes(): void
+    public function test_reporting_tables_have_organization_time_indexes(): void
     {
-        $this->assertTrue($this->hasIndex('call_detail_records', 'cdrs_tenant_created_at_index'));
-        $this->assertTrue($this->hasIndex('call_event_logs', 'call_event_logs_tenant_event_created_index'));
+        $this->assertTrue($this->hasIndex('call_detail_records', 'cdrs_organization_created_at_index'));
+        $this->assertTrue($this->hasIndex('call_event_logs', 'call_event_logs_organization_event_created_index'));
     }
 
     private function hasIndex(string $table, string $indexName): bool
@@ -504,17 +504,17 @@ Expected: FAIL on missing composites
 Examples to add if not already present:
 ```php
 Schema::table('call_detail_records', function (Blueprint $table) {
-    $table->index(['tenant_id', 'created_at'], 'cdrs_tenant_created_at_index');
-    $table->index(['tenant_id', 'direction', 'created_at'], 'cdrs_tenant_direction_created_index');
-    $table->index(['tenant_id', 'caller_id_number', 'created_at'], 'cdrs_tenant_caller_created_index');
+    $table->index(['organization_id', 'created_at'], 'cdrs_organization_created_at_index');
+    $table->index(['organization_id', 'direction', 'created_at'], 'cdrs_organization_direction_created_index');
+    $table->index(['organization_id', 'caller_id_number', 'created_at'], 'cdrs_organization_caller_created_index');
 });
 
 Schema::table('call_event_logs', function (Blueprint $table) {
-    $table->index(['tenant_id', 'event_type', 'created_at'], 'call_event_logs_tenant_event_created_index');
+    $table->index(['organization_id', 'event_type', 'created_at'], 'call_event_logs_organization_event_created_index');
 });
 
 Schema::table('recordings', function (Blueprint $table) {
-    $table->index(['tenant_id', 'created_at'], 'recordings_tenant_created_index');
+    $table->index(['organization_id', 'created_at'], 'recordings_organization_created_index');
 });
 ```
 
@@ -541,7 +541,7 @@ git commit -m "perf: add reporting and routing composite indexes"
 
 Check that docs cover:
 - `GET /admin/freeswitch/modules`
-- tenant resource fields `default_schedule_id`, `default_holiday_calendar_id`
+- organization resource fields `default_schedule_id`, `default_holiday_calendar_id`
 - supervisor reports endpoints if still missing
 - any new admin route/page references
 
@@ -589,7 +589,7 @@ Add schema:
           type: string
 ```
 
-Also update `Tenant` schema to include:
+Also update `Organization` schema to include:
 ```yaml
         default_schedule_id:
           type: string
@@ -603,7 +603,7 @@ Also update `Tenant` schema to include:
 
 Add a section in `backend/docs/api-reference.md` describing:
 - platform-admin FreeSWITCH modules endpoint
-- tenant bootstrap default fields
+- organization bootstrap default fields
 - supervisor reports if not already documented consistently
 
 - [ ] **Step 4: Validate docs are internally consistent**
@@ -619,16 +619,16 @@ Expected: all entries present
 
 ```bash
 git add backend/docs/openapi.yaml backend/docs/api-reference.md
-git commit -m "docs: update API docs for platform admin modules and tenant defaults"
+git commit -m "docs: update API docs for platform admin modules and organization defaults"
 ```
 
 ---
 
-### Task 7: Update frontend admin surfaces for new platform/admin capabilities and tenant defaults
+### Task 7: Update frontend admin surfaces for new platform/admin capabilities and organization defaults
 
 **Files:**
-- Modify: `frontend/src/pages/admin/TenantFormPage.tsx`
-- Modify: `frontend/src/pages/admin/TenantsPage.tsx`
+- Modify: `frontend/src/pages/admin/OrganizationFormPage.tsx`
+- Modify: `frontend/src/pages/admin/OrganizationsPage.tsx`
 - Modify: `frontend/src/pages/admin/CapabilitiesPage.tsx`
 - Modify: `frontend/src/app.tsx`
 - Create: `frontend/src/pages/admin/FreeSwitchModulesPage.tsx`
@@ -640,11 +640,11 @@ Import `FreeSwitchModulesPage` and add `FreeSwitchModuleStatus` type usage befor
 
 Expected: compile failure on missing file/type until created.
 
-- [ ] **Step 2: Add tenant default fields to frontend types**
+- [ ] **Step 2: Add organization default fields to frontend types**
 
-In `frontend/src/types/models.ts` update tenant shape:
+In `frontend/src/types/models.ts` update organization shape:
 ```ts
-export interface Tenant {
+export interface Organization {
   id: string;
   name: string;
   domain: string;
@@ -659,15 +659,15 @@ export interface Tenant {
 
 Use the implementation from Task 3 and register it in `frontend/src/app.tsx`.
 
-- [ ] **Step 4: Surface tenant defaults in admin tenant pages**
+- [ ] **Step 4: Surface organization defaults in admin organization pages**
 
-In `TenantsPage.tsx` or `TenantFormPage.tsx`, add read-only/defaults display such as:
+In `OrganizationsPage.tsx` or `OrganizationFormPage.tsx`, add read-only/defaults display such as:
 ```tsx
 <div className="text-sm text-muted-foreground">
-  Default schedule: {tenant.default_schedule_id ?? 'Not provisioned'}
+  Default schedule: {organization.default_schedule_id ?? 'Not provisioned'}
 </div>
 <div className="text-sm text-muted-foreground">
-  Default holiday calendar: {tenant.default_holiday_calendar_id ?? 'Not provisioned'}
+  Default holiday calendar: {organization.default_holiday_calendar_id ?? 'Not provisioned'}
 </div>
 ```
 
@@ -687,8 +687,8 @@ Expected: PASS with no TypeScript errors
 - [ ] **Step 7: Commit**
 
 ```bash
-git add frontend/src/pages/admin/FreeSwitchModulesPage.tsx frontend/src/pages/admin/TenantFormPage.tsx frontend/src/pages/admin/TenantsPage.tsx frontend/src/pages/admin/CapabilitiesPage.tsx frontend/src/app.tsx frontend/src/types/models.ts
-git commit -m "feat: add platform admin module status UI and tenant default visibility"
+git add frontend/src/pages/admin/FreeSwitchModulesPage.tsx frontend/src/pages/admin/OrganizationFormPage.tsx frontend/src/pages/admin/OrganizationsPage.tsx frontend/src/pages/admin/CapabilitiesPage.tsx frontend/src/app.tsx frontend/src/types/models.ts
+git commit -m "feat: add platform admin module status UI and organization default visibility"
 ```
 
 ---

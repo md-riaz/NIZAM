@@ -8,11 +8,11 @@ use App\Models\Webhook;
 class WebhookDispatcher
 {
     /**
-     * Dispatch webhooks for a given tenant and event.
+     * Dispatch webhooks for a given organization and event.
      */
-    public function dispatch(string $tenantId, string $eventType, array $payload): void
+    public function dispatch(string $organizationId, string $eventType, array $payload): void
     {
-        $webhooks = Webhook::where('tenant_id', $tenantId)
+        $webhooks = Webhook::where('organization_id', $organizationId)
             ->where('is_active', true)
             ->get()
             ->filter(function (Webhook $webhook) use ($eventType) {

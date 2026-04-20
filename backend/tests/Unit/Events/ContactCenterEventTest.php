@@ -12,7 +12,7 @@ class ContactCenterEventTest extends TestCase
     public function test_broadcasts_on_correct_channels(): void
     {
         $event = new ContactCenterEvent(
-            tenantId: 'tenant-123',
+            organizationId: 'organization-123',
             eventType: 'agent.state_changed',
             data: ['agent_id' => 'agent-1', 'state' => 'available']
         );
@@ -22,14 +22,14 @@ class ContactCenterEventTest extends TestCase
         $this->assertCount(2, $channels);
         $this->assertInstanceOf(PrivateChannel::class, $channels[0]);
         $this->assertInstanceOf(PrivateChannel::class, $channels[1]);
-        $this->assertEquals('private-tenant.tenant-123.contact-center', $channels[0]->name);
-        $this->assertEquals('private-tenant.tenant-123.contact-center.agent-state_changed', $channels[1]->name);
+        $this->assertEquals('private-organization.organization-123.contact-center', $channels[0]->name);
+        $this->assertEquals('private-organization.organization-123.contact-center.agent-state_changed', $channels[1]->name);
     }
 
     public function test_broadcast_as_returns_correct_event_name(): void
     {
         $event = new ContactCenterEvent(
-            tenantId: 'tenant-123',
+            organizationId: 'organization-123',
             eventType: 'agent.state_changed',
             data: []
         );
@@ -41,7 +41,7 @@ class ContactCenterEventTest extends TestCase
     {
         $data = ['agent_id' => 'agent-1'];
         $event = new ContactCenterEvent(
-            tenantId: 'tenant-123',
+            organizationId: 'organization-123',
             eventType: 'agent.state_changed',
             data: $data
         );
@@ -70,12 +70,12 @@ class ContactCenterEventTest extends TestCase
 
     public function test_filtered_channel_uses_hyphenated_event_type(): void
     {
-        $event = new ContactCenterEvent('t1', 'queue.call_joined', []);
+        $event = new ContactCenterEvent('organization-1', 'queue.call_joined', []);
         $channels = $event->broadcastOn();
-        $this->assertEquals('private-tenant.t1.contact-center.queue-call_joined', $channels[1]->name);
+        $this->assertEquals('private-organization.organization-1.contact-center.queue-call_joined', $channels[1]->name);
 
-        $event2 = new ContactCenterEvent('t1', 'agent.state_changed', []);
+        $event2 = new ContactCenterEvent('organization-1', 'agent.state_changed', []);
         $channels2 = $event2->broadcastOn();
-        $this->assertEquals('private-tenant.t1.contact-center.agent-state_changed', $channels2[1]->name);
+        $this->assertEquals('private-organization.organization-1.contact-center.agent-state_changed', $channels2[1]->name);
     }
 }

@@ -551,17 +551,17 @@ class ModuleVerificationAuditTest extends TestCase
     }
 
     // =========================================================================
-    // CHECKPOINT 9 — MULTI-TENANT ISOLATION
+    // CHECKPOINT 9 — MULTI-ORGANIZATION ISOLATION
     // =========================================================================
 
     public function test_cp9_module_system_does_not_break_tenancy_model(): void
     {
-        // The module system doesn't touch the Tenant model or middleware
-        // Verify the tenant.access middleware is still configured in core routes
+        // The module system doesn't touch the Organization model or middleware
+        // Verify the organization.access middleware is still configured in core routes
         $coreRoutes = file_get_contents(base_path('routes/api.php'));
-        $this->assertStringContainsString('tenant.access', $coreRoutes);
+        $this->assertStringContainsString('organization.access', $coreRoutes);
 
-        // Module routes also use tenant.access middleware
+        // Module routes also use organization.access middleware
         $moduleRoutes = [
             base_path('modules/PbxRouting/routes/api.php'),
             base_path('modules/PbxContactCenter/routes/api.php'),
@@ -573,9 +573,9 @@ class ModuleVerificationAuditTest extends TestCase
         foreach ($moduleRoutes as $file) {
             $content = file_get_contents($file);
             $this->assertStringContainsString(
-                'tenant.access',
+                'organization.access',
                 $content,
-                "Module route file {$file} must use tenant.access middleware"
+                "Module route file {$file} must use organization.access middleware"
             );
         }
     }

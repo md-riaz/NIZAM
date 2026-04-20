@@ -6,13 +6,13 @@ use App\Models\Flow;
 use App\Models\FlowEdge;
 use App\Models\FlowNode;
 use App\Models\FlowVersion;
-use App\Models\Tenant;
-use App\Models\TenantDialplanManifest;
+use App\Models\Organization;
+use App\Models\OrganizationDialplanManifest;
 use App\Services\Flow\FlowArtifactService;
 use App\Services\Flow\FlowPublishService;
 use App\Services\Flow\Compile\FlowToIrCompiler;
 use App\Domain\Flow\Compile\NodeSpecRegistry;
-use App\Services\TenantManifestBuilder;
+use App\Services\OrganizationManifestBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -20,23 +20,23 @@ class FlowPublishServiceTest extends TestCase
 {
     use RefreshDatabase;
     protected FlowPublishService $publishService;
-    protected Tenant $tenant;
+    protected Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
+        $this->organization = Organization::factory()->create(['domain' => 'test.example.com']);
         $registry = new NodeSpecRegistry();
         $compiler = new FlowToIrCompiler($registry);
         $artifactService = new FlowArtifactService($compiler, app(\App\Services\Routing\RoutingGraphCompiler::class));
-        $manifestBuilder = new TenantManifestBuilder(app(\App\Services\DialplanCompiler::class));
+        $manifestBuilder = new OrganizationManifestBuilder(app(\App\Services\DialplanCompiler::class));
         $this->publishService = new FlowPublishService($artifactService, $manifestBuilder);
     }
 
     public function test_can_publish_flow_version(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'status' => 'draft',
@@ -90,7 +90,7 @@ class FlowPublishServiceTest extends TestCase
         $this->assertNotNull($artifact);
 
         // Verify manifest was created and activated
-        $manifest = TenantDialplanManifest::where('tenant_id', $this->tenant->id)
+        $manifest = OrganizationDialplanManifest::where('organization_id', $this->organization->id)
             ->where('manifest_type', 'inbound_routing')
             ->where('is_active', true)
             ->first();
@@ -103,7 +103,7 @@ class FlowPublishServiceTest extends TestCase
 
     public function test_publish_fails_for_invalid_flow(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'status' => 'draft',
@@ -129,7 +129,7 @@ class FlowPublishServiceTest extends TestCase
 
     public function test_rollback_flow_version(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'status' => 'published',
@@ -185,7 +185,7 @@ class FlowPublishServiceTest extends TestCase
         $this->assertEquals('draft', $flowVersion->status);
 
         // Verify manifest was updated (not necessarily null, but rebuilt)
-        $manifest = TenantDialplanManifest::where('tenant_id', $this->tenant->id)
+        $manifest = OrganizationDialplanManifest::where('organization_id', $this->organization->id)
             ->where('manifest_type', 'inbound_routing')
             ->where('is_active', true)
             ->first();
@@ -194,7 +194,7 @@ class FlowPublishServiceTest extends TestCase
 
     public function test_publish_creates_unique_artifact_per_flow_version(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion1 = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'version_number' => 1,

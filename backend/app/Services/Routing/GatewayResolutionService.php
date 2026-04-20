@@ -3,11 +3,11 @@
 namespace App\Services\Routing;
 
 use App\Models\Gateway;
-use App\Models\Tenant;
+use App\Models\Organization;
 
 class GatewayResolutionService
 {
-    public function resolveFromXmlCurl(Tenant $tenant, array $payload): array
+    public function resolveFromXmlCurl(Organization $organization, array $payload): array
     {
         $identifier = $payload['variable_sip_gateway_name']
             ?? $payload['sip_gateway_name']
@@ -21,14 +21,14 @@ class GatewayResolutionService
 
         if ($identifier) {
             $gateway = Gateway::query()
-                ->where('tenant_id', $tenant->id)
+                ->where('organization_id', $organization->id)
                 ->where('name', $identifier)
                 ->first();
         }
 
         if (! $gateway && $realm) {
             $gateway = Gateway::query()
-                ->where('tenant_id', $tenant->id)
+                ->where('organization_id', $organization->id)
                 ->where(function ($query) use ($realm) {
                     $query->where('host', $realm)
                         ->orWhere('realm', $realm)

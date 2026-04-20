@@ -3,23 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\UsageMeteringService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * API controller for tenant usage metering.
+ * API controller for organization usage metering.
  */
 class UsageController extends Controller
 {
     /**
-     * Get usage summary for a tenant.
+     * Get usage summary for an organization.
      */
-    public function summary(Request $request, Tenant $tenant, UsageMeteringService $metering): JsonResponse
+    public function summary(Request $request, Organization $organization, UsageMeteringService $metering): JsonResponse
     {
-        $this->authorize('view', $tenant);
+        $this->authorize('view', $organization);
 
         $from = $request->has('from')
             ? Carbon::parse($request->input('from'))
@@ -31,10 +31,10 @@ class UsageController extends Controller
 
         return response()->json([
             'data' => [
-                'tenant_id' => $tenant->id,
+                'organization_id' => $organization->id,
                 'from' => $from->toDateString(),
                 'to' => $to->toDateString(),
-                'usage' => $metering->getSummary($tenant, $from, $to),
+                'usage' => $metering->getSummary($organization, $from, $to),
             ],
         ]);
     }
@@ -42,11 +42,11 @@ class UsageController extends Controller
     /**
      * Collect and record current usage snapshot.
      */
-    public function collect(Tenant $tenant, UsageMeteringService $metering): JsonResponse
+    public function collect(Organization $organization, UsageMeteringService $metering): JsonResponse
     {
-        $this->authorize('update', $tenant);
+        $this->authorize('update', $organization);
 
-        $records = $metering->collectSnapshot($tenant);
+        $records = $metering->collectSnapshot($organization);
 
         return response()->json([
             'data' => [
@@ -59,9 +59,9 @@ class UsageController extends Controller
     /**
      * Reconcile CDR billable minutes against metered call_minutes.
      */
-    public function reconcile(Request $request, Tenant $tenant, UsageMeteringService $metering): JsonResponse
+    public function reconcile(Request $request, Organization $organization, UsageMeteringService $metering): JsonResponse
     {
-        $this->authorize('view', $tenant);
+        $this->authorize('view', $organization);
 
         $from = $request->has('from')
             ? Carbon::parse($request->input('from'))
@@ -72,7 +72,7 @@ class UsageController extends Controller
             : Carbon::today();
 
         return response()->json([
-            'data' => $metering->reconcileCallMinutes($tenant, $from, $to),
+            'data' => $metering->reconcileCallMinutes($organization, $from, $to),
         ]);
     }
 }

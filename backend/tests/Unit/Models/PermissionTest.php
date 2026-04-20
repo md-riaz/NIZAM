@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Permission;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -36,14 +36,14 @@ class PermissionTest extends TestCase
 
     public function test_user_has_permission_relationship(): void
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test',
             'domain' => 'test.com',
             'slug' => 'test',
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
         $perm = Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
 
         $user->permissions()->attach($perm->id);
@@ -54,14 +54,14 @@ class PermissionTest extends TestCase
 
     public function test_admin_always_has_permission(): void
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test',
             'domain' => 'test.com',
             'slug' => 'test',
             'is_active' => true,
         ]);
 
-        $admin = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'admin']);
+        $admin = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
 
         // Admin has permission even without explicit assignment
         $this->assertTrue($admin->hasPermission('extensions.view'));
@@ -70,14 +70,14 @@ class PermissionTest extends TestCase
 
     public function test_user_without_explicit_permissions_defaults_to_allow(): void
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test',
             'domain' => 'test.com',
             'slug' => 'test',
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
 
         // Users with no explicit permissions default to allow (pre-sync state)
         $this->assertTrue($user->hasPermission('extensions.view'));
@@ -85,14 +85,14 @@ class PermissionTest extends TestCase
 
     public function test_user_with_granted_permission_returns_true(): void
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test',
             'domain' => 'test.com',
             'slug' => 'test',
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
         Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
         Permission::create(['slug' => 'extensions.create', 'module' => 'core']);
 
@@ -104,14 +104,14 @@ class PermissionTest extends TestCase
 
     public function test_revoke_permissions(): void
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test',
             'domain' => 'test.com',
             'slug' => 'test',
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
         Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
         Permission::create(['slug' => 'extensions.create', 'module' => 'core']);
 
@@ -126,14 +126,14 @@ class PermissionTest extends TestCase
 
     public function test_grant_permissions_is_idempotent(): void
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test',
             'domain' => 'test.com',
             'slug' => 'test',
             'is_active' => true,
         ]);
 
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
         Permission::create(['slug' => 'extensions.view', 'module' => 'core']);
 
         $user->grantPermissions(['extensions.view']);

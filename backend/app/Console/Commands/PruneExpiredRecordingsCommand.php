@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Storage\StorageDriver;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -19,26 +19,26 @@ class PruneExpiredRecordingsCommand extends Command
 
     protected $signature = 'nizam:prune-recordings
                             {--dry-run : List expired recordings without deleting them}
-                            {--tenant= : Restrict pruning to a specific tenant UUID}';
+                            {--organization= : Restrict pruning to a specific organization UUID}';
 
-    protected $description = 'Delete recordings that have exceeded their tenant retention period';
+    protected $description = 'Delete recordings that have exceeded their organization retention period';
 
     public function handle(): int
     {
         $dryRun = (bool) $this->option('dry-run');
-        $tenantId = $this->option('tenant');
+        $organizationId = $this->option('organization');
 
-        $query = Tenant::whereNotNull('recording_retention_days')
+        $query = Organization::whereNotNull('recording_retention_days')
             ->where('recording_retention_days', '>', 0);
 
-        if ($tenantId) {
-            $query->where('id', $tenantId);
+        if ($organizationId) {
+            $query->where('id', $organizationId);
         }
 
-        $tenants = $query->get();
+        $organizations = $query->get();
 
-        if ($tenants->isEmpty()) {
-            $this->info('No tenants with a recording_retention_days policy found.');
+        if ($organizations->isEmpty()) {
+            $this->info('No organizations with a recording_retention_days policy found.');
 
             return self::SUCCESS;
         }
@@ -46,8 +46,8 @@ class PruneExpiredRecordingsCommand extends Command
         $totalDeleted = 0;
         $totalFailed = 0;
 
-        foreach ($tenants as $tenant) {
-            [$deleted, $failed] = $this->pruneForTenant($tenant, $dryRun);
+        foreach ($organizations as $organization) {
+            [$deleted, $failed] = $this->pruneForOrganization($organization, $dryRun);
             $totalDeleted += $deleted;
             $totalFailed += $failed;
         }
@@ -63,15 +63,15 @@ class PruneExpiredRecordingsCommand extends Command
     }
 
     /**
-     * Prune recordings for a single tenant.
+     * Prune recordings for a single organization.
      *
      * @return array{0: int, 1: int} [deleted, failed]
      */
-    protected function pruneForTenant(Tenant $tenant, bool $dryRun): array
+    protected function pruneForOrganization(Organization $organization, bool $dryRun): array
     {
-        $cutoff = now()->subDays($tenant->recording_retention_days);
+        $cutoff = now()->subDays($organization->recording_retention_days);
 
-        $recordings = Recording::where('tenant_id', $tenant->id)
+        $recordings = Recording::where('organization_id', $organization->id)
             ->where('created_at', '<', $cutoff)
             ->get();
 
@@ -84,7 +84,7 @@ class PruneExpiredRecordingsCommand extends Command
 
         foreach ($recordings as $recording) {
             if ($dryRun) {
-                $this->line("  [dry-run] Would delete recording {$recording->id} (tenant={$tenant->slug}, file={$recording->file_path})");
+                $this->line("  [dry-run] Would delete recording {$recording->id} (organization={$organization->slug}, file={$recording->file_path})");
                 $deleted++;
 
                 continue;
@@ -104,16 +104,16 @@ class PruneExpiredRecordingsCommand extends Command
 
                 Log::info('nizam:prune-recordings: deleted recording', [
                     'recording_id' => $recording->id,
-                    'tenant_id' => $tenant->id,
-                    'tenant_slug' => $tenant->slug,
+                    'organization_id' => $organization->id,
+                    'organization_slug' => $organization->slug,
                     'file_path' => $recording->file_path,
-                    'retention_days' => $tenant->recording_retention_days,
+                    'retention_days' => $organization->recording_retention_days,
                 ]);
             } catch (\Throwable $e) {
                 $failed++;
                 Log::error('nizam:prune-recordings: failed to delete recording', [
                     'recording_id' => $recording->id,
-                    'tenant_id' => $tenant->id,
+                    'organization_id' => $organization->id,
                     'error' => $e->getMessage(),
                 ]);
                 $this->error("Failed to delete recording {$recording->id}: {$e->getMessage()}");

@@ -10,14 +10,14 @@ return new class extends Migration
     {
         Schema::create('schedules', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('holiday_calendar_id')->nullable()->constrained('holiday_calendars')->nullOnDelete();
             $table->string('name');
             $table->string('timezone')->default('UTC');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->index(['tenant_id', 'is_active']);
+            $table->index(['organization_id', 'is_active']);
         });
     }
 

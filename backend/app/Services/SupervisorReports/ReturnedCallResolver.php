@@ -3,7 +3,7 @@
 namespace App\Services\SupervisorReports;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DidNormalizationService;
 use Carbon\CarbonInterface;
 
@@ -28,7 +28,7 @@ class ReturnedCallResolver
     }
 
     public function findReturnedCall(
-        Tenant $tenant,
+        Organization $organization,
         string $normalizedCallerNumber,
         CarbonInterface $after,
         ?int $windowDays = null
@@ -41,7 +41,7 @@ class ReturnedCallResolver
         $deadline = $after->copy()->addDays($windowDays);
 
         return CallDetailRecord::query()
-            ->where('tenant_id', $tenant->id)
+            ->where('organization_id', $organization->id)
             ->where('direction', 'outbound')
             ->where('start_stamp', '>', $after)
             ->where('start_stamp', '<=', $deadline)

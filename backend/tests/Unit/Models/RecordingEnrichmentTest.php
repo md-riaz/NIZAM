@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,14 +13,14 @@ class RecordingEnrichmentTest extends TestCase
 
     public function test_recording_can_store_queue_metadata(): void
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
         ]);
 
         $recording = Recording::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'test-uuid-123',
             'queue_name' => 'Support Queue',
             'agent_id' => 'agent-uuid-123',
@@ -43,14 +43,14 @@ class RecordingEnrichmentTest extends TestCase
 
     public function test_recording_queue_metadata_nullable(): void
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
         ]);
 
         $recording = Recording::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'test-uuid-456',
         ]);
 
@@ -64,14 +64,14 @@ class RecordingEnrichmentTest extends TestCase
 
     public function test_recording_with_abandon_metadata(): void
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
         ]);
 
         $recording = Recording::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'test-uuid-789',
             'queue_name' => 'Sales Queue',
             'wait_time' => 120,

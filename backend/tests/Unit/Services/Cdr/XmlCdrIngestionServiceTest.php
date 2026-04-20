@@ -5,7 +5,7 @@ namespace Tests\Unit\Services\Cdr;
 use App\Events\CallDetailRecordCreated;
 use App\Models\CallDetailRecord;
 use App\Models\ProcessedCdrFile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Cdr\XmlCdrIngestionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -37,7 +37,7 @@ class XmlCdrIngestionServiceTest extends TestCase
     {
         Event::fake([CallDetailRecordCreated::class]);
 
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'demo.example.com',
         ]);
 
@@ -46,7 +46,7 @@ class XmlCdrIngestionServiceTest extends TestCase
         $path = $this->directory.'/call-a.xml';
         File::put($path, $this->xmlFor([
             'uuid' => 'call-a',
-            'domain_name' => $tenant->domain,
+            'domain_name' => $organization->domain,
             'caller_id_name' => 'Alice',
             'caller_id_number' => '01710000000',
             'destination_number' => '1001',
@@ -64,7 +64,7 @@ class XmlCdrIngestionServiceTest extends TestCase
 
         $cdr = CallDetailRecord::query()->where('uuid', 'call-a')->firstOrFail();
 
-        $this->assertSame($tenant->id, $cdr->tenant_id);
+        $this->assertSame($organization->id, $cdr->organization_id);
         $this->assertSame('Alice', $cdr->caller_id_name);
         $this->assertSame('01710000000', $cdr->caller_id_number);
         $this->assertSame('1001', $cdr->destination_number);
@@ -86,7 +86,7 @@ class XmlCdrIngestionServiceTest extends TestCase
     {
         Event::fake([CallDetailRecordCreated::class]);
 
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'keep.example.com',
         ]);
 
@@ -95,7 +95,7 @@ class XmlCdrIngestionServiceTest extends TestCase
         $path = $this->directory.'/call-b.xml';
         File::put($path, $this->xmlFor([
             'uuid' => 'call-b',
-            'domain_name' => $tenant->domain,
+            'domain_name' => $organization->domain,
             'caller_id_number' => '01710000001',
             'destination_number' => '1002',
         ]));

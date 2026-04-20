@@ -11,7 +11,7 @@ incidents cannot be resolved within the expected response window.
 | Level | Description | Response Time | Escalation After |
 |-------|-------------|---------------|------------------|
 | **P0 — Critical** | Total service outage, data loss risk | 5 minutes | 15 minutes |
-| **P1 — High** | Major feature degraded, some tenants affected | 10 minutes | 30 minutes |
+| **P1 — High** | Major feature degraded, some organizations affected | 10 minutes | 30 minutes |
 | **P2 — Medium** | Minor feature degraded, workaround exists | 30 minutes | 2 hours |
 | **P3 — Low** | Cosmetic issue, no user impact | Next business day | 1 week |
 
@@ -34,12 +34,12 @@ incidents cannot be resolved within the expected response window.
   - [Webhook Backlog Explosion](./runbooks/webhook-backlog-explosion.md)
 - [ ] Review application logs: `tail -f /var/log/nizam/laravel.log`
 - [ ] Check system health: `curl http://localhost/api/health`
-- [ ] Identify affected tenants and scope of impact
+- [ ] Identify affected organizations and scope of impact
 
 ### Step 3: Mitigate (within escalation window)
 - [ ] Apply the appropriate runbook fix
 - [ ] Verify the fix resolves the issue
-- [ ] Confirm affected tenants are restored
+- [ ] Confirm affected organizations are restored
 - [ ] If fix doesn't work, proceed to Step 4
 
 ### Step 4: Escalate
@@ -51,11 +51,11 @@ incidents cannot be resolved within the expected response window.
   - What happened (symptoms)
   - What was tried (actions taken)
   - Current state (what's still broken)
-  - Impact assessment (tenants, calls affected)
+  - Impact assessment (organizations, calls affected)
 
 ### Step 5: Resolve
 - [ ] Confirm all systems are healthy
-- [ ] Verify all tenant services are restored
+- [ ] Verify all organization services are restored
 - [ ] Run smoke tests if applicable
 - [ ] Update status page / notify affected customers
 
@@ -88,7 +88,7 @@ incidents cannot be resolved within the expected response window.
 ```
 [INCIDENT] Severity: P{X} | Status: Investigating/Mitigating/Resolved
 Impact: {description of impact}
-Affected: {tenants/services}
+Affected: {organizations/services}
 Action: {what is being done}
 ETA: {estimated resolution time}
 ```

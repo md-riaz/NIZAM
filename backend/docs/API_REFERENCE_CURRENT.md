@@ -12,7 +12,7 @@
 
 1. [Authentication](#authentication)
 2. [Health Check](#health-check)
-3. [Tenants](#tenants)
+3. [Organizations](#organizations)
 4. [Extensions](#extensions)
 5. [DIDs](#dids)
 6. [Ring Groups](#ring-groups)
@@ -52,27 +52,11 @@
 
 NIZAM uses [Laravel Sanctum](https://laravel.com/docs/sanctum) bearer tokens.
 
-### Register
+### Registration
 
-```http
-POST /api/auth/register
-Content-Type: application/json
+Self-registration is not supported.
 
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password",
-  "password_confirmation": "password"
-}
-```
-
-**Response** `201`:
-```json
-{
-  "user": { "id": "uuid", "name": "John Doe", "email": "john@example.com" },
-  "token": "1|abc123..."
-}
-```
+Organizations are provisioned manually by Superadmin users, and users are created under an existing organization by an authorized administrator.
 
 ### Login
 
@@ -198,45 +182,44 @@ Returns HTTP 200 if healthy, 503 if degraded.
 
 ---
 
-## Tenants
+## Organizations
 
-Admin-only for create/update/delete. Regular users can only view their own tenant.
+Superadmin-only for create/update/delete. Admin and Agent users can only view their own organization.
 
-### List Tenants
+### List Organizations
 
 ```http
-GET /api/tenants
+GET /api/organizations
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### Create Tenant
+### Create Organization
 
 ```http
-POST /api/tenants
-Authorization: Bearer YOUR_TOKEN (admin)
+POST /api/organizations
+Authorization: Bearer YOUR_TOKEN (superadmin)
 Content-Type: application/json
 
 {
   "name": "Acme Corp",
   "domain": "acme.example.com",
-  "slug": "acme",
   "max_extensions": 100,
   "is_active": true
 }
 ```
 
-### Get Tenant
+### Get Organization
 
 ```http
-GET /api/tenants/{id}
+GET /api/organizations/{id}
 Authorization: Bearer YOUR_TOKEN
 ```
 
-### Update Tenant
+### Update Organization
 
 ```http
-PUT /api/tenants/{id}
-Authorization: Bearer YOUR_TOKEN (admin)
+PUT /api/organizations/{id}
+Authorization: Bearer YOUR_TOKEN (superadmin)
 Content-Type: application/json
 
 {
@@ -246,17 +229,17 @@ Content-Type: application/json
 }
 ```
 
-### Delete Tenant
+### Delete Organization
 
 ```http
-DELETE /api/tenants/{id}
-Authorization: Bearer YOUR_TOKEN (admin)
+DELETE /api/organizations/{id}
+Authorization: Bearer YOUR_TOKEN (superadmin)
 ```
 
-### Get Tenant Settings
+### Get Organization Settings
 
 ```http
-GET /api/tenants/{id}/settings
+GET /api/organizations/{id}/settings
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -267,11 +250,11 @@ Authorization: Bearer YOUR_TOKEN
 }
 ```
 
-### Update Tenant Settings
+### Update Organization Settings
 
 ```http
-PUT /api/tenants/{id}/settings
-Authorization: Bearer YOUR_TOKEN (admin)
+PUT /api/organizations/{id}/settings
+Authorization: Bearer YOUR_TOKEN (superadmin)
 Content-Type: application/json
 
 {
@@ -281,10 +264,10 @@ Content-Type: application/json
 
 Settings are **merged** — existing keys are preserved unless explicitly overwritten.
 
-### Provision Tenant (Zero-Touch)
+### Provision Organization (Zero-Touch)
 
 ```http
-POST /api/tenants/provision
+POST /api/organizations/provision
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -301,10 +284,10 @@ Content-Type: application/json
 
 Only `name` is required. Domain and slug are auto-generated if not provided.
 
-### Get Tenant Stats
+### Get Organization Stats
 
 ```http
-GET /api/tenants/{id}/stats
+GET /api/organizations/{id}/stats
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -337,19 +320,19 @@ Authorization: Bearer YOUR_TOKEN
 
 ## Extensions
 
-All extension endpoints are tenant-scoped.
+All extension endpoints are organization-scoped.
 
 ### List Extensions
 
 ```http
-GET /api/tenants/{tenant_id}/extensions
+GET /api/organizations/{organization_id}/extensions
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Create Extension
 
 ```http
-POST /api/tenants/{tenant_id}/extensions
+POST /api/organizations/{organization_id}/extensions
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -371,14 +354,14 @@ Content-Type: application/json
 ### Get Extension
 
 ```http
-GET /api/tenants/{tenant_id}/extensions/{id}
+GET /api/organizations/{organization_id}/extensions/{id}
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Update Extension
 
 ```http
-PUT /api/tenants/{tenant_id}/extensions/{id}
+PUT /api/organizations/{organization_id}/extensions/{id}
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -391,17 +374,17 @@ Content-Type: application/json
 ### Delete Extension
 
 ```http
-DELETE /api/tenants/{tenant_id}/extensions/{id}
+DELETE /api/organizations/{organization_id}/extensions/{id}
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Registration Status
 
-Get real-time SIP registration status from FreeSWITCH for a single extension or all extensions in a tenant.
+Get real-time SIP registration status from FreeSWITCH for a single extension or all extensions in a organization.
 
 ```http
-GET /api/tenants/{tenant_id}/extensions/status/all
-GET /api/tenants/{tenant_id}/extensions/{id}/status
+GET /api/organizations/{organization_id}/extensions/status/all
+GET /api/organizations/{organization_id}/extensions/{id}/status
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -410,7 +393,7 @@ Authorization: Bearer YOUR_TOKEN
 Get the complete connection suite for WebRTC clients (SIP.js, etc.):
 
 ```http
-GET /api/tenants/{tenant_id}/extensions/{id}/webrtc-config
+GET /api/organizations/{organization_id}/extensions/{id}/webrtc-config
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -438,11 +421,11 @@ Authorization: Bearer YOUR_TOKEN
 ## DIDs (Inbound Numbers)
 
 ```http
-GET    /api/tenants/{tenant_id}/dids
-POST   /api/tenants/{tenant_id}/dids
-GET    /api/tenants/{tenant_id}/dids/{id}
-PUT    /api/tenants/{tenant_id}/dids/{id}
-DELETE /api/tenants/{tenant_id}/dids/{id}
+GET    /api/organizations/{organization_id}/dids
+POST   /api/organizations/{organization_id}/dids
+GET    /api/organizations/{organization_id}/dids/{id}
+PUT    /api/organizations/{organization_id}/dids/{id}
+DELETE /api/organizations/{organization_id}/dids/{id}
 ```
 
 ### Create DID
@@ -464,11 +447,11 @@ DELETE /api/tenants/{tenant_id}/dids/{id}
 ## Ring Groups
 
 ```http
-GET    /api/tenants/{tenant_id}/ring-groups
-POST   /api/tenants/{tenant_id}/ring-groups
-GET    /api/tenants/{tenant_id}/ring-groups/{id}
-PUT    /api/tenants/{tenant_id}/ring-groups/{id}
-DELETE /api/tenants/{tenant_id}/ring-groups/{id}
+GET    /api/organizations/{organization_id}/ring-groups
+POST   /api/organizations/{organization_id}/ring-groups
+GET    /api/organizations/{organization_id}/ring-groups/{id}
+PUT    /api/organizations/{organization_id}/ring-groups/{id}
+DELETE /api/organizations/{organization_id}/ring-groups/{id}
 ```
 
 ### Create Ring Group
@@ -492,11 +475,11 @@ DELETE /api/tenants/{tenant_id}/ring-groups/{id}
 ## IVRs
 
 ```http
-GET    /api/tenants/{tenant_id}/ivrs
-POST   /api/tenants/{tenant_id}/ivrs
-GET    /api/tenants/{tenant_id}/ivrs/{id}
-PUT    /api/tenants/{tenant_id}/ivrs/{id}
-DELETE /api/tenants/{tenant_id}/ivrs/{id}
+GET    /api/organizations/{organization_id}/ivrs
+POST   /api/organizations/{organization_id}/ivrs
+GET    /api/organizations/{organization_id}/ivrs/{id}
+PUT    /api/organizations/{organization_id}/ivrs/{id}
+DELETE /api/organizations/{organization_id}/ivrs/{id}
 ```
 
 ### Create IVR
@@ -524,11 +507,11 @@ DELETE /api/tenants/{tenant_id}/ivrs/{id}
 ## Time Conditions
 
 ```http
-GET    /api/tenants/{tenant_id}/time-conditions
-POST   /api/tenants/{tenant_id}/time-conditions
-GET    /api/tenants/{tenant_id}/time-conditions/{id}
-PUT    /api/tenants/{tenant_id}/time-conditions/{id}
-DELETE /api/tenants/{tenant_id}/time-conditions/{id}
+GET    /api/organizations/{organization_id}/time-conditions
+POST   /api/organizations/{organization_id}/time-conditions
+GET    /api/organizations/{organization_id}/time-conditions/{id}
+PUT    /api/organizations/{organization_id}/time-conditions/{id}
+DELETE /api/organizations/{organization_id}/time-conditions/{id}
 ```
 
 ---
@@ -538,11 +521,11 @@ DELETE /api/tenants/{tenant_id}/time-conditions/{id}
 Policy-driven routing: DID → policy → outcome. Conditions are AND-evaluated at runtime.
 
 ```http
-GET    /api/tenants/{tenant_id}/call-routing-policies
-POST   /api/tenants/{tenant_id}/call-routing-policies
-GET    /api/tenants/{tenant_id}/call-routing-policies/{id}
-PUT    /api/tenants/{tenant_id}/call-routing-policies/{id}
-DELETE /api/tenants/{tenant_id}/call-routing-policies/{id}
+GET    /api/organizations/{organization_id}/call-routing-policies
+POST   /api/organizations/{organization_id}/call-routing-policies
+GET    /api/organizations/{organization_id}/call-routing-policies/{id}
+PUT    /api/organizations/{organization_id}/call-routing-policies/{id}
+DELETE /api/organizations/{organization_id}/call-routing-policies/{id}
 ```
 
 ### Create Call Routing Policy
@@ -577,7 +560,7 @@ DELETE /api/tenants/{tenant_id}/call-routing-policies/{id}
 ### Evaluate Policy
 
 ```http
-POST /api/tenants/{tenant_id}/call-routing-policies/{policy_id}/evaluate
+POST /api/organizations/{organization_id}/call-routing-policies/{policy_id}/evaluate
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -594,7 +577,7 @@ Content-Type: application/json
 {
   "policy_id": "uuid",
   "policy_name": "Business Hours",
-  "context": { "tenant_id": "uuid", "did": "+15551234567", "caller_id": "5559876543" },
+  "context": { "organization_id": "uuid", "did": "+15551234567", "caller_id": "5559876543" },
   "decision": { "decision": "allow" }
 }
 ```
@@ -606,12 +589,12 @@ Content-Type: application/json
 Composable call flow graphs. Each flow is a sequence of nodes that are compiled into FreeSWITCH dialplan actions.
 
 ```http
-GET    /api/tenants/{tenant_id}/flows
-POST   /api/tenants/{tenant_id}/flows
-GET    /api/tenants/{tenant_id}/flows/{id}
-PUT    /api/tenants/{tenant_id}/flows/{id}
-DELETE /api/tenants/{tenant_id}/flows/{id}
-POST   /api/tenants/{tenant_id}/flows/{id}/publish
+GET    /api/organizations/{organization_id}/flows
+POST   /api/organizations/{organization_id}/flows
+GET    /api/organizations/{organization_id}/flows/{id}
+PUT    /api/organizations/{organization_id}/flows/{id}
+DELETE /api/organizations/{organization_id}/flows/{id}
+POST   /api/organizations/{organization_id}/flows/{id}/publish
 ```
 
 ### Create Flow
@@ -653,7 +636,7 @@ POST   /api/tenants/{tenant_id}/flows/{id}/publish
 ### Publish Flow
 
 ```http
-POST /api/tenants/{tenant_id}/flows/{id}/publish
+POST /api/organizations/{organization_id}/flows/{id}/publish
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -664,22 +647,22 @@ Authorization: Bearer YOUR_TOKEN
 View active and completed call sessions with full trace events.
 
 ```http
-GET    /api/tenants/{tenant_id}/calls
-GET    /api/tenants/{tenant_id}/calls/{callSession}
-GET    /api/tenants/{tenant_id}/calls/{callSession}/analyze
+GET    /api/organizations/{organization_id}/calls
+GET    /api/organizations/{organization_id}/calls/{callSession}
+GET    /api/organizations/{organization_id}/calls/{callSession}/analyze
 ```
 
 ### List Call Sessions
 
 ```http
-GET /api/tenants/{tenant_id}/calls
+GET /api/organizations/{organization_id}/calls
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Get Call Session
 
 ```http
-GET /api/tenants/{tenant_id}/calls/{callSession}
+GET /api/organizations/{organization_id}/calls/{callSession}
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -688,7 +671,7 @@ Authorization: Bearer YOUR_TOKEN
 {
   "data": {
     "id": "uuid",
-    "tenant_id": "uuid",
+    "organization_id": "uuid",
     "call_uuid": "abc-123",
     "caller_id_number": "+15551234567",
     "destination_number": "1001",
@@ -707,7 +690,7 @@ Authorization: Bearer YOUR_TOKEN
 ### Analyze Call Session
 
 ```http
-GET /api/tenants/{tenant_id}/calls/{callSession}/analyze
+GET /api/organizations/{organization_id}/calls/{callSession}/analyze
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -720,18 +703,18 @@ Returns computed replay timeline and node metrics for the call session.
 Contact center agent management.
 
 ```http
-GET    /api/tenants/{tenant_id}/agents
-POST   /api/tenants/{tenant_id}/agents
-GET    /api/tenants/{tenant_id}/agents/{id}
-PUT    /api/tenants/{tenant_id}/agents/{id}
-DELETE /api/tenants/{tenant_id}/agents/{id}
-POST   /api/tenants/{tenant_id}/agents/{id}/state
+GET    /api/organizations/{organization_id}/agents
+POST   /api/organizations/{organization_id}/agents
+GET    /api/organizations/{organization_id}/agents/{id}
+PUT    /api/organizations/{organization_id}/agents/{id}
+DELETE /api/organizations/{organization_id}/agents/{id}
+POST   /api/organizations/{organization_id}/agents/{id}/state
 ```
 
 ### Change Agent State
 
 ```http
-POST /api/tenants/{tenant_id}/agents/{id}/state
+POST /api/organizations/{organization_id}/agents/{id}/state
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -750,20 +733,20 @@ Content-Type: application/json
 Contact center queue management.
 
 ```http
-GET    /api/tenants/{tenant_id}/queues
-POST   /api/tenants/{tenant_id}/queues
-GET    /api/tenants/{tenant_id}/queues/{id}
-PUT    /api/tenants/{tenant_id}/queues/{id}
-DELETE /api/tenants/{tenant_id}/queues/{id}
-GET    /api/tenants/{tenant_id}/queues/{id}/members
-POST   /api/tenants/{tenant_id}/queues/{id}/members
-DELETE /api/tenants/{tenant_id}/queues/{id}/members/{agent}
+GET    /api/organizations/{organization_id}/queues
+POST   /api/organizations/{organization_id}/queues
+GET    /api/organizations/{organization_id}/queues/{id}
+PUT    /api/organizations/{organization_id}/queues/{id}
+DELETE /api/organizations/{organization_id}/queues/{id}
+GET    /api/organizations/{organization_id}/queues/{id}/members
+POST   /api/organizations/{organization_id}/queues/{id}/members
+DELETE /api/organizations/{organization_id}/queues/{id}/members/{agent}
 ```
 
 ### Add Queue Member
 
 ```http
-POST /api/tenants/{tenant_id}/queues/{id}/members
+POST /api/organizations/{organization_id}/queues/{id}/members
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -777,7 +760,7 @@ Content-Type: application/json
 ### Remove Queue Member
 
 ```http
-DELETE /api/tenants/{tenant_id}/queues/{id}/members/{agent}
+DELETE /api/organizations/{organization_id}/queues/{id}/members/{agent}
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -788,17 +771,17 @@ Authorization: Bearer YOUR_TOKEN
 Real-time queue performance monitoring.
 
 ```http
-GET    /api/tenants/{tenant_id}/queues/{id}/metrics/realtime
-POST   /api/tenants/{tenant_id}/queues/{id}/metrics/aggregate
-GET    /api/tenants/{tenant_id}/queues/{id}/metrics/history
-GET    /api/tenants/{tenant_id}/wallboard
-GET    /api/tenants/{tenant_id}/agent-states
+GET    /api/organizations/{organization_id}/queues/{id}/metrics/realtime
+POST   /api/organizations/{organization_id}/queues/{id}/metrics/aggregate
+GET    /api/organizations/{organization_id}/queues/{id}/metrics/history
+GET    /api/organizations/{organization_id}/wallboard
+GET    /api/organizations/{organization_id}/agent-states
 ```
 
 ### Get Realtime Queue Metrics
 
 ```http
-GET /api/tenants/{tenant_id}/queues/{id}/metrics/realtime
+GET /api/organizations/{organization_id}/queues/{id}/metrics/realtime
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -821,27 +804,27 @@ Authorization: Bearer YOUR_TOKEN
 ### Get Wallboard
 
 ```http
-GET /api/tenants/{tenant_id}/wallboard
+GET /api/organizations/{organization_id}/wallboard
 Authorization: Bearer YOUR_TOKEN
 ```
 
-Returns aggregated metrics for all queues in the tenant.
+Returns aggregated metrics for all queues in the organization.
 
 ---
 
 ## Recordings
 
 ```http
-GET    /api/tenants/{tenant_id}/recordings
-GET    /api/tenants/{tenant_id}/recordings/{id}
-GET    /api/tenants/{tenant_id}/recordings/{id}/download
-DELETE /api/tenants/{tenant_id}/recordings/{id}
+GET    /api/organizations/{organization_id}/recordings
+GET    /api/organizations/{organization_id}/recordings/{id}
+GET    /api/organizations/{organization_id}/recordings/{id}/download
+DELETE /api/organizations/{organization_id}/recordings/{id}
 ```
 
 ### List Recordings
 
 ```http
-GET /api/tenants/{tenant_id}/recordings
+GET /api/organizations/{organization_id}/recordings
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -857,7 +840,7 @@ Authorization: Bearer YOUR_TOKEN
 ### Download Recording
 
 ```http
-GET /api/tenants/{tenant_id}/recordings/{id}/download
+GET /api/organizations/{organization_id}/recordings/{id}/download
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -870,9 +853,9 @@ Returns the recording file as a download.
 Read-only. Created automatically when calls end.
 
 ```http
-GET /api/tenants/{tenant_id}/cdrs
-GET /api/tenants/{tenant_id}/cdrs/{id}
-GET /api/tenants/{tenant_id}/cdrs/export
+GET /api/organizations/{organization_id}/cdrs
+GET /api/organizations/{organization_id}/cdrs/{id}
+GET /api/organizations/{organization_id}/cdrs/export
 ```
 
 **Query Parameters** (for list endpoint):
@@ -889,7 +872,7 @@ GET /api/tenants/{tenant_id}/cdrs/export
 ### Export CDRs as CSV
 
 ```http
-GET /api/tenants/{tenant_id}/cdrs/export
+GET /api/organizations/{organization_id}/cdrs/export
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -900,13 +883,13 @@ Streamed CSV with headers: `uuid`, `caller_id_name`, `caller_id_number`, `destin
 ## Webhooks
 
 ```http
-GET    /api/tenants/{tenant_id}/webhooks
-POST   /api/tenants/{tenant_id}/webhooks
-GET    /api/tenants/{tenant_id}/webhooks/{id}
-PUT    /api/tenants/{tenant_id}/webhooks/{id}
-DELETE /api/tenants/{tenant_id}/webhooks/{id}
-GET    /api/tenants/{tenant_id}/webhooks/{id}/delivery-attempts
-GET    /api/tenants/{tenant_id}/webhooks/{id}/delivery-stats
+GET    /api/organizations/{organization_id}/webhooks
+POST   /api/organizations/{organization_id}/webhooks
+GET    /api/organizations/{organization_id}/webhooks/{id}
+PUT    /api/organizations/{organization_id}/webhooks/{id}
+DELETE /api/organizations/{organization_id}/webhooks/{id}
+GET    /api/organizations/{organization_id}/webhooks/{id}/delivery-attempts
+GET    /api/organizations/{organization_id}/webhooks/{id}/delivery-stats
 ```
 
 ### Create Webhook
@@ -937,19 +920,19 @@ GET    /api/tenants/{tenant_id}/webhooks/{id}/delivery-stats
 - `did.created` — DID created via API
 - `did.updated` — DID updated via API
 - `did.deleted` — DID deleted via API
-- `tenant.updated` — Tenant configuration changed
+- `organization.updated` — Organization configuration changed
 
 ### Get Delivery Attempts
 
 ```http
-GET /api/tenants/{tenant_id}/webhooks/{id}/delivery-attempts
+GET /api/organizations/{organization_id}/webhooks/{id}/delivery-attempts
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Get Delivery Stats
 
 ```http
-GET /api/tenants/{tenant_id}/webhooks/{id}/delivery-stats
+GET /api/organizations/{organization_id}/webhooks/{id}/delivery-stats
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -958,17 +941,17 @@ Authorization: Bearer YOUR_TOKEN
 ## Call Events
 
 ```http
-GET    /api/tenants/{tenant_id}/call-events
-GET    /api/tenants/{tenant_id}/call-events/stream
-GET    /api/tenants/{tenant_id}/call-events/{callUuid}/trace
-GET    /api/tenants/{tenant_id}/call-events/replay/{eventId}
-POST   /api/tenants/{tenant_id}/call-events/redispatch/{eventId}
+GET    /api/organizations/{organization_id}/call-events
+GET    /api/organizations/{organization_id}/call-events/stream
+GET    /api/organizations/{organization_id}/call-events/{callUuid}/trace
+GET    /api/organizations/{organization_id}/call-events/replay/{eventId}
+POST   /api/organizations/{organization_id}/call-events/redispatch/{eventId}
 ```
 
 ### List Call Events
 
 ```http
-GET /api/tenants/{tenant_id}/call-events
+GET /api/organizations/{organization_id}/call-events
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -983,21 +966,21 @@ Authorization: Bearer YOUR_TOKEN
 ### Call Trace
 
 ```http
-GET /api/tenants/{tenant_id}/call-events/{callUuid}/trace
+GET /api/organizations/{organization_id}/call-events/{callUuid}/trace
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Event Replay
 
 ```http
-GET /api/tenants/{tenant_id}/call-events/replay/{eventId}
+GET /api/organizations/{organization_id}/call-events/replay/{eventId}
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Real-Time Event Stream (SSE)
 
 ```http
-GET /api/tenants/{tenant_id}/call-events/stream
+GET /api/organizations/{organization_id}/call-events/stream
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -1010,7 +993,7 @@ Authorization: Bearer YOUR_TOKEN
 ### Re-dispatch Event
 
 ```http
-POST /api/tenants/{tenant_id}/call-events/redispatch/{eventId}
+POST /api/organizations/{organization_id}/call-events/redispatch/{eventId}
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -1019,18 +1002,18 @@ Authorization: Bearer YOUR_TOKEN
 ## Call Control
 
 ```http
-POST /api/tenants/{tenant_id}/calls/originate
-GET  /api/tenants/{tenant_id}/calls/status
-POST /api/tenants/{tenant_id}/calls/hangup
-POST /api/tenants/{tenant_id}/calls/transfer
-POST /api/tenants/{tenant_id}/calls/recording
-POST /api/tenants/{tenant_id}/calls/hold
+POST /api/organizations/{organization_id}/calls/originate
+GET  /api/organizations/{organization_id}/calls/status
+POST /api/organizations/{organization_id}/calls/hangup
+POST /api/organizations/{organization_id}/calls/transfer
+POST /api/organizations/{organization_id}/calls/recording
+POST /api/organizations/{organization_id}/calls/hold
 ```
 
 ### Originate Call
 
 ```http
-POST /api/tenants/{tenant_id}/calls/originate
+POST /api/organizations/{organization_id}/calls/originate
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -1043,14 +1026,14 @@ Content-Type: application/json
 ### Call Status
 
 ```http
-GET /api/tenants/{tenant_id}/calls/status
+GET /api/organizations/{organization_id}/calls/status
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Hangup Call
 
 ```http
-POST /api/tenants/{tenant_id}/calls/hangup
+POST /api/organizations/{organization_id}/calls/hangup
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -1063,7 +1046,7 @@ Content-Type: application/json
 ### Transfer Call
 
 ```http
-POST /api/tenants/{tenant_id}/calls/transfer
+POST /api/organizations/{organization_id}/calls/transfer
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -1077,7 +1060,7 @@ Content-Type: application/json
 ### Toggle Recording
 
 ```http
-POST /api/tenants/{tenant_id}/calls/recording
+POST /api/organizations/{organization_id}/calls/recording
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -1090,7 +1073,7 @@ Content-Type: application/json
 ### Hold / Unhold
 
 ```http
-POST /api/tenants/{tenant_id}/calls/hold
+POST /api/organizations/{organization_id}/calls/hold
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -1105,11 +1088,11 @@ Content-Type: application/json
 ## Device Profiles
 
 ```http
-GET    /api/tenants/{tenant_id}/device-profiles
-POST   /api/tenants/{tenant_id}/device-profiles
-GET    /api/tenants/{tenant_id}/device-profiles/{id}
-PUT    /api/tenants/{tenant_id}/device-profiles/{id}
-DELETE /api/tenants/{tenant_id}/device-profiles/{id}
+GET    /api/organizations/{organization_id}/device-profiles
+POST   /api/organizations/{organization_id}/device-profiles
+GET    /api/organizations/{organization_id}/device-profiles/{id}
+PUT    /api/organizations/{organization_id}/device-profiles/{id}
+DELETE /api/organizations/{organization_id}/device-profiles/{id}
 ```
 
 ---
@@ -1146,12 +1129,12 @@ Manage reusable outbound bridge targets. Bridge objects let routing surfaces lik
 
 
 ```http
-GET    /api/tenants/{tenant_id}/gateways
-POST   /api/tenants/{tenant_id}/gateways
-GET    /api/tenants/{tenant_id}/gateways/{id}
-PUT    /api/tenants/{tenant_id}/gateways/{id}
-DELETE /api/tenants/{tenant_id}/gateways/{id}
-GET    /api/tenants/{tenant_id}/gateways/{id}/status
+GET    /api/organizations/{organization_id}/gateways
+POST   /api/organizations/{organization_id}/gateways
+GET    /api/organizations/{organization_id}/gateways/{id}
+PUT    /api/organizations/{organization_id}/gateways/{id}
+DELETE /api/organizations/{organization_id}/gateways/{id}
+GET    /api/organizations/{organization_id}/gateways/{id}/status
 ```
 
 ### Gateway Registration Status
@@ -1161,7 +1144,7 @@ Get real-time SIP registration status from FreeSWITCH for a given gateway.
 This endpoint queries FreeSWITCH live via ESL (`sofia status gateway {name}`) and returns current state.
 
 ```http
-GET /api/tenants/{tenant_id}/gateways/{id}/status
+GET /api/organizations/{organization_id}/gateways/{id}/status
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -1179,17 +1162,17 @@ Response includes:
 Upload and manage system audio prompts (e.g., greetings) and Music on Hold (MOH). Backed by Spatie Media Library.
 
 ```http
-GET    /api/tenants/{tenant_id}/system-media
-POST   /api/tenants/{tenant_id}/system-media
-GET    /api/tenants/{tenant_id}/system-media/{id}
-PUT    /api/tenants/{tenant_id}/system-media/{id}
-DELETE /api/tenants/{tenant_id}/system-media/{id}
+GET    /api/organizations/{organization_id}/system-media
+POST   /api/organizations/{organization_id}/system-media
+GET    /api/organizations/{organization_id}/system-media/{id}
+PUT    /api/organizations/{organization_id}/system-media/{id}
+DELETE /api/organizations/{organization_id}/system-media/{id}
 ```
 
 ### Upload Media
 
 ```http
-POST /api/tenants/{tenant_id}/system-media
+POST /api/organizations/{organization_id}/system-media
 Authorization: Bearer YOUR_TOKEN
 Content-Type: multipart/form-data
 
@@ -1205,7 +1188,7 @@ collection: "prompts"
 ## Codec Metrics
 
 ```http
-GET /api/tenants/{tenant_id}/codec-metrics
+GET /api/organizations/{organization_id}/codec-metrics
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -1214,11 +1197,11 @@ Authorization: Bearer YOUR_TOKEN
 ## Holiday Calendars
 
 ```http
-GET    /api/tenants/{tenant_id}/holiday-calendars
-POST   /api/tenants/{tenant_id}/holiday-calendars
-GET    /api/tenants/{tenant_id}/holiday-calendars/{id}
-PUT    /api/tenants/{tenant_id}/holiday-calendars/{id}
-DELETE /api/tenants/{tenant_id}/holiday-calendars/{id}
+GET    /api/organizations/{organization_id}/holiday-calendars
+POST   /api/organizations/{organization_id}/holiday-calendars
+GET    /api/organizations/{organization_id}/holiday-calendars/{id}
+PUT    /api/organizations/{organization_id}/holiday-calendars/{id}
+DELETE /api/organizations/{organization_id}/holiday-calendars/{id}
 ```
 
 ---
@@ -1226,11 +1209,11 @@ DELETE /api/tenants/{tenant_id}/holiday-calendars/{id}
 ## Schedules
 
 ```http
-GET    /api/tenants/{tenant_id}/schedules
-POST   /api/tenants/{tenant_id}/schedules
-GET    /api/tenants/{tenant_id}/schedules/{id}
-PUT    /api/tenants/{tenant_id}/schedules/{id}
-DELETE /api/tenants/{tenant_id}/schedules/{id}
+GET    /api/organizations/{organization_id}/schedules
+POST   /api/organizations/{organization_id}/schedules
+GET    /api/organizations/{organization_id}/schedules/{id}
+PUT    /api/organizations/{organization_id}/schedules/{id}
+DELETE /api/organizations/{organization_id}/schedules/{id}
 ```
 
 ---
@@ -1238,11 +1221,11 @@ DELETE /api/tenants/{tenant_id}/schedules/{id}
 ## Teams
 
 ```http
-GET    /api/tenants/{tenant_id}/teams
-POST   /api/tenants/{tenant_id}/teams
-GET    /api/tenants/{tenant_id}/teams/{id}
-PUT    /api/tenants/{tenant_id}/teams/{id}
-DELETE /api/tenants/{tenant_id}/teams/{id}
+GET    /api/organizations/{organization_id}/teams
+POST   /api/organizations/{organization_id}/teams
+GET    /api/organizations/{organization_id}/teams/{id}
+PUT    /api/organizations/{organization_id}/teams/{id}
+DELETE /api/organizations/{organization_id}/teams/{id}
 ```
 
 ---
@@ -1256,7 +1239,7 @@ GET /api/users
 Authorization: Bearer {token}
 ```
 
-Query parameters: `tenant_id`, `role`
+Query parameters: `organization_id`, `role`
 
 ### Create User
 
@@ -1270,7 +1253,7 @@ Content-Type: application/json
   "email": "jane@example.com",
   "password": "password123",
   "role": "user",
-  "tenant_id": "tenant-uuid"
+  "organization_id": "organization-uuid"
 }
 ```
 
@@ -1339,14 +1322,14 @@ Authorization: Bearer {token}
 Read-only API for querying audit trail entries.
 
 ```http
-GET /api/tenants/{tenant_id}/audit-logs
-GET /api/tenants/{tenant_id}/audit-logs/{id}
+GET /api/organizations/{organization_id}/audit-logs
+GET /api/organizations/{organization_id}/audit-logs/{id}
 ```
 
 ### List Audit Logs
 
 ```http
-GET /api/tenants/{tenant_id}/audit-logs
+GET /api/organizations/{organization_id}/audit-logs
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -1366,21 +1349,21 @@ Authorization: Bearer YOUR_TOKEN
 ### Get Usage Summary
 
 ```http
-GET /api/tenants/{tenant_id}/usage/summary?from=2026-02-01&to=2026-02-28
+GET /api/organizations/{organization_id}/usage/summary?from=2026-02-01&to=2026-02-28
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Collect Usage Snapshot
 
 ```http
-POST /api/tenants/{tenant_id}/usage/collect
+POST /api/organizations/{organization_id}/usage/collect
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Reconcile Call Minutes
 
 ```http
-GET /api/tenants/{tenant_id}/usage/reconcile?from=2026-02-01&to=2026-02-28
+GET /api/organizations/{organization_id}/usage/reconcile?from=2026-02-01&to=2026-02-28
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -1395,7 +1378,7 @@ GET /api/admin/dashboard
 Authorization: Bearer YOUR_TOKEN
 ```
 
-Returns total tenants by status, per-tenant resource counts, and aggregate system metrics.
+Returns total organizations by status, per-organization resource counts, and aggregate system metrics.
 
 ---
 
@@ -1537,7 +1520,7 @@ All errors follow a consistent format:
 | Status | Meaning |
 |--------|---------|
 | `401` | Unauthenticated — invalid or missing token |
-| `403` | Forbidden — insufficient permissions or wrong tenant |
+| `403` | Forbidden — insufficient permissions or wrong organization |
 | `404` | Not found |
 | `422` | Validation error |
 | `429` | Rate limit exceeded |

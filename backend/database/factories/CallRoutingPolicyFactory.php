@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\CallRoutingPolicy;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -17,7 +17,7 @@ class CallRoutingPolicyFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'name' => fake()->words(3, true).' policy',
             'description' => fake()->optional()->sentence(),
             'conditions' => [

@@ -5,7 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\Agent;
 use App\Models\Queue;
 use App\Models\QueueEntry;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\MetricsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -25,26 +25,26 @@ class MetricsServiceTest extends TestCase
 
     private function createSetup(): array
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
         ]);
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support Queue',
             'strategy' => Queue::STRATEGY_ROUND_ROBIN,
             'max_wait_time' => 300,
             'service_level_threshold' => 20,
         ]);
 
-        return [$tenant, $queue];
+        return [$organization, $queue];
     }
 
-    private function createAgentForTenant(Tenant $tenant, string $state = Agent::STATE_AVAILABLE): Agent
+    private function createAgentForOrganization(Organization $organization, string $state = Agent::STATE_AVAILABLE): Agent
     {
-        $ext = $tenant->extensions()->create([
+        $ext = $organization->extensions()->create([
             'extension' => (string) fake()->unique()->numberBetween(1000, 9999),
             'password' => 'secret123',
             'directory_first_name' => fake()->firstName(),
@@ -52,7 +52,7 @@ class MetricsServiceTest extends TestCase
         ]);
 
         return Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $ext->id,
             'name' => fake()->name(),
             'state' => $state,
@@ -61,7 +61,7 @@ class MetricsServiceTest extends TestCase
 
     public function test_real_time_metrics_with_no_entries(): void
     {
-        [$tenant, $queue] = $this->createSetup();
+        [$organization, $queue] = $this->createSetup();
 
         $metrics = $this->metricsService->getRealTimeMetrics($queue);
 
@@ -75,11 +75,11 @@ class MetricsServiceTest extends TestCase
 
     public function test_real_time_metrics_with_entries(): void
     {
-        [$tenant, $queue] = $this->createSetup();
+        [$organization, $queue] = $this->createSetup();
 
         // Create answered entry within SLA
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -90,7 +90,7 @@ class MetricsServiceTest extends TestCase
 
         // Create answered entry outside SLA
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -101,7 +101,7 @@ class MetricsServiceTest extends TestCase
 
         // Create abandoned entry
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ABANDONED,
@@ -112,7 +112,7 @@ class MetricsServiceTest extends TestCase
 
         // Create waiting entry
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_WAITING,
@@ -131,11 +131,11 @@ class MetricsServiceTest extends TestCase
 
     public function test_abandon_rate_calculation(): void
     {
-        [$tenant, $queue] = $this->createSetup();
+        [$organization, $queue] = $this->createSetup();
 
         // 1 answered, 1 abandoned = 50% abandon rate
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -145,7 +145,7 @@ class MetricsServiceTest extends TestCase
         ]);
 
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ABANDONED,
@@ -161,12 +161,12 @@ class MetricsServiceTest extends TestCase
 
     public function test_service_level_calculation(): void
     {
-        [$tenant, $queue] = $this->createSetup();
+        [$organization, $queue] = $this->createSetup();
         $queue->update(['service_level_threshold' => 20]);
 
         // 1 within SLA (15s), 1 outside SLA (30s), 1 abandoned
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -176,7 +176,7 @@ class MetricsServiceTest extends TestCase
         ]);
 
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -186,7 +186,7 @@ class MetricsServiceTest extends TestCase
         ]);
 
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ABANDONED,
@@ -203,10 +203,10 @@ class MetricsServiceTest extends TestCase
 
     public function test_agent_occupancy_calculation(): void
     {
-        [$tenant, $queue] = $this->createSetup();
+        [$organization, $queue] = $this->createSetup();
 
-        $agent1 = $this->createAgentForTenant($tenant, Agent::STATE_BUSY);
-        $agent2 = $this->createAgentForTenant($tenant, Agent::STATE_AVAILABLE);
+        $agent1 = $this->createAgentForOrganization($organization, Agent::STATE_BUSY);
+        $agent2 = $this->createAgentForOrganization($organization, Agent::STATE_AVAILABLE);
 
         $queue->members()->attach($agent1->id, ['id' => Str::uuid(), 'priority' => 0]);
         $queue->members()->attach($agent2->id, ['id' => Str::uuid(), 'priority' => 1]);
@@ -218,10 +218,10 @@ class MetricsServiceTest extends TestCase
 
     public function test_aggregate_metrics_creates_record(): void
     {
-        [$tenant, $queue] = $this->createSetup();
+        [$organization, $queue] = $this->createSetup();
 
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -243,15 +243,15 @@ class MetricsServiceTest extends TestCase
 
     public function test_agent_states_summary(): void
     {
-        [$tenant] = $this->createSetup();
+        [$organization] = $this->createSetup();
 
-        $this->createAgentForTenant($tenant, Agent::STATE_AVAILABLE);
-        $this->createAgentForTenant($tenant, Agent::STATE_AVAILABLE);
-        $this->createAgentForTenant($tenant, Agent::STATE_BUSY);
-        $this->createAgentForTenant($tenant, Agent::STATE_PAUSED);
-        $this->createAgentForTenant($tenant, Agent::STATE_OFFLINE);
+        $this->createAgentForOrganization($organization, Agent::STATE_AVAILABLE);
+        $this->createAgentForOrganization($organization, Agent::STATE_AVAILABLE);
+        $this->createAgentForOrganization($organization, Agent::STATE_BUSY);
+        $this->createAgentForOrganization($organization, Agent::STATE_PAUSED);
+        $this->createAgentForOrganization($organization, Agent::STATE_OFFLINE);
 
-        $summary = $this->metricsService->getAgentStatesSummary($tenant->id);
+        $summary = $this->metricsService->getAgentStatesSummary($organization->id);
 
         $this->assertEquals(2, $summary[Agent::STATE_AVAILABLE]);
         $this->assertEquals(1, $summary[Agent::STATE_BUSY]);
@@ -262,12 +262,12 @@ class MetricsServiceTest extends TestCase
 
     public function test_wallboard_data_structure(): void
     {
-        [$tenant, $queue] = $this->createSetup();
+        [$organization, $queue] = $this->createSetup();
 
-        $agent = $this->createAgentForTenant($tenant);
+        $agent = $this->createAgentForOrganization($organization);
         $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 0]);
 
-        $wallboard = $this->metricsService->getWallboardData($tenant->id);
+        $wallboard = $this->metricsService->getWallboardData($organization->id);
 
         $this->assertArrayHasKey('queues', $wallboard);
         $this->assertArrayHasKey('agent_states', $wallboard);
@@ -276,23 +276,23 @@ class MetricsServiceTest extends TestCase
         $this->assertCount(1, $wallboard['agents']);
     }
 
-    public function test_tenant_isolation_in_metrics(): void
+    public function test_organization_isolation_in_metrics(): void
     {
-        [$tenant1, $queue1] = $this->createSetup();
+        [$organization1, $queue1] = $this->createSetup();
 
-        $tenant2 = Tenant::create([
+        $organization2 = Organization::create([
             'name' => 'Other Corp',
             'domain' => 'other.example.com',
             'max_extensions' => 50,
         ]);
 
         $queue2 = Queue::create([
-            'tenant_id' => $tenant2->id,
+            'organization_id' => $organization2->id,
             'name' => 'Other Queue',
         ]);
 
         QueueEntry::create([
-            'tenant_id' => $tenant1->id,
+            'organization_id' => $organization1->id,
             'queue_id' => $queue1->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -303,7 +303,7 @@ class MetricsServiceTest extends TestCase
         $metrics2 = $this->metricsService->getRealTimeMetrics($queue2);
         $this->assertEquals(0, $metrics2['calls_offered']);
 
-        $wallboard2 = $this->metricsService->getWallboardData($tenant2->id);
+        $wallboard2 = $this->metricsService->getWallboardData($organization2->id);
         $this->assertCount(1, $wallboard2['queues']);
         $this->assertEquals(0, $wallboard2['queues'][0]['calls_offered']);
     }

@@ -5,8 +5,8 @@ Date: 2026-04-12
 ## 1. What is now completed or strongly established
 
 ### Core architecture foundations
-- **Domain-only tenant identity**
-  - tenant context should resolve by domain only
+- **Domain-only organization identity**
+  - organization context should resolve by domain only
 - **User / Extension / Device mapping**
   - real business identity separated from telephony identity
 - **Presence aggregation**
@@ -67,7 +67,7 @@ When a new organization/domain is created, it should become an immediately usabl
 1. **Automatic organization bootstrap**
    - create default business-hours schedule
    - create default holiday calendar
-   - link tenant default schedule/calendar
+   - link organization default schedule/calendar
    - create a main entrypoint/default flow
    - create a default after-hours fallback target
 
@@ -115,7 +115,7 @@ When a new organization/domain is created, it should become an immediately usabl
 ### Phase 1: Organization bootstrap service
 - introduce a dedicated bootstrap service invoked on org creation
 - provision default schedule and holiday calendar
-- attach defaults to tenant/org
+- attach defaults to organization
 
 ### Phase 2: Default entrypoint provisioning
 - create a starter main flow/preset
@@ -124,7 +124,7 @@ When a new organization/domain is created, it should become an immediately usabl
 
 ### Phase 3: Feature-code/service-code pack
 - add first-wave built-in service routes
-- compile them into the generated tenant manifest/dialplan path
+- compile them into the generated organization manifest/dialplan path
 
 ### Phase 4: Manifest rebuild audit
 - add missing observers/triggers for route-affecting PBX objects

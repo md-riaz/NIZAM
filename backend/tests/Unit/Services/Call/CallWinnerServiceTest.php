@@ -6,7 +6,7 @@ use App\Events\CallDeliveryPushRequested;
 use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
 use App\Models\EndpointBinding;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\CallWinnerService;
 use App\Services\Media\FreeSwitchCommandService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -79,9 +79,9 @@ class CallWinnerServiceTest extends TestCase
         Event::fake([CallDeliveryPushRequested::class]);
         $this->mockFreeSwitchCommandService();
 
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
-        $endpoint = EndpointBinding::factory()->for($tenant)->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
+        $endpoint = EndpointBinding::factory()->for($organization)->create([
             'type' => EndpointBinding::TYPE_PSTN_FORWARD,
             'is_push_capable' => false,
             'push_token' => null,
@@ -126,9 +126,9 @@ class CallWinnerServiceTest extends TestCase
             ];
         });
 
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret',
             'directory_first_name' => 'Winner',
@@ -216,8 +216,8 @@ class CallWinnerServiceTest extends TestCase
      */
     protected function makeAnsweredRaceAttempts(): array
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '1000',
             'password' => 'secret',
             'directory_first_name' => 'Race',
@@ -226,7 +226,7 @@ class CallWinnerServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $callSession = CallSession::factory()->for($organization)->create();
         $winnerBinding = EndpointBinding::factory()->forExtension($extension)->create([
             'type' => EndpointBinding::TYPE_DESK_PHONE,
             'is_push_capable' => false,

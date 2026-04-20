@@ -16,7 +16,7 @@ class QueueMetric extends Model
     public const PERIOD_DAILY = 'daily';
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'queue_id',
         'period',
         'period_start',
@@ -45,9 +45,9 @@ class QueueMetric extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function queue(): BelongsTo

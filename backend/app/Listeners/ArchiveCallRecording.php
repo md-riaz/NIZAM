@@ -16,7 +16,7 @@ class ArchiveCallRecording
         $cdr = $event->cdr;
 
         $payload = [
-            'tenant_id' => $cdr->tenant_id,
+            'organization_id' => $cdr->organization_id,
             'call_uuid' => $cdr->uuid,
             'recording_path' => $cdr->recording_path,
             'direction' => $cdr->direction,

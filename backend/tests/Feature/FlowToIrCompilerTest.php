@@ -6,7 +6,7 @@ use App\Models\Flow;
 use App\Models\FlowEdge;
 use App\Models\FlowNode;
 use App\Models\FlowVersion;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Domain\Flow\Compile\NodeSpecRegistry;
 use App\Services\Flow\Compile\FlowToIrCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,20 +16,20 @@ class FlowToIrCompilerTest extends TestCase
 {
     use RefreshDatabase;
     protected FlowToIrCompiler $compiler;
-    protected Tenant $tenant;
+    protected Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
+        $this->organization = Organization::factory()->create(['domain' => 'test.example.com']);
         $registry = new NodeSpecRegistry();
         $this->compiler = new FlowToIrCompiler($registry);
     }
 
     public function test_can_compile_start_node(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'definition_json' => [],
@@ -62,7 +62,7 @@ class FlowToIrCompilerTest extends TestCase
 
     public function test_can_compile_schedule_check_node(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'definition_json' => [],
@@ -95,7 +95,7 @@ class FlowToIrCompilerTest extends TestCase
 
     public function test_can_compile_menu_node(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'definition_json' => [],
@@ -128,7 +128,7 @@ class FlowToIrCompilerTest extends TestCase
 
     public function test_can_compile_voicemail_node(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'definition_json' => [],
@@ -161,7 +161,7 @@ class FlowToIrCompilerTest extends TestCase
 
     public function test_can_compile_hangup_node(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'definition_json' => [],
@@ -181,7 +181,7 @@ class FlowToIrCompilerTest extends TestCase
 
     public function test_throws_on_unknown_type(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'definition_json' => [],
@@ -199,7 +199,7 @@ class FlowToIrCompilerTest extends TestCase
 
     public function test_can_validate_flow_before_compilation(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'definition_json' => [],
@@ -216,7 +216,7 @@ class FlowToIrCompilerTest extends TestCase
 
     public function test_cannot_validate_flow_with_unknown_type(): void
     {
-        $flow = Flow::factory()->create(['tenant_id' => $this->tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'definition_json' => [],

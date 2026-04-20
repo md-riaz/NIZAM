@@ -25,7 +25,7 @@ class VoicemailModuleTest extends TestCase
 
     public function test_voicemail_event_service_builds_local_first_payload(): void
     {
-        $tenant = \App\Models\Tenant::factory()->create([
+        $organization = \App\Models\Organization::factory()->create([
             'domain' => 'vm.example.com',
             'is_active' => true,
         ]);
@@ -42,7 +42,7 @@ class VoicemailModuleTest extends TestCase
         ]);
 
         $this->assertNotNull($payload);
-        $this->assertSame($tenant->id, $payload['tenant_id']);
+        $this->assertSame($organization->id, $payload['organization_id']);
         $this->assertSame(CallEventLog::EVENT_VOICEMAIL_RECEIVED, $payload['event_type']);
         $this->assertSame('local', $payload['metadata']['storage_disk']);
         $this->assertSame('local-first', $payload['metadata']['storage_driver']);
@@ -52,7 +52,7 @@ class VoicemailModuleTest extends TestCase
 
     public function test_voicemail_event_service_canonicalizes_windows_and_absolute_paths(): void
     {
-        $tenant = \App\Models\Tenant::factory()->create([
+        $organization = \App\Models\Organization::factory()->create([
             'domain' => 'vm.example.com',
             'is_active' => true,
         ]);
@@ -61,7 +61,7 @@ class VoicemailModuleTest extends TestCase
 
         $payload = $service->handleMaintenanceEvent([
             'VM-Action' => 'leave-message',
-            'VM-Domain' => $tenant->domain,
+            'VM-Domain' => $organization->domain,
             'VM-User' => '1001',
             'VM-Message-File' => 'C:\\freeswitch\\storage\\voicemail\\vm.example.com\\1001\\msg.wav',
         ]);

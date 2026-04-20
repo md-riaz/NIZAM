@@ -6,7 +6,7 @@ use App\Jobs\DispatchCallDeliveryPush;
 use App\Models\CallSession;
 use App\Models\EndpointBinding;
 use App\Models\PushNotificationLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Push\ApnsPushDriver;
 use App\Services\Push\FcmPushDriver;
 use App\Services\Push\NullPushDriver;
@@ -25,10 +25,10 @@ class DispatchCallDeliveryPushTest extends TestCase
         config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
     }
 
-    private function makeTenantAndBinding(string $domain, string $ext, string $platform, array $tokens = []): array
+    private function makeOrganizationAndBinding(string $domain, string $ext, string $platform, array $tokens = []): array
     {
-        $tenant = Tenant::factory()->create(['domain' => $domain]);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => $domain]);
+        $extension = $organization->extensions()->create([
             'extension' => $ext, 'password' => 'secret',
             'directory_first_name' => 'Test', 'directory_last_name' => 'User',
             'voicemail_enabled' => false, 'is_active' => true,
@@ -38,7 +38,7 @@ class DispatchCallDeliveryPushTest extends TestCase
             'platform' => $platform,
             'is_push_capable' => true,
         ], $tokens));
-        $session = CallSession::factory()->for($tenant)->create(['call_uuid' => 'test-uuid', 'state' => 'parked']);
+        $session = CallSession::factory()->for($organization)->create(['call_uuid' => 'test-uuid', 'state' => 'parked']);
 
         return [$binding, $session];
     }
@@ -57,7 +57,7 @@ class DispatchCallDeliveryPushTest extends TestCase
 
     public function test_ios_binding_uses_apns_driver(): void
     {
-        [$binding, $session] = $this->makeTenantAndBinding('ios.test', '4001', EndpointBinding::PLATFORM_IOS, [
+        [$binding, $session] = $this->makeOrganizationAndBinding('ios.test', '4001', EndpointBinding::PLATFORM_IOS, [
             'voip_push_token' => 'voip-tok', 'push_token' => null,
         ]);
         $log = $this->makeLog($session, $binding);
@@ -76,7 +76,7 @@ class DispatchCallDeliveryPushTest extends TestCase
 
     public function test_android_binding_uses_fcm_driver(): void
     {
-        [$binding, $session] = $this->makeTenantAndBinding('android.test', '4002', EndpointBinding::PLATFORM_ANDROID, [
+        [$binding, $session] = $this->makeOrganizationAndBinding('android.test', '4002', EndpointBinding::PLATFORM_ANDROID, [
             'push_token' => 'fcm-tok', 'voip_push_token' => null,
         ]);
         $log = $this->makeLog($session, $binding);
@@ -95,7 +95,7 @@ class DispatchCallDeliveryPushTest extends TestCase
 
     public function test_ios_binding_with_only_data_push_token_uses_fcm_driver(): void
     {
-        [$binding, $session] = $this->makeTenantAndBinding('ios-fcm.test', '4007', EndpointBinding::PLATFORM_IOS, [
+        [$binding, $session] = $this->makeOrganizationAndBinding('ios-fcm.test', '4007', EndpointBinding::PLATFORM_IOS, [
             'push_token' => 'fcm-ios-token', 'voip_push_token' => null,
         ]);
         $log = $this->makeLog($session, $binding);
@@ -118,7 +118,7 @@ class DispatchCallDeliveryPushTest extends TestCase
 
     public function test_driver_failure_marks_log_failed(): void
     {
-        [$binding, $session] = $this->makeTenantAndBinding('fail.test', '4003', EndpointBinding::PLATFORM_IOS, [
+        [$binding, $session] = $this->makeOrganizationAndBinding('fail.test', '4003', EndpointBinding::PLATFORM_IOS, [
             'voip_push_token' => 'voip-tok2',
         ]);
         $log = $this->makeLog($session, $binding);
@@ -136,7 +136,7 @@ class DispatchCallDeliveryPushTest extends TestCase
 
     public function test_noop_when_log_already_sent(): void
     {
-        [$binding, $session] = $this->makeTenantAndBinding('sent.test', '4004', EndpointBinding::PLATFORM_IOS, [
+        [$binding, $session] = $this->makeOrganizationAndBinding('sent.test', '4004', EndpointBinding::PLATFORM_IOS, [
             'voip_push_token' => 'voip-tok3',
         ]);
         $log = $this->makeLog($session, $binding, 'sent');
@@ -161,8 +161,8 @@ class DispatchCallDeliveryPushTest extends TestCase
 
     public function test_marks_failed_when_binding_not_found(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'nob.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'nob.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '4005', 'password' => 'x',
             'directory_first_name' => 'A', 'directory_last_name' => 'B',
             'voicemail_enabled' => false, 'is_active' => true,
@@ -170,7 +170,7 @@ class DispatchCallDeliveryPushTest extends TestCase
         $binding = EndpointBinding::factory()->forExtension($extension)->create([
             'type' => EndpointBinding::TYPE_MOBILE_APP, 'is_push_capable' => true,
         ]);
-        $session = CallSession::factory()->for($tenant)->create(['call_uuid' => 'nob-uuid', 'state' => 'parked']);
+        $session = CallSession::factory()->for($organization)->create(['call_uuid' => 'nob-uuid', 'state' => 'parked']);
         $log = $this->makeLog($session, $binding);
 
         $manager = $this->createMock(PushDriverManager::class);

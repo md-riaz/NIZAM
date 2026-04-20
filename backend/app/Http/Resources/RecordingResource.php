@@ -11,7 +11,7 @@ class RecordingResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'call_uuid' => $this->call_uuid,
             'file_name' => $this->file_name,
             'file_size' => $this->file_size,

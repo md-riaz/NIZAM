@@ -3,20 +3,20 @@
 namespace App\Services;
 
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Support\Collection;
 
 class DirectoryService
 {
     /**
-     * Search active tenant extensions for the company directory.
+     * Search active organization extensions for the company directory.
      *
      * @return Collection<int, Extension>
      */
-    public function search(Tenant $tenant, ?string $search = null, int $limit = 50): Collection
+    public function search(Organization $organization, ?string $search = null, int $limit = 50): Collection
     {
         $query = Extension::query()
-            ->where('tenant_id', $tenant->id)
+            ->where('organization_id', $organization->id)
             ->where('is_active', true)
             ->orderBy('directory_first_name')
             ->orderBy('directory_last_name')

@@ -26,7 +26,7 @@
   - users delete
   - extensions delete
   - ring-groups delete
-  - tenant provision/delete coverage
+  - organization provision/delete coverage
 - [x] Upgrade dashboard to consume `GET admin/dashboard`.
 - [x] Add full UI for:
   - admin/ssl
@@ -34,7 +34,7 @@
   - admin/blocked-destinations
   - auth/tokens
 
-## Wave 2 — Tenant control-plane CRUD (6-8 days)
+## Wave 2 — Organization control-plane CRUD (6-8 days)
 
 - [ ] Add full modules + menu entries for:
   - queues (+ members + metrics endpoints)
@@ -58,21 +58,21 @@
   - cdr analytics + export + detail
   - recordings list/detail/download/delete
   - codec-metrics
-  - tenant stats / wallboard / usage summary-collect-reconcile
+  - organization stats / wallboard / usage summary-collect-reconcile
   - audit log detail
 
 ## Wave 4 — Usability hardening + release gate (3-4 days)
 
 - [ ] Verify every in-scope API has an entry path (menu or page link).
 - [ ] Keyboard-only and screen-reader pass for newly added modules.
-- [ ] Add E2E smoke coverage for top workflows (auth, tenant switch, CRUD, call ops, logs).
+- [ ] Add E2E smoke coverage for top workflows (auth, organization switch, CRUD, call ops, logs).
 - [ ] Produce endpoint coverage report target: **>=95% of in-scope operations**.
 
 ## Acceptance criteria
 
 - [ ] No in-scope endpoint remains orphaned from frontend workflow.
 - [ ] Every new page is reachable from consistent IA (menu or contextual links).
-- [ ] Role/tenant guards match backend authorization behavior.
+- [ ] Role/organization guards match backend authorization behavior.
 - [ ] Error states, loading states, and empty states implemented for each module.
 - [ ] Release note includes excluded scopes (flows/ivrs/time-conditions) clearly.
 

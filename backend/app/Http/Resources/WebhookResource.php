@@ -11,7 +11,7 @@ class WebhookResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'url' => $this->url,
             'events' => $this->events,
             'is_active' => $this->is_active,

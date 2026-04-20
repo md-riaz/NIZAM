@@ -19,7 +19,7 @@ class Gateway extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'name',
         'vendor',
         'host',
@@ -67,9 +67,9 @@ class Gateway extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function dids(): HasMany

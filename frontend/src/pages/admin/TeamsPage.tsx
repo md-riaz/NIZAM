@@ -16,7 +16,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/context/AuthContext';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
 
@@ -30,30 +30,30 @@ interface Team {
 }
 
 export default function TeamsPage() {
-    const { activeTenant } = useTenant();
+    const { activeOrganization } = useOrganization();
     const { user } = useAuth();
     const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
     const { data: teams = [], isLoading } = useQuery<Team[]>({
-        queryKey: ['teams', activeTenant?.id],
+        queryKey: ['teams', activeOrganization?.id],
         queryFn: async () => {
-            if (!activeTenant) return [];
-            const response = await api.get(`tenants/${activeTenant.id}/teams`);
+            if (!activeOrganization) return [];
+            const response = await api.get(`organizations/${activeOrganization.id}/teams`);
             return response.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
-            await api.delete(`tenants/${activeTenant?.id}/teams/${id}`);
+            await api.delete(`organizations/${activeOrganization?.id}/teams/${id}`);
         },
         successMessage: 'Team deleted successfully',
-        invalidateQueries: [['teams', activeTenant?.id || '']],
+        invalidateQueries: [['teams', activeOrganization?.id || '']],
         onSettled: () => setTeamToDelete(null),
     });
 
-    if (!activeTenant) return null;
+    if (!activeOrganization) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">

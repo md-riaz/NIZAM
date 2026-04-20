@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Models\Agent;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,9 +18,9 @@ class EndpointBindingFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'extension_id' => Extension::factory()->state(function (array $attributes): array {
-                return ['tenant_id' => $attributes['tenant_id']];
+                return ['organization_id' => $attributes['organization_id']];
             }),
             'agent_id' => null,
             'type' => EndpointBinding::TYPE_MOBILE_APP,
@@ -44,7 +44,7 @@ class EndpointBindingFactory extends Factory
     public function forAgent(Agent $agent): static
     {
         return $this->state(fn () => [
-            'tenant_id' => $agent->tenant_id,
+            'organization_id' => $agent->organization_id,
             'agent_id' => $agent->id,
             'extension_id' => $agent->extension_id,
         ]);
@@ -53,7 +53,7 @@ class EndpointBindingFactory extends Factory
     public function forExtension(Extension $extension): static
     {
         return $this->state(fn () => [
-            'tenant_id' => $extension->tenant_id,
+            'organization_id' => $extension->organization_id,
             'extension_id' => $extension->id,
         ]);
     }

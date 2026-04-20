@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services\SupervisorReports;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\SupervisorReports\MissedReturnedCallsReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,10 +14,10 @@ class MissedReturnedCallsReportServiceTest extends TestCase
 
     public function test_marks_missed_call_as_returned_when_outbound_call_happens_within_window(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         $missed = CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'direction' => 'inbound',
             'caller_id_number' => '+1 (555) 123-4567',
             'start_stamp' => '2026-04-01 09:00:00',
@@ -25,14 +25,14 @@ class MissedReturnedCallsReportServiceTest extends TestCase
         ]);
 
         $returned = CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'direction' => 'outbound',
             'destination_number' => '15551234567',
             'start_stamp' => '2026-04-03 10:00:00',
         ]);
 
         $report = app(MissedReturnedCallsReportService::class)->generate(
-            $tenant,
+            $organization,
             now()->parse('2026-04-01'),
             now()->parse('2026-04-05'),
         );
@@ -48,10 +48,10 @@ class MissedReturnedCallsReportServiceTest extends TestCase
 
     public function test_leaves_missed_call_open_when_return_happens_outside_window(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'direction' => 'inbound',
             'caller_id_number' => '+15557654321',
             'start_stamp' => '2026-04-01 09:00:00',
@@ -59,14 +59,14 @@ class MissedReturnedCallsReportServiceTest extends TestCase
         ]);
 
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'direction' => 'outbound',
             'destination_number' => '+15557654321',
             'start_stamp' => '2026-04-12 09:00:00',
         ]);
 
         $report = app(MissedReturnedCallsReportService::class)->generate(
-            $tenant,
+            $organization,
             now()->parse('2026-04-01'),
             now()->parse('2026-04-05'),
             7,

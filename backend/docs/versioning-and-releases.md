@@ -77,7 +77,7 @@ These changes REQUIRE consumer updates:
 ### Smoke Tests
 - [ ] Health check endpoint returns 200
 - [ ] Authentication flow works (register → login → token → me)
-- [ ] Tenant CRUD operations succeed
+- [ ] Organization CRUD operations succeed
 - [ ] Extension provisioning works
 - [ ] Call event processing functions correctly
 - [ ] Webhook delivery succeeds

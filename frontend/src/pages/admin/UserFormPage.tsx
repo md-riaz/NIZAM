@@ -32,14 +32,14 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import api from '@/lib/api';
-import type { Tenant } from '@/types/models';
+import type { Organization } from '@/types/models';
 
 const userSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('A valid email is required'),
     password: z.string().optional(),
     role: z.enum(['admin', 'user']),
-    tenant_id: z.string().optional(),
+    organization_id: z.string().optional(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -67,7 +67,7 @@ export default function UserFormPage() {
             email: '',
             password: '',
             role: 'user',
-            tenant_id: 'global',
+            organization_id: 'global',
         },
     });
 
@@ -80,10 +80,10 @@ export default function UserFormPage() {
         enabled: isEdit,
     });
 
-    const { data: tenants = [] } = useQuery({
-        queryKey: ['tenants'],
+    const { data: organizations = [] } = useQuery({
+        queryKey: ['organizations'],
         queryFn: async () => {
-            const response = await api.get<{ data: Tenant[] }>('tenants');
+            const response = await api.get<{ data: Organization[] }>('organizations');
             return response.data.data;
         },
     });
@@ -95,7 +95,7 @@ export default function UserFormPage() {
                 email: user.email ?? '',
                 password: '',
                 role: user.role === 'admin' ? 'admin' : 'user',
-                tenant_id: user.tenant_id ?? 'global',
+                organization_id: user.organization_id ?? 'global',
             });
         }
     }, [user, form]);
@@ -104,7 +104,7 @@ export default function UserFormPage() {
         mutationFn: async (values: UserFormValues) => {
             const payload = {
                 ...values,
-                tenant_id: values.tenant_id === 'global' ? null : values.tenant_id,
+                organization_id: values.organization_id === 'global' ? null : values.organization_id,
             };
 
             if (isEdit && !values.password) {
@@ -142,7 +142,7 @@ export default function UserFormPage() {
                 <CardHeader>
                     <CardTitle>User profile</CardTitle>
                     <CardDescription>
-                        Create platform or tenant-scoped users and assign their role.
+                        Create platform or organization-scoped users and assign their role.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -227,27 +227,27 @@ export default function UserFormPage() {
 
                                 <FormField
                                     control={form.control}
-                                    name="tenant_id"
+                                    name="organization_id"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Tenant scope</FormLabel>
+                                            <FormLabel>Organization scope</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select tenant scope" />
+                                                        <SelectValue placeholder="Select organization scope" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="global">Global platform user</SelectItem>
-                                                    {tenants.map((tenant) => (
-                                                        <SelectItem key={tenant.id} value={tenant.id}>
-                                                            {tenant.name}
+                                                    {organizations.map((organization) => (
+                                                        <SelectItem key={organization.id} value={organization.id}>
+                                                            {organization.name}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                             <FormDescription>
-                                                Global users have no tenant assignment. Tenant users are scoped to one organization.
+                                                Global users have no organization assignment. Organization users are scoped to one organization.
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>

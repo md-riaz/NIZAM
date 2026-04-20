@@ -28,7 +28,7 @@ They are used to trigger alerts, guide capacity planning, and set customer expec
 |-----|--------|-------------|
 | Metrics aggregation delay | < 60s | Time from period end to metric record availability |
 | Real-time metrics freshness | < 10s | Maximum staleness of real-time queue metrics |
-| Health score computation | < 5s (p95) | Time to compute per-tenant health score |
+| Health score computation | < 5s (p95) | Time to compute per-organization health score |
 
 ## 4. Call Processing
 

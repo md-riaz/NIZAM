@@ -4,20 +4,20 @@ namespace App\Services\Routing;
 
 use App\Models\Did;
 use App\Models\Gateway;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DidNormalizationService;
 
 class NumberRoutingService
 {
     public function resolveInboundDid(
-        Tenant $tenant,
+        Organization $organization,
         string $destinationNumber,
         ?Gateway $gateway = null,
     ): ?Did {
-        $normalized = DidNormalizationService::toE164($destinationNumber, $this->defaultCountryCode($tenant));
+        $normalized = DidNormalizationService::toE164($destinationNumber, $this->defaultCountryCode($organization));
 
         $query = Did::query()
-            ->where('tenant_id', $tenant->id)
+            ->where('organization_id', $organization->id)
             ->where('is_active', true)
             ->where(function ($builder) use ($destinationNumber, $normalized) {
                 $builder->where('number', $destinationNumber)
@@ -39,8 +39,8 @@ class NumberRoutingService
             ->first();
     }
 
-    protected function defaultCountryCode(Tenant $tenant): string
+    protected function defaultCountryCode(Organization $organization): string
     {
-        return (string) data_get($tenant->settings, 'default_country_code', '1');
+        return (string) data_get($organization->settings, 'default_country_code', '1');
     }
 }

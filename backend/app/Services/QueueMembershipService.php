@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Agent;
 use App\Models\Queue;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -13,9 +13,9 @@ class QueueMembershipService
     public function __construct(
         protected WallboardProjectionService $wallboardProjectionService,
     ) {}
-    public function addMember(Tenant $tenant, Queue $queue, string $agentId, int $priority = 0): ?Agent
+    public function addMember(Organization $organization, Queue $queue, string $agentId, int $priority = 0): ?Agent
     {
-        $agent = $tenant->agents()->find($agentId);
+        $agent = $organization->agents()->find($agentId);
 
         if (! $agent || $queue->members()->where('agent_id', $agent->id)->exists()) {
             return null;

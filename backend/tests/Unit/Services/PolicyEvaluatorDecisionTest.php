@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\CallRoutingPolicy;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\PolicyEvaluator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -48,36 +48,36 @@ class PolicyEvaluatorDecisionTest extends TestCase
         $this->assertEquals('Caller is blacklisted.', $result['reason']);
     }
 
-    public function test_evaluate_policy_rejects_suspended_tenant(): void
+    public function test_evaluate_policy_rejects_suspended_organization(): void
     {
-        $tenant = Tenant::factory()->create([
-            'status' => Tenant::STATUS_SUSPENDED,
+        $organization = Organization::factory()->create([
+            'status' => Organization::STATUS_SUSPENDED,
             'is_active' => true,
         ]);
 
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'conditions' => [],
         ]);
 
-        $result = $this->evaluator->evaluatePolicy($policy, ['tenant_id' => $tenant->id]);
+        $result = $this->evaluator->evaluatePolicy($policy, ['organization_id' => $organization->id]);
 
         $this->assertEquals(PolicyEvaluator::DECISION_REJECT, $result['decision']);
-        $this->assertEquals('Tenant is suspended or terminated.', $result['reason']);
+        $this->assertEquals('Organization is suspended or terminated.', $result['reason']);
     }
 
     public function test_evaluate_policy_returns_redirect_on_match(): void
     {
-        $tenant = Tenant::factory()->create();
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'conditions' => [],
             'match_destination_type' => 'extension',
             'match_destination_id' => $extension->id,
         ]);
 
-        $result = $this->evaluator->evaluatePolicy($policy, ['tenant_id' => $tenant->id]);
+        $result = $this->evaluator->evaluatePolicy($policy, ['organization_id' => $organization->id]);
 
         $this->assertEquals(PolicyEvaluator::DECISION_REDIRECT, $result['decision']);
         $this->assertEquals('extension', $result['redirect_to']['type']);
@@ -86,11 +86,11 @@ class PolicyEvaluatorDecisionTest extends TestCase
 
     public function test_evaluate_policy_returns_redirect_on_no_match(): void
     {
-        $tenant = Tenant::factory()->create();
-        $matchExtension = Extension::factory()->create(['tenant_id' => $tenant->id]);
-        $voicemailExtension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $matchExtension = Extension::factory()->create(['organization_id' => $organization->id]);
+        $voicemailExtension = Extension::factory()->create(['organization_id' => $organization->id]);
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'conditions' => [
                 ['type' => 'time_of_day', 'params' => ['start' => '23:00', 'end' => '23:01']],
             ],
@@ -102,7 +102,7 @@ class PolicyEvaluatorDecisionTest extends TestCase
 
         $now = \Carbon\Carbon::parse('2024-01-01 10:00:00');
         $result = $this->evaluator->evaluatePolicy($policy, [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'now' => $now,
         ]);
 
@@ -111,20 +111,20 @@ class PolicyEvaluatorDecisionTest extends TestCase
         $this->assertEquals($voicemailExtension->id, $result['redirect_to']['id']);
     }
 
-    public function test_evaluate_policy_allows_operational_tenant(): void
+    public function test_evaluate_policy_allows_operational_organization(): void
     {
-        $tenant = Tenant::factory()->create([
-            'status' => Tenant::STATUS_ACTIVE,
+        $organization = Organization::factory()->create([
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'conditions' => [],
             'match_destination_type' => null,
             'match_destination_id' => null,
         ]);
 
-        $result = $this->evaluator->evaluatePolicy($policy, ['tenant_id' => $tenant->id]);
+        $result = $this->evaluator->evaluatePolicy($policy, ['organization_id' => $organization->id]);
 
         $this->assertEquals(PolicyEvaluator::DECISION_ALLOW, $result['decision']);
     }

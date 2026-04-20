@@ -2,7 +2,7 @@
 
 namespace App\Services\Call;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\EslConnectionManager;
 
 class LiveRegistrationVisibility
@@ -14,7 +14,7 @@ class LiveRegistrationVisibility
     /**
      * @return array<string, array<string, mixed>>|null
      */
-    public function forTenant(Tenant $tenant): ?array
+    public function forOrganization(Organization $organization): ?array
     {
         $response = $this->esl->api('show registrations as json');
 
@@ -22,7 +22,7 @@ class LiveRegistrationVisibility
             return null;
         }
 
-        $domain = strtolower((string) $tenant->domain);
+        $domain = strtolower((string) $organization->domain);
         $registrations = [];
 
         foreach ($this->parseJsonResponse($response) as $registration) {

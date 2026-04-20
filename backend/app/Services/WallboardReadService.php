@@ -16,14 +16,14 @@ class WallboardReadService
         protected MetricsService $metricsService
     ) {}
 
-    public function getWallboardData(string $tenantId): array
+    public function getWallboardData(string $organizationId): array
     {
         return Cache::remember(
-            sprintf('metrics:%s:wallboard', $tenantId),
+            sprintf('metrics:%s:wallboard', $organizationId),
             now()->addSeconds(15),
-            function () use ($tenantId): array {
+            function () use ($organizationId): array {
                 $queues = Queue::query()
-                    ->where('tenant_id', $tenantId)
+                    ->where('organization_id', $organizationId)
                     ->where('is_active', true)
                     ->get();
 
@@ -32,7 +32,7 @@ class WallboardReadService
                 $livePeriodStart = now()->subHour();
 
                 $aggregatedMetrics = QueueMetric::query()
-                    ->where('tenant_id', $tenantId)
+                    ->where('organization_id', $organizationId)
                     ->where('period', QueueMetric::PERIOD_HOURLY)
                     ->where('period_start', $currentHourStart)
                     ->whereIn('queue_id', $queueIds)
@@ -54,8 +54,8 @@ class WallboardReadService
                         $this->getWaitingCounts($queueIds),
                         $this->getQueueMemberStats($queueIds),
                     ),
-                    'agent_states' => $this->metricsService->getAgentStatesSummary($tenantId),
-                    'agents' => $this->getAgents($tenantId),
+                    'agent_states' => $this->metricsService->getAgentStatesSummary($organizationId),
+                    'agents' => $this->getAgents($organizationId),
                 ];
             }
         );
@@ -166,10 +166,10 @@ class WallboardReadService
         })->values();
     }
 
-    private function getAgents(string $tenantId): Collection
+    private function getAgents(string $organizationId): Collection
     {
         return Agent::query()
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->where('is_active', true)
             ->with('extension:id,extension,directory_first_name,directory_last_name')
             ->get()

@@ -5,7 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -29,11 +29,11 @@ class DialplanCompilerPreRoutingTest extends TestCase
 
     public function test_pre_routing_blacklist_rejects_call(): void
     {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
+        $organization = Organization::factory()->create(['is_active' => true]);
 
         // Create a pre-routing policy (NOT linked to any DID) with blacklist
         CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
             'priority' => 1,
             'conditions' => [
@@ -44,12 +44,12 @@ class DialplanCompilerPreRoutingTest extends TestCase
         ]);
 
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15559999999',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
@@ -57,7 +57,7 @@ class DialplanCompilerPreRoutingTest extends TestCase
         ]);
 
         // Call from blacklisted number
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15559999999', '5551234567');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15559999999', '5551234567');
 
         $this->assertStringContainsString('respond', $xml);
         $this->assertStringContainsString('403', $xml);
@@ -66,10 +66,10 @@ class DialplanCompilerPreRoutingTest extends TestCase
 
     public function test_pre_routing_allows_non_blacklisted_caller(): void
     {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
+        $organization = Organization::factory()->create(['is_active' => true]);
 
         CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
             'priority' => 1,
             'conditions' => [
@@ -80,12 +80,12 @@ class DialplanCompilerPreRoutingTest extends TestCase
         ]);
 
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15559999999',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
@@ -93,7 +93,7 @@ class DialplanCompilerPreRoutingTest extends TestCase
         ]);
 
         // Call from non-blacklisted number
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15559999999', '5559876543');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15559999999', '5559876543');
 
         // Should proceed to normal DID routing
         $this->assertStringContainsString('bridge', $xml);
@@ -102,16 +102,16 @@ class DialplanCompilerPreRoutingTest extends TestCase
 
     public function test_did_linked_policies_excluded_from_pre_routing(): void
     {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
+        $organization = Organization::factory()->create(['is_active' => true]);
 
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
 
         // Policy linked as DID destination should NOT be evaluated pre-routing
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
             'conditions' => [
                 ['type' => 'time_of_day', 'params' => ['start' => '09:00', 'end' => '17:00']],
@@ -121,29 +121,29 @@ class DialplanCompilerPreRoutingTest extends TestCase
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15551000000',
             'destination_type' => 'call_routing_policy',
             'destination_id' => $policy->id,
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15551000000');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15551000000');
 
         // Should reach DID routing (not pre-routing reject)
         $this->assertStringContainsString('time-of-day="09:00-17:00"', $xml);
         $this->assertStringNotContainsString('policy-reject', $xml);
     }
 
-    public function test_pre_routing_suspended_tenant_rejects(): void
+    public function test_pre_routing_suspended_organization_rejects(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_SUSPENDED,
+            'status' => Organization::STATUS_SUSPENDED,
         ]);
 
-        // Suspended tenants are rejected at compileDialplan level anyway (isOperational check)
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15559999999');
+        // Suspended organizations are rejected at compileDialplan level anyway (isOperational check)
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15559999999');
 
         $this->assertStringContainsString('dialplan', $xml);
         $this->assertStringNotContainsString('bridge', $xml);
@@ -151,23 +151,23 @@ class DialplanCompilerPreRoutingTest extends TestCase
 
     public function test_pre_routing_redirect_overrides_did_routing(): void
     {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
+        $organization = Organization::factory()->create(['is_active' => true]);
 
         $normalExt = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'is_active' => true,
         ]);
 
         $redirectExt = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '9999',
             'is_active' => true,
         ]);
 
         // Global pre-routing policy redirecting all calls
         CallRoutingPolicy::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
             'priority' => 1,
             'conditions' => [],
@@ -176,14 +176,14 @@ class DialplanCompilerPreRoutingTest extends TestCase
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15559999999',
             'destination_type' => 'extension',
             'destination_id' => $normalExt->id,
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15559999999');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15559999999');
 
         // Should be redirected to extension 9999, not 1001
         $this->assertStringContainsString('policy-redirect', $xml);
@@ -192,22 +192,22 @@ class DialplanCompilerPreRoutingTest extends TestCase
 
     public function test_no_pre_routing_policies_proceeds_normally(): void
     {
-        $tenant = Tenant::factory()->create(['is_active' => true]);
+        $organization = Organization::factory()->create(['is_active' => true]);
 
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15559999999',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '+15559999999');
+        $xml = $this->compiler->compileDialplan($organization->domain, '+15559999999');
 
         $this->assertStringContainsString('bridge', $xml);
         $this->assertStringNotContainsString('policy-reject', $xml);

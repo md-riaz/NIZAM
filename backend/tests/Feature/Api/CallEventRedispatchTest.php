@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\CallEventLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Services\WebhookDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,14 +15,14 @@ class CallEventRedispatchTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
+        $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'role' => 'admin',
         ]);
     }
@@ -32,20 +32,20 @@ class CallEventRedispatchTest extends TestCase
         $this->mock(WebhookDispatcher::class, function ($mock) {
             $mock->shouldReceive('dispatch')
                 ->once()
-                ->with($this->tenant->id, CallEventLog::EVENT_CALL_CREATED, \Mockery::type('array'));
+                ->with($this->organization->id, CallEventLog::EVENT_CALL_CREATED, \Mockery::type('array'));
         });
 
         $event = CallEventLog::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'call_uuid' => 'redispatch-uuid-123',
             'event_type' => CallEventLog::EVENT_CALL_CREATED,
-            'payload' => ['tenant_id' => $this->tenant->id, 'call_uuid' => 'redispatch-uuid-123'],
+            'payload' => ['organization_id' => $this->organization->id, 'call_uuid' => 'redispatch-uuid-123'],
             'schema_version' => CallEventLog::SCHEMA_VERSION,
             'occurred_at' => now(),
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-events/redispatch/{$event->id}");
+            ->postJson("/api/v1/organizations/{$this->organization->id}/call-events/redispatch/{$event->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment([
@@ -58,17 +58,17 @@ class CallEventRedispatchTest extends TestCase
         $missingEventId = (string) \Illuminate\Support\Str::uuid();
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-events/redispatch/{$missingEventId}");
+            ->postJson("/api/v1/organizations/{$this->organization->id}/call-events/redispatch/{$missingEventId}");
 
         $response->assertStatus(404);
     }
 
-    public function test_redispatch_enforces_tenant_isolation(): void
+    public function test_redispatch_enforces_organization_isolation(): void
     {
-        $otherTenant = Tenant::factory()->create();
+        $otherOrganization = Organization::factory()->create();
         $event = CallEventLog::create([
-            'tenant_id' => $otherTenant->id,
-            'call_uuid' => 'other-tenant-uuid',
+            'organization_id' => $otherOrganization->id,
+            'call_uuid' => 'other-organization-uuid',
             'event_type' => CallEventLog::EVENT_CALL_CREATED,
             'payload' => ['test' => true],
             'schema_version' => CallEventLog::SCHEMA_VERSION,
@@ -76,7 +76,7 @@ class CallEventRedispatchTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-events/redispatch/{$event->id}");
+            ->postJson("/api/v1/organizations/{$this->organization->id}/call-events/redispatch/{$event->id}");
 
         $response->assertStatus(404);
     }

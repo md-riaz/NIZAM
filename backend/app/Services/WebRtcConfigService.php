@@ -120,11 +120,11 @@ class WebRtcConfigService
             'sip_tls_server' => ($tlsEnabled && $tlsSipPort !== '')
                 ? sprintf('%s:%s', $host, $tlsSipPort)
                 : null,
-            'sip_uri' => sprintf('sip:%s@%s', $extension->extension, $extension->tenant->domain),
+            'sip_uri' => sprintf('sip:%s@%s', $extension->extension, $extension->organization->domain),
             'sip_username' => $extension->extension,
             'sip_password' => $extension->password,
-            'sip_domain' => $extension->tenant->domain,
-            'sip_realm' => $extension->tenant->domain,
+            'sip_domain' => $extension->organization->domain,
+            'sip_realm' => $extension->organization->domain,
             'display_name' => trim(($extension->directory_first_name ?? '').' '.($extension->directory_last_name ?? '')),
             'ice_servers' => $iceServers,
             'codec_prefs' => $codecPrefs,

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Models\Webhook;
 use App\Models\WebhookDeliveryAttempt;
@@ -15,22 +15,22 @@ class WebhookDeliveryAttemptApiTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
-        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->organization = Organization::factory()->create();
+        $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
     }
 
     public function test_can_list_delivery_attempts_for_a_webhook(): void
     {
-        $webhook = Webhook::factory()->create(['tenant_id' => $this->tenant->id]);
+        $webhook = Webhook::factory()->create(['organization_id' => $this->organization->id]);
         WebhookDeliveryAttempt::factory()->count(3)->create(['webhook_id' => $webhook->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/webhooks/{$webhook->id}/delivery-attempts");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/webhooks/{$webhook->id}/delivery-attempts");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -38,7 +38,7 @@ class WebhookDeliveryAttemptApiTest extends TestCase
 
     public function test_delivery_attempts_include_expected_fields(): void
     {
-        $webhook = Webhook::factory()->create(['tenant_id' => $this->tenant->id]);
+        $webhook = Webhook::factory()->create(['organization_id' => $this->organization->id]);
         WebhookDeliveryAttempt::factory()->create([
             'webhook_id' => $webhook->id,
             'event_type' => 'call.created',
@@ -47,7 +47,7 @@ class WebhookDeliveryAttemptApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/webhooks/{$webhook->id}/delivery-attempts");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/webhooks/{$webhook->id}/delivery-attempts");
 
         $response->assertStatus(200);
         $response->assertJsonFragment([
@@ -57,13 +57,13 @@ class WebhookDeliveryAttemptApiTest extends TestCase
         ]);
     }
 
-    public function test_cannot_view_delivery_attempts_of_other_tenants_webhook(): void
+    public function test_cannot_view_delivery_attempts_of_other_organizations_webhook(): void
     {
-        $otherTenant = Tenant::factory()->create();
-        $webhook = Webhook::factory()->create(['tenant_id' => $otherTenant->id]);
+        $otherOrganization = Organization::factory()->create();
+        $webhook = Webhook::factory()->create(['organization_id' => $otherOrganization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/webhooks/{$webhook->id}/delivery-attempts");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/webhooks/{$webhook->id}/delivery-attempts");
 
         $response->assertStatus(404);
     }

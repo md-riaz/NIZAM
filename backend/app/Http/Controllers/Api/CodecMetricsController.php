@@ -5,22 +5,22 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\CallDetailRecord;
 use App\Models\Gateway;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API controller exposing codec negotiation metrics for a tenant.
+ * API controller exposing codec negotiation metrics for an organization.
  */
 class CodecMetricsController extends Controller
 {
     /**
-     * Return codec distribution and mismatch metrics for a tenant.
+     * Return codec distribution and mismatch metrics for an organization.
      */
-    public function __invoke(Tenant $tenant): JsonResponse
+    public function __invoke(Organization $organization): JsonResponse
     {
-        $this->authorize('view', $tenant);
+        $this->authorize('view', $organization);
 
-        $cdrs = CallDetailRecord::where('tenant_id', $tenant->id)
+        $cdrs = CallDetailRecord::where('organization_id', $organization->id)
             ->whereNotNull('negotiated_codec')
             ->selectRaw('negotiated_codec, count(*) as count')
             ->groupBy('negotiated_codec')
@@ -34,15 +34,15 @@ class CodecMetricsController extends Controller
             'percentage' => $total > 0 ? round(($row->count / $total) * 100, 2) : 0.0,
         ])->values();
 
-        $mismatches = CallDetailRecord::where('tenant_id', $tenant->id)
+        $mismatches = CallDetailRecord::where('organization_id', $organization->id)
             ->whereNotNull('read_codec')
             ->whereNotNull('write_codec')
             ->whereRaw('read_codec != write_codec')
             ->count();
 
-        $totalCdrs = CallDetailRecord::where('tenant_id', $tenant->id)->count();
+        $totalCdrs = CallDetailRecord::where('organization_id', $organization->id)->count();
 
-        $gateways = Gateway::where('tenant_id', $tenant->id)
+        $gateways = Gateway::where('organization_id', $organization->id)
             ->where('is_active', true)
             ->get(['id', 'name', 'inbound_codecs', 'outbound_codecs', 'allow_transcoding']);
 

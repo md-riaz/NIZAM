@@ -17,7 +17,7 @@ Implement FusionPBX-style self-call behavior (account management/voicemail acces
     - **Self-Call Management**: Description of the FusionPBX-style behavior.
     - **Multi-Registration Support**: Description of simultaneous contact support.
     - **Optimized Directory Service**: Description of the filtered XML-CURL lookup performance.
-    - **Context Isolation**: Description of multi-tenant domain context logic.
+    - **Context Isolation**: Description of multi-organization domain context logic.
 - **Status Indicators**: Each card will show whether the feature is active based on live system settings or code presence.
 
 ## Architecture
@@ -41,4 +41,4 @@ Implement FusionPBX-style self-call behavior (account management/voicemail acces
 ## Success Criteria
 - Calling your own extension from MicroSIP/tSIP triggers the voicemail management prompt.
 - Admins can see the list of enhancements and their status.
-- System remains performant and multi-tenant isolated.
+- System remains performant and multi-organization isolated.

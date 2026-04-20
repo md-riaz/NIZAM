@@ -27,7 +27,7 @@ class ScheduleCheckNodeHandler implements NodeHandler
         }
 
         $schedule = Schedule::query()
-            ->where('tenant_id', $context->tenantId())
+            ->where('organization_id', $context->organizationId())
             ->whereKey($scheduleId)
             ->where('is_active', true)
             ->first();

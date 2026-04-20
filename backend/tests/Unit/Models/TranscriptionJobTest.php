@@ -22,7 +22,7 @@ class TranscriptionJobTest extends TestCase
     public function test_belongs_to_recording(): void
     {
         $recording = Recording::factory()->create();
-        $job = TranscriptionJob::factory()->create(['recording_id' => $recording->id, 'tenant_id' => $recording->tenant_id]);
+        $job = TranscriptionJob::factory()->create(['recording_id' => $recording->id, 'organization_id' => $recording->organization_id]);
 
         $this->assertInstanceOf(Recording::class, $job->recording);
     }

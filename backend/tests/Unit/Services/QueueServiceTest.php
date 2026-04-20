@@ -6,7 +6,7 @@ use App\Events\ContactCenterEvent;
 use App\Models\Agent;
 use App\Models\Queue;
 use App\Models\QueueEntry;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\QueueService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -27,14 +27,14 @@ class QueueServiceTest extends TestCase
 
     private function createSetup(int $agentCount = 3): array
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
         ]);
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support Queue',
             'strategy' => Queue::STRATEGY_ROUND_ROBIN,
             'max_wait_time' => 300,
@@ -42,7 +42,7 @@ class QueueServiceTest extends TestCase
 
         $agents = [];
         for ($i = 0; $i < $agentCount; $i++) {
-            $ext = $tenant->extensions()->create([
+            $ext = $organization->extensions()->create([
                 'extension' => (string) (1001 + $i),
                 'password' => 'secret123',
                 'directory_first_name' => "Agent{$i}",
@@ -50,7 +50,7 @@ class QueueServiceTest extends TestCase
             ]);
 
             $agent = Agent::create([
-                'tenant_id' => $tenant->id,
+                'organization_id' => $organization->id,
                 'extension_id' => $ext->id,
                 'name' => "Agent {$i}",
                 'state' => Agent::STATE_AVAILABLE,
@@ -64,14 +64,14 @@ class QueueServiceTest extends TestCase
             $agents[] = $agent;
         }
 
-        return [$tenant, $queue, $agents];
+        return [$organization, $queue, $agents];
     }
 
     public function test_add_to_queue_creates_entry(): void
     {
         Event::fake();
 
-        [$tenant, $queue] = $this->createSetup(1);
+        [$organization, $queue] = $this->createSetup(1);
         $callUuid = (string) Str::uuid();
 
         $entry = $this->queueService->addToQueue($queue, $callUuid, [
@@ -93,7 +93,7 @@ class QueueServiceTest extends TestCase
 
     public function test_select_agent_round_robin(): void
     {
-        [$tenant, $queue, $agents] = $this->createSetup(3);
+        [$organization, $queue, $agents] = $this->createSetup(3);
 
         // First selection should return first agent
         $selected = $this->queueService->selectAgent($queue);
@@ -104,7 +104,7 @@ class QueueServiceTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue, $agents] = $this->createSetup(3);
+        [$organization, $queue, $agents] = $this->createSetup(3);
 
         // Simulate first call answered by agent 0
         $entry = $this->queueService->addToQueue($queue, (string) Str::uuid());
@@ -120,12 +120,12 @@ class QueueServiceTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue, $agents] = $this->createSetup(3);
+        [$organization, $queue, $agents] = $this->createSetup(3);
         $queue->update(['strategy' => Queue::STRATEGY_LEAST_RECENT]);
 
         // Agent 2 never answered — should be selected
         $entry1 = QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -136,7 +136,7 @@ class QueueServiceTest extends TestCase
         ]);
 
         $entry2 = QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_ANSWERED,
@@ -152,7 +152,7 @@ class QueueServiceTest extends TestCase
 
     public function test_select_agent_ring_all_returns_first_available(): void
     {
-        [$tenant, $queue, $agents] = $this->createSetup(3);
+        [$organization, $queue, $agents] = $this->createSetup(3);
         $queue->update(['strategy' => Queue::STRATEGY_RING_ALL]);
 
         $selected = $this->queueService->selectAgent($queue);
@@ -161,7 +161,7 @@ class QueueServiceTest extends TestCase
 
     public function test_get_agents_for_ring_all(): void
     {
-        [$tenant, $queue, $agents] = $this->createSetup(3);
+        [$organization, $queue, $agents] = $this->createSetup(3);
         $queue->update(['strategy' => Queue::STRATEGY_RING_ALL]);
 
         $available = $this->queueService->getAgentsForRingAll($queue);
@@ -170,7 +170,7 @@ class QueueServiceTest extends TestCase
 
     public function test_select_agent_returns_null_when_none_available(): void
     {
-        [$tenant, $queue, $agents] = $this->createSetup(2);
+        [$organization, $queue, $agents] = $this->createSetup(2);
 
         foreach ($agents as $agent) {
             $agent->transitionState(Agent::STATE_BUSY);
@@ -184,7 +184,7 @@ class QueueServiceTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue, $agents] = $this->createSetup(1);
+        [$organization, $queue, $agents] = $this->createSetup(1);
         $entry = $this->queueService->addToQueue($queue, (string) Str::uuid());
 
         $this->queueService->answerEntry($entry, $agents[0]);
@@ -208,7 +208,7 @@ class QueueServiceTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue] = $this->createSetup(0);
+        [$organization, $queue] = $this->createSetup(0);
         $entry = $this->queueService->addToQueue($queue, (string) Str::uuid());
 
         $this->queueService->abandonEntry($entry, 'caller_hangup');
@@ -227,7 +227,7 @@ class QueueServiceTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue] = $this->createSetup(0);
+        [$organization, $queue] = $this->createSetup(0);
         $entry = $this->queueService->addToQueue($queue, (string) Str::uuid());
 
         $this->queueService->overflowEntry($entry);
@@ -243,12 +243,12 @@ class QueueServiceTest extends TestCase
 
     public function test_overflow_candidates(): void
     {
-        [$tenant, $queue] = $this->createSetup(0);
+        [$organization, $queue] = $this->createSetup(0);
         $queue->update(['max_wait_time' => 60]);
 
         // Entry within time limit
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_WAITING,
@@ -257,7 +257,7 @@ class QueueServiceTest extends TestCase
 
         // Entry exceeding time limit
         QueueEntry::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(),
             'status' => QueueEntry::STATUS_WAITING,
@@ -270,7 +270,7 @@ class QueueServiceTest extends TestCase
 
     public function test_skips_paused_agents_in_selection(): void
     {
-        [$tenant, $queue, $agents] = $this->createSetup(3);
+        [$organization, $queue, $agents] = $this->createSetup(3);
 
         $agents[0]->transitionState(Agent::STATE_PAUSED, Agent::PAUSE_LUNCH);
 
@@ -280,7 +280,7 @@ class QueueServiceTest extends TestCase
 
     public function test_skips_inactive_agents_in_selection(): void
     {
-        [$tenant, $queue, $agents] = $this->createSetup(3);
+        [$organization, $queue, $agents] = $this->createSetup(3);
 
         $agents[0]->update(['is_active' => false]);
 

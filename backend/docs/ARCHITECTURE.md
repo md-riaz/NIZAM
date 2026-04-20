@@ -8,7 +8,7 @@ This document codifies the non-negotiable design principles of NIZAM. Every feat
 
 ### 1. Database Is Source of Truth
 
-All system state — tenants, extensions, DIDs, routing policies, call flows, CDRs — lives in the database. FreeSWITCH configuration is **derived**, never manually edited.
+All system state — organizations, extensions, DIDs, routing policies, call flows, CDRs — lives in the database. FreeSWITCH configuration is **derived**, never manually edited.
 
 > If it's not in the database, it doesn't exist.
 
@@ -24,9 +24,9 @@ Every operation — create, read, update, delete — is performed through the RE
 
 The API layer contains all business rules, validation, and authorization. Any future UI (dashboard, flow builder, admin panel) is a thin client that consumes the API. Logic duplication between API and UI is a defect.
 
-### 5. Multi-Tenant by Default
+### 5. Multi-Organization by Default
 
-Every resource is scoped to a tenant. Tenant isolation is enforced at the middleware, policy, and query level. There is no "single-tenant mode" — even a single-customer deployment uses the tenant model.
+Every resource is scoped to an organization. Organization isolation is enforced at the middleware, policy, and query level. There is no "single-organization mode" — even a single-customer deployment uses the organization model.
 
 ### 6. Event-Driven State Tracking
 
@@ -53,7 +53,7 @@ Call lifecycle, registration changes, and system events are captured as immutabl
 - **Controllers** validate input and delegate to models/services. No business logic.
 - **Services** orchestrate cross-model operations (e.g., `DialplanCompiler`, `PolicyEvaluator`).
 - **Models** own data access, relationships, casts, and audit hooks.
-- **Policies** enforce authorization. Admin bypasses all. Tenant isolation is mandatory.
+- **Policies** enforce authorization. Admin bypasses all. Organization isolation is mandatory.
 - **Jobs** handle async work (webhook delivery, event processing). Always idempotent.
 
 ---
@@ -83,7 +83,7 @@ Call flows define a directed graph of nodes (play_prompt, collect_input, bridge,
 
 - **Authentication**: Laravel Sanctum bearer tokens. No session-based auth for API.
 - **Authorization**: Per-resource policies with granular permissions. Admin role bypasses all.
-- **Tenant Isolation**: Middleware + policy + query scoping. Cross-tenant access is a critical defect.
+- **Organization Isolation**: Middleware + policy + query scoping. Cross-organization access is a critical defect.
 - **Encryption**: Webhook secrets encrypted at rest. TLS required in production.
 - **Rate Limiting**: Auth endpoints throttled at 5/min. API endpoints at 60/min per user.
 - **Audit Trail**: All model mutations logged with old/new values, user, IP, timestamp.
@@ -110,7 +110,7 @@ It is **not**:
 
 It **is**:
 - An API-first platform for building communications infrastructure
-- A multi-tenant routing engine with policy-driven call handling
+- A multi-organization routing engine with policy-driven call handling
 - A composable call flow execution layer
 - An event-driven automation backbone
 
@@ -121,7 +121,7 @@ It **is**:
 When evaluating a new feature or change, ask:
 
 1. **Does it go through the API?** If not, redesign it.
-2. **Is it tenant-scoped?** If not, justify why.
+2. **Is it organization-scoped?** If not, justify why.
 3. **Is the state in the database?** If not, move it there.
 4. **Is the dialplan derived?** If not, make it compiled.
 5. **Is it event-driven?** If state changes aren't observable, add events.

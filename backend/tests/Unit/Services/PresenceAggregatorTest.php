@@ -8,7 +8,7 @@ use App\Models\DeviceProfile;
 use App\Models\DeviceRegistrationSnapshot;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Services\Presence\PresenceAggregator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,40 +33,40 @@ class PresenceAggregatorTest extends TestCase
 
     public function test_it_merges_direct_and_extension_devices_and_prefers_primary_extension(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
         $primaryExtension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
             'is_primary' => true,
         ]);
         $secondaryExtension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
             'is_primary' => false,
         ]);
 
         $directDevice = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
             'extension_id' => null,
             'is_active' => true,
         ]);
         $extensionDevice = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => null,
             'extension_id' => $primaryExtension->id,
             'is_active' => true,
         ]);
         DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => null,
             'extension_id' => $secondaryExtension->id,
             'is_active' => false,
         ]);
 
         DeviceRegistrationSnapshot::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $primaryExtension->id,
             'registration_key' => 'business-user-primary',
             'registered' => true,
@@ -93,14 +93,14 @@ class PresenceAggregatorTest extends TestCase
 
     public function test_it_reports_ringing_when_any_active_attempt_is_ringing(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
             'is_primary' => true,
         ]);
-        $callSession = CallSession::factory()->create(['tenant_id' => $tenant->id]);
+        $callSession = CallSession::factory()->create(['organization_id' => $organization->id]);
         $endpointBinding = EndpointBinding::factory()->forExtension($extension)->create();
         $attempt = CallDeliveryAttempt::factory()->create([
             'call_session_id' => $callSession->id,
@@ -120,13 +120,13 @@ class PresenceAggregatorTest extends TestCase
 
     public function test_it_reports_on_call_for_non_ringing_active_attempts(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
         ]);
-        $callSession = CallSession::factory()->create(['tenant_id' => $tenant->id]);
+        $callSession = CallSession::factory()->create(['organization_id' => $organization->id]);
         $endpointBinding = EndpointBinding::factory()->forExtension($extension)->create();
         $attempt = CallDeliveryAttempt::factory()->create([
             'call_session_id' => $callSession->id,
@@ -143,13 +143,13 @@ class PresenceAggregatorTest extends TestCase
 
     public function test_it_falls_back_to_offline_when_no_registrations_or_active_calls_exist(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $user = User::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'role' => 'user',
         ]);
         Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
         ]);
 
@@ -163,21 +163,21 @@ class PresenceAggregatorTest extends TestCase
 
     public function test_device_profile_can_resolve_user_from_direct_or_extension_mapping(): void
     {
-        $tenant = Tenant::factory()->create();
-        $directUser = User::factory()->create(['tenant_id' => $tenant->id]);
-        $extensionUser = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $directUser = User::factory()->create(['organization_id' => $organization->id]);
+        $extensionUser = User::factory()->create(['organization_id' => $organization->id]);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $extensionUser->id,
         ]);
 
         $directDevice = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $directUser->id,
             'extension_id' => null,
         ]);
         $extensionDevice = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => null,
             'extension_id' => $extension->id,
         ]);

@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Did;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,7 +16,7 @@ class DidFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'number' => '+1'.fake()->numerify('##########'),
             'description' => fake()->optional(0.7)->sentence(),
             'destination_type' => fake()->randomElement([

@@ -12,36 +12,36 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 
 export default function ExtensionDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
 
     const { data: extension, isLoading } = useQuery({
-        queryKey: ['extension', activeTenant?.id, id],
+        queryKey: ['extension', activeOrganization?.id, id],
         queryFn: async () => {
-            const response = await api.get(`${tenantApiPrefix}/extensions/${id}`);
+            const response = await api.get(`${organizationApiPrefix}/extensions/${id}`);
             return response.data.data;
         },
-        enabled: Boolean(id) && Boolean(activeTenant),
+        enabled: Boolean(id) && Boolean(activeOrganization),
     });
 
     const { data: sipConfig, isLoading: isSipConfigLoading } = useQuery({
-        queryKey: ['extension-sip-config', activeTenant?.id, id],
+        queryKey: ['extension-sip-config', activeOrganization?.id, id],
         queryFn: async () => {
-            const response = await api.get(`${tenantApiPrefix}/extensions/${id}/sip-config`);
+            const response = await api.get(`${organizationApiPrefix}/extensions/${id}/sip-config`);
             return response.data.data;
         },
-        enabled: Boolean(id) && Boolean(activeTenant),
+        enabled: Boolean(id) && Boolean(activeOrganization),
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select a tenant to view extension details.
+                Select a organization to view extension details.
             </div>
         );
     }
@@ -54,7 +54,7 @@ export default function ExtensionDetailPage() {
                     <span className="sr-only">Back to extensions</span>
                 </Button>
                 <div>
-                    <p className="text-sm text-muted-foreground">{activeTenant.name} › Phone System</p>
+                    <p className="text-sm text-muted-foreground">{activeOrganization.name} › Phone System</p>
                     <h1 className="text-2xl font-bold tracking-tight">Extension Details</h1>
                 </div>
             </div>

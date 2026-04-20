@@ -8,16 +8,16 @@ abstract class BaseResource
 {
     protected NizamClient $client;
 
-    protected ?string $tenantId;
+    protected ?string $organizationId;
 
-    public function __construct(NizamClient $client, ?string $tenantId = null)
+    public function __construct(NizamClient $client, ?string $organizationId = null)
     {
         $this->client = $client;
-        $this->tenantId = $tenantId;
+        $this->organizationId = $organizationId;
     }
 
-    protected function tenantPath(string $path = ''): string
+    protected function organizationPath(string $path = ''): string
     {
-        return "tenants/{$this->tenantId}".(! empty($path) ? "/{$path}" : '');
+        return "organizations/{$this->organizationId}".(! empty($path) ? "/{$path}" : '');
     }
 }

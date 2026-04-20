@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Support\Arr;
 
 class OfficeFeatureService
@@ -10,9 +10,9 @@ class OfficeFeatureService
     /**
      * @return array<string, bool>
      */
-    public function getFeatures(Tenant $tenant): array
+    public function getFeatures(Organization $organization): array
     {
-        $features = data_get($tenant->settings ?? [], 'business_phone.office_features', []);
+        $features = data_get($organization->settings ?? [], 'business_phone.office_features', []);
 
         return $this->normalizeFeatures(is_array($features) ? $features : []);
     }
@@ -21,14 +21,14 @@ class OfficeFeatureService
      * @param  array<string, mixed>  $attributes
      * @return array<string, bool>
      */
-    public function updateFeatures(Tenant $tenant, array $attributes): array
+    public function updateFeatures(Organization $organization, array $attributes): array
     {
-        $features = $this->normalizeFeatures(array_merge($this->getFeatures($tenant), $attributes));
-        $settings = $tenant->settings ?? [];
+        $features = $this->normalizeFeatures(array_merge($this->getFeatures($organization), $attributes));
+        $settings = $organization->settings ?? [];
 
         Arr::set($settings, 'business_phone.office_features', $features);
 
-        $tenant->forceFill([
+        $organization->forceFill([
             'settings' => $settings,
         ])->save();
 

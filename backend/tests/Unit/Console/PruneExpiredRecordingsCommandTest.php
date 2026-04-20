@@ -3,7 +3,7 @@
 namespace Tests\Unit\Console;
 
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -16,11 +16,11 @@ class PruneExpiredRecordingsCommandTest extends TestCase
     {
         Storage::fake('recordings');
 
-        $tenant = Tenant::factory()->create(['recording_retention_days' => 30]);
+        $organization = Organization::factory()->create(['recording_retention_days' => 30]);
 
         // Old recording — should be deleted
         $old = Recording::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'file_path' => 'recordings/old.wav',
         ]);
         $old->created_at = now()->subDays(31);
@@ -28,7 +28,7 @@ class PruneExpiredRecordingsCommandTest extends TestCase
 
         // Recent recording — should be kept
         $recent = Recording::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'file_path' => 'recordings/recent.wav',
         ]);
 
@@ -39,19 +39,19 @@ class PruneExpiredRecordingsCommandTest extends TestCase
         $this->assertModelExists($recent);
     }
 
-    public function test_it_respects_tenant_retention_boundary(): void
+    public function test_it_respects_organization_retention_boundary(): void
     {
         Storage::fake('recordings');
 
-        $tenant = Tenant::factory()->create(['recording_retention_days' => 7]);
+        $organization = Organization::factory()->create(['recording_retention_days' => 7]);
 
         // 6-day-old recording — within retention window, must not be deleted
-        $within = Recording::factory()->create(['tenant_id' => $tenant->id]);
+        $within = Recording::factory()->create(['organization_id' => $organization->id]);
         $within->created_at = now()->subDays(6);
         $within->save();
 
         // 8-day-old recording — outside window, must be deleted
-        $outside = Recording::factory()->create(['tenant_id' => $tenant->id]);
+        $outside = Recording::factory()->create(['organization_id' => $organization->id]);
         $outside->created_at = now()->subDays(8);
         $outside->save();
 
@@ -65,9 +65,9 @@ class PruneExpiredRecordingsCommandTest extends TestCase
     {
         Storage::fake('recordings');
 
-        $tenant = Tenant::factory()->create(['recording_retention_days' => 1]);
+        $organization = Organization::factory()->create(['recording_retention_days' => 1]);
 
-        $recording = Recording::factory()->create(['tenant_id' => $tenant->id]);
+        $recording = Recording::factory()->create(['organization_id' => $organization->id]);
         $recording->created_at = now()->subDays(2);
         $recording->save();
 
@@ -77,14 +77,14 @@ class PruneExpiredRecordingsCommandTest extends TestCase
         $this->assertModelExists($recording);
     }
 
-    public function test_it_skips_tenants_without_retention_policy(): void
+    public function test_it_skips_organizations_without_retention_policy(): void
     {
         Storage::fake('recordings');
 
-        // Tenant with no retention policy (null)
-        $tenant = Tenant::factory()->create(['recording_retention_days' => null]);
+        // Organization with no retention policy (null)
+        $organization = Organization::factory()->create(['recording_retention_days' => null]);
 
-        $recording = Recording::factory()->create(['tenant_id' => $tenant->id]);
+        $recording = Recording::factory()->create(['organization_id' => $organization->id]);
         $recording->created_at = now()->subDays(365);
         $recording->save();
 
@@ -93,23 +93,23 @@ class PruneExpiredRecordingsCommandTest extends TestCase
         $this->assertModelExists($recording);
     }
 
-    public function test_tenant_option_restricts_pruning_to_single_tenant(): void
+    public function test_organization_option_restricts_pruning_to_single_organization(): void
     {
         Storage::fake('recordings');
 
-        $tenantA = Tenant::factory()->create(['recording_retention_days' => 1]);
-        $tenantB = Tenant::factory()->create(['recording_retention_days' => 1]);
+        $organizationA = Organization::factory()->create(['recording_retention_days' => 1]);
+        $organizationB = Organization::factory()->create(['recording_retention_days' => 1]);
 
-        $recordingA = Recording::factory()->create(['tenant_id' => $tenantA->id]);
+        $recordingA = Recording::factory()->create(['organization_id' => $organizationA->id]);
         $recordingA->created_at = now()->subDays(2);
         $recordingA->save();
 
-        $recordingB = Recording::factory()->create(['tenant_id' => $tenantB->id]);
+        $recordingB = Recording::factory()->create(['organization_id' => $organizationB->id]);
         $recordingB->created_at = now()->subDays(2);
         $recordingB->save();
 
-        // Prune only tenant A
-        $this->artisan('nizam:prune-recordings', ['--tenant' => $tenantA->id])
+        // Prune only organization A
+        $this->artisan('nizam:prune-recordings', ['--organization' => $organizationA->id])
             ->assertExitCode(0);
 
         $this->assertModelMissing($recordingA);
@@ -120,14 +120,14 @@ class PruneExpiredRecordingsCommandTest extends TestCase
     {
         $disk = Storage::fake('recordings');
 
-        $tenant = Tenant::factory()->create(['recording_retention_days' => 1]);
+        $organization = Organization::factory()->create(['recording_retention_days' => 1]);
 
         $filePath = 'recordings/to-delete.wav';
         $disk->put($filePath, 'fake audio data');
         $this->assertTrue($disk->exists($filePath));
 
         $recording = Recording::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'file_path' => $filePath,
         ]);
         $recording->created_at = now()->subDays(2);
@@ -139,9 +139,9 @@ class PruneExpiredRecordingsCommandTest extends TestCase
         $this->assertFalse($disk->exists($filePath));
     }
 
-    public function test_returns_success_when_no_tenants_have_retention_policy(): void
+    public function test_returns_success_when_no_organizations_have_retention_policy(): void
     {
-        Tenant::factory()->count(3)->create(['recording_retention_days' => null]);
+        Organization::factory()->count(3)->create(['recording_retention_days' => null]);
 
         $this->artisan('nizam:prune-recordings')->assertExitCode(0);
     }

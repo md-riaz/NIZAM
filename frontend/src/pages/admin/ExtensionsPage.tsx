@@ -30,54 +30,54 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import type { Extension } from '@/types/models';
 
 export default function ExtensionsPage() {
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [extensionToDelete, setExtensionToDelete] = useState<Extension | null>(null);
 
     const { data: extensions = [], isLoading } = useQuery({
-        queryKey: ['extensions', activeTenant?.id],
+        queryKey: ['extensions', activeOrganization?.id],
         queryFn: async () => {
-            const res = await api.get<{ data: Extension[] }>(`${tenantApiPrefix}/extensions`);
+            const res = await api.get<{ data: Extension[] }>(`${organizationApiPrefix}/extensions`);
             return res.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const { data: statusMap = {} } = useQuery({
-        queryKey: ['extension-status', activeTenant?.id],
+        queryKey: ['extension-status', activeOrganization?.id],
         queryFn: async () => {
             const res = await api.get<Record<string, { status: string; ip?: string; user_agent?: string }>>(
-                `${tenantApiPrefix}/extensions/status/all`,
+                `${organizationApiPrefix}/extensions/status/all`,
             );
             return res.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
         refetchInterval: 15_000,
     });
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
-            await api.delete(`${tenantApiPrefix}/extensions/${id}`);
+            await api.delete(`${organizationApiPrefix}/extensions/${id}`);
         },
         onSuccess: async () => {
             await Promise.all([
-                queryClient.invalidateQueries({ queryKey: ['extensions', activeTenant?.id] }),
-                queryClient.invalidateQueries({ queryKey: ['extension-status', activeTenant?.id] }),
+                queryClient.invalidateQueries({ queryKey: ['extensions', activeOrganization?.id] }),
+                queryClient.invalidateQueries({ queryKey: ['extension-status', activeOrganization?.id] }),
             ]);
             setExtensionToDelete(null);
         },
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select a tenant to view extensions.
+                Select a organization to view extensions.
             </div>
         );
     }
@@ -88,10 +88,10 @@ export default function ExtensionsPage() {
         <div className="space-y-6 p-6 lg:p-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm text-muted-foreground">{activeTenant.name} &rsaquo; Phone System</p>
+                    <p className="text-sm text-muted-foreground">{activeOrganization.name} &rsaquo; Phone System</p>
                     <h1 className="text-2xl font-bold tracking-tight">Extensions</h1>
                     <p className="text-muted-foreground">
-                        Manage and provision internal SIP extensions for {activeTenant.domain}.
+                        Manage and provision internal SIP extensions for {activeOrganization.domain}.
                     </p>
                 </div>
                 <Button onClick={() => navigate('/admin/extensions/create')}>
@@ -138,7 +138,7 @@ export default function ExtensionsPage() {
                 <CardHeader>
                     <CardTitle>All Extensions</CardTitle>
                     <CardDescription>
-                        Showing {extensions.length} extensions for {activeTenant.domain}
+                        Showing {extensions.length} extensions for {activeOrganization.domain}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

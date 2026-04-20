@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\DeviceProfile;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,9 +14,9 @@ class ProvisioningTest extends TestCase
 
     public function test_returns_provisioning_config_for_known_mac_address(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
+        $organization = Organization::factory()->create(['domain' => 'test.example.com']);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -24,7 +24,7 @@ class ProvisioningTest extends TestCase
         ]);
 
         DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'vendor' => 'yealink',
             'mac_address' => 'AA:BB:CC:DD:EE:FF',

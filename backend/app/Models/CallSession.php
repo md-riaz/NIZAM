@@ -16,7 +16,7 @@ class CallSession extends Model
 
     protected $fillable = [
         'call_uuid',
-        'tenant_id',
+        'organization_id',
         'did_id',
         'flow_version_id',
         'current_node_id',
@@ -37,9 +37,9 @@ class CallSession extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function did(): BelongsTo

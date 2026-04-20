@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\EndpointBinding;
 use App\Models\Queue;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Support\Str;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,13 +34,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_extension(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -48,7 +48,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $did = $tenant->dids()->create([
+        $did = $organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
@@ -66,13 +66,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_ring_group_simultaneous(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $ext1 = $tenant->extensions()->create([
+        $ext1 = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -80,7 +80,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $ext2 = $tenant->extensions()->create([
+        $ext2 = $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret1234',
             'directory_first_name' => 'Jane',
@@ -88,7 +88,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $ringGroup = $tenant->ringGroups()->create([
+        $ringGroup = $organization->ringGroups()->create([
             'name' => 'Sales',
             'strategy' => 'simultaneous',
             'ring_timeout' => 30,
@@ -96,7 +96,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $did = $tenant->dids()->create([
+        $did = $organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'ring_group',
             'destination_id' => $ringGroup->id,
@@ -115,13 +115,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_ring_group_sequential(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $ext1 = $tenant->extensions()->create([
+        $ext1 = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -129,7 +129,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $ringGroup = $tenant->ringGroups()->create([
+        $ringGroup = $organization->ringGroups()->create([
             'name' => 'Support',
             'strategy' => 'sequential',
             'ring_timeout' => 20,
@@ -137,7 +137,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $did = $tenant->dids()->create([
+        $did = $organization->dids()->create([
             'number' => '+15559876543',
             'destination_type' => 'ring_group',
             'destination_id' => $ringGroup->id,
@@ -155,13 +155,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_extension_with_follow_me_sets_pstn_bridge_metadata(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1003',
             'password' => 'secret1234',
             'directory_first_name' => 'Follow',
@@ -172,7 +172,7 @@ class DialplanCompilerExtendedTest extends TestCase
         ]);
 
         EndpointBinding::query()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'type' => EndpointBinding::TYPE_PSTN_FORWARD,
             'device_uuid' => 'follow-me-'.$extension->id,
@@ -185,7 +185,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'forward_requires_confirm' => true,
         ]);
 
-        $did = $tenant->dids()->create([
+        $did = $organization->dids()->create([
             'number' => '+15550001003',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
@@ -203,13 +203,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_extension_with_dnd_returns_busy(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1004',
             'password' => 'secret1234',
             'directory_first_name' => 'Do',
@@ -218,7 +218,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'dnd_enabled' => true,
         ]);
 
-        $tenant->dids()->create([
+        $organization->dids()->create([
             'number' => '+15550001004',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
@@ -233,13 +233,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_queue_uses_shared_delivery_entrypoint(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -247,7 +247,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $agent = $tenant->agents()->create([
+        $agent = $organization->agents()->create([
             'extension_id' => $extension->id,
             'name' => 'Queue Agent',
             'status' => 'available',
@@ -255,13 +255,13 @@ class DialplanCompilerExtendedTest extends TestCase
         ]);
 
         $queue = Queue::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'strategy' => Queue::STRATEGY_RING_ALL,
             'is_active' => true,
         ]);
         $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 1]);
 
-        $did = $tenant->dids()->create([
+        $did = $organization->dids()->create([
             'number' => '+15551111111',
             'destination_type' => 'queue',
             'destination_id' => $queue->id,
@@ -277,13 +277,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_agent_uses_shared_delivery_entrypoint(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -291,14 +291,14 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $agent = $tenant->agents()->create([
+        $agent = $organization->agents()->create([
             'extension_id' => $extension->id,
             'name' => 'Direct Agent',
             'status' => 'available',
             'is_active' => true,
         ]);
 
-        $did = $tenant->dids()->create([
+        $did = $organization->dids()->create([
             'number' => '+15552221111',
             'destination_type' => 'agent',
             'destination_id' => $agent->id,
@@ -314,13 +314,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_ivr(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $ivr = $tenant->ivrs()->create([
+        $ivr = $organization->ivrs()->create([
             'name' => 'Main Menu',
             'timeout' => 5,
             'max_failures' => 3,
@@ -328,7 +328,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $did = $tenant->dids()->create([
+        $did = $organization->dids()->create([
             'number' => '+15551111111',
             'destination_type' => 'ivr',
             'destination_id' => $ivr->id,
@@ -343,13 +343,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_voicemail(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -357,7 +357,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $did = $tenant->dids()->create([
+        $did = $organization->dids()->create([
             'number' => '+15552222222',
             'destination_type' => 'voicemail',
             'destination_id' => $extension->id,
@@ -373,13 +373,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_did_routing_to_time_condition(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -387,7 +387,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $timeCondition = $tenant->timeConditions()->create([
+        $timeCondition = $organization->timeConditions()->create([
             'name' => 'Business Hours',
             'conditions' => [
                 ['wday' => 'mon-fri', 'time_from' => '09:00', 'time_to' => '17:00'],
@@ -399,7 +399,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $did = $tenant->dids()->create([
+        $did = $organization->dids()->create([
             'number' => '+15553333333',
             'destination_type' => 'time_condition',
             'destination_id' => $timeCondition->id,
@@ -416,8 +416,8 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_dialplan_includes_convenience_service_routes(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Convenience Tenant',
+        $organization = Organization::create([
+            'name' => 'Convenience Organization',
             'domain' => 'pbx.example.com',
             'is_active' => true,
             'settings' => [
@@ -428,7 +428,7 @@ class DialplanCompilerExtendedTest extends TestCase
             ],
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'Primary',
@@ -437,7 +437,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_primary' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '2000',
             'password' => 'secret1234',
             'directory_first_name' => 'Operator',
@@ -445,7 +445,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '3000',
             'password' => 'secret1234',
             'directory_first_name' => 'Voicemail',
@@ -453,7 +453,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '*98');
+        $xml = $this->compiler->compileDialplan($organization->domain, '*98');
 
         $this->assertStringContainsString('extension name="voicemail-main"', $xml);
         $this->assertStringContainsString('destination_number" expression="^\*98$"', $xml);
@@ -472,13 +472,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_convenience_routes_fall_back_to_primary_extension_targets(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Fallback Convenience Tenant',
+        $organization = Organization::create([
+            'name' => 'Fallback Convenience Organization',
             'domain' => 'fallback.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '4100',
             'password' => 'secret1234',
             'directory_first_name' => 'Fallback',
@@ -487,7 +487,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_primary' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '0');
+        $xml = $this->compiler->compileDialplan($organization->domain, '0');
 
         $this->assertStringContainsString('transfer" data="4100 XML fallback.example.com"', $xml);
         $this->assertStringNotContainsString('voicemail" data="check default fallback.example.com 4100"', $xml);
@@ -495,8 +495,8 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_convenience_routes_ignore_invalid_configured_voicemail_target(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Invalid Voicemail Target Tenant',
+        $organization = Organization::create([
+            'name' => 'Invalid Voicemail Target Organization',
             'domain' => 'invalid-voicemail.example.com',
             'is_active' => true,
             'settings' => [
@@ -507,7 +507,7 @@ class DialplanCompilerExtendedTest extends TestCase
             ],
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '4100',
             'password' => 'secret1234',
             'directory_first_name' => 'Fallback',
@@ -516,7 +516,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_primary' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '*98');
+        $xml = $this->compiler->compileDialplan($organization->domain, '*98');
 
         $this->assertStringContainsString('extension name="voicemail-main"', $xml);
         $this->assertStringContainsString('respond" data="404"', $xml);
@@ -525,8 +525,8 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_convenience_routes_require_active_operator_target_for_operator_shortcut(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Invalid Operator Target Tenant',
+        $organization = Organization::create([
+            'name' => 'Invalid Operator Target Organization',
             'domain' => 'invalid-operator.example.com',
             'is_active' => true,
             'settings' => [
@@ -536,7 +536,7 @@ class DialplanCompilerExtendedTest extends TestCase
             ],
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '0');
+        $xml = $this->compiler->compileDialplan($organization->domain, '0');
 
         $this->assertStringContainsString('destination_number" expression="^0$"', $xml);
         $this->assertStringContainsString('respond" data="404"', $xml);
@@ -545,13 +545,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_convenience_routes_make_starter_routes_explicitly_unconfigured(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Starter Routes Tenant',
+        $organization = Organization::create([
+            'name' => 'Starter Routes Organization',
             'domain' => 'starter-routes.example.com',
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '*69');
+        $xml = $this->compiler->compileDialplan($organization->domain, '*69');
 
         $this->assertStringContainsString('Call return starter route requested by ${caller_id_number}; call return is not configured yet', $xml);
         $this->assertStringContainsString('respond" data="404"', $xml);
@@ -562,20 +562,20 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_convenience_routes_include_directed_pickup_group_pickup_and_parking(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Feature Codes Tenant',
+        $organization = Organization::create([
+            'name' => 'Feature Codes Organization',
             'domain' => 'features.example.com',
             'is_active' => true,
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '**1001');
+        $xml = $this->compiler->compileDialplan($organization->domain, '**1001');
 
         $this->assertStringContainsString('extension name="pickup-direct"', $xml);
         $this->assertStringContainsString('destination_number" expression="^\*\*(.+)$"', $xml);
-        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_intercept.lua $1"', $xml);
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/custom/_directed_pickup.lua $1"', $xml);
         $this->assertStringContainsString('extension name="pickup-group"', $xml);
         $this->assertStringContainsString('destination_number" expression="^\*8$"', $xml);
-        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_intercept_group.lua inbound"', $xml);
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/custom/_group_pickup.lua inbound"', $xml);
         $this->assertStringContainsString('extension name="intercom-prefix"', $xml);
         $this->assertStringContainsString('destination_number" expression="^\*8(\d{2,7})$"', $xml);
         $this->assertStringContainsString('application="set" data="nizam_auto_answer_enabled=true"', $xml);
@@ -591,7 +591,7 @@ class DialplanCompilerExtendedTest extends TestCase
         $this->assertStringContainsString('extension name="park-auto"', $xml);
         $this->assertStringContainsString('destination_number" expression="^(park\\+)?\*5900$"', $xml);
         $this->assertStringContainsString('application="set" data="nizam_parking_lot=park"', $xml);
-        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/nizam_valet_park.lua park *5900 5901 5999"', $xml);
+        $this->assertStringContainsString('application="lua" data="/usr/local/freeswitch/scripts/custom/_valet_park.lua park *5900 5901 5999"', $xml);
         $this->assertStringContainsString('extension name="park-auto-orbit"', $xml);
         $this->assertStringContainsString('destination_number" expression="^(?:park\\+)?(59(0[1-9]|[1-9][0-9]))$"', $xml);
         $this->assertStringContainsString('application="valet_park" data="*5900@${context} $1"', $xml);
@@ -599,13 +599,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_directory_with_voicemail_settings(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -624,13 +624,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_compile_directory_with_caller_id(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -650,10 +650,10 @@ class DialplanCompilerExtendedTest extends TestCase
         $this->assertStringContainsString('1001', $xml);
     }
 
-    public function test_inactive_tenant_returns_empty_directory(): void
+    public function test_inactive_organization_returns_empty_directory(): void
     {
-        Tenant::create([
-            'name' => 'Inactive Tenant',
+        Organization::create([
+            'name' => 'Inactive Organization',
             'domain' => 'inactive.example.com',
             'is_active' => false,
         ]);
@@ -666,13 +666,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_inactive_extension_excluded_from_directory(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'Active',
@@ -680,7 +680,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret1234',
             'directory_first_name' => 'Inactive',
@@ -696,13 +696,13 @@ class DialplanCompilerExtendedTest extends TestCase
 
     public function test_inactive_did_not_routed(): void
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -710,7 +710,7 @@ class DialplanCompilerExtendedTest extends TestCase
             'is_active' => true,
         ]);
 
-        $tenant->dids()->create([
+        $organization->dids()->create([
             'number' => '+15559999999',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,

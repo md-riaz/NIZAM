@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\Agent;
 use App\Models\Queue;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,9 +12,9 @@ class TelecomEdgeCaseTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createTenant(array $overrides = []): Tenant
+    private function createOrganization(array $overrides = []): Organization
     {
-        return Tenant::create(array_merge([
+        return Organization::create(array_merge([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
@@ -23,52 +23,52 @@ class TelecomEdgeCaseTest extends TestCase
 
     // -- Recording retention --
 
-    public function test_tenant_can_set_recording_retention_days(): void
+    public function test_organization_can_set_recording_retention_days(): void
     {
-        $tenant = $this->createTenant(['recording_retention_days' => 90]);
+        $organization = $this->createOrganization(['recording_retention_days' => 90]);
 
-        $this->assertEquals(90, $tenant->recording_retention_days);
-        $this->assertDatabaseHas('tenants', [
-            'id' => $tenant->id,
+        $this->assertEquals(90, $organization->recording_retention_days);
+        $this->assertDatabaseHas('organizations', [
+            'id' => $organization->id,
             'recording_retention_days' => 90,
         ]);
     }
 
-    public function test_tenant_recording_retention_defaults_to_null(): void
+    public function test_organization_recording_retention_defaults_to_null(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
-        $this->assertNull($tenant->recording_retention_days);
+        $this->assertNull($organization->recording_retention_days);
     }
 
     // -- Abuse controls --
 
-    public function test_tenant_can_set_max_calls_per_minute(): void
+    public function test_organization_can_set_max_calls_per_minute(): void
     {
-        $tenant = $this->createTenant(['max_calls_per_minute' => 30]);
+        $organization = $this->createOrganization(['max_calls_per_minute' => 30]);
 
-        $this->assertEquals(30, $tenant->max_calls_per_minute);
-        $this->assertDatabaseHas('tenants', [
-            'id' => $tenant->id,
+        $this->assertEquals(30, $organization->max_calls_per_minute);
+        $this->assertDatabaseHas('organizations', [
+            'id' => $organization->id,
             'max_calls_per_minute' => 30,
         ]);
     }
 
-    public function test_tenant_max_calls_per_minute_defaults_to_null(): void
+    public function test_organization_max_calls_per_minute_defaults_to_null(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
-        $this->assertNull($tenant->max_calls_per_minute);
+        $this->assertNull($organization->max_calls_per_minute);
     }
 
     // -- Queue wrapup_seconds (ACW) --
 
     public function test_queue_can_set_wrapup_seconds(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support',
             'wrapup_seconds' => 30,
         ]);
@@ -82,10 +82,10 @@ class TelecomEdgeCaseTest extends TestCase
 
     public function test_queue_wrapup_seconds_defaults_to_zero(): void
     {
-        $tenant = $this->createTenant();
+        $organization = $this->createOrganization();
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support',
         ]);
 
@@ -96,8 +96,8 @@ class TelecomEdgeCaseTest extends TestCase
 
     public function test_agent_acw_pause_transition(): void
     {
-        $tenant = $this->createTenant();
-        $extension = $tenant->extensions()->create([
+        $organization = $this->createOrganization();
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret',
             'directory_first_name' => 'Test',
@@ -105,7 +105,7 @@ class TelecomEdgeCaseTest extends TestCase
         ]);
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent ACW',
             'state' => Agent::STATE_AVAILABLE,

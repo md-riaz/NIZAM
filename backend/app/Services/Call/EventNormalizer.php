@@ -63,7 +63,7 @@ class EventNormalizer
         }
 
         $normalized['call_uuid'] = $callUuid;
-        // Extract domain to map back to the tenant
+        // Extract domain to map back to the organization
         $normalized['domain'] = $rawEvent['variable_domain_name'] 
             ?? $rawEvent['variable_sip_req_host'] 
             ?? $rawEvent['variable_sip_from_host'] 

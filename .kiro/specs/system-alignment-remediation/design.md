@@ -7,13 +7,13 @@ This remediation is split into low-risk phases so we can fix structural issues w
 ## Phases
 
 ### Phase 1: Schema and query performance
-- Add composite indexes for tenant-scoped call-session, queue-entry, agent, call-event, and CDR access patterns.
+- Add composite indexes for organization-scoped call-session, queue-entry, agent, call-event, and CDR access patterns.
 - Verify schema columns used by models and services actually exist.
 - Prefer additive migrations over destructive renames in the first pass.
 
 ### Phase 2: Read-path cleanup
 - Refactor MetricsService to use SQL aggregation instead of collection-heavy request-time fan-out.
-- Add short-lived tenant-scoped caching for wallboard and agent-state reads.
+- Add short-lived organization-scoped caching for wallboard and agent-state reads.
 - Ensure CallTraceAnalyzer consumes preloaded relations and does not re-query unnecessarily.
 
 ### Phase 3: Boundary cleanup
@@ -32,6 +32,6 @@ This remediation is split into low-risk phases so we can fix structural issues w
 - Centralize flow node registration metadata for validation and compile behavior.
 
 ## Safety constraints
-- Keep tenant scoping explicit.
+- Keep organization scoping explicit.
 - Prefer additive changes and compatibility adapters before removals.
 - Validate touched PHP files after each implementation phase.
