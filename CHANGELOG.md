@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **Organization User Roles:** Replaced the legacy `user` organization role with `agent` across backend validation, admin user-management frontend flows, and role-based test fixtures.
 - **Role Data Migration:** Added a one-time database migration that rewrites stored `users.role='user'` rows to `agent` with no backwards-compatibility alias.
+- **Frontend Dev Runtime:** Updated `frontend/vite.config.js` to load both repo-root and frontend-local env files, and proxy `/api/v1` requests during local Vite development so browser login works against the configured backend instead of failing on same-origin fallback.
 
 ---
 
