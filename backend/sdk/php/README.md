@@ -20,21 +20,21 @@ use Nizam\Sdk\NizamClient;
 
 $client = new NizamClient('http://localhost/api', 'your-api-token');
 
-// List tenants
-$tenants = $client->tenants()->list();
+// List organizations
+$organizations = $client->organizations()->list();
 
-// Create a tenant
-$tenant = $client->tenants()->create([
+// Create a organization
+$organization = $client->organizations()->create([
     'name' => 'Acme Corp',
     'domain' => 'acme.example.com',
     'max_extensions' => 50,
 ]);
 
-// List extensions for a tenant
-$extensions = $client->extensions($tenantId)->list();
+// List extensions for a organization
+$extensions = $client->extensions($organizationId)->list();
 
 // Create an extension
-$extension = $client->extensions($tenantId)->create([
+$extension = $client->extensions($organizationId)->create([
     'extension' => '1001',
     'password' => 'securePass123!',
     'directory_first_name' => 'John',
@@ -42,12 +42,12 @@ $extension = $client->extensions($tenantId)->create([
 ]);
 
 // Manage queues
-$queues = $client->queues($tenantId)->list();
-$metrics = $client->queues($tenantId)->realtimeMetrics($queueId);
+$queues = $client->queues($organizationId)->list();
+$metrics = $client->queues($organizationId)->realtimeMetrics($queueId);
 
 // Webhooks
-$webhooks = $client->webhooks($tenantId)->list();
-$webhook = $client->webhooks($tenantId)->create([
+$webhooks = $client->webhooks($organizationId)->list();
+$webhook = $client->webhooks($organizationId)->create([
     'url' => 'https://hooks.example.com/nizam',
     'events' => ['call.created', 'call.hangup'],
     'secret' => 'my-secret',
@@ -71,7 +71,7 @@ use Nizam\Sdk\Exceptions\NizamApiException;
 use Nizam\Sdk\Exceptions\ValidationException;
 
 try {
-    $tenant = $client->tenants()->create([...]);
+    $organization = $client->organizations()->create([...]);
 } catch (ValidationException $e) {
     // 422 - validation errors
     $errors = $e->getErrors();
@@ -87,16 +87,16 @@ try {
 | Resource | Methods |
 |----------|---------|
 | `auth()` | `login()`, `register()`, `logout()`, `me()` |
-| `tenants()` | `list()`, `create()`, `get()`, `update()`, `delete()`, `settings()` |
-| `extensions($tenantId)` | `list()`, `create()`, `get()`, `update()`, `delete()` |
-| `dids($tenantId)` | `list()`, `create()`, `get()`, `update()`, `delete()` |
-| `queues($tenantId)` | `list()`, `create()`, `get()`, `update()`, `delete()`, `realtimeMetrics()` |
-| `agents($tenantId)` | `list()`, `create()`, `get()`, `update()`, `delete()`, `changeState()` |
-| `webhooks($tenantId)` | `list()`, `create()`, `get()`, `update()`, `delete()`, `deliveryStats()` |
-| `calls($tenantId)` | `originate()`, `hangup()`, `transfer()`, `hold()` |
-| `recordings($tenantId)` | `list()`, `get()`, `download()`, `delete()` |
-| `cdrs($tenantId)` | `list()`, `get()`, `export()` |
-| `callEvents($tenantId)` | `list()`, `trace()`, `replay()` |
+| `organizations()` | `list()`, `create()`, `get()`, `update()`, `delete()`, `settings()` |
+| `extensions($organizationId)` | `list()`, `create()`, `get()`, `update()`, `delete()` |
+| `dids($organizationId)` | `list()`, `create()`, `get()`, `update()`, `delete()` |
+| `queues($organizationId)` | `list()`, `create()`, `get()`, `update()`, `delete()`, `realtimeMetrics()` |
+| `agents($organizationId)` | `list()`, `create()`, `get()`, `update()`, `delete()`, `changeState()` |
+| `webhooks($organizationId)` | `list()`, `create()`, `get()`, `update()`, `delete()`, `deliveryStats()` |
+| `calls($organizationId)` | `originate()`, `hangup()`, `transfer()`, `hold()` |
+| `recordings($organizationId)` | `list()`, `get()`, `download()`, `delete()` |
+| `cdrs($organizationId)` | `list()`, `get()`, `export()` |
+| `callEvents($organizationId)` | `list()`, `trace()`, `replay()` |
 
 ## License
 

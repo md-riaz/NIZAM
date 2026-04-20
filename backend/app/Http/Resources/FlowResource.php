@@ -11,7 +11,7 @@ class FlowResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'name' => $this->name,
             'description' => $this->description,
             'active_version_id' => $this->active_version_id,

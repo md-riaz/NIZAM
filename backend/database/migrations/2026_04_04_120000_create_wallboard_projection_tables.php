@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('wallboard_queue_projections', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('queue_id')->constrained('queues')->cascadeOnDelete();
             $table->string('queue_name');
             $table->integer('waiting_count')->default(0);
@@ -23,13 +23,13 @@ return new class extends Migration
             $table->decimal('abandon_rate', 5, 2)->default(0);
             $table->decimal('agent_occupancy', 5, 2)->default(0);
             $table->timestamps();
-            $table->unique(['tenant_id', 'queue_id']);
-            $table->index(['tenant_id', 'updated_at']);
+            $table->unique(['organization_id', 'queue_id']);
+            $table->index(['organization_id', 'updated_at']);
         });
 
         Schema::create('wallboard_agent_projections', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('agent_id')->constrained('agents')->cascadeOnDelete();
             $table->string('name');
             $table->string('role')->nullable();
@@ -39,8 +39,8 @@ return new class extends Migration
             $table->string('extension')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->unique(['tenant_id', 'agent_id']);
-            $table->index(['tenant_id', 'is_active', 'state']);
+            $table->unique(['organization_id', 'agent_id']);
+            $table->index(['organization_id', 'is_active', 'state']);
         });
     }
 

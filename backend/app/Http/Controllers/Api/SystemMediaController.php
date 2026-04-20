@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -14,13 +14,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class SystemMediaController extends Controller
 {
     /**
-     * List all media items for a tenant in a given collection.
+     * List all media items for an organization in a given collection.
      */
-    public function index(Request $request, Tenant $tenant): JsonResponse
+    public function index(Request $request, Organization $organization): JsonResponse
     {
         $collection = $request->query('collection', 'prompts');
 
-        $media = $tenant->getMedia($collection)->map(fn (Media $item) => [
+        $media = $organization->getMedia($collection)->map(fn (Media $item) => [
             'id' => $item->id,
             'uuid' => $item->uuid,
             'name' => $item->name,
@@ -36,9 +36,9 @@ class SystemMediaController extends Controller
     }
 
     /**
-     * Upload a new media file to a tenant's collection.
+     * Upload a new media file to a organization's collection.
      */
-    public function store(Request $request, Tenant $tenant): JsonResponse
+    public function store(Request $request, Organization $organization): JsonResponse
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:wav,mp3,ogg', 'max:20480'],
@@ -49,7 +49,7 @@ class SystemMediaController extends Controller
         $collection = $request->input('collection', 'prompts');
         $name = $request->input('name', $request->file('file')->getClientOriginalName());
 
-        $media = $tenant
+        $media = $organization
             ->addMediaFromRequest('file')
             ->usingName($name)
             ->toMediaCollection($collection);
@@ -71,9 +71,9 @@ class SystemMediaController extends Controller
     /**
      * Show a single media item.
      */
-    public function show(Tenant $tenant, int $mediaId): JsonResponse
+    public function show(Organization $organization, int $mediaId): JsonResponse
     {
-        $media = $tenant->media()->findOrFail($mediaId);
+        $media = $organization->media()->findOrFail($mediaId);
 
         return response()->json([
             'data' => [
@@ -94,9 +94,9 @@ class SystemMediaController extends Controller
     /**
      * Update a media item's name or custom properties.
      */
-    public function update(Request $request, Tenant $tenant, int $mediaId): JsonResponse
+    public function update(Request $request, Organization $organization, int $mediaId): JsonResponse
     {
-        $media = $tenant->media()->findOrFail($mediaId);
+        $media = $organization->media()->findOrFail($mediaId);
 
         $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
@@ -129,9 +129,9 @@ class SystemMediaController extends Controller
     /**
      * Delete a media item.
      */
-    public function destroy(Tenant $tenant, int $mediaId): JsonResponse
+    public function destroy(Organization $organization, int $mediaId): JsonResponse
     {
-        $media = $tenant->media()->findOrFail($mediaId);
+        $media = $organization->media()->findOrFail($mediaId);
         $media->delete();
 
         return response()->json(null, 204);

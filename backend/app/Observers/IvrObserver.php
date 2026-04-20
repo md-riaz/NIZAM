@@ -6,20 +6,20 @@ use App\Models\Ivr;
 
 class IvrObserver
 {
-    use RebuildsTenantManifest;
+    use RebuildsOrganizationManifest;
 
     public function created(Ivr $ivr): void
     {
-        $this->rebuildTenantManifestForModel($ivr);
+        $this->rebuildOrganizationManifestForModel($ivr);
     }
 
     public function updated(Ivr $ivr): void
     {
-        $this->rebuildTenantManifestForModel($ivr);
+        $this->rebuildOrganizationManifestForModel($ivr);
     }
 
     public function deleted(Ivr $ivr): void
     {
-        $this->rebuildTenantManifestForModel($ivr);
+        $this->rebuildOrganizationManifestForModel($ivr);
     }
 }

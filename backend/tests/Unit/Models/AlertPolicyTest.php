@@ -4,7 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\Alert;
 use App\Models\AlertPolicy;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,8 +14,8 @@ class AlertPolicyTest extends TestCase
 
     public function test_create_alert_policy(): void
     {
-        $tenant = Tenant::factory()->create();
-        $policy = AlertPolicy::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $policy = AlertPolicy::factory()->create(['organization_id' => $organization->id]);
 
         $this->assertDatabaseHas('alert_policies', ['id' => $policy->id]);
     }
@@ -108,7 +108,7 @@ class AlertPolicyTest extends TestCase
     {
         $policy = AlertPolicy::factory()->create();
         Alert::factory()->count(3)->create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
         ]);
 

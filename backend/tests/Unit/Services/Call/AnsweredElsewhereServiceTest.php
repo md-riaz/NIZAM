@@ -6,7 +6,7 @@ use App\Events\CallDeliveryPushRequested;
 use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
 use App\Models\EndpointBinding;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\AnsweredElsewhereService;
 use App\Services\Call\TraceWriter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,8 +30,8 @@ class AnsweredElsewhereServiceTest extends TestCase
     {
         Event::fake([CallDeliveryPushRequested::class]);
 
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret',
             'directory_first_name' => 'Mobile',
@@ -41,7 +41,7 @@ class AnsweredElsewhereServiceTest extends TestCase
         ]);
 
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'answered-elsewhere-call',
             'variables' => [
                 'winner_leg_uuid' => 'winner-leg',

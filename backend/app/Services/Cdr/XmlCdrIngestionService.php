@@ -5,7 +5,7 @@ namespace App\Services\Cdr;
 use App\Events\CallDetailRecordCreated;
 use App\Models\CallDetailRecord;
 use App\Models\ProcessedCdrFile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 
@@ -21,11 +21,11 @@ class XmlCdrIngestionService
     {
         $checksum = $this->checksumFor($path);
         $parsed = $this->parser->parseFile($path);
-        $tenant = $this->resolveTenant($parsed);
+        $organization = $this->resolveOrganization($parsed);
 
-        if (! $tenant) {
+        if (! $organization) {
             throw new \RuntimeException(sprintf(
-                'Unable to resolve tenant for XML CDR domain [%s].',
+                'Unable to resolve organization for XML CDR domain [%s].',
                 $parsed['domain'] ?? ''
             ));
         }
@@ -35,7 +35,7 @@ class XmlCdrIngestionService
         }
 
         $attributes = [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'caller_id_name' => $parsed['caller_id_name'] ?: null,
             'caller_id_number' => $parsed['caller_id_number'] ?: '',
             'destination_number' => $parsed['destination_number'] ?: '',
@@ -105,7 +105,7 @@ class XmlCdrIngestionService
         );
     }
 
-    protected function resolveTenant(array $parsed): ?Tenant
+    protected function resolveOrganization(array $parsed): ?Organization
     {
         $domain = trim((string) ($parsed['domain'] ?? ''));
 
@@ -113,7 +113,7 @@ class XmlCdrIngestionService
             return null;
         }
 
-        return Tenant::query()->where('domain', $domain)->first();
+        return Organization::query()->where('domain', $domain)->first();
     }
 
     protected function parseTimestamp(?string $value): ?Carbon

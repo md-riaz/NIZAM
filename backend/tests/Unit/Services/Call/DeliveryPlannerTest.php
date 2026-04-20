@@ -4,7 +4,7 @@ namespace Tests\Unit\Services\Call;
 
 use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\DeliveryPlanner;
 use App\Services\Call\EndpointCandidate;
 use App\Services\Call\EndpointCandidateSet;
@@ -30,8 +30,8 @@ class DeliveryPlannerTest extends TestCase
 
     public function test_online_sip_candidates_are_planned_in_immediate_wave_without_waiting_for_push(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
 
         $sipCandidate = $this->candidate(
             bindingId: 'binding-sip',
@@ -71,8 +71,8 @@ class DeliveryPlannerTest extends TestCase
 
     public function test_dormant_push_candidates_capture_wake_window_and_late_join_metadata(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'mobile.test']);
-        $callSession = CallSession::factory()->for($tenant)->create([
+        $organization = Organization::factory()->create(['domain' => 'mobile.test']);
+        $callSession = CallSession::factory()->for($organization)->create([
             'variables' => ['delivery_wake_window_seconds' => 90],
         ]);
 
@@ -107,8 +107,8 @@ class DeliveryPlannerTest extends TestCase
 
     public function test_pstn_candidates_are_planned_in_delayed_wave_with_confirmation_policy(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'pstn.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $organization = Organization::factory()->create(['domain' => 'pstn.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
 
         $pstnCandidate = $this->candidate(
             bindingId: 'binding-pstn',
@@ -143,8 +143,8 @@ class DeliveryPlannerTest extends TestCase
     {
         Carbon::setTestNow('2025-01-01T10:00:00+00:00');
 
-        $tenant = Tenant::factory()->create(['domain' => 'origin.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $organization = Organization::factory()->create(['domain' => 'origin.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
 
         $extensionSip = $this->candidate(
             bindingId: 'binding-ext-sip',
@@ -205,8 +205,8 @@ class DeliveryPlannerTest extends TestCase
 
     public function test_planner_sorts_each_wave_by_candidate_priority_and_binding_id(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'sort.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $organization = Organization::factory()->create(['domain' => 'sort.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
 
         $slowSip = $this->candidate(bindingId: 'binding-z', priority: 5);
         $fastSip = $this->candidate(bindingId: 'binding-a', priority: 1);

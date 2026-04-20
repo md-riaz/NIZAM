@@ -17,7 +17,7 @@ use App\Models\Schedule;
 use App\Models\ScheduleRule;
 use App\Models\Team;
 use App\Models\TeamMember;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\TimeCondition;
 use App\Services\Call\DeliveryTargetResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -39,13 +39,13 @@ class DeliveryTargetResolverTest extends TestCase
 
     public function test_resolves_extension_target_from_call_session_metadata(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'nizam_delivery_target_type' => 'extension',
                 'nizam_delivery_target_id' => $extension->id,
@@ -62,16 +62,16 @@ class DeliveryTargetResolverTest extends TestCase
 
     public function test_resolves_ring_group_members_into_extension_targets(): void
     {
-        $tenant = Tenant::factory()->create();
-        $first = Extension::factory()->create(['tenant_id' => $tenant->id, 'is_active' => true]);
-        $second = Extension::factory()->create(['tenant_id' => $tenant->id, 'is_active' => true]);
+        $organization = Organization::factory()->create();
+        $first = Extension::factory()->create(['organization_id' => $organization->id, 'is_active' => true]);
+        $second = Extension::factory()->create(['organization_id' => $organization->id, 'is_active' => true]);
         $ringGroup = RingGroup::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'members' => [$first->id, $second->id],
             'is_active' => true,
         ]);
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'nizam_delivery_target_type' => 'ring_group',
                 'nizam_delivery_target_id' => $ringGroup->id,
@@ -88,27 +88,27 @@ class DeliveryTargetResolverTest extends TestCase
 
     public function test_resolves_queue_ring_all_strategy_into_eligible_agents(): void
     {
-        $tenant = Tenant::factory()->create();
-        $firstExtension = Extension::factory()->create(['tenant_id' => $tenant->id]);
-        $secondExtension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $firstExtension = Extension::factory()->create(['organization_id' => $organization->id]);
+        $secondExtension = Extension::factory()->create(['organization_id' => $organization->id]);
         $firstAgent = Agent::factory()->available()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $firstExtension->id,
             'is_active' => true,
         ]);
         $secondAgent = Agent::factory()->available()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $secondExtension->id,
             'is_active' => true,
         ]);
         $queue = Queue::factory()->ringAll()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
         $queue->members()->attach($firstAgent->id, ['id' => Str::uuid(), 'priority' => 1]);
         $queue->members()->attach($secondAgent->id, ['id' => Str::uuid(), 'priority' => 2]);
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'nizam_delivery_target_type' => 'queue',
                 'nizam_delivery_target_id' => $queue->id,
@@ -125,16 +125,16 @@ class DeliveryTargetResolverTest extends TestCase
 
     public function test_did_resolution_bypasses_non_human_destinations(): void
     {
-        $tenant = Tenant::factory()->create();
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $did = Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'destination_type' => 'voicemail',
             'destination_id' => $extension->id,
             'is_active' => true,
         ]);
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'nizam_delivery_target_type' => 'did',
                 'nizam_delivery_target_id' => $did->id,
@@ -150,11 +150,11 @@ class DeliveryTargetResolverTest extends TestCase
 
     public function test_time_condition_resolves_the_matching_human_branch(): void
     {
-        $tenant = Tenant::factory()->create();
-        $matchExtension = Extension::factory()->create(['tenant_id' => $tenant->id]);
-        $noMatchExtension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $matchExtension = Extension::factory()->create(['organization_id' => $organization->id]);
+        $noMatchExtension = Extension::factory()->create(['organization_id' => $organization->id]);
         $timeCondition = TimeCondition::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'conditions' => [[
                 'wday' => 'mon-fri',
                 'time_from' => '09:00',
@@ -167,7 +167,7 @@ class DeliveryTargetResolverTest extends TestCase
             'is_active' => true,
         ]);
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'nizam_delivery_target_type' => 'time_condition',
                 'nizam_delivery_target_id' => $timeCondition->id,
@@ -187,15 +187,15 @@ class DeliveryTargetResolverTest extends TestCase
 
     public function test_flow_resolution_follows_open_schedule_branch_to_human_team_targets(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $team = Team::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Open Team',
             'strategy' => 'simultaneous',
             'timeout' => 20,
             'is_active' => true,
         ]);
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id, 'is_active' => true]);
+        $extension = Extension::factory()->create(['organization_id' => $organization->id, 'is_active' => true]);
         TeamMember::create([
             'team_id' => $team->id,
             'endpoint_type' => 'extension',
@@ -204,7 +204,7 @@ class DeliveryTargetResolverTest extends TestCase
             'is_active' => true,
         ]);
 
-        $flow = Flow::factory()->create(['tenant_id' => $tenant->id]);
+        $flow = Flow::factory()->create(['organization_id' => $organization->id]);
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'is_published' => true,
@@ -212,7 +212,7 @@ class DeliveryTargetResolverTest extends TestCase
         $flow->update(['active_version_id' => $flowVersion->id]);
 
         $schedule = Schedule::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'timezone' => 'UTC',
             'is_active' => true,
         ]);
@@ -264,7 +264,7 @@ class DeliveryTargetResolverTest extends TestCase
         ]);
 
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'nizam_delivery_target_type' => 'flow',
                 'nizam_delivery_target_id' => $flow->id,
@@ -292,24 +292,24 @@ class DeliveryTargetResolverTest extends TestCase
 
     public function test_ring_group_falls_back_to_human_target_when_no_active_members_exist(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $fallbackExtension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => true,
         ]);
         $inactiveMember = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'is_active' => false,
         ]);
         $ringGroup = RingGroup::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'members' => [$inactiveMember->id],
             'fallback_destination_type' => 'extension',
             'fallback_destination_id' => $fallbackExtension->id,
             'is_active' => true,
         ]);
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'nizam_delivery_target_type' => 'ring_group',
                 'nizam_delivery_target_id' => $ringGroup->id,
@@ -327,21 +327,21 @@ class DeliveryTargetResolverTest extends TestCase
 
     public function test_extension_resolution_keeps_follow_me_as_extension_target_for_orchestration(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '4001',
             'follow_me_enabled' => true,
             'follow_me_destination' => '+15551234567',
             'is_active' => true,
         ]);
         EndpointBinding::factory()->forExtension($extension)->pstnForward()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'forward_number' => '+15551234567',
             'forward_requires_confirm' => true,
         ]);
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'nizam_delivery_target_type' => 'extension',
                 'nizam_delivery_target_id' => $extension->id,

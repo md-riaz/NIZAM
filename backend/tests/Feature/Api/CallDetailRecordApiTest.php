@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,21 +14,21 @@ class CallDetailRecordApiTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
-        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->organization = Organization::factory()->create();
+        $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
     }
 
-    public function test_can_list_cdrs_for_a_tenant(): void
+    public function test_can_list_cdrs_for_a_organization(): void
     {
-        CallDetailRecord::factory()->count(3)->create(['tenant_id' => $this->tenant->id]);
+        CallDetailRecord::factory()->count(3)->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs");
 
         $response->assertStatus(200);
         $response->assertJsonCount(3, 'data');
@@ -36,10 +36,10 @@ class CallDetailRecordApiTest extends TestCase
 
     public function test_can_show_a_cdr(): void
     {
-        $cdr = CallDetailRecord::factory()->create(['tenant_id' => $this->tenant->id]);
+        $cdr = CallDetailRecord::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs/{$cdr->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['uuid' => $cdr->uuid]);
@@ -48,7 +48,7 @@ class CallDetailRecordApiTest extends TestCase
     public function test_cdrs_are_read_only_no_create(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/cdrs", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/cdrs", [
                 'uuid' => 'test-uuid',
                 'caller_id_number' => '1001',
                 'destination_number' => '1002',
@@ -59,10 +59,10 @@ class CallDetailRecordApiTest extends TestCase
 
     public function test_cdrs_are_read_only_no_delete(): void
     {
-        $cdr = CallDetailRecord::factory()->create(['tenant_id' => $this->tenant->id]);
+        $cdr = CallDetailRecord::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
+            ->deleteJson("/api/v1/organizations/{$this->organization->id}/cdrs/{$cdr->id}");
 
         $response->assertStatus(405);
     }
@@ -70,16 +70,16 @@ class CallDetailRecordApiTest extends TestCase
     public function test_can_filter_cdrs_by_direction(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'direction' => 'inbound',
         ]);
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'direction' => 'outbound',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?direction=inbound");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs?direction=inbound");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -88,16 +88,16 @@ class CallDetailRecordApiTest extends TestCase
     public function test_can_filter_cdrs_by_uuid(): void
     {
         $cdr = CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'uuid' => 'unique-call-uuid-123',
         ]);
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'uuid' => 'other-uuid',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?uuid=unique-call-uuid-123");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs?uuid=unique-call-uuid-123");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -107,16 +107,16 @@ class CallDetailRecordApiTest extends TestCase
     public function test_can_filter_cdrs_by_caller_id_number(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'caller_id_number' => '+15551234567',
         ]);
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'caller_id_number' => '+15559999999',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?caller_id_number=".urlencode('+15551234567'));
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs?caller_id_number=".urlencode('+15551234567'));
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -125,16 +125,16 @@ class CallDetailRecordApiTest extends TestCase
     public function test_can_filter_cdrs_by_destination_number(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'destination_number' => '1001',
         ]);
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'destination_number' => '1002',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?destination_number=1001");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs?destination_number=1001");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
@@ -143,28 +143,28 @@ class CallDetailRecordApiTest extends TestCase
     public function test_can_filter_cdrs_by_hangup_cause(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'hangup_cause' => 'NORMAL_CLEARING',
         ]);
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'hangup_cause' => 'USER_BUSY',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs?hangup_cause=USER_BUSY");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs?hangup_cause=USER_BUSY");
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'data');
     }
 
-    public function test_returns_404_for_wrong_tenant(): void
+    public function test_returns_404_for_wrong_organization(): void
     {
-        $otherTenant = Tenant::factory()->create();
-        $cdr = CallDetailRecord::factory()->create(['tenant_id' => $otherTenant->id]);
+        $otherOrganization = Organization::factory()->create();
+        $cdr = CallDetailRecord::factory()->create(['organization_id' => $otherOrganization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs/{$cdr->id}");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs/{$cdr->id}");
 
         $response->assertStatus(403);
     }
@@ -172,18 +172,18 @@ class CallDetailRecordApiTest extends TestCase
     public function test_cdrs_are_ordered_by_start_stamp_desc(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'start_stamp' => now()->subMinutes(10),
             'caller_id_number' => 'older',
         ]);
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'start_stamp' => now(),
             'caller_id_number' => 'newer',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs");
 
         $response->assertStatus(200);
         $data = $response->json('data');

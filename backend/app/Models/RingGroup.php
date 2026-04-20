@@ -18,7 +18,7 @@ class RingGroup extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'name',
         'strategy',
         'ring_timeout',
@@ -42,8 +42,8 @@ class RingGroup extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 }

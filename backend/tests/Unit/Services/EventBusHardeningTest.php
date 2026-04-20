@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\CallEventLog;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\EventProcessor;
 use App\Services\WebhookDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,25 +24,25 @@ class EventBusHardeningTest extends TestCase
         $this->processor = new EventProcessor($dispatcher);
     }
 
-    private function createTenantWithExtension(): array
+    private function createOrganizationWithExtension(): array
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'is_active' => true,
         ]);
 
-        return [$tenant, $extension];
+        return [$organization, $extension];
     }
 
     public function test_event_payload_includes_schema_version(): void
     {
-        [$tenant] = $this->createTenantWithExtension();
+        [$organization] = $this->createOrganizationWithExtension();
         Event::fake();
 
         $this->processor->process([
@@ -62,7 +62,7 @@ class EventBusHardeningTest extends TestCase
 
     public function test_event_payload_has_immutable_format(): void
     {
-        [$tenant] = $this->createTenantWithExtension();
+        [$organization] = $this->createOrganizationWithExtension();
         Event::fake();
 
         $this->processor->process([
@@ -79,7 +79,7 @@ class EventBusHardeningTest extends TestCase
         $this->assertNotNull($event);
 
         $payload = $event->payload;
-        $this->assertArrayHasKey('tenant_id', $payload);
+        $this->assertArrayHasKey('organization_id', $payload);
         $this->assertArrayHasKey('call_uuid', $payload);
         $this->assertArrayHasKey('event_type', $payload);
         $this->assertArrayHasKey('timestamp', $payload);
@@ -89,7 +89,7 @@ class EventBusHardeningTest extends TestCase
 
     public function test_canonical_event_type_for_channel_create(): void
     {
-        [$tenant] = $this->createTenantWithExtension();
+        [$organization] = $this->createOrganizationWithExtension();
         Event::fake();
 
         $this->processor->process([
@@ -121,7 +121,7 @@ class EventBusHardeningTest extends TestCase
 
     public function test_event_payload_metadata_contains_call_data(): void
     {
-        [$tenant] = $this->createTenantWithExtension();
+        [$organization] = $this->createOrganizationWithExtension();
         Event::fake();
 
         $this->processor->process([

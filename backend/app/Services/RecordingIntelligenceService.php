@@ -57,11 +57,11 @@ class RecordingIntelligenceService
     }
 
     /**
-     * Batch enrich recordings for a tenant.
+     * Batch enrich recordings for an organization.
      */
-    public function enrichTenantRecordings(string $tenantId, ?int $limit = null): Collection
+    public function enrichOrganizationRecordings(string $organizationId, ?int $limit = null): Collection
     {
-        $query = Recording::where('tenant_id', $tenantId)
+        $query = Recording::where('organization_id', $organizationId)
             ->where(function ($q) {
                 $q->whereNull('sentiment')
                     ->orWhere('sentiment', 'pending');
@@ -91,7 +91,7 @@ class RecordingIntelligenceService
         }
 
         return TranscriptionJob::create([
-            'tenant_id' => $recording->tenant_id,
+            'organization_id' => $recording->organization_id,
             'recording_id' => $recording->id,
             'status' => TranscriptionJob::STATUS_PENDING,
             'language' => $language,
@@ -99,22 +99,22 @@ class RecordingIntelligenceService
     }
 
     /**
-     * Get recordings that need review for a tenant.
+     * Get recordings that need review for an organization.
      */
-    public function getRecordingsNeedingReview(string $tenantId): Collection
+    public function getRecordingsNeedingReview(string $organizationId): Collection
     {
-        return Recording::where('tenant_id', $tenantId)
+        return Recording::where('organization_id', $organizationId)
             ->where('needs_review', true)
             ->orderByDesc('created_at')
             ->get();
     }
 
     /**
-     * Get transcription status summary for a tenant.
+     * Get transcription status summary for an organization.
      */
-    public function getTranscriptionStatus(string $tenantId): array
+    public function getTranscriptionStatus(string $organizationId): array
     {
-        $jobs = TranscriptionJob::where('tenant_id', $tenantId)
+        $jobs = TranscriptionJob::where('organization_id', $organizationId)
             ->selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status')

@@ -29,7 +29,7 @@ User story: As a platform maintainer, I want a first-class runtime endpoint mode
 #### Acceptance Criteria
 
 1. THE system SHALL provide a runtime endpoint binding model separate from `DeviceProfile`.
-2. THE endpoint binding model SHALL support tenant-scoped association to extensions, agents, or both where appropriate.
+2. THE endpoint binding model SHALL support organization-scoped association to extensions, agents, or both where appropriate.
 3. THE endpoint binding model SHALL support runtime delivery attributes including endpoint type, device identity, push tokens, platform, app version, enabled state, push capability state, late-join allowance, forward number, and PSTN confirmation policy.
 4. IF an endpoint is disabled THEN the orchestration pipeline SHALL exclude it from candidate delivery attempts.
 5. IF an endpoint is marked push-capable THEN the system SHALL store the token material required to send wake notifications.
@@ -137,22 +137,22 @@ User story: As a platform maintainer, I want a short-lived reachability cache so
 
 #### Acceptance Criteria
 
-1. THE system SHALL maintain a short-lived reachability cache keyed by tenant and user or endpoint identity.
+1. THE system SHALL maintain a short-lived reachability cache keyed by organization and user or endpoint identity.
 2. WHEN registration events are received THEN the system SHALL refresh or invalidate the reachability cache accordingly.
 3. WHEN reachability planning runs and cache data is unavailable or stale THEN the system SHALL fall back to a live registration visibility path.
 4. THE reachability cache SHALL inform planning decisions but SHALL NOT replace durable orchestration state in `CallSession` and delivery attempts.
 
-### Requirement 12: Tenant-scoped mobile device management APIs
+### Requirement 12: Organization-scoped mobile device management APIs
 
-User story: As a tenant application, I want authenticated APIs for runtime mobile device binding and token rotation so that mobile endpoints can participate in call delivery safely.
+User story: As a organization application, I want authenticated APIs for runtime mobile device binding and token rotation so that mobile endpoints can participate in call delivery safely.
 
 #### Acceptance Criteria
 
-1. THE system SHALL provide authenticated tenant-scoped endpoints for mobile device registration, update, deletion, token refresh, heartbeat, and capability updates.
+1. THE system SHALL provide authenticated organization-scoped endpoints for mobile device registration, update, deletion, token refresh, heartbeat, and capability updates.
 2. THE mobile device registration endpoint SHALL accept runtime fields including extension reference, device UUID, platform, push token, VoIP push token when applicable, app version, push-enabled state, SIP background support, and late-join preference.
 3. WHEN a device refreshes a token THEN the system SHALL rotate the stored token without requiring a new logical device record when the device identity is unchanged.
 4. WHEN a device heartbeat or capability update is received THEN the system SHALL update runtime endpoint state without mutating provisioning-only `DeviceProfile` data.
-5. ALL mobile device API operations SHALL be tenant-scoped and protected by existing authenticated API middleware.
+5. ALL mobile device API operations SHALL be organization-scoped and protected by existing authenticated API middleware.
 
 ### Requirement 13: No duplicated push decision logic
 

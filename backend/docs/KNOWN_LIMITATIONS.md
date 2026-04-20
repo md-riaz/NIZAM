@@ -77,7 +77,7 @@ are supported via WebSocket transport on the `internal` profile with DTLS-SRTP.
   selection.
 - Certificate files must still be provisioned externally in the configured
   directory; NIZAM does not issue, renew, or rotate certificates.
-- Per-tenant TLS/SRTP enforcement is not available; all tenants share the same
+- Per-organization TLS/SRTP enforcement is not available; all organizations share the same
   media security posture.
 
 **Why external trusted certificates are still required for production:**
@@ -107,13 +107,13 @@ manipulation for carrier compliance.
 - Caller ID numbers (effective and outbound) are automatically normalized to
   E.164 format using `DidNormalizationService::toE164()`, with the leading `+`
   stripped for the dialplan variables to ensure carrier compatibility.
-- P-Asserted-Identity injection and Privacy headers are managed at the **Tenant level**.
-- Settings are stored in the Tenant's `settings` JSON field (`outbound_caller_id_pai`
+- P-Asserted-Identity injection and Privacy headers are managed at the **Organization level**.
+- Settings are stored in the Organization's `settings` JSON field (`outbound_caller_id_pai`
   and `outbound_caller_id_privacy`).
-- If a tenant does not specify a PAI preference (set to `null`), it falls back to
+- If a organization does not specify a PAI preference (set to `null`), it falls back to
   the global `OUTBOUND_CALLER_ID_PAI` setting in `config/telephony.php`.
 - Anonymous call presentation is supported by setting privacy to `hide` or `full`
-  at the tenant level.
+  at the organization level.
 
 **Recommendation:** Use `DidNormalizationService::toE164()` for E.164
 formatting. Carrier-specific SIP header manipulation should be handled in
@@ -146,7 +146,7 @@ reliable matching regardless of carrier format.
 - All DIDs store a `normalized_number` field (E.164) generated automatically
   on save.
 - `NumberRoutingService::resolveInboundDid()` normalizes the inbound destination
-  number using the tenant's default country code before querying the database.
+  number using the organization's default country code before querying the database.
 - Matches are performed against both the raw `number` and the `normalized_number`.
 
 ---
@@ -213,7 +213,7 @@ skew are **not** tested for starvation resistance beyond basic unit tests.
 
 ### Recording Retention Policies
 
-Per-tenant recording retention is enforced by the `nizam:prune-recordings`
+Per-organization recording retention is enforced by the `nizam:prune-recordings`
 artisan command, which is scheduled to run daily via the task scheduler.
 
 **System behavior:**
@@ -225,11 +225,11 @@ artisan command, which is scheduled to run daily via the task scheduler.
   schedule:work`, which triggers the command at midnight UTC daily.
 - Legal hold, export, and GDPR deletion requests must still be handled manually
   via the recordings API.
-- Audit logs (`audit_logs` table) are tenant-scoped but not encrypted at rest.
+- Audit logs (`audit_logs` table) are organization-scoped but not encrypted at rest.
 
 **Operator tip:** Use `php artisan nizam:prune-recordings --dry-run` to preview
-which recordings would be deleted before running for real. Pass `--tenant=<uuid>`
-to restrict the run to a single tenant.
+which recordings would be deleted before running for real. Pass `--organization=<uuid>`
+to restrict the run to a single organization.
 
 ### PII / Sensitive Data in Logs
 
@@ -239,7 +239,7 @@ card numbers in log output via `SensitiveDataSanitizerTap`.
 **System behavior:**
 - The `SensitiveDataSanitizerTap` is registered on the `single`, `daily`, and
   `stderr` log channels in `config/logging.php`.
-- Audit logs (`audit_logs` table) are tenant-scoped but not encrypted at rest.
+- Audit logs (`audit_logs` table) are organization-scoped but not encrypted at rest.
 - FreeSWITCH log files (outside NIZAM) are not sanitized; keep FreeSWITCH log
   levels at `warning` or above in production to avoid leaking SIP credentials.
 
@@ -307,7 +307,7 @@ webhook signing secrets, or JWT secrets.
 
 ### Abuse Controls / Toll Fraud
 
-NIZAM enforces per-tenant call rate limiting (`max_calls_per_minute`) and 
+NIZAM enforces per-organization call rate limiting (`max_calls_per_minute`) and 
 concurrent call limiting (`max_concurrent_calls`) in real-time.
 
 **System behavior:**
@@ -315,7 +315,7 @@ concurrent call limiting (`max_concurrent_calls`) in real-time.
   calls for every inbound and outbound call.
 - Destination blocking is enforced via the `BlockedDestination` model. 
   Calls matching these patterns (Regex) are rejected with SIP 403 Forbidden.
-- Global and tenant-specific blocking rules are supported.
+- Global and organization-specific blocking rules are supported.
 - Toll fraud detection (anomalous patterns, high-cost destinations) is 
   partially addressed via these blocking rules but lacks automatic heuristics.
 
@@ -345,14 +345,14 @@ use external tools (Homer, VoIPmonitor).
 
 ### Correlation IDs
 
-Call events include `call_uuid` and `tenant_id`. Additional correlation
+Call events include `call_uuid` and `organization_id`. Additional correlation
 dimensions (node_id, gateway_id, queue_id, agent_id) are **partially**
 available depending on the event type.
 
 **System behavior:**
 - `queue.call_answered` events include `queue_id` and `agent_id`.
 - Generic call events (CHANNEL_CREATE, CHANNEL_HANGUP) include only `call_uuid`
-  and `tenant_id`.
+  and `organization_id`.
 - There is no unified correlation ID that links across all subsystems
   (gateway → queue → agent → recording).
 - Cross-system debugging requires manual correlation via `call_uuid`.

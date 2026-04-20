@@ -3,7 +3,7 @@
 namespace App\Modules\Voicemail;
 
 use App\Models\CallEventLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Support\Facades\Log;
 
 class VoicemailEventService
@@ -20,18 +20,18 @@ class VoicemailEventService
             return null;
         }
 
-        $tenant = $this->resolveTenant($event);
-        if (! $tenant) {
+        $organization = $this->resolveOrganization($event);
+        if (! $organization) {
             return null;
         }
 
         $mailbox = (string) ($event['VM-User'] ?? 'unknown');
-        $resolvedStoragePath = $this->resolveStoragePath($event, $tenant->domain, $mailbox);
+        $resolvedStoragePath = $this->resolveStoragePath($event, $organization->domain, $mailbox);
         $rawStoragePath = $this->resolveRawStoragePath($event);
 
         $metadata = [
             'user' => (string) ($event['VM-User'] ?? ''),
-            'domain' => (string) ($event['VM-Domain'] ?? $tenant->domain),
+            'domain' => (string) ($event['VM-Domain'] ?? $organization->domain),
             'caller_id_number' => (string) ($event['VM-Caller-ID-Number'] ?? ''),
             'caller_id_name' => (string) ($event['VM-Caller-ID-Name'] ?? ''),
             'message_len' => (string) ($event['VM-Message-Len'] ?? '0'),
@@ -58,7 +58,7 @@ class VoicemailEventService
             $metadata['raw_message_file'] = $rawStoragePath;
         }
 
-        return $this->buildPayload($tenant->id, $metadata);
+        return $this->buildPayload($organization->id, $metadata);
     }
 
     /**
@@ -67,14 +67,14 @@ class VoicemailEventService
     public function handleReceivedPayload(array $data): void
     {
         Log::debug('Voicemail module handled received event', [
-            'tenant_id' => $data['tenant_id'] ?? null,
+            'organization_id' => $data['organization_id'] ?? null,
             'call_uuid' => $data['call_uuid'] ?? null,
             'storage_disk' => data_get($data, 'metadata.storage_disk'),
             'storage_path' => data_get($data, 'metadata.storage_path'),
         ]);
     }
 
-    protected function resolveTenant(array $event): ?Tenant
+    protected function resolveOrganization(array $event): ?Organization
     {
         $domain = $event['VM-Domain']
             ?? $event['variable_domain_name']
@@ -85,16 +85,16 @@ class VoicemailEventService
             return null;
         }
 
-        $tenant = Tenant::query()
+        $organization = Organization::query()
             ->where('domain', $domain)
             ->where('is_active', true)
             ->first();
 
-        if (! $tenant || ! $tenant->isOperational()) {
+        if (! $organization || ! $organization->isOperational()) {
             return null;
         }
 
-        return $tenant;
+        return $organization;
     }
 
     protected function resolveStoragePath(array $event, string $domain, string $mailbox): string
@@ -150,10 +150,10 @@ class VoicemailEventService
      * @param  array<string, mixed>  $metadata
      * @return array<string, mixed>
      */
-    protected function buildPayload(string $tenantId, array $metadata): array
+    protected function buildPayload(string $organizationId, array $metadata): array
     {
         return [
-            'tenant_id' => $tenantId,
+            'organization_id' => $organizationId,
             'call_uuid' => (string) ($metadata['message_uuid'] ?? $metadata['message_id'] ?? $metadata['user'] ?? ''),
             'event_type' => CallEventLog::EVENT_VOICEMAIL_RECEIVED,
             'timestamp' => now()->toIso8601String(),

@@ -15,7 +15,7 @@ class FollowMeEndpointBindingService
         $destination = $this->normalizeForwardNumber((string) ($state['follow_me_destination'] ?? $extension->follow_me_destination ?? ''));
 
         $query = EndpointBinding::query()
-            ->where('tenant_id', $extension->tenant_id)
+            ->where('organization_id', $extension->organization_id)
             ->where('type', EndpointBinding::TYPE_PSTN_FORWARD)
             ->where(function ($query) use ($extension): void {
                 $query->where('extension_id', $extension->id);
@@ -34,7 +34,7 @@ class FollowMeEndpointBindingService
         $binding = $query->orderByDesc('agent_id')->orderByDesc('created_at')->first();
 
         $payload = [
-            'tenant_id' => $extension->tenant_id,
+            'organization_id' => $extension->organization_id,
             'extension_id' => $extension->id,
             'agent_id' => $extension->agent?->id,
             'type' => EndpointBinding::TYPE_PSTN_FORWARD,

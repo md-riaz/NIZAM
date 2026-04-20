@@ -8,7 +8,7 @@ use App\Listeners\HandleCallDeliveryPushRequested;
 use App\Models\CallSession;
 use App\Models\EndpointBinding;
 use App\Models\PushNotificationLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -30,8 +30,8 @@ class HandleCallDeliveryPushRequestedTest extends TestCase
     {
         Queue::fake();
 
-        $tenant = Tenant::factory()->create(['domain' => 'push.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'push.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '2001',
             'password' => 'secret',
             'directory_first_name' => 'Push',
@@ -46,7 +46,7 @@ class HandleCallDeliveryPushRequestedTest extends TestCase
             'voip_push_token' => 'test-voip-token',
         ]);
 
-        $session = CallSession::factory()->for($tenant)->create([
+        $session = CallSession::factory()->for($organization)->create([
             'call_uuid' => 'push-test-uuid-1',
             'state' => 'parked',
         ]);
@@ -79,8 +79,8 @@ class HandleCallDeliveryPushRequestedTest extends TestCase
     {
         Queue::fake();
 
-        $tenant = Tenant::factory()->create(['domain' => 'push2.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'push2.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '2002',
             'password' => 'secret',
             'directory_first_name' => 'Push',
@@ -94,7 +94,7 @@ class HandleCallDeliveryPushRequestedTest extends TestCase
             'is_push_capable' => true,
         ]);
 
-        $session = CallSession::factory()->for($tenant)->create([
+        $session = CallSession::factory()->for($organization)->create([
             'call_uuid' => 'push-test-uuid-2',
             'state' => 'parked',
         ]);
@@ -112,8 +112,8 @@ class HandleCallDeliveryPushRequestedTest extends TestCase
     {
         Queue::fake();
 
-        $tenant = Tenant::factory()->create(['domain' => 'push3.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'push3.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '2003',
             'password' => 'secret',
             'directory_first_name' => 'Push',
@@ -128,7 +128,7 @@ class HandleCallDeliveryPushRequestedTest extends TestCase
             'push_token' => 'test-fcm-token',
         ]);
 
-        $session = CallSession::factory()->for($tenant)->create([
+        $session = CallSession::factory()->for($organization)->create([
             'call_uuid' => 'push-test-uuid-3',
             'state' => 'parked',
         ]);

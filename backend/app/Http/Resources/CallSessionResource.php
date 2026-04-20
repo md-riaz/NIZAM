@@ -37,7 +37,7 @@ class CallSessionResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'call_uuid' => $this->call_uuid,
             'did_id' => $this->did_id,
             'flow_id' => $this->flowVersion?->flow_id,

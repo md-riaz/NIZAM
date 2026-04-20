@@ -10,13 +10,13 @@ return new class extends Migration
     {
         Schema::create('flows', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->uuid('active_version_id')->nullable();
             $table->timestamps();
 
-            $table->index('tenant_id');
+            $table->index('organization_id');
         });
     }
 

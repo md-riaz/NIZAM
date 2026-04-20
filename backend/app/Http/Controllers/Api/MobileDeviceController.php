@@ -10,16 +10,16 @@ use App\Http\Requests\UpdateMobileDeviceCapabilitiesRequest;
 use App\Http\Requests\UpdateMobileDeviceRequest;
 use App\Http\Resources\MobileDeviceResource;
 use App\Models\EndpointBinding;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Carbon\Carbon;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 
 class MobileDeviceController extends Controller
 {
-    public function register(RegisterMobileDeviceRequest $request, Tenant $tenant): JsonResponse
+    public function register(RegisterMobileDeviceRequest $request, Organization $organization): JsonResponse
     {
-        $binding = $tenant->endpointBindings()->firstOrNew([
+        $binding = $organization->endpointBindings()->firstOrNew([
             'type' => EndpointBinding::TYPE_MOBILE_APP,
             'device_uuid' => $request->validated('device_uuid'),
         ]);
@@ -27,7 +27,7 @@ class MobileDeviceController extends Controller
         $this->authorize($binding->exists ? 'update' : 'create', $binding->exists ? $binding : EndpointBinding::class);
 
         $this->applyPayload($binding, $request->validated(), touchLastSeen: true, setDefaults: ! $binding->exists);
-        $binding->tenant()->associate($tenant);
+        $binding->organization()->associate($organization);
         $binding->type = EndpointBinding::TYPE_MOBILE_APP;
         $binding->save();
         $binding->load('extension');
@@ -37,9 +37,9 @@ class MobileDeviceController extends Controller
             ->setStatusCode($binding->wasRecentlyCreated ? 201 : 200);
     }
 
-    public function update(UpdateMobileDeviceRequest $request, Tenant $tenant, EndpointBinding $endpointBinding): JsonResponse|MobileDeviceResource
+    public function update(UpdateMobileDeviceRequest $request, Organization $organization, EndpointBinding $endpointBinding): JsonResponse|MobileDeviceResource
     {
-        if ($response = $this->ensureScopedMobileDevice($tenant, $endpointBinding)) {
+        if ($response = $this->ensureScopedMobileDevice($organization, $endpointBinding)) {
             return $response;
         }
 
@@ -52,9 +52,9 @@ class MobileDeviceController extends Controller
         return new MobileDeviceResource($endpointBinding);
     }
 
-    public function destroy(Tenant $tenant, EndpointBinding $endpointBinding): JsonResponse
+    public function destroy(Organization $organization, EndpointBinding $endpointBinding): JsonResponse
     {
-        if ($response = $this->ensureScopedMobileDevice($tenant, $endpointBinding)) {
+        if ($response = $this->ensureScopedMobileDevice($organization, $endpointBinding)) {
             return $response;
         }
 
@@ -65,9 +65,9 @@ class MobileDeviceController extends Controller
         return response()->json(null, 204);
     }
 
-    public function refreshToken(RefreshMobileDeviceTokenRequest $request, Tenant $tenant, EndpointBinding $endpointBinding): JsonResponse|MobileDeviceResource
+    public function refreshToken(RefreshMobileDeviceTokenRequest $request, Organization $organization, EndpointBinding $endpointBinding): JsonResponse|MobileDeviceResource
     {
-        if ($response = $this->ensureScopedMobileDevice($tenant, $endpointBinding)) {
+        if ($response = $this->ensureScopedMobileDevice($organization, $endpointBinding)) {
             return $response;
         }
 
@@ -80,9 +80,9 @@ class MobileDeviceController extends Controller
         return new MobileDeviceResource($endpointBinding);
     }
 
-    public function heartbeat(MobileDeviceHeartbeatRequest $request, Tenant $tenant, EndpointBinding $endpointBinding): JsonResponse|MobileDeviceResource
+    public function heartbeat(MobileDeviceHeartbeatRequest $request, Organization $organization, EndpointBinding $endpointBinding): JsonResponse|MobileDeviceResource
     {
-        if ($response = $this->ensureScopedMobileDevice($tenant, $endpointBinding)) {
+        if ($response = $this->ensureScopedMobileDevice($organization, $endpointBinding)) {
             return $response;
         }
 
@@ -99,9 +99,9 @@ class MobileDeviceController extends Controller
         return new MobileDeviceResource($endpointBinding);
     }
 
-    public function capabilities(UpdateMobileDeviceCapabilitiesRequest $request, Tenant $tenant, EndpointBinding $endpointBinding): JsonResponse|MobileDeviceResource
+    public function capabilities(UpdateMobileDeviceCapabilitiesRequest $request, Organization $organization, EndpointBinding $endpointBinding): JsonResponse|MobileDeviceResource
     {
-        if ($response = $this->ensureScopedMobileDevice($tenant, $endpointBinding)) {
+        if ($response = $this->ensureScopedMobileDevice($organization, $endpointBinding)) {
             return $response;
         }
 
@@ -114,9 +114,9 @@ class MobileDeviceController extends Controller
         return new MobileDeviceResource($endpointBinding);
     }
 
-    private function ensureScopedMobileDevice(Tenant $tenant, EndpointBinding $endpointBinding): ?JsonResponse
+    private function ensureScopedMobileDevice(Organization $organization, EndpointBinding $endpointBinding): ?JsonResponse
     {
-        if ($endpointBinding->tenant_id !== $tenant->id || $endpointBinding->type !== EndpointBinding::TYPE_MOBILE_APP) {
+        if ($endpointBinding->organization_id !== $organization->id || $endpointBinding->type !== EndpointBinding::TYPE_MOBILE_APP) {
             return response()->json(['message' => 'Mobile device not found.'], 404);
         }
 

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\UsageRecord;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -16,7 +16,7 @@ class UsageRecordFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'metric' => fake()->randomElement([
                 UsageRecord::METRIC_CALL_MINUTES,
                 UsageRecord::METRIC_CONCURRENT_CALL_PEAK,

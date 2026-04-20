@@ -6,20 +6,20 @@ use App\Models\RingGroup;
 
 class RingGroupObserver
 {
-    use RebuildsTenantManifest;
+    use RebuildsOrganizationManifest;
 
     public function created(RingGroup $ringGroup): void
     {
-        $this->rebuildTenantManifestForModel($ringGroup);
+        $this->rebuildOrganizationManifestForModel($ringGroup);
     }
 
     public function updated(RingGroup $ringGroup): void
     {
-        $this->rebuildTenantManifestForModel($ringGroup);
+        $this->rebuildOrganizationManifestForModel($ringGroup);
     }
 
     public function deleted(RingGroup $ringGroup): void
     {
-        $this->rebuildTenantManifestForModel($ringGroup);
+        $this->rebuildOrganizationManifestForModel($ringGroup);
     }
 }

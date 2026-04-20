@@ -20,7 +20,7 @@ class Schedule extends Model
     public const SCOPE_USER = 'user';
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'holiday_calendar_id',
         'name',
         'timezone',
@@ -34,9 +34,9 @@ class Schedule extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function holidayCalendar(): BelongsTo
@@ -59,9 +59,9 @@ class Schedule extends Model
         return $this->hasMany(ScheduleException::class);
     }
 
-    public function defaultForTenant(): HasOne
+    public function defaultForOrganization(): HasOne
     {
-        return $this->hasOne(Tenant::class, 'default_schedule_id');
+        return $this->hasOne(Organization::class, 'default_schedule_id');
     }
 
     public function teams(): HasMany
@@ -76,7 +76,7 @@ class Schedule extends Model
 
     public function scopeLabel(): string
     {
-        if ($this->relationLoaded('defaultForTenant') ? $this->defaultForTenant !== null : $this->defaultForTenant()->exists()) {
+        if ($this->relationLoaded('defaultForOrganization') ? $this->defaultForOrganization !== null : $this->defaultForOrganization()->exists()) {
             return self::SCOPE_ORGANIZATION;
         }
 

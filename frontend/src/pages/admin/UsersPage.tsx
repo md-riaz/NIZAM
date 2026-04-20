@@ -100,7 +100,7 @@ export default function UsersPage() {
                                     <TableHead>Name</TableHead>
                                     <TableHead>Email</TableHead>
                                     <TableHead>Role</TableHead>
-                                    <TableHead>Tenant</TableHead>
+                                    <TableHead>Organization</TableHead>
                                     <TableHead>Created</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -123,7 +123,7 @@ export default function UsersPage() {
                                         <TableCell className="text-muted-foreground">{user.email}</TableCell>
                                         <TableCell>{roleBadge(user.role)}</TableCell>
                                         <TableCell className="text-muted-foreground">
-                                            {user.tenant?.name ?? 'Global'}
+                                            {user.organization?.name ?? 'Global'}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">
                                             {new Date(user.created_at).toLocaleDateString()}

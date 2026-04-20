@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('dids', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->string('number');
             $table->string('description')->nullable();
             $table->string('destination_type');

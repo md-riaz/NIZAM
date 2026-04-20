@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Policies;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\Extension;
 use App\Models\User;
 use App\Policies\DeviceProfilePolicy;
@@ -10,7 +10,7 @@ use App\Policies\DidPolicy;
 use App\Policies\ExtensionPolicy;
 use App\Policies\IvrPolicy;
 use App\Policies\RingGroupPolicy;
-use App\Policies\TenantPolicy;
+use App\Policies\OrganizationPolicy;
 use App\Policies\TimeConditionPolicy;
 use App\Policies\WebhookPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,40 +20,40 @@ class PolicyTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_bypasses_tenant_policy(): void
+    public function test_admin_bypasses_organization_policy(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
-        $policy = new TenantPolicy;
+        $policy = new OrganizationPolicy;
         $this->assertTrue($policy->before($admin, 'view'));
     }
 
-    public function test_non_admin_cannot_create_tenant(): void
+    public function test_non_admin_cannot_create_organization(): void
     {
         $user = User::factory()->create(['role' => 'user']);
 
-        $policy = new TenantPolicy;
+        $policy = new OrganizationPolicy;
         $this->assertNull($policy->before($user, 'create'));
         $this->assertFalse($policy->create($user));
     }
 
-    public function test_user_can_view_own_tenant(): void
+    public function test_user_can_view_own_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
 
-        $policy = new TenantPolicy;
-        $this->assertTrue($policy->view($user, $tenant));
+        $policy = new OrganizationPolicy;
+        $this->assertTrue($policy->view($user, $organization));
     }
 
-    public function test_user_cannot_view_other_tenant(): void
+    public function test_user_cannot_view_other_organization(): void
     {
-        $tenantA = Tenant::factory()->create();
-        $tenantB = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenantA->id, 'role' => 'user']);
+        $organizationA = Organization::factory()->create();
+        $organizationB = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organizationA->id, 'role' => 'user']);
 
-        $policy = new TenantPolicy;
-        $this->assertFalse($policy->view($user, $tenantB));
+        $policy = new OrganizationPolicy;
+        $this->assertFalse($policy->view($user, $organizationB));
     }
 
     public function test_admin_bypasses_extension_policy(): void
@@ -64,11 +64,11 @@ class PolicyTest extends TestCase
         $this->assertTrue($policy->before($admin, 'view'));
     }
 
-    public function test_user_can_view_extension_in_own_tenant(): void
+    public function test_user_can_view_extension_in_own_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'pass',
             'directory_first_name' => 'John',
@@ -79,12 +79,12 @@ class PolicyTest extends TestCase
         $this->assertTrue($policy->view($user, $extension));
     }
 
-    public function test_user_cannot_view_extension_in_other_tenant(): void
+    public function test_user_cannot_view_extension_in_other_organization(): void
     {
-        $tenantA = Tenant::factory()->create();
-        $tenantB = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenantA->id, 'role' => 'user']);
-        $extension = $tenantB->extensions()->create([
+        $organizationA = Organization::factory()->create();
+        $organizationB = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organizationA->id, 'role' => 'user']);
+        $extension = $organizationB->extensions()->create([
             'extension' => '1001',
             'password' => 'pass',
             'directory_first_name' => 'Jane',
@@ -102,12 +102,12 @@ class PolicyTest extends TestCase
         $this->assertTrue($policy->before($admin, 'view'));
     }
 
-    public function test_user_can_view_did_in_own_tenant(): void
+    public function test_user_can_view_did_in_own_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
-        $did = $tenant->dids()->create([
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
+        $did = $organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
@@ -117,13 +117,13 @@ class PolicyTest extends TestCase
         $this->assertTrue($policy->view($user, $did));
     }
 
-    public function test_user_cannot_view_did_in_other_tenant(): void
+    public function test_user_cannot_view_did_in_other_organization(): void
     {
-        $tenantA = Tenant::factory()->create();
-        $tenantB = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenantA->id, 'role' => 'user']);
-        $extension = Extension::factory()->create(['tenant_id' => $tenantB->id]);
-        $did = $tenantB->dids()->create([
+        $organizationA = Organization::factory()->create();
+        $organizationB = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organizationA->id, 'role' => 'user']);
+        $extension = Extension::factory()->create(['organization_id' => $organizationB->id]);
+        $did = $organizationB->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
@@ -140,18 +140,18 @@ class PolicyTest extends TestCase
         $this->assertTrue($policy->before($admin, 'view'));
     }
 
-    public function test_user_can_create_ring_group_with_tenant(): void
+    public function test_user_can_create_ring_group_with_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
 
         $policy = new RingGroupPolicy;
         $this->assertTrue($policy->create($user));
     }
 
-    public function test_user_without_tenant_cannot_create_ring_group(): void
+    public function test_user_without_organization_cannot_create_ring_group(): void
     {
-        $user = User::factory()->create(['tenant_id' => null, 'role' => 'user']);
+        $user = User::factory()->create(['organization_id' => null, 'role' => 'user']);
 
         $policy = new RingGroupPolicy;
         $this->assertFalse($policy->create($user));
@@ -185,11 +185,11 @@ class PolicyTest extends TestCase
         $this->assertTrue($policy->before($admin, 'view'));
     }
 
-    public function test_user_can_view_webhook_in_own_tenant(): void
+    public function test_user_can_view_webhook_in_own_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'user']);
-        $webhook = $tenant->webhooks()->create([
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'user']);
+        $webhook = $organization->webhooks()->create([
             'url' => 'https://example.com/webhook',
             'events' => ['call.created'],
             'secret' => 'test-secret',
@@ -199,12 +199,12 @@ class PolicyTest extends TestCase
         $this->assertTrue($policy->view($user, $webhook));
     }
 
-    public function test_user_cannot_update_webhook_in_other_tenant(): void
+    public function test_user_cannot_update_webhook_in_other_organization(): void
     {
-        $tenantA = Tenant::factory()->create();
-        $tenantB = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenantA->id, 'role' => 'user']);
-        $webhook = $tenantB->webhooks()->create([
+        $organizationA = Organization::factory()->create();
+        $organizationB = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organizationA->id, 'role' => 'user']);
+        $webhook = $organizationB->webhooks()->create([
             'url' => 'https://example.com/webhook',
             'events' => ['call.created'],
             'secret' => 'test-secret',

@@ -6,20 +6,20 @@ use App\Models\Did;
 
 class DidObserver
 {
-    use RebuildsTenantManifest;
+    use RebuildsOrganizationManifest;
 
     public function created(Did $did): void
     {
-        $this->rebuildTenantManifestForModel($did);
+        $this->rebuildOrganizationManifestForModel($did);
     }
 
     public function updated(Did $did): void
     {
-        $this->rebuildTenantManifestForModel($did);
+        $this->rebuildOrganizationManifestForModel($did);
     }
 
     public function deleted(Did $did): void
     {
-        $this->rebuildTenantManifestForModel($did);
+        $this->rebuildOrganizationManifestForModel($did);
     }
 }

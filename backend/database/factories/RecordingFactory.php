@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +19,7 @@ class RecordingFactory extends Factory
 
         return [
             'id' => (string) fake()->uuid(),
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'call_uuid' => $uuid,
             'file_path' => "recordings/{$uuid}.wav",
             'file_name' => "{$uuid}.wav",

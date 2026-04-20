@@ -29,7 +29,7 @@ class AlertServiceTest extends TestCase
         ]);
 
         $alert = Alert::factory()->create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
         ]);
 
@@ -49,7 +49,7 @@ class AlertServiceTest extends TestCase
         ]);
 
         $alert = Alert::factory()->create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
         ]);
 
@@ -70,7 +70,7 @@ class AlertServiceTest extends TestCase
         ]);
 
         $alert = Alert::factory()->create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
         ]);
 
@@ -91,7 +91,7 @@ class AlertServiceTest extends TestCase
         ]);
 
         $alert = Alert::factory()->create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
         ]);
 
@@ -111,7 +111,7 @@ class AlertServiceTest extends TestCase
         ]);
 
         $alert = Alert::factory()->create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
             'severity' => Alert::SEVERITY_CRITICAL,
             'metric' => 'abandon_rate',
@@ -123,7 +123,7 @@ class AlertServiceTest extends TestCase
 
         $payload = $results['webhook']['payload'];
         $this->assertArrayHasKey('alert_id', $payload);
-        $this->assertArrayHasKey('tenant_id', $payload);
+        $this->assertArrayHasKey('organization_id', $payload);
         $this->assertArrayHasKey('severity', $payload);
         $this->assertArrayHasKey('metric', $payload);
         $this->assertArrayHasKey('message', $payload);
@@ -137,7 +137,7 @@ class AlertServiceTest extends TestCase
         ]);
 
         $alert = Alert::factory()->create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
             'severity' => Alert::SEVERITY_CRITICAL,
         ]);
@@ -157,7 +157,7 @@ class AlertServiceTest extends TestCase
         ]);
 
         $alerts = Alert::factory()->count(3)->create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
         ]);
 

@@ -3,7 +3,7 @@
 namespace App\Services\Routing;
 
 use App\Models\Bridge;
-use App\Models\Tenant;
+use App\Models\Organization;
 
 class BridgeCompiler
 {
@@ -18,7 +18,7 @@ class BridgeCompiler
      *                                WebRTC calls get Opus-first defaults and
      *                                different transcoding behaviour.
      */
-    public function compileAction(Tenant $tenant, Bridge $bridge, bool $anti = false, string $endpointType = 'sip'): string
+    public function compileAction(Organization $organization, Bridge $bridge, bool $anti = false, string $endpointType = 'sip'): string
     {
         $tag = $anti ? 'anti-action' : 'action';
 

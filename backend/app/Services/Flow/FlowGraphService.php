@@ -14,11 +14,11 @@ class FlowGraphService
         protected FlowPublishService $flowPublishService,
     ) {}
 
-    public function createFlowWithVersion(string $tenantId, FlowData $data): Flow
+    public function createFlowWithVersion(string $organizationId, FlowData $data): Flow
     {
-        return DB::transaction(function () use ($tenantId, $data) {
+        return DB::transaction(function () use ($organizationId, $data) {
             $flow = Flow::create([
-                'tenant_id' => $tenantId,
+                'organization_id' => $organizationId,
                 'name' => $data->name,
                 'description' => $data->description,
             ]);

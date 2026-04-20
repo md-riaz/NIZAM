@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Permission;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,14 +16,14 @@ class UserApiTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
+        $this->organization = Organization::factory()->create();
         $this->admin = User::factory()->create(['role' => 'admin']);
-        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id, 'role' => 'user']);
+        $this->user = User::factory()->create(['organization_id' => $this->organization->id, 'role' => 'user']);
     }
 
     public function test_admin_can_list_users(): void
@@ -50,7 +50,7 @@ class UserApiTest extends TestCase
                 'email' => 'newuser@example.com',
                 'password' => 'password123',
                 'role' => 'user',
-                'tenant_id' => $this->tenant->id,
+                'organization_id' => $this->organization->id,
             ]);
 
         $response->assertStatus(201);
@@ -139,10 +139,10 @@ class UserApiTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_can_filter_users_by_tenant(): void
+    public function test_can_filter_users_by_organization(): void
     {
         $response = $this->actingAs($this->admin, 'sanctum')
-            ->getJson("/api/v1/users?tenant_id={$this->tenant->id}");
+            ->getJson("/api/v1/users?organization_id={$this->organization->id}");
 
         $response->assertStatus(200);
     }

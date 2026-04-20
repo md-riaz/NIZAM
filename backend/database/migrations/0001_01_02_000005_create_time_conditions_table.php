@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('time_conditions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->string('name');
             $table->json('conditions');
             $table->string('match_destination_type');

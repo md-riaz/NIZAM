@@ -10,13 +10,13 @@ return new class extends Migration
     {
         if (Schema::hasTable('call_detail_records')) {
             Schema::table('call_detail_records', function (Blueprint $table): void {
-                $table->index(['tenant_id', 'caller_id_number', 'start_stamp'], 'cdr_tenant_caller_start_idx');
+                $table->index(['organization_id', 'caller_id_number', 'start_stamp'], 'cdr_organization_caller_start_idx');
             });
         }
 
         if (Schema::hasTable('recordings')) {
             Schema::table('recordings', function (Blueprint $table): void {
-                $table->index(['tenant_id', 'caller_id_number', 'created_at'], 'recordings_tenant_caller_created_idx');
+                $table->index(['organization_id', 'caller_id_number', 'created_at'], 'recordings_organization_caller_created_idx');
             });
         }
     }
@@ -25,13 +25,13 @@ return new class extends Migration
     {
         if (Schema::hasTable('recordings')) {
             Schema::table('recordings', function (Blueprint $table): void {
-                $table->dropIndex('recordings_tenant_caller_created_idx');
+                $table->dropIndex('recordings_organization_caller_created_idx');
             });
         }
 
         if (Schema::hasTable('call_detail_records')) {
             Schema::table('call_detail_records', function (Blueprint $table): void {
-                $table->dropIndex('cdr_tenant_caller_start_idx');
+                $table->dropIndex('cdr_organization_caller_start_idx');
             });
         }
     }

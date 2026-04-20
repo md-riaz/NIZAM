@@ -2,20 +2,20 @@
 
 namespace App\Services;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\UsageRecord;
 use Carbon\Carbon;
 
 class UsageMeteringService
 {
     /**
-     * Record a usage metric for a tenant.
+     * Record a usage metric for an organization.
      */
-    public function record(Tenant $tenant, string $metric, float $value, ?array $metadata = null, ?Carbon $date = null): UsageRecord
+    public function record(Organization $organization, string $metric, float $value, ?array $metadata = null, ?Carbon $date = null): UsageRecord
     {
         $date = $date ?? Carbon::today();
 
-        return $tenant->usageRecords()->create([
+        return $organization->usageRecords()->create([
             'metric' => $metric,
             'value' => $value,
             'metadata' => $metadata,
@@ -24,33 +24,33 @@ class UsageMeteringService
     }
 
     /**
-     * Collect and record current snapshot metrics for a tenant.
+     * Collect and record current snapshot metrics for an organization.
      */
-    public function collectSnapshot(Tenant $tenant, ?Carbon $date = null): array
+    public function collectSnapshot(Organization $organization, ?Carbon $date = null): array
     {
         $date = $date ?? Carbon::today();
         $records = [];
 
         $records[] = $this->record(
-            $tenant,
+            $organization,
             UsageRecord::METRIC_ACTIVE_EXTENSIONS,
-            $tenant->extensions()->where('is_active', true)->count(),
+            $organization->extensions()->where('is_active', true)->count(),
             null,
             $date
         );
 
         $records[] = $this->record(
-            $tenant,
+            $organization,
             UsageRecord::METRIC_RECORDING_STORAGE,
-            (float) $tenant->recordings()->sum('file_size'),
+            (float) $organization->recordings()->sum('file_size'),
             null,
             $date
         );
 
         $records[] = $this->record(
-            $tenant,
+            $organization,
             UsageRecord::METRIC_ACTIVE_DEVICES,
-            (float) $tenant->deviceProfiles()->count(),
+            (float) $organization->deviceProfiles()->count(),
             null,
             $date
         );
@@ -59,11 +59,11 @@ class UsageMeteringService
     }
 
     /**
-     * Get usage summary for a tenant within a date range.
+     * Get usage summary for an organization within a date range.
      */
-    public function getSummary(Tenant $tenant, Carbon $from, Carbon $to): array
+    public function getSummary(Organization $organization, Carbon $from, Carbon $to): array
     {
-        $records = $tenant->usageRecords()
+        $records = $organization->usageRecords()
             ->whereDate('recorded_date', '>=', $from->toDateString())
             ->whereDate('recorded_date', '<=', $to->toDateString())
             ->get();
@@ -83,23 +83,23 @@ class UsageMeteringService
     }
 
     /**
-     * Reconcile CDR billable seconds against metered call_minutes for a tenant.
+     * Reconcile CDR billable seconds against metered call_minutes for an organization.
      *
      * Compares the sum of CDR billsec (converted to minutes) with the sum of
      * recorded call_minutes usage records for the given date range.
      */
-    public function reconcileCallMinutes(Tenant $tenant, Carbon $from, Carbon $to): array
+    public function reconcileCallMinutes(Organization $organization, Carbon $from, Carbon $to): array
     {
         $fromDate = $from->copy()->startOfDay();
         $toDate = $to->copy()->endOfDay();
 
-        $cdrTotalSeconds = (int) $tenant->cdrs()
+        $cdrTotalSeconds = (int) $organization->cdrs()
             ->whereBetween('start_stamp', [$fromDate, $toDate])
             ->sum('billsec');
 
         $cdrMinutes = round($cdrTotalSeconds / 60, 4);
 
-        $meteredMinutes = (float) $tenant->usageRecords()
+        $meteredMinutes = (float) $organization->usageRecords()
             ->where('metric', UsageRecord::METRIC_CALL_MINUTES)
             ->whereDate('recorded_date', '>=', $from->copy()->toDateString())
             ->whereDate('recorded_date', '<=', $to->copy()->toDateString())

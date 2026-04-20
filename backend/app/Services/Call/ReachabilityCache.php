@@ -13,9 +13,9 @@ class ReachabilityCache
     /**
      * @return array<string, mixed>|null
      */
-    public function snapshotFor(string $tenantId, EndpointCandidate $candidate, int $maxAgeSeconds): ?array
+    public function snapshotFor(string $organizationId, EndpointCandidate $candidate, int $maxAgeSeconds): ?array
     {
-        foreach ($this->candidateKeys($tenantId, $candidate) as $key) {
+        foreach ($this->candidateKeys($organizationId, $candidate) as $key) {
             $snapshot = $this->get($key);
 
             if (! is_array($snapshot) || ! $this->isFresh($snapshot, $maxAgeSeconds)) {
@@ -31,11 +31,11 @@ class ReachabilityCache
     /**
      * @param  array<string, mixed>  $snapshot
      */
-    public function rememberCandidate(string $tenantId, EndpointCandidate $candidate, array $snapshot, ?DateTimeInterface $observedAt = null): void
+    public function rememberCandidate(string $organizationId, EndpointCandidate $candidate, array $snapshot, ?DateTimeInterface $observedAt = null): void
     {
         $payload = $this->normalizeSnapshot($candidate, $snapshot, $observedAt);
 
-        foreach ($this->candidateKeys($tenantId, $candidate) as $key) {
+        foreach ($this->candidateKeys($organizationId, $candidate) as $key) {
             $this->put($key, $payload);
         }
     }
@@ -44,7 +44,7 @@ class ReachabilityCache
      * @param  array<string, array<string, mixed>>  $registrations
      * @param  iterable<EndpointCandidate>  $candidates
      */
-    public function rememberCandidateSnapshots(string $tenantId, iterable $candidates, array $registrations, ?DateTimeInterface $observedAt = null): void
+    public function rememberCandidateSnapshots(string $organizationId, iterable $candidates, array $registrations, ?DateTimeInterface $observedAt = null): void
     {
         foreach ($candidates as $candidate) {
             if (! $candidate instanceof EndpointCandidate || blank($candidate->sipAor)) {
@@ -56,7 +56,7 @@ class ReachabilityCache
                 ? ($registrations[$registrationUser] ?? null)
                 : null;
 
-            $this->rememberCandidate($tenantId, $candidate, [
+            $this->rememberCandidate($organizationId, $candidate, [
                 'registered' => (bool) data_get($snapshot, 'registered', false),
                 'registration_user' => $registrationUser,
                 'realm' => $this->realmFor($candidate),
@@ -69,18 +69,18 @@ class ReachabilityCache
         }
     }
 
-    public function markRegistered(string $tenantId, EndpointCandidate $candidate, array $attributes = [], ?DateTimeInterface $observedAt = null): void
+    public function markRegistered(string $organizationId, EndpointCandidate $candidate, array $attributes = [], ?DateTimeInterface $observedAt = null): void
     {
-        $this->rememberCandidate($tenantId, $candidate, [
+        $this->rememberCandidate($organizationId, $candidate, [
             'registered' => true,
             ...$attributes,
             'source' => $attributes['source'] ?? 'registration_event',
         ], $observedAt);
     }
 
-    public function markUnregistered(string $tenantId, EndpointCandidate $candidate, array $attributes = [], ?DateTimeInterface $observedAt = null): void
+    public function markUnregistered(string $organizationId, EndpointCandidate $candidate, array $attributes = [], ?DateTimeInterface $observedAt = null): void
     {
-        $this->rememberCandidate($tenantId, $candidate, [
+        $this->rememberCandidate($organizationId, $candidate, [
             'registered' => false,
             ...$attributes,
             'source' => $attributes['source'] ?? 'registration_event',
@@ -130,14 +130,14 @@ class ReachabilityCache
     /**
      * @return list<string>
      */
-    protected function candidateKeys(string $tenantId, EndpointCandidate $candidate): array
+    protected function candidateKeys(string $organizationId, EndpointCandidate $candidate): array
     {
-        $keys = [sprintf('call-delivery:reachability:tenant:%s:endpoint:%s', $tenantId, $candidate->endpointBindingId)];
+        $keys = [sprintf('call-delivery:reachability:organization:%s:endpoint:%s', $organizationId, $candidate->endpointBindingId)];
 
         $registrationUser = $this->registrationUserFor($candidate);
 
         if ($registrationUser !== null) {
-            $keys[] = sprintf('call-delivery:reachability:tenant:%s:user:%s', $tenantId, $registrationUser);
+            $keys[] = sprintf('call-delivery:reachability:organization:%s:user:%s', $organizationId, $registrationUser);
         }
 
         return $keys;

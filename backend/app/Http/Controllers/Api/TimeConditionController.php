@@ -6,33 +6,33 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTimeConditionRequest;
 use App\Http\Requests\UpdateTimeConditionRequest;
 use App\Http\Resources\TimeConditionResource;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\TimeCondition;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API controller for managing time conditions scoped to a tenant.
+ * API controller for managing time conditions scoped to a organization.
  */
 class TimeConditionController extends Controller
 {
     /**
-     * List time conditions for a tenant (paginated).
+     * List time conditions for an organization (paginated).
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', TimeCondition::class);
 
-        return TimeConditionResource::collection($tenant->timeConditions()->paginate(15));
+        return TimeConditionResource::collection($organization->timeConditions()->paginate(15));
     }
 
     /**
-     * Create a new time condition for a tenant.
+     * Create a new time condition for an organization.
      */
-    public function store(StoreTimeConditionRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreTimeConditionRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', TimeCondition::class);
 
-        $timeCondition = $tenant->timeConditions()->create($request->validated());
+        $timeCondition = $organization->timeConditions()->create($request->validated());
 
         return (new TimeConditionResource($timeCondition))->response()->setStatusCode(201);
     }
@@ -40,9 +40,9 @@ class TimeConditionController extends Controller
     /**
      * Show a single time condition.
      */
-    public function show(Tenant $tenant, TimeCondition $timeCondition): JsonResponse|TimeConditionResource
+    public function show(Organization $organization, TimeCondition $timeCondition): JsonResponse|TimeConditionResource
     {
-        if ($timeCondition->tenant_id !== $tenant->id) {
+        if ($timeCondition->organization_id !== $organization->id) {
             return response()->json(['message' => 'Time condition not found.'], 404);
         }
 
@@ -54,9 +54,9 @@ class TimeConditionController extends Controller
     /**
      * Update an existing time condition.
      */
-    public function update(UpdateTimeConditionRequest $request, Tenant $tenant, TimeCondition $timeCondition): JsonResponse|TimeConditionResource
+    public function update(UpdateTimeConditionRequest $request, Organization $organization, TimeCondition $timeCondition): JsonResponse|TimeConditionResource
     {
-        if ($timeCondition->tenant_id !== $tenant->id) {
+        if ($timeCondition->organization_id !== $organization->id) {
             return response()->json(['message' => 'Time condition not found.'], 404);
         }
 
@@ -70,9 +70,9 @@ class TimeConditionController extends Controller
     /**
      * Delete a time condition.
      */
-    public function destroy(Tenant $tenant, TimeCondition $timeCondition): JsonResponse
+    public function destroy(Organization $organization, TimeCondition $timeCondition): JsonResponse
     {
-        if ($timeCondition->tenant_id !== $tenant->id) {
+        if ($timeCondition->organization_id !== $organization->id) {
             return response()->json(['message' => 'Time condition not found.'], 404);
         }
 

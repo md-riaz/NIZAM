@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('endpoint_bindings', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('extension_id')->nullable()->constrained('extensions')->nullOnDelete();
             $table->foreignUuid('agent_id')->nullable()->constrained('agents')->nullOnDelete();
             $table->string('type');
@@ -30,10 +30,10 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['tenant_id', 'is_enabled']);
+            $table->index(['organization_id', 'is_enabled']);
             $table->index(['extension_id', 'is_enabled']);
             $table->index(['agent_id', 'is_enabled']);
-            $table->unique(['tenant_id', 'device_uuid']);
+            $table->unique(['organization_id', 'device_uuid']);
         });
     }
 

@@ -9,16 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('dids', function (Blueprint $table) {
-            $table->dropUnique(['tenant_id', 'number']);
-            $table->unique(['tenant_id', 'number', 'gateway_id', 'gateway_registration_id']);
+            $table->dropUnique(['organization_id', 'number']);
+            $table->unique(['organization_id', 'number', 'gateway_id', 'gateway_registration_id']);
         });
     }
 
     public function down(): void
     {
         Schema::table('dids', function (Blueprint $table) {
-            $table->dropUnique(['tenant_id', 'number', 'gateway_id', 'gateway_registration_id']);
-            $table->unique(['tenant_id', 'number']);
+            $table->dropUnique(['organization_id', 'number', 'gateway_id', 'gateway_registration_id']);
+            $table->unique(['organization_id', 'number']);
         });
     }
 };

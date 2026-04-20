@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Agent;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +17,7 @@ class AgentFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'extension_id' => Extension::factory(),
             'name' => fake()->name(),
             'role' => Agent::ROLE_AGENT,

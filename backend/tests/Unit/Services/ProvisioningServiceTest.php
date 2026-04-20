@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\DeviceProfile;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\ProvisioningService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -24,9 +24,9 @@ class ProvisioningServiceTest extends TestCase
 
     public function test_renders_config_with_extension_variables_substituted(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
+        $organization = Organization::factory()->create(['domain' => 'test.example.com']);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -34,7 +34,7 @@ class ProvisioningServiceTest extends TestCase
         ]);
 
         $profile = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'vendor' => 'yealink',
             'mac_address' => '00:11:22:33:44:55',
@@ -53,9 +53,9 @@ class ProvisioningServiceTest extends TestCase
 
     public function test_returns_default_template_when_device_has_no_custom_template(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'test.example.com']);
+        $organization = Organization::factory()->create(['domain' => 'test.example.com']);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -63,7 +63,7 @@ class ProvisioningServiceTest extends TestCase
         ]);
 
         $profile = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'vendor' => 'yealink',
             'mac_address' => '00:11:22:33:44:55',
@@ -87,21 +87,21 @@ class ProvisioningServiceTest extends TestCase
             'telephony.freeswitch.wss_port' => 7443,
         ]);
 
-        $strategy = $this->service->endpointStrategy('tenant-softphone.example.com');
+        $strategy = $this->service->endpointStrategy('organization-softphone.example.com');
 
         $this->assertSame('softphone', $strategy['default_endpoint']);
         $this->assertSame('optional', $strategy['hardware_provisioning']);
         $this->assertTrue($strategy['softphone']['recommended']);
         $this->assertFalse($strategy['hardware']['recommended']);
-        $this->assertSame('tenant-softphone.example.com:5060', $strategy['softphone']['sip_server']);
-        $this->assertSame('wss://tenant-softphone.example.com:7443', $strategy['softphone']['websocket_url']);
+        $this->assertSame('organization-softphone.example.com:5060', $strategy['softphone']['sip_server']);
+        $this->assertSame('wss://organization-softphone.example.com:7443', $strategy['softphone']['websocket_url']);
     }
 
     public function test_finds_device_by_mac_address_normalized(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $profile = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'mac_address' => '00:11:22:33:44:55',
             'is_active' => true,
         ]);

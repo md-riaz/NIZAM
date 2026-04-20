@@ -11,7 +11,7 @@ class SmsMessage extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'tenant_domain',
+        'organization_domain',
         'direction',
         'from_number',
         'to_number',

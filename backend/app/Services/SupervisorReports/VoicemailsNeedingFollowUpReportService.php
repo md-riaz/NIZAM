@@ -4,7 +4,7 @@ namespace App\Services\SupervisorReports;
 
 use App\Models\CallEventLog;
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Carbon\CarbonInterface;
 
 class VoicemailsNeedingFollowUpReportService
@@ -13,28 +13,28 @@ class VoicemailsNeedingFollowUpReportService
         protected ReturnedCallResolver $returnedCallResolver,
     ) {}
 
-    public function generate(Tenant $tenant, CarbonInterface $from, CarbonInterface $to, ?int $windowDays = null): array
+    public function generate(Organization $organization, CarbonInterface $from, CarbonInterface $to, ?int $windowDays = null): array
     {
         $windowDays ??= $this->returnedCallResolver->defaultWindowDays();
 
         $voicemailEvents = CallEventLog::query()
-            ->where('tenant_id', $tenant->id)
+            ->where('organization_id', $organization->id)
             ->where('event_type', CallEventLog::EVENT_VOICEMAIL_RECEIVED)
             ->whereBetween('occurred_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
             ->orderByDesc('occurred_at')
             ->get();
 
-        $items = $voicemailEvents->map(function (CallEventLog $event) use ($tenant, $windowDays): array {
+        $items = $voicemailEvents->map(function (CallEventLog $event) use ($organization, $windowDays): array {
             $callerNumber = (string) data_get($event->payload, 'metadata.caller_id_number', '');
             $normalizedCallerNumber = $this->returnedCallResolver->normalizeNumber($callerNumber);
             $returnedCall = $this->returnedCallResolver->findReturnedCall(
-                $tenant,
+                $organization,
                 $normalizedCallerNumber,
                 $event->occurred_at,
                 $windowDays,
             );
 
-            $recording = $this->resolveVoicemailRecording($tenant, $event);
+            $recording = $this->resolveVoicemailRecording($organization, $event);
             $needsAttention = ($recording?->needs_review ?? false) || $returnedCall === null;
 
             return [
@@ -78,12 +78,12 @@ class VoicemailsNeedingFollowUpReportService
         ];
     }
 
-    protected function resolveVoicemailRecording(Tenant $tenant, CallEventLog $event): ?Recording
+    protected function resolveVoicemailRecording(Organization $organization, CallEventLog $event): ?Recording
     {
         $storagePath = data_get($event->payload, 'metadata.storage_path');
 
         return Recording::query()
-            ->where('tenant_id', $tenant->id)
+            ->where('organization_id', $organization->id)
             ->when($event->call_uuid, fn ($query) => $query->where('call_uuid', $event->call_uuid))
             ->when($storagePath, fn ($query) => $query->orWhere('file_path', $storagePath))
             ->orderByDesc('created_at')

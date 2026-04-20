@@ -6,7 +6,7 @@ The Log Viewer provides platform administrators with web-based access to FreeSWI
 
 ## Authorization
 
-Access is restricted to **platform administrators only** (users with `role = 'admin'` and `tenant_id = null`). Tenant administrators and regular users cannot access system logs.
+Access is restricted to **platform administrators only** (users with `role = 'admin'` and `organization_id = null`). Organization administrators and regular users cannot access system logs.
 
 ## Features
 
@@ -112,6 +112,6 @@ while ($event = $esl->recvEvent()) {
 - Ensure Laravel logging is configured correctly
 
 ### "403 Forbidden"
-- Verify user has `role = 'admin'` and `tenant_id = null`
+- Verify user has `role = 'admin'` and `organization_id = null`
 - Check authentication token is valid
 - Ensure `platform-admin` gate is properly defined

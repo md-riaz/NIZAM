@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Services\Admin\FreeSwitchModuleStatusService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,7 +18,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     {
         $admin = User::factory()->create([
             'role' => 'admin',
-            'tenant_id' => null,
+            'organization_id' => null,
         ]);
 
         $service = Mockery::mock(FreeSwitchModuleStatusService::class);
@@ -66,7 +66,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     {
         $admin = User::factory()->create([
             'role' => 'admin',
-            'tenant_id' => null,
+            'organization_id' => null,
         ]);
 
         $service = Mockery::mock(FreeSwitchModuleStatusService::class);
@@ -95,7 +95,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     {
         $admin = User::factory()->create([
             'role' => 'admin',
-            'tenant_id' => null,
+            'organization_id' => null,
         ]);
 
         $service = Mockery::mock(FreeSwitchModuleStatusService::class);
@@ -124,7 +124,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     {
         $admin = User::factory()->create([
             'role' => 'admin',
-            'tenant_id' => null,
+            'organization_id' => null,
         ]);
 
         $service = Mockery::mock(FreeSwitchModuleStatusService::class);
@@ -148,12 +148,12 @@ class FreeSwitchModuleStatusApiTest extends TestCase
         $response->assertJsonPath('message', 'This module cannot be stopped from the platform admin UI.');
     }
 
-    public function test_tenant_admin_cannot_view_freeswitch_modules_status(): void
+    public function test_organization_admin_cannot_view_freeswitch_modules_status(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $admin = User::factory()->create([
             'role' => 'admin',
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
 
         $response = $this->actingAs($admin, 'sanctum')
@@ -166,7 +166,7 @@ class FreeSwitchModuleStatusApiTest extends TestCase
     {
         $admin = User::factory()->create([
             'role' => 'admin',
-            'tenant_id' => null,
+            'organization_id' => null,
         ]);
 
         $service = Mockery::mock(FreeSwitchModuleStatusService::class);
@@ -194,10 +194,10 @@ class FreeSwitchModuleStatusApiTest extends TestCase
 
     public function test_regular_user_cannot_view_freeswitch_modules_status(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $user = User::factory()->create([
             'role' => 'user',
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
 
         $response = $this->actingAs($user, 'sanctum')

@@ -371,7 +371,7 @@ git commit -m "feat: add XML CDR discovery service"
 namespace Tests\Unit\Services\Cdr;
 
 use App\Models\ProcessedCdrFile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Cdr\XmlCdrIngestionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
@@ -383,7 +383,7 @@ class XmlCdrIngestionServiceTest extends TestCase
 
     public function test_it_ingests_xml_cdr_once_and_marks_file_processed(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'demo.example.com']);
+        $organization = Organization::factory()->create(['domain' => 'demo.example.com']);
         $path = storage_path('app/testing/xml_cdr/demo.xml');
         File::ensureDirectoryExists(dirname($path));
         File::put($path, <<<XML
@@ -395,7 +395,7 @@ XML);
         $result = $service->ingestFile($path);
 
         $this->assertTrue($result['ingested']);
-        $this->assertDatabaseHas('call_detail_records', ['uuid' => 'call-123', 'tenant_id' => $tenant->id]);
+        $this->assertDatabaseHas('call_detail_records', ['uuid' => 'call-123', 'organization_id' => $organization->id]);
         $this->assertDatabaseHas('processed_cdr_files', ['file_path' => $path, 'status' => 'processed']);
     }
 }
@@ -414,7 +414,7 @@ namespace App\Services\Cdr;
 
 use App\Models\CallDetailRecord;
 use App\Models\ProcessedCdrFile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Support\Facades\File;
 
 class XmlCdrIngestionService
@@ -433,21 +433,21 @@ class XmlCdrIngestionService
         }
 
         $parsed = $this->parser->parseFile($path);
-        $tenant = Tenant::where('domain', $parsed['domain'])->first();
+        $organization = Organization::where('domain', $parsed['domain'])->first();
 
-        if (! $tenant) {
+        if (! $organization) {
             ProcessedCdrFile::updateOrCreate(
                 ['file_path' => $path],
-                ['file_name' => basename($path), 'checksum' => $checksum, 'status' => 'failed', 'error_message' => 'Tenant not found']
+                ['file_name' => basename($path), 'checksum' => $checksum, 'status' => 'failed', 'error_message' => 'Organization not found']
             );
 
-            return ['ingested' => false, 'reason' => 'tenant_not_found'];
+            return ['ingested' => false, 'reason' => 'organization_not_found'];
         }
 
         CallDetailRecord::updateOrCreate(
             ['uuid' => $parsed['uuid']],
             [
-                'tenant_id' => $tenant->id,
+                'organization_id' => $organization->id,
                 'caller_id_name' => $parsed['caller_id_name'],
                 'caller_id_number' => $parsed['caller_id_number'],
                 'destination_number' => $parsed['destination_number'],
@@ -491,7 +491,7 @@ public function test_it_deletes_file_after_successful_ingestion_when_cleanup_is_
 {
     config(['telephony.xml_cdr.cleanup_on_success' => true]);
 
-    $tenant = Tenant::factory()->create(['domain' => 'cleanup.example.com']);
+    $organization = Organization::factory()->create(['domain' => 'cleanup.example.com']);
     $path = storage_path('app/testing/xml_cdr/cleanup.xml');
     File::ensureDirectoryExists(dirname($path));
     File::put($path, '<?xml version="1.0"?><cdr><variables><uuid>call-cleanup</uuid><domain_name>cleanup.example.com</domain_name><caller_id_number>01712345678</caller_id_number><destination_number>1001</destination_number><billsec>5</billsec><hangup_cause>NORMAL_CLEARING</hangup_cause></variables></cdr>');
@@ -533,7 +533,7 @@ git commit -m "feat: add idempotent XML CDR ingestion service"
 
 namespace Tests\Feature\Console;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -544,7 +544,7 @@ class IngestXmlCdrCommandTest extends TestCase
 
     public function test_command_ingests_pending_xml_cdr_files(): void
     {
-        Tenant::factory()->create(['domain' => 'command.example.com']);
+        Organization::factory()->create(['domain' => 'command.example.com']);
 
         $directory = storage_path('app/testing/xml_cdr');
         File::ensureDirectoryExists($directory);
@@ -656,7 +656,7 @@ class XmlCdrIngestionStatusApiTest extends TestCase
 
     public function test_platform_admin_can_view_xml_cdr_ingestion_status(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
         ProcessedCdrFile::create([
             'file_path' => 'xml_cdr/test.xml',
             'file_name' => 'test.xml',

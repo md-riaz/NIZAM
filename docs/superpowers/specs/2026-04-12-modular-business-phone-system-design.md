@@ -50,10 +50,10 @@ Use business entities as the primary authoring model:
 
 Telephony artifacts such as directory XML, dialplan, SIP profiles, or bridge strings are runtime outputs, not primary admin-facing concepts.
 
-### 3.2 Domain is the tenant boundary
+### 3.2 Domain is the organization boundary
 The unique **domain** is the sole organization context identifier.
 
-There should be no separate slug-based tenant identity in the core model.
+There should be no separate slug-based organization identity in the core model.
 
 Domain should drive:
 - organization isolation
@@ -157,7 +157,7 @@ Properties:
 
 Notes:
 - domain is the canonical identity key
-- all tenant resolution and runtime scoping must derive from domain
+- all organization resolution and runtime scoping must derive from domain
 
 ## 5.2 User
 
@@ -598,7 +598,7 @@ This ensures the system remains semantically correct even if the product is rena
 This design intentionally avoids:
 - traditional PBX-admin-first modeling where extensions are the primary human concept
 - over-reliance on hardware provisioning as a core product driver
-- duplicate tenant identifiers such as slug + domain in the core model
+- duplicate organization identifiers such as slug + domain in the core model
 - raw graph interpretation in the runtime hot path without validation and compilation
 - heavy product-name-centric architecture naming
 - over-distributed microservice behavior inside call-critical routing

@@ -7,7 +7,7 @@ use App\Models\FlowEdge;
 use App\Models\FlowNode;
 use App\Models\FlowVersion;
 use App\Models\RingGroup;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Flow\Compile\FlowToIrCompiler;
 use App\Domain\Flow\Compile\NodeSpecRegistry;
 use App\Services\Flow\FlowArtifactService;
@@ -19,13 +19,13 @@ class FlowCompilerSnapshotTest extends TestCase
     use RefreshDatabase;
 
     protected FlowArtifactService $artifactService;
-    protected Tenant $tenant;
+    protected Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->tenant = Tenant::factory()->create(['domain' => 'snapshot.example.com']);
+        $this->organization = Organization::factory()->create(['domain' => 'snapshot.example.com']);
         $registry = new NodeSpecRegistry();
         $compiler = new FlowToIrCompiler($registry);
         $this->artifactService = new FlowArtifactService($compiler, app(\App\Services\Routing\RoutingGraphCompiler::class));
@@ -36,7 +36,7 @@ class FlowCompilerSnapshotTest extends TestCase
         // 1. Setup a predictable Flow
         $flow = Flow::factory()->create([
             'id' => '11111111-1111-1111-1111-111111111111',
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
         ]);
         
         $flowVersion = FlowVersion::factory()->create([
@@ -46,7 +46,7 @@ class FlowCompilerSnapshotTest extends TestCase
 
         $ringGroup = RingGroup::factory()->create([
             'id' => '99999999-9999-9999-9999-999999999999',
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'strategy' => 'simultaneous',
             'members' => [],
         ]);

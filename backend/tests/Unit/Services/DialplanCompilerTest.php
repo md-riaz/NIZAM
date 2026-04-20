@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -24,15 +24,15 @@ class DialplanCompilerTest extends TestCase
         );
     }
 
-    private function createTenantWithExtension(): array
+    private function createOrganizationWithExtension(): array
     {
-        $tenant = Tenant::create([
-            'name' => 'Test Tenant',
+        $organization = Organization::create([
+            'name' => 'Test Organization',
             'domain' => 'test.example.com',
             'is_active' => true,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'John',
@@ -42,12 +42,12 @@ class DialplanCompilerTest extends TestCase
             'is_active' => true,
         ]);
 
-        return [$tenant, $extension];
+        return [$organization, $extension];
     }
 
-    public function test_compile_directory_returns_valid_xml_for_tenant_with_extensions(): void
+    public function test_compile_directory_returns_valid_xml_for_organization_with_extensions(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $xml = $this->compiler->compileDirectory('test.example.com');
 
@@ -68,7 +68,7 @@ class DialplanCompilerTest extends TestCase
 
     public function test_compile_dialplan_routes_to_extension_for_internal_calls(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $xml = $this->compiler->compileDialplan('test.example.com', '1001');
 
@@ -89,7 +89,7 @@ class DialplanCompilerTest extends TestCase
 
     public function test_compile_dialplan_returns_failsafe_for_unroutable_destination(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $xml = $this->compiler->compileDialplan('test.example.com', '9999');
 

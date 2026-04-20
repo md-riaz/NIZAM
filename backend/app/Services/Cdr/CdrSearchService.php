@@ -3,7 +3,7 @@
 namespace App\Services\Cdr;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 
@@ -12,9 +12,9 @@ class CdrSearchService
     /**
      * Search CDRs with advanced filters.
      */
-    public function search(Tenant $tenant, Request $request, int $perPage = 25): LengthAwarePaginator
+    public function search(Organization $organization, Request $request, int $perPage = 25): LengthAwarePaginator
     {
-        $query = CallDetailRecord::where('tenant_id', $tenant->id)
+        $query = CallDetailRecord::where('organization_id', $organization->id)
             ->with('enrichment');
 
         // Full-text search across caller/destination numbers

@@ -13,7 +13,7 @@ class Bridge extends Model
     use Auditable, HasFactory, HasUuids;
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'name',
         'bridge_type',
         'gateway_id',
@@ -33,9 +33,9 @@ class Bridge extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function gateway(): BelongsTo

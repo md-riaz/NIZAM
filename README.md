@@ -4,7 +4,7 @@
 
 > From Arabic: نظام (Nizām) — meaning *system, order, structure*.
 
-NIZAM is an API-first, modular communications platform built on top of [FreeSWITCH](https://freeswitch.com), designed to provide structured automation, integration, and multi-tenant telephony control — serving as a modern alternative to FusionPBX and Wazo.
+NIZAM is an API-first, modular communications platform built on top of [FreeSWITCH](https://freeswitch.com), designed to provide structured automation, integration, and multi-organization telephony control — serving as a modern alternative to FusionPBX and Wazo.
 
 ---
 
@@ -15,7 +15,7 @@ NIZAM separates concerns into distinct layers:
 | Layer | Technology | Responsibility |
 |-------|-----------|----------------|
 | **Media Core** | FreeSWITCH | SIP signaling, RTP media, WebRTC (WSS/DTLS), call bridging, recording, conferencing |
-| **Control Plane** | Laravel 12 | Business logic, tenant management, routing, provisioning |
+| **Control Plane** | Laravel 12 | Business logic, organization management, routing, provisioning |
 | **Integration Layer** | REST + WebSocket + Events | API access, real-time streaming, webhooks |
 | **Provisioning Layer** | Template engine | Device automation, vendor profiles |
 
@@ -34,7 +34,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 ├─────────────┴──────────────┴────────────────────────┤
 │              Laravel Control Plane                   │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐            │
-│  │ Tenant   │ │Extension │ │ Routing  │  ...       │
+│  │ Organization │ │Extension │ │ Routing  │  ...       │
 │  │ Service  │ │ Service  │ │ Service  │            │
 │  └──────────┘ └──────────┘ └──────────┘            │
 ├─────────────────────────────────────────────────────┤
@@ -56,11 +56,11 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 
 ## Core Features
 
-### Multi-Tenancy
-- Domain-based tenant isolation
-- Per-tenant resource limits
+### Multi-Organization
+- Domain-based organization isolation
+- Per-organization resource limits
 - Scoped authentication via Sanctum
-- Role-based authorization (admin bypasses tenant checks)
+- Role-based authorization (superadmin bypasses organization checks)
 
 ### Extensions
 - SIP user management with plaintext passwords (accessible for webphone/sip.js integration)
@@ -86,14 +86,14 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 ### Time Conditions
 - Office hours logic with day/time rules
 - Match and no-match destination routing
-- Can target bridge and flow destinations in addition to local tenant objects
+- Can target bridge and flow destinations in addition to local organization objects
 
 ### CDR & Recording
 - Indexed call detail records
 - UUID correlation with FreeSWITCH
 - Recording path tracking
 - Recording model with file indexing, download API, and deletion
-- CDR CSV export with filtering (`GET /api/tenants/{id}/cdrs/export`)
+- CDR CSV export with filtering (`GET /api/organizations/{id}/cdrs/export`)
 
 ### Device Provisioning
 - Template-based device configs
@@ -103,7 +103,7 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 
 ### Webhooks
 - Outbound event notifications for CRM/ERP integration
-- Configurable event subscriptions per tenant
+- Configurable event subscriptions per organization
 - HMAC-SHA256 signed payloads for security (secrets encrypted at rest)
 - Queued delivery with exponential backoff retry
 - Events: `call.started`, `call.answered`, `call.bridge`, `call.missed`, `call.hangup`, `voicemail.received`, `registration.registered`, `registration.unregistered`
@@ -116,14 +116,14 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - Persistent event log for full call lifecycle replay
 - Call trace API for debugging any call by UUID
 - Gateway status polling and caching (`php artisan nizam:gateway-status`)
-- Broadcast events via WebSocket channels per tenant
+- Broadcast events via WebSocket channels per organization
 - Automatic webhook dispatch on matching events
 
 ### Audit Logging
 - Automatic create/update/delete tracking on all domain models
 - Old and new values stored per change
 - User and IP tracking for accountability
-- Applied to: Extension, Tenant, DID, RingGroup, IVR, TimeCondition, Webhook, DeviceProfile
+- Applied to: Extension, Organization, DID, RingGroup, IVR, TimeCondition, Webhook, DeviceProfile
 
 ### Module Framework
 - `NizamModule` interface for plug-in extensibility
@@ -153,8 +153,8 @@ FreeSWITCH remains stateless regarding business logic. All business state lives 
 - SIP passwords stored as plaintext for webphone/sip.js integration
 - Webhook secrets encrypted at rest
 - API rate limiting (60 requests/minute per user or IP)
-- Tenant isolation middleware on all scoped routes
-- Role-based authorization policies (TenantPolicy, ExtensionPolicy, DidPolicy, RingGroupPolicy, IvrPolicy, TimeConditionPolicy, WebhookPolicy, DeviceProfilePolicy, UserPolicy, RecordingPolicy, CallDetailRecordPolicy, CallEventLogPolicy, CallPolicy)
+- Organization isolation middleware on all scoped routes
+- Role-based authorization policies (OrganizationPolicy, ExtensionPolicy, DidPolicy, RingGroupPolicy, IvrPolicy, TimeConditionPolicy, WebhookPolicy, DeviceProfilePolicy, UserPolicy, RecordingPolicy, CallDetailRecordPolicy, CallEventLogPolicy, CallPolicy)
 - Granular permission system with per-user permission assignment
 - Admin user management API (CRUD for users, grant/revoke permissions)
 - Fail-safe routing defaults
@@ -167,21 +167,16 @@ NIZAM is API-first — the UI is just an API client. All operations are accessib
 
 ### Authentication
 
-Register, login, and obtain bearer tokens via the Auth API. All other endpoints require authentication via [Laravel Sanctum](https://laravel.com/docs/sanctum) bearer tokens.
+Login and obtain bearer tokens via the Auth API. Self-registration is not supported. Organizations are provisioned manually by Superadmin users, and users are created under an existing organization by an authorized administrator.
 
 ```bash
-# Register
-curl -X POST http://localhost:8231/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Admin","email":"admin@example.com","password":"password","password_confirmation":"password"}'
-
 # Login
 curl -X POST http://localhost:8231/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@example.com","password":"password"}'
 
 # Use token in subsequent requests
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8231/api/v1/tenants
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8231/api/v1/organizations
 ```
 
 ### Endpoints
@@ -194,7 +189,7 @@ curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8231/api/v1/tenants
 #### Auth
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/auth/register` | Register a new user |
+| `POST` | `/api/auth/login` | Login and get token |
 | `POST` | `/api/auth/login` | Login and get token |
 | `POST` | `/api/auth/logout` | Logout (revoke token) |
 | `GET` | `/api/auth/me` | Get authenticated user |
@@ -202,29 +197,29 @@ curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8231/api/v1/tenants
 | `POST` | `/api/auth/tokens` | Create named API token |
 | `DELETE` | `/api/auth/tokens/{id}` | Revoke API token |
 
-#### Tenants
+#### Organizations
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/tenants` | List tenants (admin: all, user: own tenant only) |
-| `POST` | `/api/tenants` | Create tenant (admin only) |
-| `GET` | `/api/tenants/{id}` | Get tenant |
-| `PUT` | `/api/tenants/{id}` | Update tenant (admin only) |
-| `DELETE` | `/api/tenants/{id}` | Delete tenant (admin only) |
-| `GET` | `/api/tenants/{id}/settings` | Get tenant settings |
-| `PUT` | `/api/tenants/{id}/settings` | Merge-update tenant settings (admin only) |
-| `GET` | `/api/tenants/{id}/stats` | Get tenant dashboard statistics |
+| `GET` | `/api/organizations` | List organizations (superadmin: all, organization users: own organization only) |
+| `POST` | `/api/organizations` | Create organization (superadmin only) |
+| `GET` | `/api/organizations/{id}` | Get organization |
+| `PUT` | `/api/organizations/{id}` | Update organization (superadmin only) |
+| `DELETE` | `/api/organizations/{id}` | Delete organization (superadmin only) |
+| `GET` | `/api/organizations/{id}/settings` | Get organization settings |
+| `PUT` | `/api/organizations/{id}/settings` | Merge-update organization settings (superadmin only) |
+| `GET` | `/api/organizations/{id}/stats` | Get organization dashboard statistics |
 
 #### Extensions
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/tenants/{id}/extensions` | List extensions |
-| `POST` | `/api/tenants/{id}/extensions` | Create extension |
-| `GET` | `/api/tenants/{id}/extensions/{id}` | Get extension (includes voicemail PIN) |
-| `PUT` | `/api/tenants/{id}/extensions/{id}` | Update extension |
-| `DELETE` | `/api/tenants/{id}/extensions/{id}` | Delete extension |
+| `GET` | `/api/organizations/{id}/extensions` | List extensions |
+| `POST` | `/api/organizations/{id}/extensions` | Create extension |
+| `GET` | `/api/organizations/{id}/extensions/{id}` | Get extension (includes voicemail PIN) |
+| `PUT` | `/api/organizations/{id}/extensions/{id}` | Update extension |
+| `DELETE` | `/api/organizations/{id}/extensions/{id}` | Delete extension |
 
 #### DIDs, Ring Groups, IVRs, Time Conditions, CDRs, Device Profiles, Bridges
-All follow the same CRUD pattern under `/api/tenants/{id}/...`:
+All follow the same CRUD pattern under `/api/organizations/{id}/...`:
 - `/dids` — Inbound number routing with layered gateway-aware precedence
 - `/ring-groups` — Ring group management with cause-aware fallback routing
 - `/ivrs` — IVR menu management
@@ -237,36 +232,36 @@ All follow the same CRUD pattern under `/api/tenants/{id}/...`:
 #### Webhooks
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/tenants/{id}/webhooks` | List webhooks |
-| `POST` | `/api/tenants/{id}/webhooks` | Create webhook |
-| `GET` | `/api/tenants/{id}/webhooks/{id}` | Get webhook |
-| `PUT` | `/api/tenants/{id}/webhooks/{id}` | Update webhook |
-| `DELETE` | `/api/tenants/{id}/webhooks/{id}` | Delete webhook |
+| `GET` | `/api/organizations/{id}/webhooks` | List webhooks |
+| `POST` | `/api/organizations/{id}/webhooks` | Create webhook |
+| `GET` | `/api/organizations/{id}/webhooks/{id}` | Get webhook |
+| `PUT` | `/api/organizations/{id}/webhooks/{id}` | Update webhook |
+| `DELETE` | `/api/organizations/{id}/webhooks/{id}` | Delete webhook |
 
 #### Call Operations
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/tenants/{id}/calls/originate` | Originate a call (internal or gateway-backed with `gateway_id`) |
-| `GET` | `/api/tenants/{id}/calls/status` | Get active call status |
+| `POST` | `/api/organizations/{id}/calls/originate` | Originate a call (internal or gateway-backed with `gateway_id`) |
+| `GET` | `/api/organizations/{id}/calls/status` | Get active call status |
 
 #### Call Events & Trace
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/tenants/{id}/call-events` | List call events (filterable by `call_uuid`, `event_type`, `from`, `to`) |
-| `GET` | `/api/tenants/{id}/call-events/{uuid}/trace` | Full lifecycle trace for a specific call UUID |
+| `GET` | `/api/organizations/{id}/call-events` | List call events (filterable by `call_uuid`, `event_type`, `from`, `to`) |
+| `GET` | `/api/organizations/{id}/call-events/{uuid}/trace` | Full lifecycle trace for a specific call UUID |
 
 #### Recordings
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/tenants/{id}/recordings` | List recordings (filterable by `call_uuid`, `caller_id_number`, `destination_number`, `date_from`, `date_to`) |
-| `GET` | `/api/tenants/{id}/recordings/{id}` | Get recording metadata |
-| `GET` | `/api/tenants/{id}/recordings/{id}/download` | Download recording file |
-| `DELETE` | `/api/tenants/{id}/recordings/{id}` | Delete recording |
+| `GET` | `/api/organizations/{id}/recordings` | List recordings (filterable by `call_uuid`, `caller_id_number`, `destination_number`, `date_from`, `date_to`) |
+| `GET` | `/api/organizations/{id}/recordings/{id}` | Get recording metadata |
+| `GET` | `/api/organizations/{id}/recordings/{id}/download` | Download recording file |
+| `DELETE` | `/api/organizations/{id}/recordings/{id}` | Delete recording |
 
 #### User Management (Admin Only)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/users` | List all users (filterable by `tenant_id`, `role`) |
+| `GET` | `/api/users` | List all users (filterable by `organization_id`, `role`) |
 | `POST` | `/api/users` | Create user |
 | `GET` | `/api/users/{id}` | Get user |
 | `PUT` | `/api/users/{id}` | Update user |
@@ -297,8 +292,8 @@ FreeSWITCH → ESL → Event Processor → Redis → WebSocket/API
 Real-time streaming of call lifecycle events. Events are:
 - Persisted to `call_events` table for replay and debugging
 - Dispatched to matching webhooks via queued jobs
-- Broadcast on tenant-scoped private WebSocket channels (`private-tenant.{id}.calls`)
-- Available via Server-Sent Events (SSE) at `GET /api/tenants/{id}/call-events/stream`
+- Broadcast on organization-scoped private WebSocket channels (`private-organization.{id}.calls`)
+- Available via Server-Sent Events (SSE) at `GET /api/organizations/{id}/call-events/stream`
 
 **Normalized Event Types:**
 
@@ -391,8 +386,8 @@ docker compose exec app php artisan db:seed
 
 Behavior:
 - non-production with blank admin env vars: seeds two default logins:
-  - **Platform Superadmin:** `admin@nizam.io` / `password` (has global cross-tenant access)
-  - **Tenant Admin:** `admin@nizam.local` / `password` (scoped purely to the "Nizam Communications" demo tenant)
+  - **Platform Superadmin:** `admin@nizam.io` / `password` (has global cross-organization access)
+  - **Organization Admin:** `admin@nizam.local` / `password` (scoped purely to the "Nizam Communications" demo organization)
 - production with blank admin env vars: seeds demo structure but does **not** create default login users (for security)
 - any environment with `ADMIN_EMAIL` + `ADMIN_PASSWORD` set in `.env`: securely creates or updates that exact platform admin user instead!
 
@@ -430,8 +425,8 @@ The API will be available at `http://localhost:8231/api/v1` by default.
 | `ADMIN_NAME` | `Administrator` | Bootstrap admin display name used by `db:seed` |
 | `ADMIN_EMAIL` | blank | Required in production if you want `db:seed` to create the first admin |
 | `ADMIN_PASSWORD` | blank | Required in production if you want `db:seed` to create the first admin |
-| `ADMIN_TENANT_NAME` | `Demo Company` | Tenant name created by the bootstrap seeder |
-| `ADMIN_TENANT_DOMAIN` | `demo.app.local` | Tenant domain created by the bootstrap seeder |
+| `ADMIN_ORGANIZATION_NAME` | `Demo Company` | Organization name created by the bootstrap seeder |
+| `ADMIN_ORGANIZATION_DOMAIN` | `demo.app.local` | Organization domain created by the bootstrap seeder |
 | `DB_CONNECTION` | `pgsql` | Database driver |
 | `DB_HOST` | `127.0.0.1` | Database host |
 | `DB_DATABASE` | `communications` | Database name |
@@ -491,7 +486,7 @@ Practical rule: size the base platform first, then add recording retention separ
 
 - FreeSWITCH: usually 1.5 to 3.5 GB including image, sounds, modules, logs, and runtime data
 - Laravel app: usually 1 to 2 GB including image layers, vendor dependencies, built frontend assets, and logs
-- PostgreSQL: starts small, but CDRs, events, audit logs, queue tables, and tenant data will steadily grow; 5 to 20 GB is a sensible early production budget
+- PostgreSQL: starts small, but CDRs, events, audit logs, queue tables, and organization data will steadily grow; 5 to 20 GB is a sensible early production budget
 - Redis: generally small unless you retain a lot of transient data; usually under 1 GB
 - Certbot and TLS material: usually well under 0.5 GB
 - Recordings: unbounded relative to the rest of the stack, so treat them as a separate capacity plan
@@ -591,7 +586,7 @@ NIZAM/
 │   │   ├── Controllers/
 │   │   │   ├── Api/            # REST API controllers (13 controllers)
 │   │   │   │   ├── AuthController.php
-│   │   │   │   ├── TenantController.php
+│   │   │   │   ├── OrganizationController.php
 │   │   │   │   ├── ExtensionController.php
 │   │   │   │   ├── CallController.php
 │   │   │   │   ├── CallEventController.php
@@ -600,7 +595,7 @@ NIZAM/
 │   │   │   │   └── ...
 │   │   │   ├── FreeswitchXmlController.php
 │   │   │   └── ProvisioningController.php
-│   │   ├── Middleware/          # Custom middleware (EnsureTenantAccess)
+│   │   ├── Middleware/          # Custom middleware (EnsureOrganizationAccess)
 │   │   ├── Requests/           # Form request validation (16 classes)
 │   │   └── Resources/          # API resource transformers (10 classes)
 │   ├── Jobs/                   # Queue jobs (DeliverWebhook)
@@ -609,7 +604,7 @@ NIZAM/
 │   │   ├── Contracts/          # NizamModule interface
 │   │   └── ModuleRegistry.php  # Module lifecycle management
 │   ├── Observers/              # Model observers (ExtensionObserver)
-│   ├── Policies/               # Authorization policies (TenantPolicy, ExtensionPolicy)
+│   ├── Policies/               # Authorization policies (OrganizationPolicy, ExtensionPolicy)
 │   ├── Providers/              # Service providers
 │   ├── Traits/                 # Shared traits (Auditable)
 │   └── Services/               # Business logic services
@@ -653,10 +648,10 @@ NIZAM/
 2. **Database is the source of truth** — No manual XML configuration files
 3. **Dialplan is compiled output** — Generated dynamically from database state
 4. **API-first always** — Every operation is available via REST API
-5. **Multi-tenant by design** — Domain isolation from day one
+5. **Multi-organization by design** — Domain isolation from day one
 6. **Modules are plug-in packages** — Extensible via `NizamModule` interface
 7. **Observability is mandatory** — Event logging, audit trails, CDR tracking, call trace by UUID
-8. **Security by default** — Webhook secret encryption, rate limiting, tenant isolation, audit logging
+8. **Security by default** — Webhook secret encryption, rate limiting, organization isolation, audit logging
 
 ---
 

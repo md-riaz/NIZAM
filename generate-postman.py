@@ -124,7 +124,7 @@ def example_from_schema(schema, name_hint='value'):
             'caller_id': '+15550001111',
             'destination': '1002',
             'uuid': '{{call_uuid}}',
-            'tenant_id': '{{tenant_id}}',
+            'organization_id': '{{organization_id}}',
             'extension_id': '{{extension_id}}',
             'agent_id': '{{agent_id}}',
         }
@@ -140,9 +140,9 @@ def normalize_path_for_postman(api_path):
     for part in api_path.strip('/').split('/'):
         if part.startswith('{') and part.endswith('}'):
             key = part[1:-1]
-            if key == 'tenantId':
-                raw = raw.replace(part, '{{tenant_id}}')
-                path_parts.append('{{tenant_id}}')
+            if key == 'organizationId':
+                raw = raw.replace(part, '{{organization_id}}')
+                path_parts.append('{{organization_id}}')
             else:
                 raw = raw.replace(part, '{{%s}}' % camel_to_snake(key))
                 path_parts.append('{{%s}}' % camel_to_snake(key))
@@ -232,13 +232,13 @@ def collect_variables():
     variables = OrderedDict()
     variables['base_url'] = SPEC.get('servers', [{}])[0].get('url', 'http://localhost:8231/api/v1')
     variables['api_token'] = ''
-    variables['tenant_id'] = ''
+    variables['organization_id'] = ''
 
     for _, path_item in SPEC.get('paths', {}).items():
         common_parameters = path_item.get('parameters', []) if isinstance(path_item, dict) else []
         for param in common_parameters:
             p = parameter_from_ref_or_inline(param)
-            if p.get('in') == 'path' and p['name'] != 'tenantId':
+            if p.get('in') == 'path' and p['name'] != 'organizationId':
                 variables[camel_to_snake(p['name'])] = ''
 
         for _, operation in path_item.items():
@@ -246,7 +246,7 @@ def collect_variables():
                 continue
             for param in operation.get('parameters', []):
                 p = parameter_from_ref_or_inline(param)
-                if p.get('in') == 'path' and p['name'] != 'tenantId':
+                if p.get('in') == 'path' and p['name'] != 'organizationId':
                     variables[camel_to_snake(p['name'])] = ''
     return [{'key': k, 'value': v} for k, v in variables.items()]
 

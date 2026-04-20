@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CallDetailRecordResource;
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Cdr\CdrSearchService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,29 +20,29 @@ class CdrExportController extends Controller
     /**
      * Export CDRs with advanced filters.
      *
-     * POST /api/tenants/{tenant}/cdrs/export
+     * POST /api/organizations/{organization}/cdrs/export
      *
      * Supports format query param: csv (default), json
      */
-    public function export(Request $request, Tenant $tenant): StreamedResponse|JsonResponse
+    public function export(Request $request, Organization $organization): StreamedResponse|JsonResponse
     {
         $this->authorize('viewAny', CallDetailRecord::class);
 
         $format = $request->input('format', 'csv');
 
         if ($format === 'json') {
-            return $this->exportJson($request, $tenant);
+            return $this->exportJson($request, $organization);
         }
 
-        return $this->exportCsv($request, $tenant);
+        return $this->exportCsv($request, $organization);
     }
 
     /**
      * Export CDRs as a streamed CSV download.
      */
-    protected function exportCsv(Request $request, Tenant $tenant): StreamedResponse
+    protected function exportCsv(Request $request, Organization $organization): StreamedResponse
     {
-        $query = $this->buildExportQuery($request, $tenant);
+        $query = $this->buildExportQuery($request, $organization);
 
         $headers = [
             'Content-Type' => 'text/csv; charset=utf-8',
@@ -76,9 +76,9 @@ class CdrExportController extends Controller
     /**
      * Export CDRs as JSON.
      */
-    protected function exportJson(Request $request, Tenant $tenant): JsonResponse
+    protected function exportJson(Request $request, Organization $organization): JsonResponse
     {
-        $query = $this->buildExportQuery($request, $tenant);
+        $query = $this->buildExportQuery($request, $organization);
 
         $cdrs = $query->limit(10000)->get();
 
@@ -94,9 +94,9 @@ class CdrExportController extends Controller
     /**
      * Build the export query with filters applied.
      */
-    protected function buildExportQuery(Request $request, Tenant $tenant)
+    protected function buildExportQuery(Request $request, Organization $organization)
     {
-        $query = CallDetailRecord::where('tenant_id', $tenant->id)
+        $query = CallDetailRecord::where('organization_id', $organization->id)
             ->with('enrichment')
             ->orderBy('start_stamp', 'desc');
 

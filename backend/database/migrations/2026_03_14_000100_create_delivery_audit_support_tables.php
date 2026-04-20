@@ -26,7 +26,7 @@ return new class extends Migration
 
         Schema::create('device_registration_snapshots', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('endpoint_binding_id')->nullable()->constrained('endpoint_bindings')->nullOnDelete();
             $table->foreignUuid('extension_id')->nullable()->constrained('extensions')->nullOnDelete();
             $table->string('registration_key');
@@ -36,10 +36,10 @@ return new class extends Migration
             $table->timestamp('observed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['tenant_id', 'registration_key']);
+            $table->index(['organization_id', 'registration_key']);
             $table->index(['endpoint_binding_id', 'observed_at']);
             $table->index(['extension_id', 'observed_at']);
-            $table->index(['tenant_id', 'observed_at']);
+            $table->index(['organization_id', 'observed_at']);
         });
     }
 

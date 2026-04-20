@@ -10,14 +10,14 @@ return new class extends Migration
     {
         Schema::create('call_events', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained()->cascadeOnDelete();
             $table->string('call_uuid')->index();
             $table->string('event_type'); // started, answered, bridge, hangup, registered, etc.
             $table->json('payload');
             $table->timestamp('occurred_at');
             $table->timestamps();
 
-            $table->index(['tenant_id', 'occurred_at']);
+            $table->index(['organization_id', 'occurred_at']);
             $table->index(['call_uuid', 'event_type']);
         });
     }

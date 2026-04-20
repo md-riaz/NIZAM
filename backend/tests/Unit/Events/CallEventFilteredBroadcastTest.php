@@ -11,18 +11,18 @@ class CallEventFilteredBroadcastTest extends TestCase
 {
     public function test_broadcasts_on_event_type_specific_channel(): void
     {
-        $event = new CallEvent('tenant-123', 'call.hangup', ['uuid' => 'call-456']);
+        $event = new CallEvent('organization-123', 'call.hangup', ['uuid' => 'call-456']);
 
         $channels = $event->broadcastOn();
 
         $this->assertCount(2, $channels);
         $this->assertInstanceOf(PrivateChannel::class, $channels[1]);
-        $this->assertEquals('private-tenant.tenant-123.calls.call.hangup', $channels[1]->name);
+        $this->assertEquals('private-organization.organization-123.calls.call.hangup', $channels[1]->name);
     }
 
     public function test_broadcast_with_includes_schema_version(): void
     {
-        $event = new CallEvent('tenant-123', 'call.created', ['uuid' => 'call-789']);
+        $event = new CallEvent('organization-123', 'call.created', ['uuid' => 'call-789']);
 
         $broadcastData = $event->broadcastWith();
 
@@ -36,11 +36,11 @@ class CallEventFilteredBroadcastTest extends TestCase
         $eventTypes = ['call.created', 'call.answered', 'call.hangup', 'call.bridged'];
 
         foreach ($eventTypes as $type) {
-            $event = new CallEvent('tenant-abc', $type, []);
+            $event = new CallEvent('organization-abc', $type, []);
             $channels = $event->broadcastOn();
 
             $this->assertEquals(
-                "private-tenant.tenant-abc.calls.{$type}",
+                "private-organization.organization-abc.calls.{$type}",
                 $channels[1]->name
             );
         }

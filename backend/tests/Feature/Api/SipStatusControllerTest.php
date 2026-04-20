@@ -19,7 +19,7 @@ class SipStatusControllerTest extends TestCase
     {
         $admin = User::factory()->create([
             'role' => 'admin',
-            'tenant_id' => null,
+            'organization_id' => null,
         ]);
 
         SipProfile::create([

@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Ivr;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,22 +13,22 @@ class IvrTest extends TestCase
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        $tenant = Tenant::factory()->create();
-        $ivr = Ivr::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $ivr = Ivr::factory()->create(['organization_id' => $organization->id]);
 
         $this->assertDatabaseHas('ivrs', [
             'id' => $ivr->id,
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
     }
 
-    public function test_belongs_to_a_tenant(): void
+    public function test_belongs_to_a_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $ivr = Ivr::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $ivr = Ivr::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertInstanceOf(Tenant::class, $ivr->tenant);
-        $this->assertEquals($tenant->id, $ivr->tenant->id);
+        $this->assertInstanceOf(Organization::class, $ivr->organization);
+        $this->assertEquals($organization->id, $ivr->organization->id);
     }
 
     public function test_options_is_cast_to_array(): void

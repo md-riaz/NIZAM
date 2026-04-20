@@ -6,20 +6,20 @@ use App\Models\ScheduleBreak;
 
 class ScheduleBreakObserver
 {
-    use RebuildsTenantManifest;
+    use RebuildsOrganizationManifest;
 
     public function created(ScheduleBreak $scheduleBreak): void
     {
-        $this->rebuildTenantManifestForModel($scheduleBreak);
+        $this->rebuildOrganizationManifestForModel($scheduleBreak);
     }
 
     public function updated(ScheduleBreak $scheduleBreak): void
     {
-        $this->rebuildTenantManifestForModel($scheduleBreak);
+        $this->rebuildOrganizationManifestForModel($scheduleBreak);
     }
 
     public function deleted(ScheduleBreak $scheduleBreak): void
     {
-        $this->rebuildTenantManifestForModel($scheduleBreak);
+        $this->rebuildOrganizationManifestForModel($scheduleBreak);
     }
 }

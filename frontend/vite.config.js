@@ -6,7 +6,7 @@ import { defineConfig, loadEnv } from 'vite';
 const brandingDefaults = {
     VITE_APP_NAME: 'Communications Platform',
     VITE_APP_TAGLINE: 'Communications Control Plane',
-    VITE_APP_DESCRIPTION: 'Manage tenants, extensions, call flows, and communications infrastructure.',
+    VITE_APP_DESCRIPTION: 'Manage organizations, extensions, call flows, and communications infrastructure.',
 };
 
 function trimTrailingSlash(value) {

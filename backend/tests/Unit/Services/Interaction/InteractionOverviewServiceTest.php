@@ -8,7 +8,7 @@ use App\Models\CallSession;
 use App\Models\CallTraceEvent;
 use App\Models\EndpointBinding;
 use App\Models\PushNotificationLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Interaction\InteractionOverviewService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -28,11 +28,11 @@ class InteractionOverviewServiceTest extends TestCase
 
     public function test_it_builds_business_readable_interaction_overview(): void
     {
-        $tenant = Tenant::factory()->create();
-        $endpoint = EndpointBinding::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $endpoint = EndpointBinding::factory()->create(['organization_id' => $organization->id]);
 
         $session = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'call-123',
             'state' => 'bridged',
             'started_at' => Carbon::parse('2026-04-12 10:00:00'),
@@ -44,7 +44,7 @@ class InteractionOverviewServiceTest extends TestCase
 
         CallEventLog::query()->create([
             'call_session_id' => $session->id,
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => $session->call_uuid,
             'event_id' => 'event-1',
             'event_type' => CallEventLog::EVENT_CALL_CREATED,
@@ -104,7 +104,7 @@ class InteractionOverviewServiceTest extends TestCase
         ])->save();
 
         $service = app(InteractionOverviewService::class);
-        $overview = $service->build($tenant, $session);
+        $overview = $service->build($organization, $session);
 
         $this->assertSame('call-123', $overview['call_uuid']);
         $this->assertSame('bridged', $overview['state']);
@@ -130,15 +130,15 @@ class InteractionOverviewServiceTest extends TestCase
         $this->assertCount(1, $overview['push_notification_logs']);
     }
 
-    public function test_it_rejects_sessions_from_other_tenants(): void
+    public function test_it_rejects_sessions_from_other_organizations(): void
     {
-        $tenant = Tenant::factory()->create();
-        $otherTenantSession = CallSession::factory()->create();
+        $organization = Organization::factory()->create();
+        $otherOrganizationSession = CallSession::factory()->create();
 
         $service = app(InteractionOverviewService::class);
 
         $this->expectException(NotFoundHttpException::class);
 
-        $service->build($tenant, $otherTenantSession);
+        $service->build($organization, $otherOrganizationSession);
     }
 }

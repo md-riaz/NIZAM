@@ -36,7 +36,7 @@ class Alert extends Model
     ];
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'alert_policy_id',
         'severity',
         'metric',
@@ -58,9 +58,9 @@ class Alert extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function policy(): BelongsTo

@@ -7,7 +7,7 @@ use App\Models\HolidayCalendar;
 use App\Models\Schedule;
 use App\Models\ScheduleRule;
 use App\Models\Team;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Services\Policy\SchedulePolicyEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,11 +17,11 @@ class SchedulePolicyEngineTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_uses_the_organization_default_schedule_for_tenant_open_state(): void
+    public function test_it_uses_the_organization_default_schedule_for_organization_open_state(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $schedule = Schedule::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'timezone' => 'UTC',
             'is_active' => true,
         ]);
@@ -33,9 +33,9 @@ class SchedulePolicyEngineTest extends TestCase
             'end_time' => '17:00:00',
         ]);
 
-        $tenant->update(['default_schedule_id' => $schedule->id]);
+        $organization->update(['default_schedule_id' => $schedule->id]);
 
-        $result = app(SchedulePolicyEngine::class)->evaluate($tenant, '2026-05-18 10:00:00 UTC');
+        $result = app(SchedulePolicyEngine::class)->evaluate($organization, '2026-05-18 10:00:00 UTC');
 
         $this->assertTrue($result['open']);
         $this->assertSame('open', $result['state']);
@@ -45,17 +45,17 @@ class SchedulePolicyEngineTest extends TestCase
 
     public function test_team_schedule_override_can_use_its_own_holiday_calendar(): void
     {
-        $tenant = Tenant::factory()->create();
-        $defaultCalendar = HolidayCalendar::factory()->create(['tenant_id' => $tenant->id]);
-        $teamCalendar = HolidayCalendar::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $defaultCalendar = HolidayCalendar::factory()->create(['organization_id' => $organization->id]);
+        $teamCalendar = HolidayCalendar::factory()->create(['organization_id' => $organization->id]);
         $defaultSchedule = Schedule::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'holiday_calendar_id' => $defaultCalendar->id,
             'timezone' => 'UTC',
             'is_active' => true,
         ]);
         $teamSchedule = Schedule::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'timezone' => 'UTC',
             'is_active' => true,
         ]);
@@ -79,13 +79,13 @@ class SchedulePolicyEngineTest extends TestCase
             'is_active' => true,
         ]);
 
-        $tenant->update([
+        $organization->update([
             'default_schedule_id' => $defaultSchedule->id,
             'default_holiday_calendar_id' => $defaultCalendar->id,
         ]);
 
         $team = Team::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'schedule_id' => $teamSchedule->id,
             'holiday_calendar_id' => $teamCalendar->id,
             'name' => 'Support',
@@ -106,14 +106,14 @@ class SchedulePolicyEngineTest extends TestCase
 
     public function test_user_schedule_override_takes_precedence_over_organization_default(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $defaultSchedule = Schedule::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'timezone' => 'UTC',
             'is_active' => true,
         ]);
         $userSchedule = Schedule::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'timezone' => 'UTC',
             'is_active' => true,
         ]);
@@ -131,10 +131,10 @@ class SchedulePolicyEngineTest extends TestCase
             'end_time' => '17:00:00',
         ]);
 
-        $tenant->update(['default_schedule_id' => $defaultSchedule->id]);
+        $organization->update(['default_schedule_id' => $defaultSchedule->id]);
 
         $user = User::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'schedule_id' => $userSchedule->id,
         ]);
 
@@ -148,8 +148,8 @@ class SchedulePolicyEngineTest extends TestCase
 
     public function test_is_open_now_returns_false_when_target_has_no_effective_schedule(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
-        $this->assertFalse(app(SchedulePolicyEngine::class)->isOpenNow($tenant, '2026-05-18 10:00:00 UTC'));
+        $this->assertFalse(app(SchedulePolicyEngine::class)->isOpenNow($organization, '2026-05-18 10:00:00 UTC'));
     }
 }

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('organization_id')->nullable()->constrained()->nullOnDelete();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('action'); // created, updated, deleted
             $table->string('auditable_type'); // model class
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['auditable_type', 'auditable_id']);
-            $table->index(['tenant_id', 'created_at']);
+            $table->index(['organization_id', 'created_at']);
             $table->index('user_id');
         });
     }

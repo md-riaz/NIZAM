@@ -90,6 +90,40 @@ class AdminCapabilityApiTest extends TestCase
         ]);
     }
 
+    public function test_custom_lua_scripts_are_listed_in_capability_registry(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin, 'sanctum')
+            ->getJson('/api/v1/admin/capabilities');
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment([
+            'id' => 'lua_directed_pickup',
+            'name' => 'Lua Runtime: Directed Pickup',
+            'status' => 'active',
+            'category' => 'Runtime Script',
+        ]);
+        $response->assertJsonFragment([
+            'id' => 'lua_group_pickup',
+            'name' => 'Lua Runtime: Group Pickup',
+            'status' => 'active',
+            'category' => 'Runtime Script',
+        ]);
+        $response->assertJsonFragment([
+            'id' => 'lua_team_ring',
+            'name' => 'Lua Runtime: Team Ring',
+            'status' => 'active',
+            'category' => 'Runtime Script',
+        ]);
+        $response->assertJsonFragment([
+            'id' => 'lua_valet_park',
+            'name' => 'Lua Runtime: Valet Park',
+            'status' => 'active',
+            'category' => 'Runtime Script',
+        ]);
+    }
+
     public function test_non_admin_cannot_get_platform_capabilities(): void
     {
         $user = User::factory()->create(['role' => 'user']);

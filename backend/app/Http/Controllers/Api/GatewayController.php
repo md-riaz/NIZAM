@@ -7,32 +7,32 @@ use App\Http\Requests\StoreGatewayRequest;
 use App\Http\Requests\UpdateGatewayRequest;
 use App\Http\Resources\GatewayResource;
 use App\Models\Gateway;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API controller for managing SIP gateways scoped to a tenant.
+ * API controller for managing SIP gateways scoped to a organization.
  */
 class GatewayController extends Controller
 {
     /**
-     * List gateways for a tenant (paginated).
+     * List gateways for an organization (paginated).
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', Gateway::class);
 
-        return GatewayResource::collection($tenant->gateways()->paginate(15));
+        return GatewayResource::collection($organization->gateways()->paginate(15));
     }
 
     /**
-     * Create a new gateway for a tenant.
+     * Create a new gateway for an organization.
      */
-    public function store(StoreGatewayRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreGatewayRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', Gateway::class);
 
-        $gateway = $tenant->gateways()->create($request->validated());
+        $gateway = $organization->gateways()->create($request->validated());
 
         return (new GatewayResource($gateway))->response()->setStatusCode(201);
     }
@@ -40,9 +40,9 @@ class GatewayController extends Controller
     /**
      * Show a single gateway.
      */
-    public function show(Tenant $tenant, Gateway $gateway): JsonResponse|GatewayResource
+    public function show(Organization $organization, Gateway $gateway): JsonResponse|GatewayResource
     {
-        if ($gateway->tenant_id !== $tenant->id) {
+        if ($gateway->organization_id !== $organization->id) {
             return response()->json(['message' => 'Gateway not found.'], 404);
         }
 
@@ -54,9 +54,9 @@ class GatewayController extends Controller
     /**
      * Update an existing gateway.
      */
-    public function update(UpdateGatewayRequest $request, Tenant $tenant, Gateway $gateway): JsonResponse|GatewayResource
+    public function update(UpdateGatewayRequest $request, Organization $organization, Gateway $gateway): JsonResponse|GatewayResource
     {
-        if ($gateway->tenant_id !== $tenant->id) {
+        if ($gateway->organization_id !== $organization->id) {
             return response()->json(['message' => 'Gateway not found.'], 404);
         }
 
@@ -70,9 +70,9 @@ class GatewayController extends Controller
     /**
      * Delete a gateway.
      */
-    public function destroy(Tenant $tenant, Gateway $gateway): JsonResponse
+    public function destroy(Organization $organization, Gateway $gateway): JsonResponse
     {
-        if ($gateway->tenant_id !== $tenant->id) {
+        if ($gateway->organization_id !== $organization->id) {
             return response()->json(['message' => 'Gateway not found.'], 404);
         }
 

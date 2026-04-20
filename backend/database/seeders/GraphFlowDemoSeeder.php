@@ -9,7 +9,7 @@ use App\Models\Flow;
 use App\Models\HolidayCalendar;
 use App\Models\Schedule;
 use App\Models\Team;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Flow\FlowGraphService;
 use Illuminate\Database\Seeder;
 
@@ -18,18 +18,18 @@ class GraphFlowDemoSeeder extends Seeder
     public function run(): void
     {
         $demoDomain = 'graph-demo.app.local';
-        $tenant = Tenant::updateOrCreate(
+        $organization = Organization::updateOrCreate(
             ['domain' => $demoDomain],
             [
                 'name' => 'Graph Demo',
                 'settings' => ['default_country_code' => '1'],
                 'is_active' => true,
-                'status' => Tenant::STATUS_ACTIVE,
+                'status' => Organization::STATUS_ACTIVE,
             ]
         );
 
         $salesA = Extension::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'extension' => '2001'],
+            ['organization_id' => $organization->id, 'extension' => '2001'],
             [
                 'password' => 'pass2001',
                 'directory_first_name' => 'Sales',
@@ -43,7 +43,7 @@ class GraphFlowDemoSeeder extends Seeder
         );
 
         $salesB = Extension::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'extension' => '2002'],
+            ['organization_id' => $organization->id, 'extension' => '2002'],
             [
                 'password' => 'pass2002',
                 'directory_first_name' => 'Sales',
@@ -57,7 +57,7 @@ class GraphFlowDemoSeeder extends Seeder
         );
 
         $calendar = HolidayCalendar::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'US Demo Holidays'],
+            ['organization_id' => $organization->id, 'name' => 'US Demo Holidays'],
             [
                 'timezone' => 'UTC',
                 'is_active' => true,
@@ -65,7 +65,7 @@ class GraphFlowDemoSeeder extends Seeder
         );
 
         $schedule = Schedule::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'Main Office Hours'],
+            ['organization_id' => $organization->id, 'name' => 'Main Office Hours'],
             [
                 'holiday_calendar_id' => $calendar->id,
                 'timezone' => 'UTC',
@@ -90,7 +90,7 @@ class GraphFlowDemoSeeder extends Seeder
         }
 
         $team = Team::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'Sales Team'],
+            ['organization_id' => $organization->id, 'name' => 'Sales Team'],
             [
                 'strategy' => 'simultaneous',
                 'timeout' => 20,
@@ -116,7 +116,7 @@ class GraphFlowDemoSeeder extends Seeder
         }
 
         $flow = Flow::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'name' => 'Main Office Flow'],
+            ['organization_id' => $organization->id, 'name' => 'Main Office Flow'],
             ['description' => 'Schedule -> menu -> ring team demo flow']
         );
 
@@ -154,7 +154,7 @@ class GraphFlowDemoSeeder extends Seeder
         }
 
         Did::updateOrCreate(
-            ['tenant_id' => $tenant->id, 'number' => '+15551002000'],
+            ['organization_id' => $organization->id, 'number' => '+15551002000'],
             [
                 'description' => 'Graph-native main office DID',
                 'destination_type' => 'flow',

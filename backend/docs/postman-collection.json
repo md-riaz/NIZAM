@@ -25,7 +25,7 @@
       "value": ""
     },
     {
-      "key": "tenant_id",
+      "key": "organization_id",
       "value": ""
     },
     {
@@ -376,10 +376,10 @@
       ]
     },
     {
-      "name": "Tenants",
+      "name": "Organizations",
       "item": [
         {
-          "name": "List tenants",
+          "name": "List organizations",
           "request": {
             "method": "GET",
             "header": [
@@ -390,20 +390,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants",
+              "raw": "{{base_url}}/organizations",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants"
+                "organizations"
               ]
             },
-            "description": "List tenants"
+            "description": "List organizations"
           },
           "response": []
         },
         {
-          "name": "Create tenant",
+          "name": "Create organization",
           "request": {
             "method": "POST",
             "header": [
@@ -419,15 +419,15 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants",
+              "raw": "{{base_url}}/organizations",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants"
+                "organizations"
               ]
             },
-            "description": "Create tenant",
+            "description": "Create organization",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Example Name\",\n  \"domain\": \"acme.example.com\",\n  \"slug\": \"acme\",\n  \"max_extensions\": 1,\n  \"max_concurrent_calls\": 1,\n  \"max_dids\": 1,\n  \"max_ring_groups\": 1,\n  \"is_active\": true\n}",
@@ -441,7 +441,7 @@
           "response": []
         },
         {
-          "name": "Provision tenant with automated setup",
+          "name": "Provision organization with automated setup",
           "request": {
             "method": "POST",
             "header": [
@@ -457,16 +457,16 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/provision",
+              "raw": "{{base_url}}/organizations/provision",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
+                "organizations",
                 "provision"
               ]
             },
-            "description": "Provision tenant with automated setup",
+            "description": "Provision organization with automated setup",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Example Name\",\n  \"domain\": \"acme.example.com\",\n  \"slug\": \"acme\",\n  \"max_extensions\": 1,\n  \"max_concurrent_calls\": 1,\n  \"max_dids\": 1,\n  \"max_ring_groups\": 1\n}",
@@ -480,7 +480,7 @@
           "response": []
         },
         {
-          "name": "Get tenant",
+          "name": "Get organization",
           "request": {
             "method": "GET",
             "header": [
@@ -491,26 +491,26 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}"
+                "organizations",
+                "{{organization_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
-            "description": "Get tenant"
+            "description": "Get organization"
           },
           "response": []
         },
         {
-          "name": "Update tenant",
+          "name": "Update organization",
           "request": {
             "method": "PUT",
             "header": [
@@ -526,21 +526,21 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}"
+                "organizations",
+                "{{organization_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
-            "description": "Update tenant",
+            "description": "Update organization",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Example Name\",\n  \"domain\": \"acme.example.com\",\n  \"slug\": \"acme\",\n  \"max_extensions\": 1,\n  \"max_concurrent_calls\": 1,\n  \"max_dids\": 1,\n  \"max_ring_groups\": 1,\n  \"is_active\": true\n}",
@@ -554,7 +554,7 @@
           "response": []
         },
         {
-          "name": "Delete tenant",
+          "name": "Delete organization",
           "request": {
             "method": "DELETE",
             "header": [
@@ -565,26 +565,26 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}"
+                "organizations",
+                "{{organization_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
-            "description": "Delete tenant"
+            "description": "Delete organization"
           },
           "response": []
         },
         {
-          "name": "Get tenant settings",
+          "name": "Get organization settings",
           "request": {
             "method": "GET",
             "header": [
@@ -595,27 +595,27 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/settings",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/settings",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "settings"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
-            "description": "Get tenant settings"
+            "description": "Get organization settings"
           },
           "response": []
         },
         {
-          "name": "Merge-update tenant settings",
+          "name": "Merge-update organization settings",
           "request": {
             "method": "PUT",
             "header": [
@@ -631,22 +631,22 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/settings",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/settings",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "settings"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
-            "description": "Merge-update tenant settings",
+            "description": "Merge-update organization settings",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"settings\": {}\n}",
@@ -660,7 +660,7 @@
           "response": []
         },
         {
-          "name": "Get tenant stats",
+          "name": "Get organization stats",
           "request": {
             "method": "GET",
             "header": [
@@ -671,22 +671,22 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/stats",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/stats",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "stats"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
-            "description": "Get tenant stats"
+            "description": "Get organization stats"
           },
           "response": []
         }
@@ -707,18 +707,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/extensions",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "extensions"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -743,18 +743,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/extensions",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "extensions"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -783,19 +783,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions/{{extension_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/extensions/{{extension_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "extensions",
                 "{{extension_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "extensionId"
@@ -823,19 +823,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions/{{extension_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/extensions/{{extension_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "extensions",
                 "{{extension_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "extensionId"
@@ -867,19 +867,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/extensions/{{extension_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/extensions/{{extension_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "extensions",
                 "{{extension_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "extensionId"
@@ -907,18 +907,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/dids",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "dids"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -943,18 +943,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/dids",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "dids"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -983,19 +983,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids/{{did_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/dids/{{did_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "dids",
                 "{{did_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "didId"
@@ -1023,19 +1023,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids/{{did_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/dids/{{did_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "dids",
                 "{{did_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "didId"
@@ -1067,19 +1067,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/dids/{{did_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/dids/{{did_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "dids",
                 "{{did_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "didId"
@@ -1107,18 +1107,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ring-groups",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ring-groups"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -1143,18 +1143,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ring-groups",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ring-groups"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -1183,19 +1183,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups/{{ring_group_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ring-groups/{{ring_group_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ring-groups",
                 "{{ring_group_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "ringGroupId"
@@ -1223,19 +1223,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups/{{ring_group_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ring-groups/{{ring_group_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ring-groups",
                 "{{ring_group_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "ringGroupId"
@@ -1267,19 +1267,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ring-groups/{{ring_group_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ring-groups/{{ring_group_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ring-groups",
                 "{{ring_group_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "ringGroupId"
@@ -1307,18 +1307,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ivrs",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ivrs"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -1343,18 +1343,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ivrs",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ivrs"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -1383,19 +1383,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs/{{ivr_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ivrs/{{ivr_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ivrs",
                 "{{ivr_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "ivrId"
@@ -1423,19 +1423,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs/{{ivr_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ivrs/{{ivr_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ivrs",
                 "{{ivr_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "ivrId"
@@ -1467,19 +1467,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/ivrs/{{ivr_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/ivrs/{{ivr_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "ivrs",
                 "{{ivr_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "ivrId"
@@ -1507,18 +1507,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/time-conditions",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "time-conditions"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -1543,18 +1543,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/time-conditions",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "time-conditions"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -1583,19 +1583,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions/{{time_condition_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/time-conditions/{{time_condition_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "time-conditions",
                 "{{time_condition_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "timeConditionId"
@@ -1623,19 +1623,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions/{{time_condition_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/time-conditions/{{time_condition_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "time-conditions",
                 "{{time_condition_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "timeConditionId"
@@ -1667,19 +1667,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/time-conditions/{{time_condition_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/time-conditions/{{time_condition_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "time-conditions",
                 "{{time_condition_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "timeConditionId"
@@ -1707,18 +1707,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-routing-policies",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-routing-policies"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -1743,18 +1743,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-routing-policies",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-routing-policies"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -1783,19 +1783,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/{{policy_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-routing-policies/{{policy_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-routing-policies",
                 "{{policy_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "policyId"
@@ -1823,19 +1823,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/{{policy_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-routing-policies/{{policy_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-routing-policies",
                 "{{policy_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "policyId"
@@ -1867,19 +1867,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/{{policy_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-routing-policies/{{policy_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-routing-policies",
                 "{{policy_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "policyId"
@@ -1907,20 +1907,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-routing-policies/{{policy_id}}/evaluate",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-routing-policies/{{policy_id}}/evaluate",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-routing-policies",
                 "{{policy_id}}",
                 "evaluate"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "policyId"
@@ -1957,18 +1957,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/flows",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "flows"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -1993,18 +1993,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/flows",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "flows"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2033,19 +2033,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows/{{flow_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/flows/{{flow_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "flows",
                 "{{flow_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "flowId"
@@ -2073,19 +2073,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows/{{flow_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/flows/{{flow_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "flows",
                 "{{flow_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "flowId"
@@ -2117,19 +2117,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows/{{flow_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/flows/{{flow_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "flows",
                 "{{flow_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "flowId"
@@ -2152,20 +2152,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/flows/{{flow_id}}/publish",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/flows/{{flow_id}}/publish",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "flows",
                 "{{flow_id}}",
                 "publish"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "flowId"
@@ -2193,18 +2193,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/calls",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "calls"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2224,19 +2224,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/{{call_session_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/calls/{{call_session_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "calls",
                 "{{call_session_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "callSessionId"
@@ -2259,20 +2259,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/{{call_session_id}}/analyze",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/calls/{{call_session_id}}/analyze",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "calls",
                 "{{call_session_id}}",
                 "analyze"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "callSessionId"
@@ -2305,19 +2305,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/originate",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/calls/originate",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "calls",
                 "originate"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2346,19 +2346,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/status",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/calls/status",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "calls",
                 "status"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2383,19 +2383,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/hangup",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/calls/hangup",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "calls",
                 "hangup"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2429,19 +2429,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/transfer",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/calls/transfer",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "calls",
                 "transfer"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2475,19 +2475,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/recording",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/calls/recording",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "calls",
                 "recording"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2521,19 +2521,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/calls/hold",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/calls/hold",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "calls",
                 "hold"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2567,19 +2567,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/export",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/cdrs/export",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "cdrs",
                 "export"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2604,19 +2604,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/export",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/cdrs/export",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "cdrs",
                 "export"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2645,18 +2645,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/cdrs",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "cdrs"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ],
               "query": [
@@ -2708,20 +2708,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/analytics/summary",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/cdrs/analytics/summary",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "cdrs",
                 "analytics",
                 "summary"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2741,20 +2741,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/analytics/volume",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/cdrs/analytics/volume",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "cdrs",
                 "analytics",
                 "volume"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2774,20 +2774,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/analytics/quality",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/cdrs/analytics/quality",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "cdrs",
                 "analytics",
                 "quality"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2807,20 +2807,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/analytics/destinations",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/cdrs/analytics/destinations",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "cdrs",
                 "analytics",
                 "destinations"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2840,19 +2840,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/cdrs/{{cdr_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/cdrs/{{cdr_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "cdrs",
                 "{{cdr_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "cdrId"
@@ -2880,18 +2880,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/recordings",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/recordings",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "recordings"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -2911,19 +2911,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/recordings/{{recording_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/recordings/{{recording_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "recordings",
                 "{{recording_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "recordingId"
@@ -2946,19 +2946,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/recordings/{{recording_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/recordings/{{recording_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "recordings",
                 "{{recording_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "recordingId"
@@ -2981,20 +2981,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/recordings/{{recording_id}}/download",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/recordings/{{recording_id}}/download",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "recordings",
                 "{{recording_id}}",
                 "download"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "recordingId"
@@ -3022,18 +3022,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/webhooks",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "webhooks"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3058,18 +3058,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/webhooks",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "webhooks"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3098,19 +3098,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/webhooks/{{webhook_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "webhooks",
                 "{{webhook_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "webhookId"
@@ -3138,19 +3138,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/webhooks/{{webhook_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "webhooks",
                 "{{webhook_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "webhookId"
@@ -3182,19 +3182,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/webhooks/{{webhook_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "webhooks",
                 "{{webhook_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "webhookId"
@@ -3217,20 +3217,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}/delivery-attempts",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/webhooks/{{webhook_id}}/delivery-attempts",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "webhooks",
                 "{{webhook_id}}",
                 "delivery-attempts"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "webhookId"
@@ -3253,20 +3253,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/webhooks/{{webhook_id}}/delivery-stats",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/webhooks/{{webhook_id}}/delivery-stats",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "webhooks",
                 "{{webhook_id}}",
                 "delivery-stats"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "webhookId"
@@ -3294,18 +3294,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-events",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-events"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3325,19 +3325,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/stream",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-events/stream",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-events",
                 "stream"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3357,20 +3357,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/{{call_uuid}}/trace",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-events/{{call_uuid}}/trace",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-events",
                 "{{call_uuid}}",
                 "trace"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "callUuid"
@@ -3393,20 +3393,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/replay/{{event_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-events/replay/{{event_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-events",
                 "replay",
                 "{{event_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "eventId"
@@ -3429,20 +3429,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/call-events/redispatch/{{event_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/call-events/redispatch/{{event_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "call-events",
                 "redispatch",
                 "{{event_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "eventId"
@@ -3470,18 +3470,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/device-profiles",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "device-profiles"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3506,18 +3506,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/device-profiles",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "device-profiles"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3546,19 +3546,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles/{{device_profile_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/device-profiles/{{device_profile_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "device-profiles",
                 "{{device_profile_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "deviceProfileId"
@@ -3586,19 +3586,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles/{{device_profile_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/device-profiles/{{device_profile_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "device-profiles",
                 "{{device_profile_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "deviceProfileId"
@@ -3630,19 +3630,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/device-profiles/{{device_profile_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/device-profiles/{{device_profile_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "device-profiles",
                 "{{device_profile_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "deviceProfileId"
@@ -3670,18 +3670,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/gateways",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "gateways"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3706,18 +3706,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/gateways",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "gateways"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3746,19 +3746,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways/{{gateway_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/gateways/{{gateway_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "gateways",
                 "{{gateway_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "gatewayId"
@@ -3786,19 +3786,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways/{{gateway_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/gateways/{{gateway_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "gateways",
                 "{{gateway_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "gatewayId"
@@ -3830,19 +3830,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/gateways/{{gateway_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/gateways/{{gateway_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "gateways",
                 "{{gateway_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "gatewayId"
@@ -3870,18 +3870,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/bridges",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "bridges"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3906,18 +3906,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/bridges",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "bridges"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -3946,19 +3946,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges/{{bridge_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/bridges/{{bridge_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "bridges",
                 "{{bridge_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "bridgeId"
@@ -3986,19 +3986,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges/{{bridge_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/bridges/{{bridge_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "bridges",
                 "{{bridge_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "bridgeId"
@@ -4030,19 +4030,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/bridges/{{bridge_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/bridges/{{bridge_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "bridges",
                 "{{bridge_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "bridgeId"
@@ -4070,18 +4070,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/codec-metrics",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/codec-metrics",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "codec-metrics"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4106,18 +4106,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/holiday-calendars",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "holiday-calendars"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4142,18 +4142,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/holiday-calendars",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "holiday-calendars"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4182,19 +4182,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars/{{holiday_calendar_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/holiday-calendars/{{holiday_calendar_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "holiday-calendars",
                 "{{holiday_calendar_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "holidayCalendarId"
@@ -4222,19 +4222,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars/{{holiday_calendar_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/holiday-calendars/{{holiday_calendar_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "holiday-calendars",
                 "{{holiday_calendar_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "holidayCalendarId"
@@ -4266,19 +4266,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/holiday-calendars/{{holiday_calendar_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/holiday-calendars/{{holiday_calendar_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "holiday-calendars",
                 "{{holiday_calendar_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "holidayCalendarId"
@@ -4306,18 +4306,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/schedules",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "schedules"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4342,18 +4342,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/schedules",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "schedules"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4382,19 +4382,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules/{{schedule_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/schedules/{{schedule_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "schedules",
                 "{{schedule_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "scheduleId"
@@ -4422,19 +4422,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules/{{schedule_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/schedules/{{schedule_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "schedules",
                 "{{schedule_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "scheduleId"
@@ -4466,19 +4466,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/schedules/{{schedule_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/schedules/{{schedule_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "schedules",
                 "{{schedule_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "scheduleId"
@@ -4506,18 +4506,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/teams",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "teams"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4542,18 +4542,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/teams",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "teams"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4582,19 +4582,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams/{{team_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/teams/{{team_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "teams",
                 "{{team_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "teamId"
@@ -4622,19 +4622,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams/{{team_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/teams/{{team_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "teams",
                 "{{team_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "teamId"
@@ -4666,19 +4666,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/teams/{{team_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/teams/{{team_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "teams",
                 "{{team_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "teamId"
@@ -4706,18 +4706,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/agents",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "agents"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4742,18 +4742,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/agents",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "agents"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4782,19 +4782,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/{{agent_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/agents/{{agent_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "agents",
                 "{{agent_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "agentId"
@@ -4822,19 +4822,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/{{agent_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/agents/{{agent_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "agents",
                 "{{agent_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "agentId"
@@ -4866,19 +4866,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/{{agent_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/agents/{{agent_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "agents",
                 "{{agent_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "agentId"
@@ -4906,20 +4906,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/agents/{{agent_id}}/state",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/agents/{{agent_id}}/state",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "agents",
                 "{{agent_id}}",
                 "state"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "agentId"
@@ -4956,18 +4956,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -4992,18 +4992,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -5032,19 +5032,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues/{{queue_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues",
                 "{{queue_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "queueId"
@@ -5072,19 +5072,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues/{{queue_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues",
                 "{{queue_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "queueId"
@@ -5116,19 +5116,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues/{{queue_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues",
                 "{{queue_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "queueId"
@@ -5151,20 +5151,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/members",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues/{{queue_id}}/members",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues",
                 "{{queue_id}}",
                 "members"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "queueId"
@@ -5192,20 +5192,20 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/members",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues/{{queue_id}}/members",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues",
                 "{{queue_id}}",
                 "members"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "queueId"
@@ -5237,13 +5237,13 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/members/{{agent_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues/{{queue_id}}/members/{{agent_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues",
                 "{{queue_id}}",
                 "members",
@@ -5251,7 +5251,7 @@
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "queueId"
@@ -5282,13 +5282,13 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/metrics/realtime",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues/{{queue_id}}/metrics/realtime",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues",
                 "{{queue_id}}",
                 "metrics",
@@ -5296,7 +5296,7 @@
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "queueId"
@@ -5319,13 +5319,13 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/metrics/aggregate",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues/{{queue_id}}/metrics/aggregate",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues",
                 "{{queue_id}}",
                 "metrics",
@@ -5333,7 +5333,7 @@
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "queueId"
@@ -5356,13 +5356,13 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/queues/{{queue_id}}/metrics/history",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/queues/{{queue_id}}/metrics/history",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "queues",
                 "{{queue_id}}",
                 "metrics",
@@ -5370,7 +5370,7 @@
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "queueId"
@@ -5382,7 +5382,7 @@
           "response": []
         },
         {
-          "name": "Wallboard data for tenant queues",
+          "name": "Wallboard data for organization queues",
           "request": {
             "method": "GET",
             "header": [
@@ -5393,22 +5393,22 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/wallboard",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/wallboard",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "wallboard"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
-            "description": "Wallboard data for tenant queues"
+            "description": "Wallboard data for organization queues"
           },
           "response": []
         },
@@ -5424,18 +5424,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/agent-states",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/agent-states",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "agent-states"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -5460,19 +5460,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/summary",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/usage/summary",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "usage",
                 "summary"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -5492,19 +5492,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/collect",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/usage/collect",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "usage",
                 "collect"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -5524,19 +5524,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/usage/reconcile",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/usage/reconcile",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "usage",
                 "reconcile"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -5767,8 +5767,8 @@
               ],
               "query": [
                 {
-                  "key": "tenant_id",
-                  "value": "{{tenant_id}}",
+                  "key": "organization_id",
+                  "value": "{{organization_id}}",
                   "description": ""
                 }
               ]
@@ -5806,7 +5806,7 @@
             "description": "Create blocked destination",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"pattern\": \"string\",\n  \"description\": \"Example description\"\n}",
+              "raw": "{\n  \"organization_id\": \"{{organization_id}}\",\n  \"pattern\": \"string\",\n  \"description\": \"Example description\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -5882,7 +5882,7 @@
             "description": "Update blocked destination",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"pattern\": \"string\",\n  \"description\": \"Example description\"\n}",
+              "raw": "{\n  \"organization_id\": \"{{organization_id}}\",\n  \"pattern\": \"string\",\n  \"description\": \"Example description\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -5980,7 +5980,7 @@
             "description": "Create user",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Example Name\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"string\",\n  \"tenant_id\": \"{{tenant_id}}\"\n}",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"string\",\n  \"organization_id\": \"{{organization_id}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -6054,7 +6054,7 @@
             "description": "Update user",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Example Name\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"string\",\n  \"tenant_id\": \"{{tenant_id}}\"\n}",
+              "raw": "{\n  \"name\": \"Example Name\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"string\",\n  \"organization_id\": \"{{organization_id}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -6258,18 +6258,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/audit-logs",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/audit-logs",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "audit-logs"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 }
               ]
             },
@@ -6289,19 +6289,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/tenants/{{tenant_id}}/audit-logs/{{audit_log_id}}",
+              "raw": "{{base_url}}/organizations/{{organization_id}}/audit-logs/{{audit_log_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "tenants",
-                "{{tenant_id}}",
+                "organizations",
+                "{{organization_id}}",
                 "audit-logs",
                 "{{audit_log_id}}"
               ],
               "variable": [
                 {
-                  "key": "tenantId"
+                  "key": "organizationId"
                 },
                 {
                   "key": "auditLogId"

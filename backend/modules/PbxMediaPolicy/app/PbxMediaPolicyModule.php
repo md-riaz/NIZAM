@@ -3,7 +3,7 @@
 namespace Modules\PbxMediaPolicy;
 
 use App\Models\Gateway;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Modules\BaseModule;
 
 class PbxMediaPolicyModule extends BaseModule
@@ -15,7 +15,7 @@ class PbxMediaPolicyModule extends BaseModule
 
     public function description(): string
     {
-        return 'Media policy: gateway codec config, tenant codec enforcement, dialplan codec injection, transcoding awareness';
+        return 'Media policy: gateway codec config, organization codec enforcement, dialplan codec injection, transcoding awareness';
     }
 
     public function version(): string
@@ -46,19 +46,19 @@ class PbxMediaPolicyModule extends BaseModule
     }
 
     /**
-     * Inject absolute_codec_string into dialplan based on tenant codec policy.
+     * Inject absolute_codec_string into dialplan based on organization codec policy.
      *
      * @return array<int, string>
      */
-    public function dialplanContributions(string $tenantDomain, string $destination): array
+    public function dialplanContributions(string $organizationDomain, string $destination): array
     {
-        $tenant = Tenant::where('domain', $tenantDomain)->first();
+        $organization = Organization::where('domain', $organizationDomain)->first();
 
-        if (! $tenant) {
+        if (! $organization) {
             return [];
         }
 
-        $codecPolicy = $tenant->codec_policy ?? [];
+        $codecPolicy = $organization->codec_policy ?? [];
         $codecs = $codecPolicy['codecs'] ?? [];
 
         if (empty($codecs)) {
@@ -81,14 +81,14 @@ class PbxMediaPolicyModule extends BaseModule
     {
         return [
             'before.bridge' => function (array $context): array {
-                $tenantId = $context['tenant_id'] ?? null;
+                $organizationId = $context['organization_id'] ?? null;
 
-                if (! $tenantId) {
+                if (! $organizationId) {
                     return ['allow_transcoding' => true, 'codec_string' => null];
                 }
 
-                $tenant = Tenant::find($tenantId);
-                $codecPolicy = $tenant?->codec_policy ?? [];
+                $organization = Organization::find($organizationId);
+                $codecPolicy = $organization?->codec_policy ?? [];
 
                 $gateway = isset($context['gateway_id'])
                     ? Gateway::find($context['gateway_id'])

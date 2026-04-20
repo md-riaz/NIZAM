@@ -11,7 +11,7 @@ class ExtensionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'extension' => $this->extension,
             'directory_first_name' => $this->directory_first_name,
             'directory_last_name' => $this->directory_last_name,

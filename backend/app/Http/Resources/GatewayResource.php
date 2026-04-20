@@ -11,7 +11,7 @@ class GatewayResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'name' => $this->name,
             'vendor' => $this->vendor,
             'host' => $this->host,
@@ -35,7 +35,7 @@ class GatewayResource extends JsonResource
             'caller_id_in_from' => $this->caller_id_in_from,
             'profile' => $this->profile,
             'is_active' => $this->is_active,
-            'tenant' => TenantResource::make($this->whenLoaded('tenant')),
+            'organization' => OrganizationResource::make($this->whenLoaded('organization')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -540,7 +540,7 @@ ENVEOF
     info "Running database migrations…"
     sudo -u "${NIZAM_USER}" php "${NIZAM_DIR}/artisan" migrate --force --quiet
 
-    # ── Create admin user and default tenant ───────────────────────────────────
+    # ── Create admin user and default organization ─────────────────────────────
     info "Creating admin user (${ADMIN_EMAIL})…"
 
     # Bootstrap Laravel from a temp PHP file to avoid tinker's interactive mode
@@ -558,9 +558,9 @@ require '${NIZAM_DIR}/vendor/autoload.php';
 \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class);
 \$kernel->bootstrap();
 
-// Create default tenant (idempotent)
-\$tenant = App\Models\Tenant::firstOrCreate(
-    ['slug' => 'nizam'],
+// Create default organization (idempotent)
+\$organization = App\Models\Organization::firstOrCreate(
+    ['domain' => '${SERVER_IP}'],
     [
         'name'           => 'NIZAM',
         'domain'         => '${SERVER_IP}',
@@ -574,10 +574,10 @@ require '${NIZAM_DIR}/vendor/autoload.php';
 App\Models\User::firstOrCreate(
     ['email' => '${ADMIN_EMAIL}'],
     [
-        'name'      => 'Administrator',
-        'password'  => '${ADMIN_PASS}',
-        'tenant_id' => \$tenant->id,
-        'role'      => 'admin',
+        'name'            => 'Administrator',
+        'password'        => '${ADMIN_PASS}',
+        'organization_id' => \$organization->id,
+        'role'            => 'admin',
     ]
 );
 

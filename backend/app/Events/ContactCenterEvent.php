@@ -14,7 +14,7 @@ class ContactCenterEvent implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public string $tenantId,
+        public string $organizationId,
         public string $eventType,
         public array $data
     ) {}
@@ -24,8 +24,8 @@ class ContactCenterEvent implements ShouldBroadcast
         $filteredEventType = str_replace('.', '-', $this->eventType);
 
         return [
-            new PrivateChannel('tenant.'.$this->tenantId.'.contact-center'),
-            new PrivateChannel('tenant.'.$this->tenantId.'.contact-center.'.$filteredEventType),
+            new PrivateChannel('organization.'.$this->organizationId.'.contact-center'),
+            new PrivateChannel('organization.'.$this->organizationId.'.contact-center.'.$filteredEventType),
         ];
     }
 

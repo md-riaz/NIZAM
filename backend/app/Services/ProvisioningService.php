@@ -15,15 +15,15 @@ class ProvisioningService
         $template = $profile->template ?? $this->getDefaultTemplate($profile->vendor);
 
         $extension = $profile->extension;
-        $tenant = $profile->tenant;
-        $softphoneProvisioning = $this->softphoneProvisioningDefaults($tenant?->domain);
+        $organization = $profile->organization;
+        $softphoneProvisioning = $this->softphoneProvisioningDefaults($organization?->domain);
 
         $variables = [
             '{{DEVICE_NAME}}' => $profile->name,
             '{{VENDOR}}' => $profile->vendor,
             '{{MAC_ADDRESS}}' => $profile->mac_address ?? '',
-            '{{DOMAIN}}' => $tenant->domain ?? '',
-            '{{TENANT_NAME}}' => $tenant->name ?? '',
+            '{{DOMAIN}}' => $organization->domain ?? '',
+            '{{ORGANIZATION_NAME}}' => $organization->name ?? '',
             '{{PROVISIONING_MODE}}' => 'optional_hardware',
             '{{ENDPOINT_STRATEGY}}' => 'softphone_first',
             '{{SOFTPHONE_SIP_SERVER}}' => $softphoneProvisioning['sip_server'],

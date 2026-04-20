@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\TranscriptionJob;
 use App\Services\RecordingIntelligenceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -125,16 +125,16 @@ class RecordingIntelligenceServiceTest extends TestCase
         $this->assertEquals($job1->id, $job2->id);
     }
 
-    public function test_batch_enrich_tenant_recordings(): void
+    public function test_batch_enrich_organization_recordings(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         Recording::factory()->count(3)->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'sentiment' => null,
             'silence_ratio' => 0.50,
         ]);
 
-        $enriched = $this->service->enrichTenantRecordings($tenant->id);
+        $enriched = $this->service->enrichOrganizationRecordings($organization->id);
 
         $this->assertCount(3, $enriched);
         $enriched->each(fn ($r) => $this->assertTrue($r->needs_review));
@@ -142,34 +142,34 @@ class RecordingIntelligenceServiceTest extends TestCase
 
     public function test_get_recordings_needing_review(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         Recording::factory()->count(2)->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'needs_review' => true,
         ]);
         Recording::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'needs_review' => false,
         ]);
 
-        $needsReview = $this->service->getRecordingsNeedingReview($tenant->id);
+        $needsReview = $this->service->getRecordingsNeedingReview($organization->id);
 
         $this->assertCount(2, $needsReview);
     }
 
     public function test_get_transcription_status(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         TranscriptionJob::factory()->count(2)->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'status' => TranscriptionJob::STATUS_PENDING,
         ]);
         TranscriptionJob::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'status' => TranscriptionJob::STATUS_COMPLETED,
         ]);
 
-        $status = $this->service->getTranscriptionStatus($tenant->id);
+        $status = $this->service->getTranscriptionStatus($organization->id);
 
         $this->assertEquals(2, $status['pending']);
         $this->assertEquals(1, $status['completed']);

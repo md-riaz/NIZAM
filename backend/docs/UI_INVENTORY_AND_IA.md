@@ -14,13 +14,13 @@ Generated from repository state on 2026-03-02 using `php artisan route:list --js
 | POST | `/logout` | `logout` | auth |
 | POST | `/freeswitch/xml-curl` | `freeswitch.xml-curl` | public (non-UI system endpoint) |
 | GET | `/provision/{macAddress}` | `provision` | public (device provisioning endpoint) |
-| GET | `/ui/dashboard/{tenant?}` | `ui.dashboard` | auth |
-| GET | `/ui/system-health/{tenant?}` | `ui.health` | auth |
-| GET | `/ui/tenants/{tenant}/extensions` | `ui.extensions` | auth + tenant.access |
-| POST | `/ui/tenants/{tenant}/extensions` | `ui.extensions.store` | auth + tenant.access (HTMX action) |
-| PUT | `/ui/tenants/{tenant}/extensions/{extension}` | `ui.extensions.update` | auth + tenant.access (HTMX action) |
-| DELETE | `/ui/tenants/{tenant}/extensions/{extension}` | `ui.extensions.destroy` | auth + tenant.access (HTMX action) |
-| GET | `/ui/modules/{tenant?}` | `ui.modules` | auth |
+| GET | `/ui/dashboard/{organization?}` | `ui.dashboard` | auth |
+| GET | `/ui/system-health/{organization?}` | `ui.health` | auth |
+| GET | `/ui/organizations/{organization}/extensions` | `ui.extensions` | auth + organization.access |
+| POST | `/ui/organizations/{organization}/extensions` | `ui.extensions.store` | auth + organization.access (HTMX action) |
+| PUT | `/ui/organizations/{organization}/extensions/{extension}` | `ui.extensions.update` | auth + organization.access (HTMX action) |
+| DELETE | `/ui/organizations/{organization}/extensions/{extension}` | `ui.extensions.destroy` | auth + organization.access (HTMX action) |
+| GET | `/ui/modules/{organization?}` | `ui.modules` | auth |
 | POST | `/ui/modules/{moduleName}/toggle` | `ui.modules.toggle` | auth (admin-guarded in controller) |
 | GET | `/sanctum/csrf-cookie` | `sanctum.csrf-cookie` | framework |
 
@@ -28,10 +28,10 @@ Generated from repository state on 2026-03-02 using `php artisan route:list --js
 
 - `/` (welcome entry page)
 - `/login` (session auth form)
-- `/ui/dashboard/{tenant?}`
-- `/ui/system-health/{tenant?}`
-- `/ui/tenants/{tenant}/extensions`
-- `/ui/modules/{tenant?}`
+- `/ui/dashboard/{organization?}`
+- `/ui/system-health/{organization?}`
+- `/ui/organizations/{organization}/extensions`
+- `/ui/modules/{organization?}`
 
 ### 1.3 Blade views inventory
 
@@ -54,9 +54,9 @@ Generated from repository state on 2026-03-02 using `php artisan route:list --js
 From `UiController::uiContext()` + `layouts/app.blade.php`:
 
 Primary nav (module-filtered):
-- Dashboard → `route('ui.dashboard', ['tenant' => $tenant])`
-- Extensions → `route('ui.extensions', ['tenant' => $tenant])` (shown when `pbx-routing` enabled)
-- System Health → `route('ui.health', ['tenant' => $tenant])`
+- Dashboard → `route('ui.dashboard', ['organization' => $organization])`
+- Extensions → `route('ui.extensions', ['organization' => $organization])` (shown when `pbx-routing` enabled)
+- System Health → `route('ui.health', ['organization' => $organization])`
 - Modules → `route('ui.modules')`
 
 Expansion nav (architecture-visible placeholders, coming soon):
@@ -65,7 +65,7 @@ Expansion nav (architecture-visible placeholders, coming soon):
 - Automation: Webhooks, Event Logs
 - Analytics: Recordings, SLA Trends, Call Volume
 - Media Policy: Gateways, Codec Policy
-- Admin: Tenants, Node Health, Fraud Alerts
+- Admin: Organizations, Node Health, Fraud Alerts
 
 Other page links:
 - Welcome CTA: Open Dashboard → `route('ui.dashboard')`
@@ -85,14 +85,14 @@ Current module route files are API-only (`/api/v1/...`), no module-specific web 
 
 ### Platform scope (super admin)
 
-- `/ui/modules/{tenant?}` (module lifecycle panel)
+- `/ui/modules/{organization?}` (module lifecycle panel)
 - `/ui/modules/{moduleName}/toggle` (admin-only action)
 
-### Tenant scope
+### Organization scope
 
-- `/ui/dashboard/{tenant?}`
-- `/ui/system-health/{tenant?}`
-- `/ui/tenants/{tenant}/extensions` (+ create/update/delete HTMX actions)
+- `/ui/dashboard/{organization?}`
+- `/ui/system-health/{organization?}`
+- `/ui/organizations/{organization}/extensions` (+ create/update/delete HTMX actions)
 
 ### Auth/session scope
 
@@ -110,10 +110,10 @@ Current module route files are API-only (`/api/v1/...`), no module-specific web 
 |---|---|
 | `/` welcome | Entry/launcher page |
 | `/login` | Form page |
-| `/ui/dashboard/{tenant?}` | Dashboard page |
-| `/ui/system-health/{tenant?}` | System health page |
-| `/ui/tenants/{tenant}/extensions` | List page + inline form/actions (HTMX partial table refresh) |
-| `/ui/modules/{tenant?}` | List/status page |
+| `/ui/dashboard/{organization?}` | Dashboard page |
+| `/ui/system-health/{organization?}` | System health page |
+| `/ui/organizations/{organization}/extensions` | List page + inline form/actions (HTMX partial table refresh) |
+| `/ui/modules/{organization?}` | List/status page |
 
 No current browser page appears to be a pure detail page.
 
@@ -135,7 +135,7 @@ Authenticated UI
 
 Based on available backend modules/routes/models, these high-value UI surfaces are missing or API-only:
 
-- Tenant onboarding/setup checklist
+- Organization onboarding/setup checklist
 - Fraud alert panel
 - Codec policy page (codec metrics exists via API)
 - Gateway management page (API exists)
@@ -169,17 +169,17 @@ Potential redundancies/drift:
 ```text
 Platform (Admin)
 ├── Overview
-├── Tenants
-│   ├── Tenant Overview
-│   ├── Tenant Extensions
-│   ├── Tenant Routing
-│   ├── Tenant Contact Center
-│   └── Tenant Settings
+├── Organizations
+│   ├── Organization Overview
+│   ├── Organization Extensions
+│   ├── Organization Routing
+│   ├── Organization Contact Center
+│   └── Organization Settings
 ├── Nodes
 ├── Modules
 └── System Health
 
-Tenant
+Organization
 ├── Dashboard
 ├── Extensions
 ├── Devices
@@ -203,7 +203,7 @@ Tenant
 └── Settings
 ```
 
-## 9) UX Narrative Sanity (tenant admin)
+## 9) UX Narrative Sanity (organization admin)
 
 Current UI cannot yet provide a complete linear flow for:
 1) start, 2) configure first call path, 3) test, 4) monitor, 5) troubleshoot.

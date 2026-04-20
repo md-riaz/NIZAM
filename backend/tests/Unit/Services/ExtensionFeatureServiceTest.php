@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\ExtensionFeatureService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
@@ -24,9 +24,9 @@ class ExtensionFeatureServiceTest extends TestCase
 
     public function test_it_can_enable_follow_me_for_an_extension(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
 
         $service = app(ExtensionFeatureService::class);
@@ -43,9 +43,9 @@ class ExtensionFeatureServiceTest extends TestCase
 
     public function test_it_preserves_existing_follow_me_state_on_partial_dnd_update(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'follow_me_enabled' => true,
             'follow_me_destination' => '+8801712345678',
             'dnd_enabled' => false,
@@ -64,9 +64,9 @@ class ExtensionFeatureServiceTest extends TestCase
 
     public function test_it_requires_destination_when_enabling_follow_me(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
 
         $service = app(ExtensionFeatureService::class);
@@ -81,9 +81,9 @@ class ExtensionFeatureServiceTest extends TestCase
 
     public function test_dnd_disables_follow_me_to_avoid_conflicting_state(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'follow_me_enabled' => true,
             'follow_me_destination' => '+8801712345678',
             'dnd_enabled' => false,

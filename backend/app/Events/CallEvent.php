@@ -14,7 +14,7 @@ class CallEvent implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public string $tenantId,
+        public string $organizationId,
         public string $eventType,
         public array $data
     ) {}
@@ -22,8 +22,8 @@ class CallEvent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('tenant.'.$this->tenantId.'.calls'),
-            new PrivateChannel('tenant.'.$this->tenantId.'.calls.'.$this->eventType),
+            new PrivateChannel('organization.'.$this->organizationId.'.calls'),
+            new PrivateChannel('organization.'.$this->organizationId.'.calls.'.$this->eventType),
         ];
     }
 

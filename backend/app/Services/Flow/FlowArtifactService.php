@@ -4,7 +4,7 @@ namespace App\Services\Flow;
 
 use App\Models\FlowCompiledArtifact;
 use App\Models\FlowVersion;
-use App\Models\TenantDialplanManifest;
+use App\Models\OrganizationDialplanManifest;
 use App\Services\Flow\Compile\FlowToIrCompiler;
 use App\Services\Routing\RoutingGraphCompiler;
 use Illuminate\Support\Facades\DB;
@@ -66,7 +66,7 @@ class FlowArtifactService
                 'artifact_type' => FlowCompiledArtifact::ARTIFACT_TYPE_DIALPLAN_XML,
             ],
             [
-                'tenant_id' => $flowVersion->flow->tenant_id,
+                'organization_id' => $flowVersion->flow->organization_id,
                 'content' => $dialplanXml,
                 'checksum' => md5($dialplanXml),
             ]
@@ -89,7 +89,7 @@ class FlowArtifactService
      */
     protected function generateDialplanXml(FlowVersion $flowVersion, array $irInstructions): string
     {
-        $context = $flowVersion->flow->tenant->domain;
+        $context = $flowVersion->flow->organization->domain;
 
         $xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'."\n";
         $xml .= '<document type="freeswitch/xml">'."\n";
@@ -133,7 +133,7 @@ class FlowArtifactService
     protected function generateInstructionXml(FlowVersion $flowVersion, object $instruction): string
     {
         $nodeId = $instruction->params['node_id'] ?? 'unknown';
-        $context = $flowVersion->flow->tenant->domain;
+        $context = $flowVersion->flow->organization->domain;
         $xml = '      <extension name="node_'.$nodeId.'">'."\n";
         $xml .= '        <condition field="destination_number" expression="^node_'.$nodeId.'$">'."\n";
 
@@ -240,15 +240,15 @@ class FlowArtifactService
                 $noAnswerTarget = $instruction->transitions['no_answer'] ?? 'null';
                 $timeoutTarget = $instruction->transitions['timeout'] ?? $noAnswerTarget;
                 
-                $tenant = $flowVersion->flow->tenant;
-                $ringGroup = $tenant->ringGroups()->find($teamId);
+                $organization = $flowVersion->flow->organization;
+                $ringGroup = $organization->ringGroups()->find($teamId);
                 
                 $dialString = '';
                 if ($ringGroup) {
                     $memberIds = $ringGroup->members ?? [];
-                    $extensions = $tenant->extensions()->whereIn('id', $memberIds)->where('is_active', true)->get();
+                    $extensions = $organization->extensions()->whereIn('id', $memberIds)->where('is_active', true)->get();
                     if ($extensions->isNotEmpty()) {
-                        $strings = $extensions->map(fn ($ext) => 'user/'.$ext->extension.'@'.$tenant->domain);
+                        $strings = $extensions->map(fn ($ext) => 'user/'.$ext->extension.'@'.$organization->domain);
                         $dialString = $strings->implode($ringGroup->strategy === 'simultaneous' ? ',' : '|');
                     }
                 }
@@ -258,7 +258,7 @@ class FlowArtifactService
                     $xml .= '          <action application="transfer" data="'.$noAnswerTarget.' XML '.$context.'"/>'."\n";
                 } else {
                     $xml .= '          <action application="set" data="team_id='.$teamId.'"/>'."\n";
-                    $xml .= '          <action application="lua" data="/usr/local/freeswitch/scripts/nizam_ring_team.lua \''.$dialString.'\' '.$timeout.' '.$answeredTarget.' '.$noAnswerTarget.' '.$timeoutTarget.'"/>'."\n";
+                    $xml .= '          <action application="lua" data="/usr/local/freeswitch/scripts/custom/_team_ring.lua \''.$dialString.'\' '.$timeout.' '.$answeredTarget.' '.$noAnswerTarget.' '.$timeoutTarget.'"/>'."\n";
                 }
                 break;
 
@@ -288,15 +288,15 @@ class FlowArtifactService
     }
 
     /**
-     * Activate a manifest for a tenant.
+     * Activate a manifest for an organization.
      *
-     * This sets the is_active flag on the tenant's dialplan manifest,
+     * This sets the is_active flag on the organization's dialplan manifest,
      * making it the active dialplan served by xml_curl.
      */
-    public function activateManifest(TenantDialplanManifest $manifest): bool
+    public function activateManifest(OrganizationDialplanManifest $manifest): bool
     {
-        // Deactivate any existing active manifest for this tenant and type
-        TenantDialplanManifest::where('tenant_id', $manifest->tenant_id)
+        // Deactivate any existing active manifest for this organization and type
+        OrganizationDialplanManifest::where('organization_id', $manifest->organization_id)
             ->where('manifest_type', $manifest->manifest_type)
             ->where('is_active', true)
             ->update(['is_active' => false]);

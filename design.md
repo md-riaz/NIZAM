@@ -83,8 +83,8 @@ Take inspiration from:
 
 ## Real backend-aligned product objects
 Based on the current backend surface, the UI must account for:
-- tenants
-- tenant settings
+- organizations
+- organization settings
 - users
 - permissions
 - extensions
@@ -194,8 +194,8 @@ Top-level sections:
 ### Admin
 - Users
 - Roles & Permissions
-- Tenants
-- Tenant Settings
+- Organizations
+- Organization Settings
 - Usage
 - Audit Logs
 - System Settings
@@ -214,7 +214,7 @@ Top-level sections:
 ## Left sidebar
 Contains:
 - NIZAM logo
-- tenant switcher
+- organization switcher
 - collapsible top-level sections
 - submenu items
 - quick status at bottom
@@ -230,7 +230,7 @@ Contains:
 - breadcrumb
 - page title context
 - global search
-- tenant context chip
+- organization context chip
 - environment chip
 - quick actions button
 - alerts button
@@ -589,7 +589,7 @@ Avoid flashy motion.
 - submenu row
 - breadcrumb item
 - topbar action
-- tenant switcher
+- organization switcher
 
 ## Table patterns
 - entity list table
@@ -615,9 +615,9 @@ Avoid flashy motion.
 - Forgot Password
 - Reset Password
 - Register / First User
-- First Tenant Provisioning
+- First Organization Provisioning
 - Welcome / Getting Started
-- No Tenant Assigned
+- No Organization Assigned
 - Session Expired
 - MFA placeholder design-ready page if added later
 
@@ -772,13 +772,13 @@ Avoid flashy motion.
 - User Permissions Detail
 - Roles & Permissions Matrix
 - Permissions Catalog
-- Tenants List
-- Tenant Create
-- Tenant Detail
-- Tenant Edit
-- Tenant Settings Detail
-- Tenant Usage Summary
-- Tenant Usage Reconcile View
+- Organizations List
+- Organization Create
+- Organization Detail
+- Organization Edit
+- Organization Settings Detail
+- Organization Usage Summary
+- Organization Usage Reconcile View
 - Audit Log List
 - Audit Log Detail
 - Admin Dashboard
@@ -905,8 +905,8 @@ For new system setup:
 - admin name
 - admin email
 - password
-- tenant name
-- tenant domain/slug
+- organization name
+- organization domain/slug
 - submit and enter app
 
 ## Welcome / Getting Started
@@ -992,7 +992,7 @@ Widgets:
 ## Admin Overview
 Widgets:
 - active users
-- tenant count
+- organization count
 - permission changes
 - audit volume
 - usage summary
@@ -1377,7 +1377,7 @@ Pages:
 - permission matrix
 - available permissions catalog
 
-## Tenants
+## Organizations
 ### Detail tabs
 - Overview
 - Settings
@@ -1386,7 +1386,7 @@ Pages:
 - Telephony
 - Audit
 
-## Tenant Settings
+## Organization Settings
 Tabs:
 - General
 - Branding

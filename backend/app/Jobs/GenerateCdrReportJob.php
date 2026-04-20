@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,7 +23,7 @@ class GenerateCdrReportJob implements ShouldQueue
     public int $tries = 3;
 
     public function __construct(
-        public Tenant $tenant,
+        public Organization $organization,
         public string $reportType, // 'daily', 'weekly', 'monthly'
         public ?Carbon $reportDate = null,
     ) {
@@ -37,7 +37,7 @@ class GenerateCdrReportJob implements ShouldQueue
     {
         [$from, $to] = $this->getDateRange();
 
-        $cdrs = CallDetailRecord::where('tenant_id', $this->tenant->id)
+        $cdrs = CallDetailRecord::where('organization_id', $this->organization->id)
             ->whereBetween('start_stamp', [$from, $to])
             ->orderBy('start_stamp', 'desc')
             ->get();
@@ -50,7 +50,7 @@ class GenerateCdrReportJob implements ShouldQueue
         $acd = $answeredCalls > 0 ? round($totalBillsec / $answeredCalls, 1) : 0;
 
         $report = [
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'report_type' => $this->reportType,
             'period' => [
                 'from' => $from->toIso8601String(),
@@ -83,7 +83,7 @@ class GenerateCdrReportJob implements ShouldQueue
         // Store the report as JSON
         $filename = sprintf(
             'cdr-reports/%s/%s_%s.json',
-            $this->tenant->id,
+            $this->organization->id,
             $this->reportType,
             $from->format('Y-m-d')
         );
@@ -91,7 +91,7 @@ class GenerateCdrReportJob implements ShouldQueue
         Storage::put($filename, json_encode($report, JSON_PRETTY_PRINT));
 
         Log::info('CDR report generated', [
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'report_type' => $this->reportType,
             'filename' => $filename,
             'total_calls' => $totalCalls,

@@ -1,7 +1,7 @@
 {
     "name": "PbxMediaPolicy",
     "alias": "pbx-media-policy",
-    "description": "Media policy: gateway codec config, tenant codec enforcement, dialplan codec injection, transcoding awareness",
+    "description": "Media policy: gateway codec config, organization codec enforcement, dialplan codec injection, transcoding awareness",
     "keywords": ["pbx", "media", "codec", "transcoding", "gateway"],
     "priority": 0,
     "providers": [

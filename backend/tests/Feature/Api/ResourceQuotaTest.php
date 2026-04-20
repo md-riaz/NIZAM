@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,18 +12,18 @@ class ResourceQuotaTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function adminUser(Tenant $tenant): User
+    private function adminUser(Organization $organization): User
     {
-        return User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
+        return User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
     }
 
     public function test_extension_creation_blocked_when_quota_exceeded(): void
     {
-        $tenant = Tenant::factory()->create(['max_extensions' => 1]);
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create(['max_extensions' => 1]);
+        $user = $this->adminUser($organization);
 
         // Create first extension (should succeed)
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'Test',
@@ -32,7 +32,7 @@ class ResourceQuotaTest extends TestCase
 
         // Try creating second extension (should fail)
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/extensions", [
+            ->postJson("/api/v1/organizations/{$organization->id}/extensions", [
                 'extension' => '1002',
                 'password' => 'secret456789',
                 'directory_first_name' => 'Test',
@@ -45,11 +45,11 @@ class ResourceQuotaTest extends TestCase
 
     public function test_extension_creation_allowed_when_quota_zero(): void
     {
-        $tenant = Tenant::factory()->create(['max_extensions' => 0]);
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create(['max_extensions' => 0]);
+        $user = $this->adminUser($organization);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/extensions", [
+            ->postJson("/api/v1/organizations/{$organization->id}/extensions", [
                 'extension' => '1001',
                 'password' => 'secret123456',
                 'directory_first_name' => 'Test',
@@ -61,10 +61,10 @@ class ResourceQuotaTest extends TestCase
 
     public function test_did_creation_blocked_when_quota_exceeded(): void
     {
-        $tenant = Tenant::factory()->create(['max_dids' => 1]);
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create(['max_dids' => 1]);
+        $user = $this->adminUser($organization);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'Test',
@@ -72,7 +72,7 @@ class ResourceQuotaTest extends TestCase
         ]);
 
         // Create first DID
-        $tenant->dids()->create([
+        $organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
@@ -80,7 +80,7 @@ class ResourceQuotaTest extends TestCase
 
         // Try creating second DID (should fail)
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/dids", [
+            ->postJson("/api/v1/organizations/{$organization->id}/dids", [
                 'number' => '+15559876543',
                 'destination_type' => 'extension',
                 'destination_id' => $extension->id,
@@ -92,10 +92,10 @@ class ResourceQuotaTest extends TestCase
 
     public function test_ring_group_creation_blocked_when_quota_exceeded(): void
     {
-        $tenant = Tenant::factory()->create(['max_ring_groups' => 1]);
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create(['max_ring_groups' => 1]);
+        $user = $this->adminUser($organization);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'Test',
@@ -103,7 +103,7 @@ class ResourceQuotaTest extends TestCase
         ]);
 
         // Create first ring group
-        $tenant->ringGroups()->create([
+        $organization->ringGroups()->create([
             'name' => 'Group 1',
             'strategy' => 'simultaneous',
             'members' => [$extension->id],
@@ -111,7 +111,7 @@ class ResourceQuotaTest extends TestCase
 
         // Try creating second ring group (should fail)
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/ring-groups", [
+            ->postJson("/api/v1/organizations/{$organization->id}/ring-groups", [
                 'name' => 'Group 2',
                 'strategy' => 'simultaneous',
                 'members' => [$extension->id],
@@ -121,13 +121,13 @@ class ResourceQuotaTest extends TestCase
         $response->assertJsonFragment(['message' => 'Ring group quota exceeded. Maximum allowed: 1']);
     }
 
-    public function test_quotas_can_be_set_on_tenant_creation(): void
+    public function test_quotas_can_be_set_on_organization_creation(): void
     {
         $user = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/v1/tenants', [
-                'name' => 'Quota Tenant',
+            ->postJson('/api/v1/organizations', [
+                'name' => 'Quota Organization',
                 'domain' => 'quota.example.com',
                 'max_extensions' => 50,
                 'max_concurrent_calls' => 20,

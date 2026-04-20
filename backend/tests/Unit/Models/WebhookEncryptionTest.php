@@ -12,9 +12,9 @@ class WebhookEncryptionTest extends TestCase
 
     public function test_webhook_secret_is_encrypted_at_rest(): void
     {
-        $tenant = \App\Models\Tenant::factory()->create();
+        $organization = \App\Models\Organization::factory()->create();
 
-        $webhook = $tenant->webhooks()->create([
+        $webhook = $organization->webhooks()->create([
             'url' => 'https://example.com/webhook',
             'events' => ['call.created'],
             'secret' => 'my-secret-key-123',
@@ -33,9 +33,9 @@ class WebhookEncryptionTest extends TestCase
 
     public function test_webhook_secret_is_hidden_from_serialization(): void
     {
-        $tenant = \App\Models\Tenant::factory()->create();
+        $organization = \App\Models\Organization::factory()->create();
 
-        $webhook = $tenant->webhooks()->create([
+        $webhook = $organization->webhooks()->create([
             'url' => 'https://example.com/webhook',
             'events' => ['call.created'],
             'secret' => 'hidden-secret',

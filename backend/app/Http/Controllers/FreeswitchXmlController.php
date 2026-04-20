@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Tenant;
-use App\Models\TenantDialplanManifest;
+use App\Models\Organization;
+use App\Models\OrganizationDialplanManifest;
 use App\Services\Call\CallDeliveryEntrypointService;
 use App\Services\Call\CallEventIngestionService;
 use App\Services\Call\CallSessionService;
@@ -67,9 +67,9 @@ class FreeswitchXmlController extends Controller
 
     protected function handleDialplan(string $domain, string $destinationNumber, ?string $callerIdNumber = null, array $requestPayload = []): Response
     {
-        $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
+        $organization = Organization::where('domain', $domain)->where('is_active', true)->first();
 
-        if (!$tenant || !$tenant->isOperational()) {
+        if (!$organization || !$organization->isOperational()) {
             return $this->notFoundResponse();
         }
 
@@ -77,7 +77,7 @@ class FreeswitchXmlController extends Controller
             $callUuid = (string) ($requestPayload['Unique-ID'] ?? $requestPayload['Channel-Call-UUID'] ?? $requestPayload['variable_uuid'] ?? '');
 
             if ($callUuid !== '') {
-                $this->callDeliveryEntrypointService->enter($tenant, $callUuid, [
+                $this->callDeliveryEntrypointService->enter($organization, $callUuid, [
                     'target_type' => (string) ($requestPayload['variable_nizam_delivery_target_type'] ?? $requestPayload['nizam_delivery_target_type'] ?? ''),
                     'target_id' => (string) ($requestPayload['variable_nizam_delivery_target_id'] ?? $requestPayload['nizam_delivery_target_id'] ?? ''),
                     'caller_leg_uuid' => $callUuid,
@@ -93,7 +93,7 @@ class FreeswitchXmlController extends Controller
         }
 
         // STEP 7: Serve compiled manifest if available
-        $manifest = TenantDialplanManifest::where('tenant_id', $tenant->id)
+        $manifest = OrganizationDialplanManifest::where('organization_id', $organization->id)
             ->where('manifest_type', 'inbound_routing')
             ->where('is_active', true)
             ->first();
@@ -102,15 +102,15 @@ class FreeswitchXmlController extends Controller
             // STEP 9: Emit trace event for compiled manifest usage
             $callUuid = (string) ($requestPayload['Unique-ID'] ?? $requestPayload['Channel-Call-UUID'] ?? $requestPayload['variable_uuid'] ?? '');
             if ($callUuid !== '') {
-                $gatewayContext = $this->gatewayResolutionService->resolveFromXmlCurl($tenant, $requestPayload);
+                $gatewayContext = $this->gatewayResolutionService->resolveFromXmlCurl($organization, $requestPayload);
                 $did = $this->numberRoutingService->resolveInboundDid(
-                    $tenant,
+                    $organization,
                     $destinationNumber,
                     $gatewayContext['gateway'] ?? null,
                 );
 
                 $session = $this->callSessionService->getOrCreateInboundSession(
-                    $tenant,
+                    $organization,
                     $callUuid,
                     $did,
                     [
@@ -139,15 +139,15 @@ class FreeswitchXmlController extends Controller
         $callUuid = (string) ($requestPayload['Unique-ID'] ?? $requestPayload['Channel-Call-UUID'] ?? $requestPayload['variable_uuid'] ?? '');
 
         if ($callUuid !== '') {
-            $gatewayContext = $this->gatewayResolutionService->resolveFromXmlCurl($tenant, $requestPayload);
+            $gatewayContext = $this->gatewayResolutionService->resolveFromXmlCurl($organization, $requestPayload);
             $did = $this->numberRoutingService->resolveInboundDid(
-                $tenant,
+                $organization,
                 $destinationNumber,
                 $gatewayContext['gateway'] ?? null,
             );
 
             $session = $this->callSessionService->getOrCreateInboundSession(
-                $tenant,
+                $organization,
                 $callUuid,
                 $did,
                 [
@@ -169,7 +169,7 @@ class FreeswitchXmlController extends Controller
             ]);
 
             $this->callEventIngestionService->ingest(
-                $tenant,
+                $organization,
                 \App\Models\CallEventLog::EVENT_CALL_CREATED,
                 $callUuid,
                 [

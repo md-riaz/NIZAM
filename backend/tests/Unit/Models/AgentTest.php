@@ -4,7 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\Agent;
 use App\Models\Queue;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,30 +12,30 @@ class AgentTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createTenantWithExtension(): array
+    private function createOrganizationWithExtension(): array
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
         ]);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'John',
             'directory_last_name' => 'Doe',
         ]);
 
-        return [$tenant, $extension];
+        return [$organization, $extension];
     }
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent Smith',
             'role' => Agent::ROLE_AGENT,
@@ -50,25 +50,25 @@ class AgentTest extends TestCase
         ]);
     }
 
-    public function test_belongs_to_tenant(): void
+    public function test_belongs_to_organization(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent Smith',
         ]);
 
-        $this->assertEquals($tenant->id, $agent->tenant->id);
+        $this->assertEquals($organization->id, $agent->organization->id);
     }
 
     public function test_belongs_to_extension(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent Smith',
         ]);
@@ -78,10 +78,10 @@ class AgentTest extends TestCase
 
     public function test_state_transition(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent Smith',
             'state' => Agent::STATE_OFFLINE,
@@ -97,10 +97,10 @@ class AgentTest extends TestCase
 
     public function test_pause_state_with_reason(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent Smith',
             'state' => Agent::STATE_AVAILABLE,
@@ -115,10 +115,10 @@ class AgentTest extends TestCase
 
     public function test_pause_reason_cleared_on_non_pause_state(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent Smith',
             'state' => Agent::STATE_PAUSED,
@@ -134,10 +134,10 @@ class AgentTest extends TestCase
 
     public function test_is_available(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent Smith',
             'state' => Agent::STATE_AVAILABLE,
@@ -152,10 +152,10 @@ class AgentTest extends TestCase
 
     public function test_inactive_agent_is_not_available(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent Smith',
             'state' => Agent::STATE_AVAILABLE,
@@ -184,16 +184,16 @@ class AgentTest extends TestCase
 
     public function test_can_belong_to_queues(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $agent = Agent::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent Smith',
         ]);
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Support Queue',
         ]);
 

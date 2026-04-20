@@ -6,20 +6,20 @@ use App\Models\ScheduleRule;
 
 class ScheduleRuleObserver
 {
-    use RebuildsTenantManifest;
+    use RebuildsOrganizationManifest;
 
     public function created(ScheduleRule $scheduleRule): void
     {
-        $this->rebuildTenantManifestForModel($scheduleRule);
+        $this->rebuildOrganizationManifestForModel($scheduleRule);
     }
 
     public function updated(ScheduleRule $scheduleRule): void
     {
-        $this->rebuildTenantManifestForModel($scheduleRule);
+        $this->rebuildOrganizationManifestForModel($scheduleRule);
     }
 
     public function deleted(ScheduleRule $scheduleRule): void
     {
-        $this->rebuildTenantManifestForModel($scheduleRule);
+        $this->rebuildOrganizationManifestForModel($scheduleRule);
     }
 }

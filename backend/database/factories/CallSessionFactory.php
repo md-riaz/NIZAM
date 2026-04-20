@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +17,7 @@ class CallSessionFactory extends Factory
     {
         return [
             'call_uuid' => fake()->uuid(),
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'did_id' => null,
             'flow_version_id' => null,
             'current_node_id' => null,

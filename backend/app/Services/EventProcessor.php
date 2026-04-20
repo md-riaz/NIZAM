@@ -9,7 +9,7 @@ use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
 use App\Models\CallSession;
 use App\Models\EndpointBinding;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\UsageRecord;
 use App\Modules\ModuleRegistry;
 use App\Modules\Voicemail\VoicemailEventService;
@@ -56,59 +56,59 @@ class EventProcessor
 
     protected function handleChannelCreate(array $event): void
     {
-        $tenantId = $this->resolveTenantId($event);
-        if (! $tenantId) {
+        $organizationId = $this->resolveOrganizationId($event);
+        if (! $organizationId) {
             return;
         }
 
-        $context = $this->resolveOrchestrationContext($tenantId, $event);
+        $context = $this->resolveOrchestrationContext($organizationId, $event);
         $this->markAttemptRinging($context['attempt']);
 
         $data = $this->buildEventPayload(
-            $tenantId,
+            $organizationId,
             CallEventLog::EVENT_CALL_CREATED,
             $this->augmentCallData($this->extractCallData($event), $context),
         );
 
-        CallEvent::dispatch($tenantId, CallEventLog::EVENT_CALL_CREATED, $data);
-        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_CALL_CREATED, $data);
-        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_CREATED, $data, $context['call_session']);
+        CallEvent::dispatch($organizationId, CallEventLog::EVENT_CALL_CREATED, $data);
+        $this->webhookDispatcher->dispatch($organizationId, CallEventLog::EVENT_CALL_CREATED, $data);
+        $this->recordEvent($organizationId, CallEventLog::EVENT_CALL_CREATED, $data, $context['call_session']);
 
         Log::debug('Call started', ['uuid' => $data['call_uuid'] ?? 'unknown']);
     }
 
     protected function handleChannelAnswer(array $event): void
     {
-        $tenantId = $this->resolveTenantId($event);
-        if (! $tenantId) {
+        $organizationId = $this->resolveOrganizationId($event);
+        if (! $organizationId) {
             return;
         }
 
-        $context = $this->resolveOrchestrationContext($tenantId, $event);
+        $context = $this->resolveOrchestrationContext($organizationId, $event);
         $this->markAttemptAnswered($context['attempt']);
         $this->electWinnerForAnsweredAttempt($context['call_session'], $context['attempt']);
 
         $data = $this->buildEventPayload(
-            $tenantId,
+            $organizationId,
             CallEventLog::EVENT_CALL_ANSWERED,
             $this->augmentCallData($this->extractCallData($event), $context),
         );
 
-        CallEvent::dispatch($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $data);
-        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $data);
-        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_ANSWERED, $data, $context['call_session']);
+        CallEvent::dispatch($organizationId, CallEventLog::EVENT_CALL_ANSWERED, $data);
+        $this->webhookDispatcher->dispatch($organizationId, CallEventLog::EVENT_CALL_ANSWERED, $data);
+        $this->recordEvent($organizationId, CallEventLog::EVENT_CALL_ANSWERED, $data, $context['call_session']);
 
         Log::debug('Call answered', ['uuid' => $data['call_uuid'] ?? 'unknown']);
     }
 
     protected function handleChannelBridge(array $event): void
     {
-        $tenantId = $this->resolveTenantId($event);
-        if (! $tenantId) {
+        $organizationId = $this->resolveOrganizationId($event);
+        if (! $organizationId) {
             return;
         }
 
-        $context = $this->resolveOrchestrationContext($tenantId, $event);
+        $context = $this->resolveOrchestrationContext($organizationId, $event);
         $callData = $this->extractCallData($event);
         $callData['other_leg_uuid'] = $event['Other-Leg-Unique-ID'] ?? '';
         $callData = $this->augmentCallData($callData, $context);
@@ -128,23 +128,23 @@ class EventProcessor
             $callData['other_leg_uuid'] ?: null,
         );
 
-        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $callData);
+        $data = $this->buildEventPayload($organizationId, CallEventLog::EVENT_CALL_BRIDGED, $callData);
 
-        CallEvent::dispatch($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $data);
-        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $data);
-        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_BRIDGED, $data, $context['call_session']);
+        CallEvent::dispatch($organizationId, CallEventLog::EVENT_CALL_BRIDGED, $data);
+        $this->webhookDispatcher->dispatch($organizationId, CallEventLog::EVENT_CALL_BRIDGED, $data);
+        $this->recordEvent($organizationId, CallEventLog::EVENT_CALL_BRIDGED, $data, $context['call_session']);
 
         Log::debug('Call bridged', ['uuid' => $data['call_uuid'] ?? 'unknown', 'other_leg' => $callData['other_leg_uuid']]);
     }
 
     protected function handleChannelHangup(array $event): void
     {
-        $tenantId = $this->resolveTenantId($event);
-        if (! $tenantId) {
+        $organizationId = $this->resolveOrganizationId($event);
+        if (! $organizationId) {
             return;
         }
 
-        $context = $this->resolveOrchestrationContext($tenantId, $event);
+        $context = $this->resolveOrchestrationContext($organizationId, $event);
         $callData = $this->extractCallData($event);
         $callData['hangup_cause'] = $event['Hangup-Cause'] ?? 'NORMAL_CLEARING';
         $callData['duration'] = (int) ($event['variable_duration'] ?? 0);
@@ -154,17 +154,17 @@ class EventProcessor
         $this->finalizeAttemptFromHangup($context['call_session'], $context['attempt'], $callData['hangup_cause']);
         $this->cleanupWinningHangup($context['call_session'], $context['attempt']);
 
-        $data = $this->buildEventPayload($tenantId, CallEventLog::EVENT_CALL_HANGUP, $callData);
+        $data = $this->buildEventPayload($organizationId, CallEventLog::EVENT_CALL_HANGUP, $callData);
 
-        $this->createCdr($tenantId, $data, $event);
-        $this->recordCallMinutes($tenantId, $callData['billsec']);
+        $this->createCdr($organizationId, $data, $event);
+        $this->recordCallMinutes($organizationId, $callData['billsec']);
 
-        CallEvent::dispatch($tenantId, CallEventLog::EVENT_CALL_HANGUP, $data);
-        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_CALL_HANGUP, $data);
-        $this->recordEvent($tenantId, CallEventLog::EVENT_CALL_HANGUP, $data, $context['call_session']);
+        CallEvent::dispatch($organizationId, CallEventLog::EVENT_CALL_HANGUP, $data);
+        $this->webhookDispatcher->dispatch($organizationId, CallEventLog::EVENT_CALL_HANGUP, $data);
+        $this->recordEvent($organizationId, CallEventLog::EVENT_CALL_HANGUP, $data, $context['call_session']);
 
         if (($callData['hangup_cause'] ?? '') === 'NO_ANSWER') {
-            $this->webhookDispatcher->dispatch($tenantId, 'call.missed', $data);
+            $this->webhookDispatcher->dispatch($organizationId, 'call.missed', $data);
         }
 
         Log::debug('Call hangup', ['uuid' => $data['call_uuid'] ?? 'unknown', 'cause' => $callData['hangup_cause']]);
@@ -190,14 +190,14 @@ class EventProcessor
             return;
         }
 
-        $tenantId = (string) ($data['tenant_id'] ?? '');
-        if ($tenantId === '') {
+        $organizationId = (string) ($data['organization_id'] ?? '');
+        if ($organizationId === '') {
             return;
         }
 
         $this->moduleRegistry()->dispatchEvent(CallEventLog::EVENT_VOICEMAIL_RECEIVED, $data);
-        $this->webhookDispatcher->dispatch($tenantId, CallEventLog::EVENT_VOICEMAIL_RECEIVED, $data);
-        $this->recordEvent($tenantId, CallEventLog::EVENT_VOICEMAIL_RECEIVED, $data);
+        $this->webhookDispatcher->dispatch($organizationId, CallEventLog::EVENT_VOICEMAIL_RECEIVED, $data);
+        $this->recordEvent($organizationId, CallEventLog::EVENT_VOICEMAIL_RECEIVED, $data);
 
         Log::debug('Voicemail received', $data['metadata'] ?? []);
     }
@@ -209,8 +209,8 @@ class EventProcessor
             return;
         }
 
-        $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
-        if (! $tenant) {
+        $organization = Organization::where('domain', $domain)->where('is_active', true)->first();
+        if (! $organization) {
             return;
         }
 
@@ -223,32 +223,32 @@ class EventProcessor
             'action' => $action,
         ];
 
-        $binding = $this->resolveRegistrationBinding($tenant->id, $regData['user']);
-        $this->updateReachabilityFromRegistration($tenant->id, $binding, $regData, $action);
+        $binding = $this->resolveRegistrationBinding($organization->id, $regData['user']);
+        $this->updateReachabilityFromRegistration($organization->id, $binding, $regData, $action);
 
         if ($action === 'registered') {
-            $this->tryLateJoinForRegistration($tenant->id, $binding, $domain, $regData);
+            $this->tryLateJoinForRegistration($organization->id, $binding, $domain, $regData);
         }
 
         $eventType = $action === 'registered'
             ? CallEventLog::EVENT_DEVICE_REGISTERED
             : CallEventLog::EVENT_DEVICE_UNREGISTERED;
 
-        $data = $this->buildEventPayload($tenant->id, $eventType, $regData + [
+        $data = $this->buildEventPayload($organization->id, $eventType, $regData + [
             'endpoint_binding_id' => $binding?->id,
         ]);
 
-        CallEvent::dispatch($tenant->id, $eventType, $data);
-        $this->webhookDispatcher->dispatch($tenant->id, $eventType, $data);
-        $this->recordEvent($tenant->id, $eventType, $data);
+        CallEvent::dispatch($organization->id, $eventType, $data);
+        $this->webhookDispatcher->dispatch($organization->id, $eventType, $data);
+        $this->recordEvent($organization->id, $eventType, $data);
 
         Log::debug("SIP {$action}", ['user' => $regData['user'], 'domain' => $domain, 'endpoint_binding_id' => $binding?->id]);
     }
 
-    protected function buildEventPayload(string $tenantId, string $eventType, array $metadata): array
+    protected function buildEventPayload(string $organizationId, string $eventType, array $metadata): array
     {
         return [
-            'tenant_id' => $tenantId,
+            'organization_id' => $organizationId,
             'call_uuid' => $metadata['uuid'] ?? $metadata['user'] ?? '',
             'event_type' => $eventType,
             'timestamp' => now()->toIso8601String(),
@@ -257,7 +257,7 @@ class EventProcessor
         ];
     }
 
-    protected function resolveTenantId(array $event): ?string
+    protected function resolveOrganizationId(array $event): ?string
     {
         $domain = $event['variable_domain_name']
             ?? $event['variable_sip_req_host']
@@ -268,13 +268,13 @@ class EventProcessor
             return null;
         }
 
-        $tenant = Tenant::where('domain', $domain)->where('is_active', true)->first();
+        $organization = Organization::where('domain', $domain)->where('is_active', true)->first();
 
-        if (! $tenant || ! $tenant->isOperational()) {
+        if (! $organization || ! $organization->isOperational()) {
             return null;
         }
 
-        return $tenant->id;
+        return $organization->id;
     }
 
     protected function extractCallData(array $event): array
@@ -291,22 +291,22 @@ class EventProcessor
     /**
      * @return array{call_session:?CallSession,attempt:?CallDeliveryAttempt,peer_attempt:?CallDeliveryAttempt,caller_leg_uuid:?string}
      */
-    protected function resolveOrchestrationContext(string $tenantId, array $event): array
+    protected function resolveOrchestrationContext(string $organizationId, array $event): array
     {
         $legUuid = $event['Unique-ID'] ?? $event['variable_uuid'] ?? null;
         $otherLegUuid = $event['Other-Leg-Unique-ID'] ?? null;
         $sessionId = (string) ($event['variable_sip_h_X-Nizam-Call-Session-Id'] ?? $event['sip_h_X-Nizam-Call-Session-Id'] ?? '');
         $callerLegUuid = $event['variable_nizam_call_uuid'] ?? $event['variable_origination_caller_channel_name'] ?? null;
 
-        $attempt = $this->findAttemptByLegUuid($tenantId, is_string($legUuid) ? $legUuid : null);
-        $peerAttempt = $this->findAttemptByLegUuid($tenantId, is_string($otherLegUuid) ? $otherLegUuid : null);
+        $attempt = $this->findAttemptByLegUuid($organizationId, is_string($legUuid) ? $legUuid : null);
+        $peerAttempt = $this->findAttemptByLegUuid($organizationId, is_string($otherLegUuid) ? $otherLegUuid : null);
 
         $callSession = null;
 
         if ($sessionId !== '') {
             $callSession = CallSession::query()
                 ->whereKey($sessionId)
-                ->where('tenant_id', $tenantId)
+                ->where('organization_id', $organizationId)
                 ->first();
         }
 
@@ -320,14 +320,14 @@ class EventProcessor
 
         if (! $callSession && is_string($callerLegUuid) && $callerLegUuid !== '') {
             $callSession = CallSession::query()
-                ->where('tenant_id', $tenantId)
+                ->where('organization_id', $organizationId)
                 ->where('call_uuid', $callerLegUuid)
                 ->first();
         }
 
         if (! $callSession && is_string($legUuid) && $legUuid !== '') {
             $callSession = CallSession::query()
-                ->where('tenant_id', $tenantId)
+                ->where('organization_id', $organizationId)
                 ->where('call_uuid', $legUuid)
                 ->first();
         }
@@ -340,7 +340,7 @@ class EventProcessor
         ];
     }
 
-    protected function findAttemptByLegUuid(string $tenantId, ?string $legUuid): ?CallDeliveryAttempt
+    protected function findAttemptByLegUuid(string $organizationId, ?string $legUuid): ?CallDeliveryAttempt
     {
         if (! is_string($legUuid) || $legUuid === '') {
             return null;
@@ -349,8 +349,8 @@ class EventProcessor
         return CallDeliveryAttempt::query()
             ->with('callSession')
             ->where('freeswitch_leg_uuid', $legUuid)
-            ->whereHas('callSession', function ($query) use ($tenantId): void {
-                $query->where('tenant_id', $tenantId);
+            ->whereHas('callSession', function ($query) use ($organizationId): void {
+                $query->where('organization_id', $organizationId);
             })
             ->latest('created_at')
             ->first();
@@ -637,15 +637,15 @@ class EventProcessor
         ])->save();
     }
 
-    protected function resolveRegistrationBinding(string $tenantId, string $user): ?EndpointBinding
+    protected function resolveRegistrationBinding(string $organizationId, string $user): ?EndpointBinding
     {
         if ($user === '') {
             return null;
         }
 
         return EndpointBinding::query()
-            ->with(['tenant', 'extension'])
-            ->where('tenant_id', $tenantId)
+            ->with(['organization', 'extension'])
+            ->where('organization_id', $organizationId)
             ->where('is_enabled', true)
             ->whereHas('extension', function ($query) use ($user): void {
                 $query->where('extension', $user)->where('is_active', true);
@@ -655,7 +655,7 @@ class EventProcessor
             ->first();
     }
 
-    protected function updateReachabilityFromRegistration(string $tenantId, ?EndpointBinding $binding, array $regData, string $action): void
+    protected function updateReachabilityFromRegistration(string $organizationId, ?EndpointBinding $binding, array $regData, string $action): void
     {
         if (! $binding instanceof EndpointBinding) {
             return;
@@ -671,23 +671,23 @@ class EventProcessor
         ];
 
         if ($action === 'registered') {
-            $this->reachabilityCache()->markRegistered($tenantId, $candidate, $attributes);
+            $this->reachabilityCache()->markRegistered($organizationId, $candidate, $attributes);
             $binding->forceFill(['last_registered_at' => now()])->save();
 
             return;
         }
 
-        $this->reachabilityCache()->markUnregistered($tenantId, $candidate, $attributes);
+        $this->reachabilityCache()->markUnregistered($organizationId, $candidate, $attributes);
     }
 
-    protected function tryLateJoinForRegistration(string $tenantId, ?EndpointBinding $binding, string $domain, array $regData): void
+    protected function tryLateJoinForRegistration(string $organizationId, ?EndpointBinding $binding, string $domain, array $regData): void
     {
         if (! $binding instanceof EndpointBinding || ! $binding->allow_late_join_after_push) {
             return;
         }
 
         $sessions = CallSession::query()
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->whereNull('ended_at')
             ->where(function ($query): void {
                 $query->where('state', 'parked')->orWhere('state', 'bridged');
@@ -775,15 +775,15 @@ class EventProcessor
             'caller_leg_uuid' => $callSession->call_uuid,
             'caller_id_name' => (string) data_get($callSession->variables, 'caller_id_name', 'Inbound Call'),
             'caller_id_number' => (string) data_get($callSession->variables, 'caller_id_number', 'unknown'),
-            'tenant_domain' => $domain,
+            'organization_domain' => $domain,
         ]);
     }
 
     protected function candidateForBinding(EndpointBinding $binding): EndpointCandidate
     {
         $extension = $binding->extension;
-        $sipAor = $extension && $binding->tenant?->domain
-            ? sprintf('sip:%s@%s', $extension->extension, $binding->tenant->domain)
+        $sipAor = $extension && $binding->organization?->domain
+            ? sprintf('sip:%s@%s', $extension->extension, $binding->organization->domain)
             : null;
 
         return new EndpointCandidate(
@@ -844,7 +844,7 @@ class EventProcessor
         };
     }
 
-    protected function createCdr(string $tenantId, array $data, array $event): void
+    protected function createCdr(string $organizationId, array $data, array $event): void
     {
         try {
             $meta = $data['metadata'] ?? $data;
@@ -856,7 +856,7 @@ class EventProcessor
             $callType = $this->classifyCallType($event, $direction);
 
             $cdr = CallDetailRecord::create([
-                'tenant_id' => $tenantId,
+                'organization_id' => $organizationId,
                 'uuid' => $meta['uuid'] ?? $data['call_uuid'] ?? '',
                 'caller_id_name' => $meta['caller_id_name'] ?? '',
                 'caller_id_number' => $meta['caller_id_number'] ?? '',
@@ -886,14 +886,14 @@ class EventProcessor
         }
     }
 
-    protected function recordEvent(string $tenantId, string $eventType, array $data, ?CallSession $callSession = null): void
+    protected function recordEvent(string $organizationId, string $eventType, array $data, ?CallSession $callSession = null): void
     {
         try {
-            $tenant = Tenant::find($tenantId);
+            $organization = Organization::find($organizationId);
 
-            if ($tenant) {
+            if ($organization) {
                 $this->eventIngestionService()->ingest(
-                    $tenant,
+                    $organization,
                     $eventType,
                     (string) ($data['call_uuid'] ?? $data['uuid'] ?? $data['user'] ?? ''),
                     $data,
@@ -905,7 +905,7 @@ class EventProcessor
 
             CallEventLog::create([
                 'call_session_id' => $callSession?->id,
-                'tenant_id' => $tenantId,
+                'organization_id' => $organizationId,
                 'call_uuid' => $data['call_uuid'] ?? $data['uuid'] ?? $data['user'] ?? '',
                 'event_type' => $eventType,
                 'payload' => $data,
@@ -948,23 +948,23 @@ class EventProcessor
         return $this->moduleRegistry ??= app(ModuleRegistry::class);
     }
 
-    protected function recordCallMinutes(string $tenantId, int $billsec): void
+    protected function recordCallMinutes(string $organizationId, int $billsec): void
     {
         if ($billsec <= 0 || ! $this->meteringService) {
             return;
         }
 
         try {
-            $tenant = Tenant::find($tenantId);
-            if ($tenant) {
+            $organization = Organization::find($organizationId);
+            if ($organization) {
                 $this->meteringService->record(
-                    $tenant,
+                    $organization,
                     UsageRecord::METRIC_CALL_MINUTES,
                     round($billsec / 60, 4)
                 );
             }
         } catch (\Exception $e) {
-            Log::error('Failed to record call minutes', ['error' => $e->getMessage(), 'tenant_id' => $tenantId]);
+            Log::error('Failed to record call minutes', ['error' => $e->getMessage(), 'organization_id' => $organizationId]);
         }
     }
 }

@@ -6,20 +6,20 @@ use App\Models\ScheduleException;
 
 class ScheduleExceptionObserver
 {
-    use RebuildsTenantManifest;
+    use RebuildsOrganizationManifest;
 
     public function created(ScheduleException $scheduleException): void
     {
-        $this->rebuildTenantManifestForModel($scheduleException);
+        $this->rebuildOrganizationManifestForModel($scheduleException);
     }
 
     public function updated(ScheduleException $scheduleException): void
     {
-        $this->rebuildTenantManifestForModel($scheduleException);
+        $this->rebuildOrganizationManifestForModel($scheduleException);
     }
 
     public function deleted(ScheduleException $scheduleException): void
     {
-        $this->rebuildTenantManifestForModel($scheduleException);
+        $this->rebuildOrganizationManifestForModel($scheduleException);
     }
 }

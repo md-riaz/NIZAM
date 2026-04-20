@@ -21,11 +21,11 @@ class LocalFileSystemDriverTest extends TestCase
 
         $driver = new LocalFileSystemDriver(Storage::disk('recordings'));
 
-        $metadata = $driver->archive($source, 'archive/recordings/tenant-a/2026/04/12/call-123.wav');
+        $metadata = $driver->archive($source, 'archive/recordings/organization-a/2026/04/12/call-123.wav');
 
-        $this->assertSame('archive/recordings/tenant-a/2026/04/12/call-123.wav', $metadata['path']);
+        $this->assertSame('archive/recordings/organization-a/2026/04/12/call-123.wav', $metadata['path']);
         $this->assertSame(strlen('sample-audio'), $metadata['size']);
         $this->assertFalse(is_file($source));
-        Storage::disk('recordings')->assertExists('archive/recordings/tenant-a/2026/04/12/call-123.wav');
+        Storage::disk('recordings')->assertExists('archive/recordings/organization-a/2026/04/12/call-123.wav');
     }
 }

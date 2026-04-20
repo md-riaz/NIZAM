@@ -9,5 +9,5 @@ interface SmsMessageStoreInterface
     /**
      * @return array<SmsMessageRecord>
      */
-    public function forTenant(string $tenantDomain): array;
+    public function forOrganization(string $organizationDomain): array;
 }

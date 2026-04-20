@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -24,14 +24,14 @@ class DialplanCompilerSuspendedTest extends TestCase
         );
     }
 
-    public function test_suspended_tenant_returns_empty_directory(): void
+    public function test_suspended_organization_returns_empty_directory(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_SUSPENDED,
+            'status' => Organization::STATUS_SUSPENDED,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
@@ -39,20 +39,20 @@ class DialplanCompilerSuspendedTest extends TestCase
             'directory_last_name' => 'User',
         ]);
 
-        $xml = $this->compiler->compileDirectory($tenant->domain);
+        $xml = $this->compiler->compileDirectory($organization->domain);
 
         $this->assertStringContainsString('section name="directory"', $xml);
         $this->assertStringNotContainsString('1001', $xml);
     }
 
-    public function test_suspended_tenant_returns_empty_dialplan(): void
+    public function test_suspended_organization_returns_empty_dialplan(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_SUSPENDED,
+            'status' => Organization::STATUS_SUSPENDED,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
@@ -60,20 +60,20 @@ class DialplanCompilerSuspendedTest extends TestCase
             'directory_last_name' => 'User',
         ]);
 
-        $xml = $this->compiler->compileDialplan($tenant->domain, '1001');
+        $xml = $this->compiler->compileDialplan($organization->domain, '1001');
 
         $this->assertStringContainsString('section name="dialplan"', $xml);
         $this->assertStringNotContainsString('1001', $xml);
     }
 
-    public function test_terminated_tenant_returns_empty_directory(): void
+    public function test_terminated_organization_returns_empty_directory(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_TERMINATED,
+            'status' => Organization::STATUS_TERMINATED,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
@@ -81,19 +81,19 @@ class DialplanCompilerSuspendedTest extends TestCase
             'directory_last_name' => 'User',
         ]);
 
-        $xml = $this->compiler->compileDirectory($tenant->domain);
+        $xml = $this->compiler->compileDirectory($organization->domain);
 
         $this->assertStringNotContainsString('1001', $xml);
     }
 
-    public function test_active_tenant_returns_valid_directory(): void
+    public function test_active_organization_returns_valid_directory(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
@@ -101,19 +101,19 @@ class DialplanCompilerSuspendedTest extends TestCase
             'directory_last_name' => 'User',
         ]);
 
-        $xml = $this->compiler->compileDirectory($tenant->domain);
+        $xml = $this->compiler->compileDirectory($organization->domain);
 
         $this->assertStringContainsString('1001', $xml);
     }
 
-    public function test_trial_tenant_returns_valid_directory(): void
+    public function test_trial_organization_returns_valid_directory(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'is_active' => true,
-            'status' => Tenant::STATUS_TRIAL,
+            'status' => Organization::STATUS_TRIAL,
         ]);
 
-        $tenant->extensions()->create([
+        $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
@@ -121,7 +121,7 @@ class DialplanCompilerSuspendedTest extends TestCase
             'directory_last_name' => 'User',
         ]);
 
-        $xml = $this->compiler->compileDirectory($tenant->domain);
+        $xml = $this->compiler->compileDirectory($organization->domain);
 
         $this->assertStringContainsString('1001', $xml);
     }

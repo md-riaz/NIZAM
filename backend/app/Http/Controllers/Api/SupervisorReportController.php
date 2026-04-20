@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\SupervisorReports\CallSummaryReportService;
 use App\Services\SupervisorReports\MissedReturnedCallsReportService;
 use App\Services\SupervisorReports\VoicemailsNeedingFollowUpReportService;
@@ -19,26 +19,26 @@ class SupervisorReportController extends Controller
         protected VoicemailsNeedingFollowUpReportService $voicemailsNeedingFollowUpReportService,
     ) {}
 
-    public function callSummary(Request $request, Tenant $tenant): JsonResponse
+    public function callSummary(Request $request, Organization $organization): JsonResponse
     {
         $this->authorize('viewAny', \App\Models\CallDetailRecord::class);
 
         return response()->json([
             'data' => $this->callSummaryReportService->generate(
-                $tenant,
+                $organization,
                 $this->from($request),
                 $this->to($request),
             ),
         ]);
     }
 
-    public function missedReturnedCalls(Request $request, Tenant $tenant): JsonResponse
+    public function missedReturnedCalls(Request $request, Organization $organization): JsonResponse
     {
         $this->authorize('viewAny', \App\Models\CallDetailRecord::class);
 
         return response()->json([
             'data' => $this->missedReturnedCallsReportService->generate(
-                $tenant,
+                $organization,
                 $this->from($request),
                 $this->to($request),
                 $this->windowDays($request),
@@ -46,13 +46,13 @@ class SupervisorReportController extends Controller
         ]);
     }
 
-    public function voicemailsNeedingFollowUp(Request $request, Tenant $tenant): JsonResponse
+    public function voicemailsNeedingFollowUp(Request $request, Organization $organization): JsonResponse
     {
         $this->authorize('viewAny', \App\Models\Recording::class);
 
         return response()->json([
             'data' => $this->voicemailsNeedingFollowUpReportService->generate(
-                $tenant,
+                $organization,
                 $this->from($request),
                 $this->to($request),
                 $this->windowDays($request),

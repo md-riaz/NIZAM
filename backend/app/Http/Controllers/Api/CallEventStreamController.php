@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CallEventLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class CallEventStreamController extends Controller
 {
-    protected int $maxConnectionsPerTenant = 50;
+    protected int $maxConnectionsPerOrganization = 50;
 
     /**
      * Stream call events in real-time via SSE.
@@ -23,15 +23,15 @@ class CallEventStreamController extends Controller
      * Supports Last-Event-ID for reconnection resumption.
      * Supports event_types filter for specific event types.
      */
-    public function stream(Request $request, Tenant $tenant): StreamedResponse
+    public function stream(Request $request, Organization $organization): StreamedResponse
     {
         $this->authorize('viewAny', CallEventLog::class);
 
         // Connection limit enforcement
-        $connectionKey = "sse_connections:{$tenant->id}";
+        $connectionKey = "sse_connections:{$organization->id}";
         $currentConnections = (int) Cache::get($connectionKey, 0);
 
-        if ($currentConnections >= $this->maxConnectionsPerTenant) {
+        if ($currentConnections >= $this->maxConnectionsPerOrganization) {
             return new StreamedResponse(function () {
                 echo "event: error\ndata: {\"message\":\"Connection limit reached.\"}\n\n";
             }, 429, [
@@ -48,7 +48,7 @@ class CallEventStreamController extends Controller
             ? explode(',', $request->query('event_types'))
             : null;
 
-        return new StreamedResponse(function () use ($tenant, $lastEventId, $callUuid, $eventTypes, $connectionKey) {
+        return new StreamedResponse(function () use ($organization, $lastEventId, $callUuid, $eventTypes, $connectionKey) {
             // Disable output buffering
             if (ob_get_level()) {
                 ob_end_clean();
@@ -71,7 +71,7 @@ class CallEventStreamController extends Controller
                     }
 
                     // Query for new events
-                    $query = CallEventLog::where('tenant_id', $tenant->id)
+                    $query = CallEventLog::where('organization_id', $organization->id)
                         ->orderBy('id', 'asc');
 
                     if ($lastId) {

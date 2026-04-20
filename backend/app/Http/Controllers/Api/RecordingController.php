@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RecordingResource;
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Storage\StorageDriver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,10 +21,10 @@ class RecordingController extends Controller
         protected ?StorageDriver $storageDriver = null,
     ) {}
 
-    public function index(Request $request, Tenant $tenant): AnonymousResourceCollection
+    public function index(Request $request, Organization $organization): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Recording::class);
-        $query = Recording::where('tenant_id', $tenant->id)
+        $query = Recording::where('organization_id', $organization->id)
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('call_uuid')) {
@@ -50,10 +50,10 @@ class RecordingController extends Controller
         return RecordingResource::collection($query->paginate(15));
     }
 
-    public function show(Tenant $tenant, Recording $recording): RecordingResource|JsonResponse
+    public function show(Organization $organization, Recording $recording): RecordingResource|JsonResponse
     {
         $this->authorize('view', $recording);
-        if ($recording->tenant_id !== $tenant->id) {
+        if ($recording->organization_id !== $organization->id) {
             return response()->json(['message' => 'Recording not found.'], 404);
         }
 
@@ -63,10 +63,10 @@ class RecordingController extends Controller
     /**
      * Download a recording file.
      */
-    public function download(Tenant $tenant, Recording $recording)
+    public function download(Organization $organization, Recording $recording)
     {
         $this->authorize('download', $recording);
-        if ($recording->tenant_id !== $tenant->id) {
+        if ($recording->organization_id !== $organization->id) {
             return response()->json(['message' => 'Recording not found.'], 404);
         }
 
@@ -84,10 +84,10 @@ class RecordingController extends Controller
         );
     }
 
-    public function destroy(Tenant $tenant, Recording $recording): JsonResponse
+    public function destroy(Organization $organization, Recording $recording): JsonResponse
     {
         $this->authorize('delete', $recording);
-        if ($recording->tenant_id !== $tenant->id) {
+        if ($recording->organization_id !== $organization->id) {
             return response()->json(['message' => 'Recording not found.'], 404);
         }
 

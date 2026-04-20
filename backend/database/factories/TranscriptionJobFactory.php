@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\TranscriptionJob;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,7 +17,7 @@ class TranscriptionJobFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'recording_id' => Recording::factory(),
             'status' => TranscriptionJob::STATUS_PENDING,
             'provider' => null,

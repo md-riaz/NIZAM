@@ -15,7 +15,7 @@ const openapiContent = fs.readFileSync(openapiPath, 'utf8');
 const postmanCollection = {
   info: {
     name: 'NIZAM API',
-    description: 'NIZAM — Open Communications Control Platform API. Multi-tenant VoIP/PBX platform built on FreeSWITCH + Laravel.',
+    description: 'NIZAM — Open Communications Control Platform API. Multi-organization VoIP/PBX platform built on FreeSWITCH + Laravel.',
     version: '1.0.1',
     schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
   },
@@ -30,7 +30,7 @@ const postmanCollection = {
   variable: [
     { key: 'base_url', value: 'http://localhost:8231/api/v1' },
     { key: 'api_token', value: '' },
-    { key: 'tenant_id', value: '' }
+    { key: 'organization_id', value: '' }
   ],
   item: []
 };
@@ -91,8 +91,8 @@ for (const [path, methods] of Object.entries(paths)) {
     
     if (details.parameters && details.parameters.length > 0) {
       for (const param of details.parameters) {
-        if (param.includes('TenantId')) {
-          pathItem.request.url.raw = pathItem.request.url.raw.replace('{tenantId}', '{{tenant_id}}');
+        if (param.includes('OrganizationId')) {
+          pathItem.request.url.raw = pathItem.request.url.raw.replace('{organizationId}', '{{organization_id}}');
         }
       }
     }

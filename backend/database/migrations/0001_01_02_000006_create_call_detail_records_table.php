@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('call_detail_records', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->string('uuid')->unique();
             $table->string('caller_id_name')->nullable();
             $table->string('caller_id_number');
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('recording_path')->nullable();
             $table->timestamps();
 
-            $table->index(['tenant_id', 'start_stamp']);
+            $table->index(['organization_id', 'start_stamp']);
             $table->index(['caller_id_number']);
             $table->index(['destination_number']);
         });

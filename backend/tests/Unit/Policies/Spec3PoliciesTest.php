@@ -4,7 +4,7 @@ namespace Tests\Unit\Policies;
 
 use App\Models\Flow;
 use App\Models\CallRoutingPolicy;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Policies\FlowPolicy;
 use App\Policies\CallRoutingPolicyPolicy;
@@ -37,11 +37,11 @@ class Spec3PoliciesTest extends TestCase
         $this->assertTrue($policy->before($admin, 'delete'));
     }
 
-    public function test_tenant_user_can_view_own_call_routing_policies(): void
+    public function test_organization_user_can_view_own_call_routing_policies(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
-        $crp = CallRoutingPolicy::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
+        $crp = CallRoutingPolicy::factory()->create(['organization_id' => $organization->id]);
 
         $policy = new CallRoutingPolicyPolicy;
 
@@ -49,35 +49,35 @@ class Spec3PoliciesTest extends TestCase
         $this->assertTrue($policy->view($user, $crp));
     }
 
-    public function test_tenant_user_cannot_view_other_tenants_policy(): void
+    public function test_organization_user_cannot_view_other_organizations_policy(): void
     {
-        $tenant1 = Tenant::factory()->create();
-        $tenant2 = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant1->id]);
-        $crp = CallRoutingPolicy::factory()->create(['tenant_id' => $tenant2->id]);
+        $organization1 = Organization::factory()->create();
+        $organization2 = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization1->id]);
+        $crp = CallRoutingPolicy::factory()->create(['organization_id' => $organization2->id]);
 
         $policy = new CallRoutingPolicyPolicy;
 
         $this->assertFalse($policy->view($user, $crp));
     }
 
-    public function test_tenant_user_can_view_own_call_flows(): void
+    public function test_organization_user_can_view_own_call_flows(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
-        $flow = Flow::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
+        $flow = Flow::factory()->create(['organization_id' => $organization->id]);
 
         $policy = new FlowPolicy;
 
         $this->assertTrue($policy->view($user, $flow));
     }
 
-    public function test_tenant_user_cannot_view_other_tenants_flow(): void
+    public function test_organization_user_cannot_view_other_organizations_flow(): void
     {
-        $tenant1 = Tenant::factory()->create();
-        $tenant2 = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant1->id]);
-        $flow = Flow::factory()->create(['tenant_id' => $tenant2->id]);
+        $organization1 = Organization::factory()->create();
+        $organization2 = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization1->id]);
+        $flow = Flow::factory()->create(['organization_id' => $organization2->id]);
 
         $policy = new FlowPolicy;
 

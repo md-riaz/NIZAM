@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\TimeCondition;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -16,7 +16,7 @@ class TimeConditionFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'name' => fake()->randomElement([
                 'Business Hours', 'Weekend Hours', 'Holiday Schedule',
                 'After Hours', 'Lunch Break', 'Night Shift',

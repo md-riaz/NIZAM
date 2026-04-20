@@ -16,7 +16,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/context/AuthContext';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
 
@@ -36,30 +36,30 @@ interface Agent {
 }
 
 export default function AgentsPage() {
-    const { activeTenant } = useTenant();
+    const { activeOrganization } = useOrganization();
     const { user } = useAuth();
     const [agentToDelete, setAgentToDelete] = useState<Agent | null>(null);
 
     const { data: agents = [], isLoading } = useQuery<Agent[]>({
-        queryKey: ['agents', activeTenant?.id],
+        queryKey: ['agents', activeOrganization?.id],
         queryFn: async () => {
-            if (!activeTenant) return [];
-            const response = await api.get(`tenants/${activeTenant.id}/agents`);
+            if (!activeOrganization) return [];
+            const response = await api.get(`organizations/${activeOrganization.id}/agents`);
             return response.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
-            await api.delete(`tenants/${activeTenant?.id}/agents/${id}`);
+            await api.delete(`organizations/${activeOrganization?.id}/agents/${id}`);
         },
         successMessage: 'Agent deleted successfully',
-        invalidateQueries: [['agents', activeTenant?.id || '']],
+        invalidateQueries: [['agents', activeOrganization?.id || '']],
         onSettled: () => setAgentToDelete(null),
     });
 
-    if (!activeTenant) return null;
+    if (!activeOrganization) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">

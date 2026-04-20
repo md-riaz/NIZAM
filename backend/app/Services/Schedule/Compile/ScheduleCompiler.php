@@ -16,7 +16,7 @@ class ScheduleCompiler
 {
     protected function context(Schedule $schedule): string
     {
-        return $schedule->tenant?->domain ?? 'default';
+        return $schedule->organization?->domain ?? 'default';
     }
 
     /**

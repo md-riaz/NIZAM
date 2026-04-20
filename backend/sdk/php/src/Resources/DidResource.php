@@ -6,26 +6,26 @@ class DidResource extends BaseResource
 {
     public function list(array $query = []): array
     {
-        return $this->client->get($this->tenantPath('dids'), $query);
+        return $this->client->get($this->organizationPath('dids'), $query);
     }
 
     public function create(array $data): array
     {
-        return $this->client->post($this->tenantPath('dids'), $data);
+        return $this->client->post($this->organizationPath('dids'), $data);
     }
 
     public function get(string $id): array
     {
-        return $this->client->get($this->tenantPath("dids/{$id}"));
+        return $this->client->get($this->organizationPath("dids/{$id}"));
     }
 
     public function update(string $id, array $data): array
     {
-        return $this->client->put($this->tenantPath("dids/{$id}"), $data);
+        return $this->client->put($this->organizationPath("dids/{$id}"), $data);
     }
 
     public function delete(string $id): array
     {
-        return $this->client->delete($this->tenantPath("dids/{$id}"));
+        return $this->client->delete($this->organizationPath("dids/{$id}"));
     }
 }

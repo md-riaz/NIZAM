@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\CallRoutingPolicy;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Services\PolicyEvaluator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,14 +15,14 @@ class PolicyEvaluationApiTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
+        $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'role' => 'admin',
         ]);
     }
@@ -30,7 +30,7 @@ class PolicyEvaluationApiTest extends TestCase
     public function test_can_evaluate_policy_via_api(): void
     {
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'conditions' => [
                 ['type' => 'blacklist', 'params' => ['numbers' => ['5551234567']]],
             ],
@@ -39,7 +39,7 @@ class PolicyEvaluationApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/call-routing-policies/{$policy->id}/evaluate", [
                 'caller_id' => '5551234567',
             ]);
 
@@ -50,7 +50,7 @@ class PolicyEvaluationApiTest extends TestCase
     public function test_evaluate_returns_allow_for_non_blacklisted(): void
     {
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'conditions' => [
                 ['type' => 'blacklist', 'params' => ['numbers' => ['5551234567']]],
             ],
@@ -59,7 +59,7 @@ class PolicyEvaluationApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/call-routing-policies/{$policy->id}/evaluate", [
                 'caller_id' => '5559876543',
             ]);
 
@@ -70,7 +70,7 @@ class PolicyEvaluationApiTest extends TestCase
     public function test_evaluate_with_time_context(): void
     {
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'conditions' => [
                 ['type' => 'time_of_day', 'params' => ['start' => '09:00', 'end' => '17:00']],
             ],
@@ -80,7 +80,7 @@ class PolicyEvaluationApiTest extends TestCase
 
         // Evaluate at noon — should match
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/call-routing-policies/{$policy->id}/evaluate", [
                 'time' => '2026-01-15T12:00:00Z',
             ]);
 
@@ -88,16 +88,16 @@ class PolicyEvaluationApiTest extends TestCase
         $response->assertJsonPath('decision.decision', PolicyEvaluator::DECISION_ALLOW);
     }
 
-    public function test_evaluate_enforces_tenant_isolation(): void
+    public function test_evaluate_enforces_organization_isolation(): void
     {
-        $otherTenant = Tenant::factory()->create();
+        $otherOrganization = Organization::factory()->create();
         $policy = CallRoutingPolicy::factory()->create([
-            'tenant_id' => $otherTenant->id,
+            'organization_id' => $otherOrganization->id,
             'conditions' => [],
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/call-routing-policies/{$policy->id}/evaluate");
+            ->postJson("/api/v1/organizations/{$this->organization->id}/call-routing-policies/{$policy->id}/evaluate");
 
         $response->assertStatus(404);
     }

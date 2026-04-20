@@ -7,30 +7,30 @@ use App\Http\Requests\StoreWebhookRequest;
 use App\Http\Requests\UpdateWebhookRequest;
 use App\Http\Resources\WebhookDeliveryAttemptResource;
 use App\Http\Resources\WebhookResource;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\Webhook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 
 /**
- * API controller for managing webhooks scoped to a tenant.
+ * API controller for managing webhooks scoped to a organization.
  */
 class WebhookController extends Controller
 {
     /**
-     * List webhooks for a tenant (paginated).
+     * List webhooks for an organization (paginated).
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', Webhook::class);
 
-        return WebhookResource::collection($tenant->webhooks()->paginate(15));
+        return WebhookResource::collection($organization->webhooks()->paginate(15));
     }
 
     /**
-     * Create a new webhook for a tenant.
+     * Create a new webhook for an organization.
      */
-    public function store(StoreWebhookRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreWebhookRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', Webhook::class);
 
@@ -40,7 +40,7 @@ class WebhookController extends Controller
             $data['secret'] = Str::random(32);
         }
 
-        $webhook = $tenant->webhooks()->create($data);
+        $webhook = $organization->webhooks()->create($data);
 
         return (new WebhookResource($webhook))
             ->additional(['secret' => $webhook->secret])
@@ -51,9 +51,9 @@ class WebhookController extends Controller
     /**
      * Show a single webhook.
      */
-    public function show(Tenant $tenant, Webhook $webhook): JsonResponse|WebhookResource
+    public function show(Organization $organization, Webhook $webhook): JsonResponse|WebhookResource
     {
-        if ($webhook->tenant_id !== $tenant->id) {
+        if ($webhook->organization_id !== $organization->id) {
             return response()->json(['message' => 'Webhook not found.'], 404);
         }
 
@@ -65,9 +65,9 @@ class WebhookController extends Controller
     /**
      * Update an existing webhook.
      */
-    public function update(UpdateWebhookRequest $request, Tenant $tenant, Webhook $webhook): JsonResponse|WebhookResource
+    public function update(UpdateWebhookRequest $request, Organization $organization, Webhook $webhook): JsonResponse|WebhookResource
     {
-        if ($webhook->tenant_id !== $tenant->id) {
+        if ($webhook->organization_id !== $organization->id) {
             return response()->json(['message' => 'Webhook not found.'], 404);
         }
 
@@ -81,9 +81,9 @@ class WebhookController extends Controller
     /**
      * Delete a webhook.
      */
-    public function destroy(Tenant $tenant, Webhook $webhook): JsonResponse
+    public function destroy(Organization $organization, Webhook $webhook): JsonResponse
     {
-        if ($webhook->tenant_id !== $tenant->id) {
+        if ($webhook->organization_id !== $organization->id) {
             return response()->json(['message' => 'Webhook not found.'], 404);
         }
 
@@ -97,9 +97,9 @@ class WebhookController extends Controller
     /**
      * List delivery attempts for a webhook (paginated).
      */
-    public function deliveryAttempts(Tenant $tenant, Webhook $webhook)
+    public function deliveryAttempts(Organization $organization, Webhook $webhook)
     {
-        if ($webhook->tenant_id !== $tenant->id) {
+        if ($webhook->organization_id !== $organization->id) {
             return response()->json(['message' => 'Webhook not found.'], 404);
         }
 
@@ -113,9 +113,9 @@ class WebhookController extends Controller
     /**
      * Get delivery statistics for a webhook.
      */
-    public function deliveryStats(Tenant $tenant, Webhook $webhook): JsonResponse
+    public function deliveryStats(Organization $organization, Webhook $webhook): JsonResponse
     {
-        if ($webhook->tenant_id !== $tenant->id) {
+        if ($webhook->organization_id !== $organization->id) {
             return response()->json(['message' => 'Webhook not found.'], 404);
         }
 

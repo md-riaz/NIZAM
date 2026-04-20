@@ -15,7 +15,7 @@ class UpdateQueueRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenant = $this->route('tenant');
+        $organization = $this->route('organization');
         $queue = $this->route('queue');
 
         return [
@@ -23,9 +23,9 @@ class UpdateQueueRequest extends FormRequest
                 'sometimes',
                 'string',
                 'max:255',
-                function ($attribute, $value, $fail) use ($tenant, $queue) {
-                    if ($tenant->queues()->where('name', $value)->where('id', '!=', $queue->id)->exists()) {
-                        $fail('A queue with this name already exists for this tenant.');
+                function ($attribute, $value, $fail) use ($organization, $queue) {
+                    if ($organization->queues()->where('name', $value)->where('id', '!=', $queue->id)->exists()) {
+                        $fail('A queue with this name already exists for this organization.');
                     }
                 },
             ],

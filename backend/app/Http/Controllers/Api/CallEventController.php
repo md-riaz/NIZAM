@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CallEventLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,12 +15,12 @@ use Illuminate\Http\Request;
 class CallEventController extends Controller
 {
     /**
-     * List call events for a tenant, optionally filtered by call UUID.
+     * List call events for an organization, optionally filtered by call UUID.
      */
-    public function index(Request $request, Tenant $tenant): JsonResponse
+    public function index(Request $request, Organization $organization): JsonResponse
     {
         $this->authorize('viewAny', CallEventLog::class);
-        $query = CallEventLog::where('tenant_id', $tenant->id)
+        $query = CallEventLog::where('organization_id', $organization->id)
             ->orderBy('occurred_at', 'asc');
 
         if ($request->filled('call_uuid')) {
@@ -47,10 +47,10 @@ class CallEventController extends Controller
     /**
      * Get the full trace for a specific call UUID.
      */
-    public function trace(Tenant $tenant, string $callUuid): JsonResponse
+    public function trace(Organization $organization, string $callUuid): JsonResponse
     {
         $this->authorize('viewAny', CallEventLog::class);
-        $events = CallEventLog::where('tenant_id', $tenant->id)
+        $events = CallEventLog::where('organization_id', $organization->id)
             ->where('call_uuid', $callUuid)
             ->orderBy('occurred_at', 'asc')
             ->get();
@@ -69,11 +69,11 @@ class CallEventController extends Controller
     /**
      * Replay a specific event by its UUID.
      */
-    public function replay(Tenant $tenant, string $eventId): JsonResponse
+    public function replay(Organization $organization, string $eventId): JsonResponse
     {
         $this->authorize('viewAny', CallEventLog::class);
 
-        $event = CallEventLog::where('tenant_id', $tenant->id)
+        $event = CallEventLog::where('organization_id', $organization->id)
             ->where('id', $eventId)
             ->first();
 
@@ -96,11 +96,11 @@ class CallEventController extends Controller
      *
      * Required for debugging and webhook retry scenarios.
      */
-    public function redispatch(Request $request, Tenant $tenant, string $eventId): JsonResponse
+    public function redispatch(Request $request, Organization $organization, string $eventId): JsonResponse
     {
         $this->authorize('viewAny', CallEventLog::class);
 
-        $event = CallEventLog::where('tenant_id', $tenant->id)
+        $event = CallEventLog::where('organization_id', $organization->id)
             ->where('id', $eventId)
             ->first();
 
@@ -109,7 +109,7 @@ class CallEventController extends Controller
         }
 
         $dispatcher = app(WebhookDispatcher::class);
-        $dispatcher->dispatch($tenant->id, $event->event_type, $event->payload ?? []);
+        $dispatcher->dispatch($organization->id, $event->event_type, $event->payload ?? []);
 
         return response()->json([
             'message' => 'Event re-dispatched to webhooks.',

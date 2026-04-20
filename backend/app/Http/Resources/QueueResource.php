@@ -11,7 +11,7 @@ class QueueResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'name' => $this->name,
             'strategy' => $this->strategy,
             'max_wait_time' => $this->max_wait_time,

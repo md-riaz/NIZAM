@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\OfficeFeatureService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,11 +13,11 @@ class OfficeFeatureServiceTest extends TestCase
 
     public function test_it_returns_default_office_features_when_none_are_stored(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'settings' => [],
         ]);
 
-        $features = app(OfficeFeatureService::class)->getFeatures($tenant);
+        $features = app(OfficeFeatureService::class)->getFeatures($organization);
 
         $this->assertSame([
             'parking_enabled' => false,
@@ -30,7 +30,7 @@ class OfficeFeatureServiceTest extends TestCase
 
     public function test_it_updates_office_features_without_overwriting_other_settings(): void
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'settings' => [
                 'timezone' => 'UTC',
                 'business_phone' => [
@@ -45,7 +45,7 @@ class OfficeFeatureServiceTest extends TestCase
             ],
         ]);
 
-        $features = app(OfficeFeatureService::class)->updateFeatures($tenant, [
+        $features = app(OfficeFeatureService::class)->updateFeatures($organization, [
             'parking_enabled' => true,
             'directory_enabled' => true,
         ]);
@@ -58,10 +58,10 @@ class OfficeFeatureServiceTest extends TestCase
             'directory_enabled' => true,
         ], $features);
 
-        $tenant->refresh();
+        $organization->refresh();
 
-        $this->assertSame('UTC', data_get($tenant->settings, 'timezone'));
-        $this->assertSame('flow-123', data_get($tenant->settings, 'business_phone.default_entrypoint.flow_id'));
-        $this->assertSame($features, data_get($tenant->settings, 'business_phone.office_features'));
+        $this->assertSame('UTC', data_get($organization->settings, 'timezone'));
+        $this->assertSame('flow-123', data_get($organization->settings, 'business_phone.default_entrypoint.flow_id'));
+        $this->assertSame($features, data_get($organization->settings, 'business_phone.office_features'));
     }
 }

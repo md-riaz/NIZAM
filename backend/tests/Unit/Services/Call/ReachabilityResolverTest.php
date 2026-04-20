@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services\Call;
 
 use App\Models\CallSession;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\EndpointCandidate;
 use App\Services\Call\EndpointCandidateSet;
 use App\Services\Call\LiveRegistrationVisibility;
@@ -30,18 +30,18 @@ class ReachabilityResolverTest extends TestCase
 
     public function test_uses_fresh_cached_registration_without_hitting_live_visibility(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
         $candidate = $this->sipCandidate('binding-1', 'sip:1001@acme.test');
         $cache = new ReachabilityCache;
-        $cache->markRegistered($tenant->id, $candidate, ['source' => 'reachability_cache']);
+        $cache->markRegistered($organization->id, $candidate, ['source' => 'reachability_cache']);
 
         $visibility = $this->createMock(LiveRegistrationVisibility::class);
-        $visibility->expects($this->never())->method('forTenant');
+        $visibility->expects($this->never())->method('forOrganization');
 
         $resolver = new ReachabilityResolver($cache, $visibility);
 
-        $resolved = $resolver->resolve($callSession->load('tenant'), new EndpointCandidateSet([$candidate]));
+        $resolved = $resolver->resolve($callSession->load('organization'), new EndpointCandidateSet([$candidate]));
 
         $decision = $resolved->decisions[0];
 
@@ -54,16 +54,16 @@ class ReachabilityResolverTest extends TestCase
 
     public function test_stale_cache_falls_back_to_live_visibility_and_refreshes_cache(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
         $candidate = $this->sipCandidate('binding-2', 'sip:1002@acme.test');
         $cache = new ReachabilityCache;
-        $cache->markUnregistered($tenant->id, $candidate, ['source' => 'stale_seed'], now()->subMinutes(5));
+        $cache->markUnregistered($organization->id, $candidate, ['source' => 'stale_seed'], now()->subMinutes(5));
 
         $visibility = $this->createMock(LiveRegistrationVisibility::class);
         $visibility->expects($this->once())
-            ->method('forTenant')
-            ->with($this->callback(fn ($resolvedTenant) => $resolvedTenant instanceof Tenant && $resolvedTenant->id === $tenant->id))
+            ->method('forOrganization')
+            ->with($this->callback(fn ($resolvedOrganization) => $resolvedOrganization instanceof Organization && $resolvedOrganization->id === $organization->id))
             ->willReturn([
                 '1002' => [
                     'registered' => true,
@@ -78,10 +78,10 @@ class ReachabilityResolverTest extends TestCase
 
         $resolver = new ReachabilityResolver($cache, $visibility);
 
-        $resolved = $resolver->resolve($callSession->load('tenant'), new EndpointCandidateSet([$candidate]));
+        $resolved = $resolver->resolve($callSession->load('organization'), new EndpointCandidateSet([$candidate]));
 
         $decision = $resolved->decisions[0];
-        $freshSnapshot = $cache->snapshotFor($tenant->id, $candidate, 30);
+        $freshSnapshot = $cache->snapshotFor($organization->id, $candidate, 30);
 
         $this->assertSame(ReachabilityDecision::STATUS_ONLINE_SIP, $decision->status);
         $this->assertSame('esl_live', $decision->decisionReason);
@@ -95,8 +95,8 @@ class ReachabilityResolverTest extends TestCase
 
     public function test_push_and_pstn_candidates_are_classified_when_registration_is_not_present(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $callSession = CallSession::factory()->for($tenant)->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $callSession = CallSession::factory()->for($organization)->create([
             'variables' => ['delivery_wake_window_seconds' => 90],
         ]);
 
@@ -127,13 +127,13 @@ class ReachabilityResolverTest extends TestCase
 
         $visibility = $this->createMock(LiveRegistrationVisibility::class);
         $visibility->expects($this->once())
-            ->method('forTenant')
-            ->with($this->callback(fn ($resolvedTenant) => $resolvedTenant instanceof Tenant && $resolvedTenant->id === $tenant->id))
+            ->method('forOrganization')
+            ->with($this->callback(fn ($resolvedOrganization) => $resolvedOrganization instanceof Organization && $resolvedOrganization->id === $organization->id))
             ->willReturn([]);
 
         $resolver = new ReachabilityResolver(new ReachabilityCache, $visibility);
 
-        $resolved = $resolver->resolve($callSession->load('tenant'), new EndpointCandidateSet([$pushCandidate, $pstnCandidate]));
+        $resolved = $resolver->resolve($callSession->load('organization'), new EndpointCandidateSet([$pushCandidate, $pstnCandidate]));
 
         $pushDecision = $resolved->decisions[0];
         $pstnDecision = $resolved->decisions[1];
@@ -153,14 +153,14 @@ class ReachabilityResolverTest extends TestCase
     {
         config(['call_delivery.reachability.cache_store' => 'missing-store']);
 
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
         $candidate = $this->sipCandidate('binding-5', 'sip:1005@acme.test');
 
         $visibility = $this->createMock(LiveRegistrationVisibility::class);
         $visibility->expects($this->once())
-            ->method('forTenant')
-            ->with($this->callback(fn ($resolvedTenant) => $resolvedTenant instanceof Tenant && $resolvedTenant->id === $tenant->id))
+            ->method('forOrganization')
+            ->with($this->callback(fn ($resolvedOrganization) => $resolvedOrganization instanceof Organization && $resolvedOrganization->id === $organization->id))
             ->willReturn([
                 '1005' => [
                     'registered' => true,
@@ -171,7 +171,7 @@ class ReachabilityResolverTest extends TestCase
 
         $resolver = new ReachabilityResolver(new ReachabilityCache, $visibility);
 
-        $resolved = $resolver->resolve($callSession->load('tenant'), new EndpointCandidateSet([$candidate]));
+        $resolved = $resolver->resolve($callSession->load('organization'), new EndpointCandidateSet([$candidate]));
 
         $decision = $resolved->decisions[0];
 
@@ -182,8 +182,8 @@ class ReachabilityResolverTest extends TestCase
 
     public function test_live_visibility_unavailable_marks_push_candidates_with_degraded_reason(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $callSession = CallSession::factory()->for($organization)->create();
         $candidate = new EndpointCandidate(
             endpointBindingId: 'binding-6',
             ownerType: 'extension',
@@ -199,13 +199,13 @@ class ReachabilityResolverTest extends TestCase
 
         $visibility = $this->createMock(LiveRegistrationVisibility::class);
         $visibility->expects($this->once())
-            ->method('forTenant')
-            ->with($this->callback(fn ($resolvedTenant) => $resolvedTenant instanceof Tenant && $resolvedTenant->id === $tenant->id))
+            ->method('forOrganization')
+            ->with($this->callback(fn ($resolvedOrganization) => $resolvedOrganization instanceof Organization && $resolvedOrganization->id === $organization->id))
             ->willReturn(null);
 
         $resolver = new ReachabilityResolver(new ReachabilityCache, $visibility);
 
-        $resolved = $resolver->resolve($callSession->load('tenant'), new EndpointCandidateSet([$candidate]));
+        $resolved = $resolver->resolve($callSession->load('organization'), new EndpointCandidateSet([$candidate]));
 
         $decision = $resolved->decisions[0];
 

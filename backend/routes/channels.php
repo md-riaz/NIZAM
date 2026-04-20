@@ -13,34 +13,34 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-Broadcast::channel('tenant.{tenantId}.calls', function ($user, string $tenantId) {
+Broadcast::channel('organization.{organizationId}.calls', function ($user, string $organizationId) {
     if ($user->role === 'admin') {
         return true;
     }
 
-    return $user->tenant_id === $tenantId;
+    return $user->organization_id === $organizationId;
 });
 
-Broadcast::channel('tenant.{tenantId}.calls.{eventType}', function ($user, string $tenantId, string $eventType) {
+Broadcast::channel('organization.{organizationId}.calls.{eventType}', function ($user, string $organizationId, string $eventType) {
     if ($user->role === 'admin') {
         return true;
     }
 
-    return $user->tenant_id === $tenantId;
+    return $user->organization_id === $organizationId;
 });
 
-Broadcast::channel('tenant.{tenantId}.contact-center', function ($user, string $tenantId) {
+Broadcast::channel('organization.{organizationId}.contact-center', function ($user, string $organizationId) {
     if ($user->role === 'admin') {
         return true;
     }
 
-    return $user->tenant_id === $tenantId;
+    return $user->organization_id === $organizationId;
 });
 
-Broadcast::channel('tenant.{tenantId}.contact-center.{eventType}', function ($user, string $tenantId, string $eventType) {
+Broadcast::channel('organization.{organizationId}.contact-center.{eventType}', function ($user, string $organizationId, string $eventType) {
     if ($user->role === 'admin') {
         return true;
     }
 
-    return $user->tenant_id === $tenantId;
+    return $user->organization_id === $organizationId;
 });

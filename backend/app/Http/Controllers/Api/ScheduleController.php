@@ -7,39 +7,39 @@ use App\Http\Requests\StoreScheduleRequest;
 use App\Http\Requests\UpdateScheduleRequest;
 use App\Http\Resources\ScheduleResource;
 use App\Models\Schedule;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 class ScheduleController extends Controller
 {
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         return ScheduleResource::collection(
-            $tenant->schedules()->with(['rules', 'breaks', 'exceptions'])->paginate(15)
+            $organization->schedules()->with(['rules', 'breaks', 'exceptions'])->paginate(15)
         );
     }
 
-    public function store(StoreScheduleRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreScheduleRequest $request, Organization $organization): JsonResponse
     {
-        $schedule = $tenant->schedules()->create($request->safe()->except(['rules', 'breaks', 'exceptions']));
+        $schedule = $organization->schedules()->create($request->safe()->except(['rules', 'breaks', 'exceptions']));
 
         $this->syncScheduleRelations($schedule, $request->validated());
 
         return (new ScheduleResource($schedule->load(['rules', 'breaks', 'exceptions'])))->response()->setStatusCode(201);
     }
 
-    public function show(Tenant $tenant, Schedule $schedule): JsonResponse|ScheduleResource
+    public function show(Organization $organization, Schedule $schedule): JsonResponse|ScheduleResource
     {
-        if ($schedule->tenant_id !== $tenant->id) {
+        if ($schedule->organization_id !== $organization->id) {
             return response()->json(['message' => 'Schedule not found.'], 404);
         }
 
         return new ScheduleResource($schedule->load(['rules', 'breaks', 'exceptions']));
     }
 
-    public function update(UpdateScheduleRequest $request, Tenant $tenant, Schedule $schedule): JsonResponse|ScheduleResource
+    public function update(UpdateScheduleRequest $request, Organization $organization, Schedule $schedule): JsonResponse|ScheduleResource
     {
-        if ($schedule->tenant_id !== $tenant->id) {
+        if ($schedule->organization_id !== $organization->id) {
             return response()->json(['message' => 'Schedule not found.'], 404);
         }
 
@@ -49,9 +49,9 @@ class ScheduleController extends Controller
         return new ScheduleResource($schedule->load(['rules', 'breaks', 'exceptions']));
     }
 
-    public function destroy(Tenant $tenant, Schedule $schedule): JsonResponse
+    public function destroy(Organization $organization, Schedule $schedule): JsonResponse
     {
-        if ($schedule->tenant_id !== $tenant->id) {
+        if ($schedule->organization_id !== $organization->id) {
             return response()->json(['message' => 'Schedule not found.'], 404);
         }
 

@@ -88,13 +88,6 @@ const NAV_SECTIONS: NavSection[] = [
         ],
     },
     {
-        title: 'Connectivity',
-        items: [
-            // Providers remain visible globally for Platform Admins to control shared connectivity
-            { label: (hasOrganization) => hasOrganization ? 'Providers' : 'Platform Providers', icon: Globe, href: '/admin/providers', adminOnly: true },
-        ],
-    },
-    {
         title: 'Calls',
         items: [
             { label: 'Call History', icon: PhoneCall, href: '/admin/call-history', organizationRequired: true },

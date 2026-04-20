@@ -20,7 +20,7 @@ interface NizamModule
     public function version(): string;
     public function register(): void;
     public function boot(): void;
-    public function dialplanContributions(string $tenantDomain, string $destination): array;
+    public function dialplanContributions(string $organizationDomain, string $destination): array;
     public function subscribedEvents(): array;
     public function handleEvent(string $eventType, array $data): void;
     public function permissions(): array;
@@ -92,7 +92,7 @@ class CallRecordingModule implements NizamModule
         // Run after all modules are registered
     }
 
-    public function dialplanContributions(string $tenantDomain, string $destination): array
+    public function dialplanContributions(string $organizationDomain, string $destination): array
     {
         // Return XML fragments keyed by priority (lower = earlier)
         return [
@@ -154,7 +154,7 @@ public function boot(): void
 Modules can inject dialplan XML fragments at specific priorities:
 
 ```php
-public function dialplanContributions(string $tenantDomain, string $destination): array
+public function dialplanContributions(string $organizationDomain, string $destination): array
 {
     // Priority determines order (lower = earlier in dialplan)
     return [

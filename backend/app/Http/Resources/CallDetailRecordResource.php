@@ -11,7 +11,7 @@ class CallDetailRecordResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'uuid' => $this->uuid,
             'caller_id_name' => $this->caller_id_name,
             'caller_id_number' => $this->caller_id_number,

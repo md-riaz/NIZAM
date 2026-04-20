@@ -7,7 +7,7 @@ Expand the React admin application so it covers the major existing backend API c
 This plan is focused on:
 - improving practical admin usability
 - closing the largest backend/frontend coverage gaps
-- prioritizing operational and tenant-management workflows first
+- prioritizing operational and organization-management workflows first
 - avoiding wasted effort on CRUD pages that will later be replaced by a better call-flow editor model
 
 ## Explicit Scope Decision
@@ -31,7 +31,7 @@ If any temporary UI is needed before the builder exists, it should be minimal, i
 The mounted React admin app currently exposes these main routes:
 - `/login`
 - `/admin`
-- `/admin/tenants`
+- `/admin/organizations`
 - `/admin/users`
 - `/admin/extensions`
 - `/admin/ring-groups`
@@ -51,12 +51,12 @@ The mounted React admin app currently exposes these main routes:
 
 The frontend already consumes a relatively small subset of the backend surface, mainly:
 - auth: login, logout, me
-- platform lists: tenants, users
+- platform lists: organizations, users
 - health
 - WebRTC TLS settings
 - log viewer APIs
 - SIP status APIs
-- tenant lists / read-only views for extensions, ring groups, CDRs, audit logs
+- organization lists / read-only views for extensions, ring groups, CDRs, audit logs
 - DID CRUD
 - gateway CRUD
 
@@ -66,16 +66,16 @@ This means the frontend is currently an admin shell with a few implemented workf
 
 1. Build operationally valuable workflows first.
 2. Prefer complete vertical slices over more read-only pages.
-3. Prioritize APIs tied to real admin work: provisioning, user management, tenant settings, recordings, device management, exports, status, observability.
+3. Prioritize APIs tied to real admin work: provisioning, user management, organization settings, recordings, device management, exports, status, observability.
 4. Avoid investing heavily in CRUD pages for features that are expected to move into the future call-flow builder.
 5. Reuse shared query, form, table, and confirmation patterns.
-6. Keep tenant-scoped features clearly separated from platform-admin features.
+6. Keep organization-scoped features clearly separated from platform-admin features.
 7. Build with accessibility in mind, including keyboard support, visible focus states, clear labels, and robust empty/loading/error states.
 
 ## Target Outcome
 
 After execution of this plan, the frontend should provide:
-- full tenant and user lifecycle management
+- full organization and user lifecycle management
 - complete extension management including WebRTC provisioning visibility
 - core telephony connectivity management
 - better operational tooling for logs, exports, status, and SSL/WebRTC controls
@@ -91,38 +91,38 @@ After execution of this plan, the frontend should provide:
 ### Goal
 Turn currently partial or read-only screens into fully usable admin workflows.
 
-### 1. Tenants
+### 1. Organizations
 Current state:
 - list view only
 - create button has no implemented flow
 - no edit/settings/provision UX
 
 Implement:
-- tenant create form
-- tenant edit form
-- tenant settings page
-- tenant provision action flow
-- tenant detail summary page or right-side drill-down
+- organization create form
+- organization edit form
+- organization settings page
+- organization provision action flow
+- organization detail summary page or right-side drill-down
 
 APIs to use:
-- `GET /tenants`
-- `POST /tenants`
-- `GET /tenants/{tenant}`
-- `PUT /tenants/{tenant}`
-- `DELETE /tenants/{tenant}` if allowed by business rules
-- `GET /tenants/{tenant}/settings`
-- `PUT /tenants/{tenant}/settings`
-- `POST /tenants/provision`
+- `GET /organizations`
+- `POST /organizations`
+- `GET /organizations/{organization}`
+- `PUT /organizations/{organization}`
+- `DELETE /organizations/{organization}` if allowed by business rules
+- `GET /organizations/{organization}/settings`
+- `PUT /organizations/{organization}/settings`
+- `POST /organizations/provision`
 
 Frontend additions:
-- `TenantsListPage`
-- `TenantFormPage`
-- `TenantSettingsPage`
+- `OrganizationsListPage`
+- `OrganizationFormPage`
+- `OrganizationSettingsPage`
 - provision confirmation dialog
-- route updates under `/admin/tenants/...`
+- route updates under `/admin/organizations/...`
 
 Priority notes:
-- tenant create + settings should be high priority
+- organization create + settings should be high priority
 - delete can be hidden behind stricter checks if destructive
 
 ### 2. Users and Permissions
@@ -133,7 +133,7 @@ Current state:
 
 Implement:
 - create/edit user form
-- reset role/tenant assignment flow
+- reset role/organization assignment flow
 - permissions viewer
 - grant/revoke permission actions
 
@@ -151,7 +151,7 @@ APIs to use:
 Frontend additions:
 - `UserFormPage`
 - `UserPermissionsPage` or permissions drawer
-- tenant selector for scoped users
+- organization selector for scoped users
 - role badges and filters
 
 Priority notes:
@@ -171,14 +171,14 @@ Implement:
 - registration status detail panel
 
 APIs to use:
-- `GET /tenants/{tenant}/extensions`
-- `POST /tenants/{tenant}/extensions`
-- `GET /tenants/{tenant}/extensions/{extension}`
-- `PUT /tenants/{tenant}/extensions/{extension}`
-- `DELETE /tenants/{tenant}/extensions/{extension}`
-- `GET /tenants/{tenant}/extensions/{extension}/webrtc-config`
-- `GET /tenants/{tenant}/extensions/status/all`
-- `GET /tenants/{tenant}/extensions/{extension}/status`
+- `GET /organizations/{organization}/extensions`
+- `POST /organizations/{organization}/extensions`
+- `GET /organizations/{organization}/extensions/{extension}`
+- `PUT /organizations/{organization}/extensions/{extension}`
+- `DELETE /organizations/{organization}/extensions/{extension}`
+- `GET /organizations/{organization}/extensions/{extension}/webrtc-config`
+- `GET /organizations/{organization}/extensions/status/all`
+- `GET /organizations/{organization}/extensions/{extension}/status`
 
 Frontend additions:
 - `ExtensionFormPage`
@@ -200,11 +200,11 @@ Implement:
 - ring strategy form controls
 
 APIs to use:
-- `GET /tenants/{tenant}/ring-groups`
-- `POST /tenants/{tenant}/ring-groups`
-- `GET /tenants/{tenant}/ring-groups/{ringGroup}`
-- `PUT /tenants/{tenant}/ring-groups/{ringGroup}`
-- `DELETE /tenants/{tenant}/ring-groups/{ringGroup}`
+- `GET /organizations/{organization}/ring-groups`
+- `POST /organizations/{organization}/ring-groups`
+- `GET /organizations/{organization}/ring-groups/{ringGroup}`
+- `PUT /organizations/{organization}/ring-groups/{ringGroup}`
+- `DELETE /organizations/{organization}/ring-groups/{ringGroup}`
 
 Frontend additions:
 - `RingGroupFormPage`
@@ -226,7 +226,7 @@ Improve:
 - optional status integration via gateway status endpoint
 
 Potential APIs to add to UI usage:
-- `GET /tenants/{tenant}/gateways/{gateway}/status`
+- `GET /organizations/{organization}/gateways/{gateway}/status`
 
 Priority notes:
 - these pages should be refined, not rewritten
@@ -240,11 +240,11 @@ Support real production operations, incident response, and administration.
 
 ### 6. Admin Dashboard Upgrade
 Current state:
-- basic tenants count + health check only
+- basic organizations count + health check only
 
 Implement:
 - use dedicated admin dashboard API instead of composing minimal widgets from generic endpoints
-- add cards for tenants, users, active registrations, call volume, health, recent alerts
+- add cards for organizations, users, active registrations, call volume, health, recent alerts
 - add quick links into major admin actions
 
 APIs to use:
@@ -347,11 +347,11 @@ Implement:
 - media usage notes where possible
 
 APIs to use:
-- `GET /tenants/{tenant}/system-media`
-- `POST /tenants/{tenant}/system-media`
-- `GET /tenants/{tenant}/system-media/{mediaId}`
-- `PUT /tenants/{tenant}/system-media/{mediaId}`
-- `DELETE /tenants/{tenant}/system-media/{mediaId}`
+- `GET /organizations/{organization}/system-media`
+- `POST /organizations/{organization}/system-media`
+- `GET /organizations/{organization}/system-media/{mediaId}`
+- `PUT /organizations/{organization}/system-media/{mediaId}`
+- `DELETE /organizations/{organization}/system-media/{mediaId}`
 
 Priority notes:
 - useful now even before graph-based call-flow arrives
@@ -362,7 +362,7 @@ Implement:
 - profile templates, provisioning values, brand/model support
 
 APIs to use:
-- `device-profiles` resource endpoints under tenant scope
+- `device-profiles` resource endpoints under organization scope
 
 Priority notes:
 - important if desk-phone provisioning is part of the platform rollout
@@ -375,7 +375,7 @@ Implement:
 - remove device action
 
 APIs to use:
-- mobile device endpoints under tenant scope
+- mobile device endpoints under organization scope
 
 Priority notes:
 - useful for mobile/WebRTC endpoint management
@@ -390,10 +390,10 @@ Implement:
 - filter by date/extension/caller
 
 APIs to use:
-- `GET /tenants/{tenant}/recordings`
-- `GET /tenants/{tenant}/recordings/{recording}`
-- `DELETE /tenants/{tenant}/recordings/{recording}`
-- `GET /tenants/{tenant}/recordings/{recording}/download`
+- `GET /organizations/{organization}/recordings`
+- `GET /organizations/{organization}/recordings/{recording}`
+- `DELETE /organizations/{organization}/recordings/{recording}`
+- `GET /organizations/{organization}/recordings/{recording}/download`
 
 Priority notes:
 - strong operational value and relatively self-contained
@@ -408,8 +408,8 @@ Implement:
 - JSON change viewer
 
 APIs to use:
-- `GET /tenants/{tenant}/audit-logs`
-- `GET /tenants/{tenant}/audit-logs/{auditLog}`
+- `GET /organizations/{organization}/audit-logs`
+- `GET /organizations/{organization}/audit-logs/{auditLog}`
 
 Priority notes:
 - useful for admin trust and compliance
@@ -425,14 +425,14 @@ Implement:
 - analytics dashboard cards and charts
 
 APIs to use:
-- `GET /tenants/{tenant}/cdrs`
-- `GET /tenants/{tenant}/cdrs/{cdr}`
-- `GET /tenants/{tenant}/cdrs/export`
-- `POST /tenants/{tenant}/cdrs/export`
-- `GET /tenants/{tenant}/cdrs/analytics/summary`
-- `GET /tenants/{tenant}/cdrs/analytics/volume`
-- `GET /tenants/{tenant}/cdrs/analytics/quality`
-- `GET /tenants/{tenant}/cdrs/analytics/destinations`
+- `GET /organizations/{organization}/cdrs`
+- `GET /organizations/{organization}/cdrs/{cdr}`
+- `GET /organizations/{organization}/cdrs/export`
+- `POST /organizations/{organization}/cdrs/export`
+- `GET /organizations/{organization}/cdrs/analytics/summary`
+- `GET /organizations/{organization}/cdrs/analytics/volume`
+- `GET /organizations/{organization}/cdrs/analytics/quality`
+- `GET /organizations/{organization}/cdrs/analytics/destinations`
 
 Priority notes:
 - high-value reporting area
@@ -445,7 +445,7 @@ Priority notes:
 ### Goal
 Expose advanced but still non-graph-builder functionality in a deliberate way.
 
-These are important, but should follow the core admin and tenant management work.
+These are important, but should follow the core admin and organization management work.
 
 ### 17. Teams
 Implement full CRUD if the business workflow depends on teams outside the future flow builder.
@@ -521,7 +521,7 @@ The following backend APIs should remain backend-first until the builder is read
 # Recommended Delivery Order
 
 ## Wave 1 — Must-Have Admin Completion
-1. tenant create/edit/settings/provision
+1. organization create/edit/settings/provision
 2. user create/edit/permissions
 3. extension create/edit/delete + WebRTC config visibility
 4. ring group CRUD
@@ -534,7 +534,7 @@ The following backend APIs should remain backend-first until the builder is read
 9. log viewer completion
 10. SIP status drilldowns
 
-## Wave 3 — Tenant Operations and Reporting
+## Wave 3 — Organization Operations and Reporting
 11. recordings
 12. CDR export
 13. CDR analytics
@@ -566,7 +566,7 @@ Create or standardize:
 - shared pagination/filter helpers if list sizes grow
 
 Suggested structure:
-- `frontend/src/features/tenants/*`
+- `frontend/src/features/organizations/*`
 - `frontend/src/features/users/*`
 - `frontend/src/features/extensions/*`
 - `frontend/src/features/operations/*`
@@ -587,7 +587,7 @@ Build reusable components for:
 
 ## Routing Improvements
 Add nested route groups where useful:
-- `/admin/tenants/*`
+- `/admin/organizations/*`
 - `/admin/users/*`
 - `/admin/extensions/*`
 - `/admin/operations/*`
@@ -607,7 +607,7 @@ For live operational pages:
 - centralize polling intervals
 - allow manual refresh + auto refresh toggles
 - avoid unnecessary high-frequency refetching
-- add cancellation and stale-state handling for quick tenant switching
+- add cancellation and stale-state handling for quick organization switching
 
 ---
 
@@ -615,7 +615,7 @@ For live operational pages:
 
 ## Platform Admin Features
 ### Implement now
-- tenants
+- organizations
 - users
 - permissions
 - admin dashboard
@@ -629,7 +629,7 @@ For live operational pages:
 ### Keep for later only if needed
 - token management UI
 
-## Tenant Admin Features
+## Organization Admin Features
 ### Implement now
 - extensions
 - extension status
@@ -668,9 +668,9 @@ For live operational pages:
 # Suggested Page Additions
 
 ## High-priority new pages
-- `/admin/tenants/create`
-- `/admin/tenants/:id/edit`
-- `/admin/tenants/:id/settings`
+- `/admin/organizations/create`
+- `/admin/organizations/:id/edit`
+- `/admin/organizations/:id/settings`
 - `/admin/users/create`
 - `/admin/users/:id/edit`
 - `/admin/users/:id/permissions`
@@ -710,10 +710,10 @@ Mitigation:
 Mitigation:
 - centralize query keys, API wrappers, error normalization, and mutation invalidation rules
 
-## Risk 4: Poor tenant-switch handling on live pages
+## Risk 4: Poor organization-switch handling on live pages
 Mitigation:
-- ensure all tenant-scoped queries key off active tenant ID
-- clear stale selected entity state on tenant switch
+- ensure all organization-scoped queries key off active organization ID
+- clear stale selected entity state on organization switch
 
 ## Risk 5: Operational pages becoming noisy or expensive
 Mitigation:
@@ -726,8 +726,8 @@ Mitigation:
 # Acceptance Criteria For This Roadmap
 
 A good implementation of this plan should result in:
-- admins can create and manage tenants and users from the UI
-- tenant admins can fully manage extensions, ring groups, DIDs, and gateways
+- admins can create and manage organizations and users from the UI
+- organization admins can fully manage extensions, ring groups, DIDs, and gateways
 - WebRTC/SSL/SIP operational workflows are visible and actionable from the UI
 - recordings, exports, analytics, and audit detail become usable without leaving the frontend
 - the frontend does not overcommit to page-based CRUD for domains planned for a future graph-based flow builder
@@ -738,7 +738,7 @@ A good implementation of this plan should result in:
 # Recommended First Sprint
 
 If this should be started immediately, the first sprint should contain:
-1. tenant create/edit/settings/provision
+1. organization create/edit/settings/provision
 2. user create/edit/permissions
 3. extension create/edit/delete + WebRTC config panel
 4. ring group CRUD

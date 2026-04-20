@@ -8,7 +8,7 @@ use App\Listeners\ArchiveCallRecording;
 use App\Models\CallDetailRecord;
 use App\Models\Extension;
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Modules\Media\MediaArchiveModule;
 use App\Modules\ModuleRegistry;
 use App\Services\EventProcessor;
@@ -38,26 +38,26 @@ class EventProcessorTest extends TestCase
         $this->processor = new EventProcessor($dispatcher);
     }
 
-    private function createTenantWithExtension(): array
+    private function createOrganizationWithExtension(): array
     {
-        $tenant = Tenant::factory()->create([
+        $organization = Organization::factory()->create([
             'domain' => 'test.example.com',
             'is_active' => true,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'is_active' => true,
         ]);
 
-        return [$tenant, $extension];
+        return [$organization, $extension];
     }
 
     public function test_processes_channel_hangup_complete_and_creates_cdr(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -81,7 +81,7 @@ class EventProcessorTest extends TestCase
 
         $this->assertDatabaseHas('call_detail_records', [
             'uuid' => 'test-uuid-123',
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'caller_id_number' => '1001',
             'destination_number' => '1002',
             'hangup_cause' => 'NORMAL_CLEARING',
@@ -90,7 +90,7 @@ class EventProcessorTest extends TestCase
 
     public function test_dispatches_call_event_on_channel_create(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -105,14 +105,14 @@ class EventProcessorTest extends TestCase
 
         $this->processor->process($event);
 
-        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($tenant) {
-            return $e->tenantId === $tenant->id && $e->eventType === 'started';
+        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($organization) {
+            return $e->organizationId === $organization->id && $e->eventType === 'started';
         });
     }
 
     public function test_dispatches_call_event_on_channel_answer(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $event = [
@@ -127,8 +127,8 @@ class EventProcessorTest extends TestCase
 
         $this->processor->process($event);
 
-        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($tenant) {
-            return $e->tenantId === $tenant->id && $e->eventType === 'answered';
+        Event::assertDispatched(CallEvent::class, function (CallEvent $e) use ($organization) {
+            return $e->organizationId === $organization->id && $e->eventType === 'answered';
         });
     }
 
@@ -136,13 +136,13 @@ class EventProcessorTest extends TestCase
     {
         Storage::fake('recordings');
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $sourcePath = storage_path('framework/testing/archive-listener/call-end-archive.wav');
         @mkdir(dirname($sourcePath), 0777, true);
         file_put_contents($sourcePath, 'listener-audio');
 
         $cdr = CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'uuid' => 'call-end-archive',
             'recording_path' => $sourcePath,
             'direction' => 'inbound',
@@ -159,7 +159,7 @@ class EventProcessorTest extends TestCase
         $listener->handle(new CallDetailRecordCreated($cdr));
 
         $this->assertDatabaseHas('recordings', [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'call-end-archive',
             'storage_driver' => 'local',
         ]);
@@ -171,14 +171,14 @@ class EventProcessorTest extends TestCase
 
     public function test_dispatches_missed_call_webhook_on_no_answer(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
         Event::fake([CallEvent::class]);
 
         $dispatcher = $this->createMock(WebhookDispatcher::class);
         $dispatcher->expects($this->exactly(2))
             ->method('dispatch')
-            ->willReturnCallback(function ($tenantId, $eventType, $payload) use ($tenant) {
-                $this->assertEquals($tenant->id, $tenantId);
+            ->willReturnCallback(function ($organizationId, $eventType, $payload) use ($organization) {
+                $this->assertEquals($organization->id, $organizationId);
                 $this->assertContains($eventType, ['call.hangup', 'call.missed']);
             });
 
@@ -200,7 +200,7 @@ class EventProcessorTest extends TestCase
         $processor->process($event);
     }
 
-    public function test_ignores_events_without_tenant_domain(): void
+    public function test_ignores_events_without_organization_domain(): void
     {
         Event::fake([CallEvent::class]);
 
@@ -220,13 +220,13 @@ class EventProcessorTest extends TestCase
 
     public function test_processes_voicemail_received_through_module_hook_and_webhook(): void
     {
-        [$tenant, $extension] = $this->createTenantWithExtension();
+        [$organization, $extension] = $this->createOrganizationWithExtension();
 
         $dispatcher = $this->createMock(WebhookDispatcher::class);
         $dispatcher->expects($this->once())
             ->method('dispatch')
             ->with(
-                $tenant->id,
+                $organization->id,
                 'voicemail.received',
                 $this->callback(function (array $payload): bool {
                     return ($payload['event_type'] ?? null) === 'voicemail.received'
@@ -240,8 +240,8 @@ class EventProcessorTest extends TestCase
             ->once()
             ->with(
                 'voicemail.received',
-                Mockery::on(function (array $payload) use ($tenant): bool {
-                    return ($payload['tenant_id'] ?? null) === $tenant->id
+                Mockery::on(function (array $payload) use ($organization): bool {
+                    return ($payload['organization_id'] ?? null) === $organization->id
                         && ($payload['metadata']['user'] ?? null) === '1001';
                 })
             );
@@ -260,7 +260,7 @@ class EventProcessorTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('call_events', [
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'event_type' => 'voicemail.received',
             'call_uuid' => '1001',
         ]);

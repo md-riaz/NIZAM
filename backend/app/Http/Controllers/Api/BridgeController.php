@@ -7,30 +7,30 @@ use App\Http\Requests\StoreBridgeRequest;
 use App\Http\Requests\UpdateBridgeRequest;
 use App\Http\Resources\BridgeResource;
 use App\Models\Bridge;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 class BridgeController extends Controller
 {
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', Bridge::class);
 
-        return BridgeResource::collection($tenant->bridges()->paginate(15));
+        return BridgeResource::collection($organization->bridges()->paginate(15));
     }
 
-    public function store(StoreBridgeRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreBridgeRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', Bridge::class);
 
-        $bridge = $tenant->bridges()->create($request->validated());
+        $bridge = $organization->bridges()->create($request->validated());
 
         return (new BridgeResource($bridge))->response()->setStatusCode(201);
     }
 
-    public function show(Tenant $tenant, Bridge $bridge): JsonResponse|BridgeResource
+    public function show(Organization $organization, Bridge $bridge): JsonResponse|BridgeResource
     {
-        if ($bridge->tenant_id !== $tenant->id) {
+        if ($bridge->organization_id !== $organization->id) {
             return response()->json(['message' => 'Bridge not found.'], 404);
         }
 
@@ -39,9 +39,9 @@ class BridgeController extends Controller
         return new BridgeResource($bridge);
     }
 
-    public function update(UpdateBridgeRequest $request, Tenant $tenant, Bridge $bridge): JsonResponse|BridgeResource
+    public function update(UpdateBridgeRequest $request, Organization $organization, Bridge $bridge): JsonResponse|BridgeResource
     {
-        if ($bridge->tenant_id !== $tenant->id) {
+        if ($bridge->organization_id !== $organization->id) {
             return response()->json(['message' => 'Bridge not found.'], 404);
         }
 
@@ -52,9 +52,9 @@ class BridgeController extends Controller
         return new BridgeResource($bridge);
     }
 
-    public function destroy(Tenant $tenant, Bridge $bridge): JsonResponse
+    public function destroy(Organization $organization, Bridge $bridge): JsonResponse
     {
-        if ($bridge->tenant_id !== $tenant->id) {
+        if ($bridge->organization_id !== $organization->id) {
             return response()->json(['message' => 'Bridge not found.'], 404);
         }
 

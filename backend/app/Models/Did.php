@@ -21,7 +21,7 @@ class Did extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'gateway_id',
         'number',
         'normalized_number',
@@ -58,15 +58,15 @@ class Did extends Model
 
         static::saving(function (Did $did): void {
             if ($did->number) {
-                $defaultCountryCode = (string) data_get($did->tenant?->settings, 'default_country_code', '1');
+                $defaultCountryCode = (string) data_get($did->organization?->settings, 'default_country_code', '1');
                 $did->normalized_number = DidNormalizationService::toE164($did->number, $defaultCountryCode);
             }
         });
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function destination(): MorphTo

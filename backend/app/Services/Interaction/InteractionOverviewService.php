@@ -8,7 +8,7 @@ use App\Models\CallSession;
 use App\Models\CallTraceEvent;
 use App\Models\EndpointBinding;
 use App\Models\PushNotificationLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\CallTraceAnalyzer;
 
 class InteractionOverviewService
@@ -18,9 +18,9 @@ class InteractionOverviewService
         protected CallTraceAnalyzer $traceAnalyzer,
     ) {}
 
-    public function build(Tenant $tenant, CallSession $session): array
+    public function build(Organization $organization, CallSession $session): array
     {
-        abort_unless($session->tenant_id === $tenant->id, 404);
+        abort_unless($session->organization_id === $organization->id, 404);
 
         $session->load([
             'events',

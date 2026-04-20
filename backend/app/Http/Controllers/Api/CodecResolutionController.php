@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Bridge;
 use App\Models\Gateway;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Routing\CodecResolutionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 /**
  * Preview the effective codec resolution for a given endpoint + destination + gateway combination.
  *
- * POST /api/v1/tenants/{tenant}/codec-resolution/preview
+ * POST /api/v1/organizations/{organization}/codec-resolution/preview
  */
 class CodecResolutionController extends Controller
 {
@@ -24,9 +24,9 @@ class CodecResolutionController extends Controller
     /**
      * Preview codec resolution without executing a real call.
      */
-    public function preview(Request $request, Tenant $tenant): JsonResponse
+    public function preview(Request $request, Organization $organization): JsonResponse
     {
-        $this->authorize('view', $tenant);
+        $this->authorize('view', $organization);
 
         $validated = $request->validate([
             'endpoint_type' => 'required|string|in:webrtc,sip',
@@ -37,12 +37,12 @@ class CodecResolutionController extends Controller
         ]);
 
         $bridge = isset($validated['bridge_id'])
-            ? Bridge::where('tenant_id', $tenant->id)->where('id', $validated['bridge_id'])->first()
+            ? Bridge::where('organization_id', $organization->id)->where('id', $validated['bridge_id'])->first()
             : null;
 
         $gateway = null;
         if (isset($validated['gateway_id'])) {
-            $gateway = Gateway::where('tenant_id', $tenant->id)->where('id', $validated['gateway_id'])->first();
+            $gateway = Gateway::where('organization_id', $organization->id)->where('id', $validated['gateway_id'])->first();
         } elseif ($bridge?->gateway_id) {
             $gateway = Gateway::find($bridge->gateway_id);
         }

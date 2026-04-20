@@ -13,10 +13,10 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'role' => $this->role,
             'email_verified_at' => $this->email_verified_at,
-            'tenant' => new TenantResource($this->whenLoaded('tenant')),
+            'organization' => new OrganizationResource($this->whenLoaded('organization')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

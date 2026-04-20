@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\DeviceProfile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -30,7 +30,7 @@ class DeviceProfileFactory extends Factory
         ]);
 
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'user_id' => null,
             'name' => ucfirst($vendor).' '.$model.' - '.$location,
             'vendor' => $vendor,

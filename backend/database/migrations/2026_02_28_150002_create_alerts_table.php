@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('alerts', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->foreignUuid('alert_policy_id')->constrained('alert_policies')->cascadeOnDelete();
             $table->string('severity'); // critical, warning, info
             $table->string('metric');
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->json('context')->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->timestamps();
-            $table->index(['tenant_id', 'status']);
+            $table->index(['organization_id', 'status']);
         });
     }
 

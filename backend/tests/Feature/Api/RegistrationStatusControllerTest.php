@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\Extension;
 use App\Models\User;
 use App\Services\SipRegistrationService;
@@ -16,14 +16,14 @@ class RegistrationStatusControllerTest extends TestCase
 
     public function test_bulk_extension_status_includes_user_agent(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'app.local']);
+        $organization = Organization::factory()->create(['domain' => 'app.local']);
         $admin = User::factory()->create([
             'role' => 'admin',
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
 
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
         ]);
 
@@ -44,7 +44,7 @@ class RegistrationStatusControllerTest extends TestCase
 
         $this->app->instance(SipRegistrationService::class, $service);
 
-        $response = $this->actingAs($admin, 'sanctum')->getJson("/api/v1/tenants/{$tenant->id}/extensions/status/all");
+        $response = $this->actingAs($admin, 'sanctum')->getJson("/api/v1/organizations/{$organization->id}/extensions/status/all");
 
         $response->assertOk()
             ->assertJsonPath('data.0.extension', '1001')

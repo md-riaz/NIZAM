@@ -30,7 +30,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
 
@@ -54,35 +54,35 @@ interface Member extends Agent {
 
 export default function QueueDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const { activeTenant } = useTenant();
+    const { activeOrganization } = useOrganization();
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
 
     const { data: queue } = useQuery({
-        queryKey: ['queue', activeTenant?.id, id],
+        queryKey: ['queue', activeOrganization?.id, id],
         queryFn: async () => {
-             const res = await api.get(`tenants/${activeTenant!.id}/queues/${id}`);
+             const res = await api.get(`organizations/${activeOrganization!.id}/queues/${id}`);
              return res.data.data;
         },
-        enabled: !!activeTenant && !!id,
+        enabled: !!activeOrganization && !!id,
     });
 
     const { data: members = [], isLoading } = useQuery<Member[]>({
-        queryKey: ['queue-members', activeTenant?.id, id],
+        queryKey: ['queue-members', activeOrganization?.id, id],
         queryFn: async () => {
-            const res = await api.get(`tenants/${activeTenant!.id}/queues/${id}/members`);
+            const res = await api.get(`organizations/${activeOrganization!.id}/queues/${id}/members`);
             return res.data.data;
         },
-        enabled: !!activeTenant && !!id,
+        enabled: !!activeOrganization && !!id,
     });
 
     const { data: agents = [] } = useQuery<Agent[]>({
-        queryKey: ['agents', activeTenant?.id],
+        queryKey: ['agents', activeOrganization?.id],
         queryFn: async () => {
-            const res = await api.get(`tenants/${activeTenant!.id}/agents`);
+            const res = await api.get(`organizations/${activeOrganization!.id}/agents`);
             return res.data.data;
         },
-        enabled: !!activeTenant && isAddOpen, // Only fetch when dialog opens
+        enabled: !!activeOrganization && isAddOpen, // Only fetch when dialog opens
     });
 
     const form = useForm<z.infer<typeof memberSchema>>({
@@ -92,10 +92,10 @@ export default function QueueDetailPage() {
 
     const addMutation = useApiMutation({
         mutationFn: async (values: z.infer<typeof memberSchema>) => {
-            return api.post(`tenants/${activeTenant!.id}/queues/${id}/members`, values);
+            return api.post(`organizations/${activeOrganization!.id}/queues/${id}/members`, values);
         },
         successMessage: 'Agent added to queue',
-        invalidateQueries: [['queue-members', activeTenant?.id || '', id || '']],
+        invalidateQueries: [['queue-members', activeOrganization?.id || '', id || '']],
         onSuccess: () => {
             setIsAddOpen(false);
             form.reset();
@@ -104,14 +104,14 @@ export default function QueueDetailPage() {
 
     const removeMutation = useApiMutation({
         mutationFn: async (agentId: string) => {
-            return api.delete(`tenants/${activeTenant!.id}/queues/${id}/members/${agentId}`);
+            return api.delete(`organizations/${activeOrganization!.id}/queues/${id}/members/${agentId}`);
         },
         successMessage: 'Agent removed from queue',
-        invalidateQueries: [['queue-members', activeTenant?.id || '', id || '']],
+        invalidateQueries: [['queue-members', activeOrganization?.id || '', id || '']],
         onSettled: () => setMemberToRemove(null),
     });
 
-    if (!activeTenant || !queue) return null;
+    if (!activeOrganization || !queue) return null;
 
     // Filter agents not already in the queue
     const availableAgents = agents.filter(a => !members.find(m => m.id === a.id));

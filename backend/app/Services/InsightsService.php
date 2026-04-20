@@ -16,7 +16,7 @@ class InsightsService
      * Extract features from call events into the analytics event store.
      * Idempotent: keyed by call_uuid + version.
      */
-    public function extractFeatures(string $callUuid, string $tenantId, int $version = 1): ?AnalyticsEvent
+    public function extractFeatures(string $callUuid, string $organizationId, int $version = 1): ?AnalyticsEvent
     {
         $existing = AnalyticsEvent::where('call_uuid', $callUuid)
             ->where('version', $version)
@@ -27,7 +27,7 @@ class InsightsService
         }
 
         $cdr = CallDetailRecord::where('uuid', $callUuid)
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->first();
 
         if (! $cdr) {
@@ -35,13 +35,13 @@ class InsightsService
         }
 
         $events = CallEventLog::where('call_uuid', $callUuid)
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->orderBy('occurred_at')
             ->get();
 
         $queueEntry = QueueEntry::where('call_uuid', $callUuid)->first();
 
-        $webhookFailures = WebhookDeliveryAttempt::where('tenant_id', $tenantId)
+        $webhookFailures = WebhookDeliveryAttempt::where('organization_id', $organizationId)
             ->where('event_type', 'like', 'call.%')
             ->where('created_at', '>=', $cdr->start_stamp)
             ->where('created_at', '<=', $cdr->end_stamp ?? now())
@@ -54,7 +54,7 @@ class InsightsService
         $retries = $events->where('event_type', CallEventLog::EVENT_CALL_CREATED)->count();
 
         return AnalyticsEvent::create([
-            'tenant_id' => $tenantId,
+            'organization_id' => $organizationId,
             'call_uuid' => $callUuid,
             'version' => $version,
             'wait_time' => $waitTime,
@@ -86,20 +86,20 @@ class InsightsService
     }
 
     /**
-     * Compute per-tenant health score across recent analytics events.
+     * Compute per-organization health score across recent analytics events.
      */
-    public function computeTenantHealthScore(string $tenantId, ?Carbon $since = null): array
+    public function computeOrganizationHealthScore(string $organizationId, ?Carbon $since = null): array
     {
         $since = $since ?? now()->subHours(24);
 
-        $events = AnalyticsEvent::where('tenant_id', $tenantId)
+        $events = AnalyticsEvent::where('organization_id', $organizationId)
             ->where('created_at', '>=', $since)
             ->whereNotNull('health_score')
             ->get();
 
         if ($events->isEmpty()) {
             return [
-                'tenant_id' => $tenantId,
+                'organization_id' => $organizationId,
                 'health_score' => 100.0,
                 'sample_size' => 0,
                 'period_start' => $since->toIso8601String(),
@@ -119,7 +119,7 @@ class InsightsService
         }
 
         return [
-            'tenant_id' => $tenantId,
+            'organization_id' => $organizationId,
             'health_score' => $avgScore,
             'sample_size' => $events->count(),
             'period_start' => $since->toIso8601String(),
@@ -128,20 +128,20 @@ class InsightsService
     }
 
     /**
-     * Batch process: extract and score all unprocessed CDRs for a tenant.
+     * Batch process: extract and score all unprocessed CDRs for an organization.
      */
-    public function processTenantCalls(string $tenantId, ?Carbon $since = null): Collection
+    public function processOrganizationCalls(string $organizationId, ?Carbon $since = null): Collection
     {
         $since = $since ?? now()->subHours(24);
 
-        $cdrs = CallDetailRecord::where('tenant_id', $tenantId)
+        $cdrs = CallDetailRecord::where('organization_id', $organizationId)
             ->where('start_stamp', '>=', $since)
             ->get();
 
         $processed = collect();
 
         foreach ($cdrs as $cdr) {
-            $event = $this->extractFeatures($cdr->uuid, $tenantId);
+            $event = $this->extractFeatures($cdr->uuid, $organizationId);
             if ($event) {
                 $this->scoreEvent($event);
                 $processed->push($event->fresh());

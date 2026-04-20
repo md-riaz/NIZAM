@@ -102,11 +102,11 @@ class SensitiveDataSanitizerTest extends TestCase
     {
         $record = ($this->sanitizer)($this->makeRecord('Normal log message', [
             'call_uuid' => 'abc-123',
-            'tenant_id' => 'tenant-456',
+            'organization_id' => 'organization-456',
         ]));
 
         $this->assertEquals('Normal log message', $record->message);
         $this->assertEquals('abc-123', $record->context['call_uuid']);
-        $this->assertEquals('tenant-456', $record->context['tenant_id']);
+        $this->assertEquals('organization-456', $record->context['organization_id']);
     }
 }

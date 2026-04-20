@@ -14,13 +14,13 @@
 
 ### Task 1: Organization & Domain Context Refactor
 **Files:**
-- Modify: `backend/app/Models/Tenant.php`
-- Modify: `backend/database/migrations/xxxx_create_tenants_table.php` (or new migration)
+- Modify: `backend/app/Models/Organization.php`
+- Modify: `backend/database/migrations/xxxx_create_organizations_table.php` (or new migration)
 - Modify: `backend/app/Services/DialplanCompiler.php` (remove slug usage)
-- Modify: `backend/app/Services/TenantManifestBuilder.php`
+- Modify: `backend/app/Services/OrganizationManifestBuilder.php`
 
-- [ ] **Step 1: Create migration to remove `slug` from `tenants` table**
-- [ ] **Step 2: Update `Tenant` model to rely solely on `domain`**
+- [ ] **Step 1: Create migration to remove `slug` from `organizations` table**
+- [ ] **Step 2: Update `Organization` model to rely solely on `domain`**
 - [ ] **Step 3: Update `DialplanCompiler` and `SipProfileCompiler` to resolve tenancy by `domain` only**
 - [ ] **Step 4: Run tests to ensure domain-based isolation works**
 - [ ] **Step 5: Commit changes**

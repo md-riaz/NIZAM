@@ -3,7 +3,7 @@
 namespace Tests\Unit\Observers;
 
 use App\Models\DeviceProfile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,8 +13,8 @@ class ExtensionObserverTest extends TestCase
 
     public function test_updating_extension_password_touches_device_profiles(): void
     {
-        $tenant = Tenant::factory()->create();
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create();
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'original-password',
             'directory_first_name' => 'John',
@@ -23,7 +23,7 @@ class ExtensionObserverTest extends TestCase
         ]);
 
         $profile = DeviceProfile::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Test Phone',
             'vendor' => 'yealink',
             'mac_address' => 'AA:BB:CC:DD:EE:FF',
@@ -43,8 +43,8 @@ class ExtensionObserverTest extends TestCase
 
     public function test_updating_non_provisioning_fields_does_not_touch_profiles(): void
     {
-        $tenant = Tenant::factory()->create();
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create();
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'test-password',
             'directory_first_name' => 'John',
@@ -53,7 +53,7 @@ class ExtensionObserverTest extends TestCase
         ]);
 
         $profile = DeviceProfile::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Test Phone',
             'vendor' => 'yealink',
             'mac_address' => 'AA:BB:CC:DD:EE:01',
@@ -72,8 +72,8 @@ class ExtensionObserverTest extends TestCase
 
     public function test_updating_extension_name_touches_device_profiles(): void
     {
-        $tenant = Tenant::factory()->create();
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create();
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'test-password',
             'directory_first_name' => 'John',
@@ -82,7 +82,7 @@ class ExtensionObserverTest extends TestCase
         ]);
 
         $profile = DeviceProfile::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Test Phone',
             'vendor' => 'yealink',
             'mac_address' => 'AA:BB:CC:DD:EE:02',

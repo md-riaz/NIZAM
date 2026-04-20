@@ -13,16 +13,16 @@ class UpdateExtensionRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenant = $this->route('tenant');
+        $organization = $this->route('organization');
         $extension = $this->route('extension');
 
         return [
             'extension' => [
                 'required',
                 'string',
-                function ($attribute, $value, $fail) use ($tenant, $extension) {
-                    if ($tenant->extensions()->where('extension', $value)->where('id', '!=', $extension->id)->exists()) {
-                        $fail('The extension has already been taken for this tenant.');
+                function ($attribute, $value, $fail) use ($organization, $extension) {
+                    if ($organization->extensions()->where('extension', $value)->where('id', '!=', $extension->id)->exists()) {
+                        $fail('The extension has already been taken for this organization.');
                     }
                 },
             ],

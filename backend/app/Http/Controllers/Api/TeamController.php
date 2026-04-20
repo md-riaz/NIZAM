@@ -7,19 +7,19 @@ use App\Http\Requests\StoreTeamRequest;
 use App\Http\Requests\UpdateTeamRequest;
 use App\Http\Resources\TeamResource;
 use App\Models\Team;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 class TeamController extends Controller
 {
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
-        return TeamResource::collection($tenant->teams()->with('members')->paginate(15));
+        return TeamResource::collection($organization->teams()->with('members')->paginate(15));
     }
 
-    public function store(StoreTeamRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreTeamRequest $request, Organization $organization): JsonResponse
     {
-        $team = $tenant->teams()->create($request->safe()->except('members'));
+        $team = $organization->teams()->create($request->safe()->except('members'));
 
         foreach ($request->validated()['members'] ?? [] as $member) {
             $team->members()->create($member);
@@ -28,18 +28,18 @@ class TeamController extends Controller
         return (new TeamResource($team->load('members')))->response()->setStatusCode(201);
     }
 
-    public function show(Tenant $tenant, Team $team): JsonResponse|TeamResource
+    public function show(Organization $organization, Team $team): JsonResponse|TeamResource
     {
-        if ($team->tenant_id !== $tenant->id) {
+        if ($team->organization_id !== $organization->id) {
             return response()->json(['message' => 'Team not found.'], 404);
         }
 
         return new TeamResource($team->load('members'));
     }
 
-    public function update(UpdateTeamRequest $request, Tenant $tenant, Team $team): JsonResponse|TeamResource
+    public function update(UpdateTeamRequest $request, Organization $organization, Team $team): JsonResponse|TeamResource
     {
-        if ($team->tenant_id !== $tenant->id) {
+        if ($team->organization_id !== $organization->id) {
             return response()->json(['message' => 'Team not found.'], 404);
         }
 
@@ -56,9 +56,9 @@ class TeamController extends Controller
         return new TeamResource($team->load('members'));
     }
 
-    public function destroy(Tenant $tenant, Team $team): JsonResponse
+    public function destroy(Organization $organization, Team $team): JsonResponse
     {
-        if ($team->tenant_id !== $tenant->id) {
+        if ($team->organization_id !== $organization->id) {
             return response()->json(['message' => 'Team not found.'], 404);
         }
 

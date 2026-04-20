@@ -4,7 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\DeviceProfile;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -31,20 +31,20 @@ class UserTest extends TestCase
         ]);
     }
 
-    public function test_belongs_to_a_tenant(): void
+    public function test_belongs_to_a_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertInstanceOf(Tenant::class, $user->tenant);
-        $this->assertEquals($tenant->id, $user->tenant->id);
+        $this->assertInstanceOf(Organization::class, $user->organization);
+        $this->assertEquals($organization->id, $user->organization->id);
     }
 
-    public function test_tenant_is_nullable(): void
+    public function test_organization_is_nullable(): void
     {
-        $user = User::factory()->create(['tenant_id' => null]);
+        $user = User::factory()->create(['organization_id' => null]);
 
-        $this->assertNull($user->tenant);
+        $this->assertNull($user->organization);
     }
 
     public function test_password_is_hidden(): void
@@ -64,7 +64,7 @@ class UserTest extends TestCase
     public function test_has_correct_fillable_attributes(): void
     {
         $user = new User;
-        $expected = ['name', 'email', 'password', 'tenant_id', 'role'];
+        $expected = ['name', 'email', 'password', 'organization_id', 'role'];
 
         $this->assertEquals($expected, $user->getFillable());
     }
@@ -80,15 +80,15 @@ class UserTest extends TestCase
 
     public function test_has_extensions_and_device_profiles_relationships(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
             'is_primary' => true,
         ]);
         $deviceProfile = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
         ]);
 

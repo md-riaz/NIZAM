@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\OfficeFeatureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,18 +14,18 @@ class OfficeFeatureController extends Controller
         protected OfficeFeatureService $officeFeatureService,
     ) {}
 
-    public function show(Tenant $tenant): JsonResponse
+    public function show(Organization $organization): JsonResponse
     {
-        $this->authorize('view', $tenant);
+        $this->authorize('view', $organization);
 
         return response()->json([
-            'data' => $this->officeFeatureService->getFeatures($tenant),
+            'data' => $this->officeFeatureService->getFeatures($organization),
         ]);
     }
 
-    public function update(Request $request, Tenant $tenant): JsonResponse
+    public function update(Request $request, Organization $organization): JsonResponse
     {
-        $this->authorize('update', $tenant);
+        $this->authorize('update', $organization);
 
         $validated = $request->validate([
             'parking_enabled' => ['sometimes', 'boolean'],
@@ -36,7 +36,7 @@ class OfficeFeatureController extends Controller
         ]);
 
         return response()->json([
-            'data' => $this->officeFeatureService->updateFeatures($tenant, $validated),
+            'data' => $this->officeFeatureService->updateFeatures($organization, $validated),
         ]);
     }
 }

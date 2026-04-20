@@ -95,7 +95,7 @@
     <!-- TLS ciphers default: ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH -->
     <param name="tls-ciphers" value="$${sip_tls_ciphers}"/>
 
-    <!-- xml_curl configuration for tenant-specific dialplan -->
+    <!-- xml_curl configuration for organization-specific dialplan -->
     <param name="xml-curl-enable" value="true"/>
     <param name="xml-curl-url" value="http://nizam-nginx/freeswitch/xml-curl"/>
     <param name="xml-curl-continuation-url" value="http://nizam-nginx/freeswitch/xml-curl"/>

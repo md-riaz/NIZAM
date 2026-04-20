@@ -158,7 +158,7 @@ class {$studlyName}Module implements NizamModule
         // Post-registration boot logic
     }
 
-    public function dialplanContributions(string \$tenantDomain, string \$destination): array
+    public function dialplanContributions(string \$organizationDomain, string \$destination): array
     {
         // Return XML fragments keyed by priority (lower = earlier in dialplan)
         // Example:
@@ -280,7 +280,7 @@ use Illuminate\\Support\\Facades\\Route;
 */
 
 Route::prefix('api')->middleware(['auth:sanctum', 'throttle:api'])->group(function () {
-    Route::prefix('tenants/{tenant}')->middleware('tenant.access')->group(function () {
+    Route::prefix('organizations/{organization}')->middleware('organization.access')->group(function () {
         // Add your module routes here
     });
 });

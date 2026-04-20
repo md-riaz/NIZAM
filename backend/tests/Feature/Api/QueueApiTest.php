@@ -4,7 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Agent;
 use App\Models\Queue;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -16,32 +16,32 @@ class QueueApiTest extends TestCase
 
     private User $user;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->tenant = Tenant::create([
+        $this->organization = Organization::create([
             'name' => 'Test Corp',
             'domain' => 'test.example.com',
             'max_extensions' => 50,
         ]);
 
         $this->user = User::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
         ]);
     }
 
     public function test_can_list_queues(): void
     {
         Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/queues");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/queues");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
@@ -50,7 +50,7 @@ class QueueApiTest extends TestCase
     public function test_can_create_queue(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/queues", [
                 'name' => 'Support Queue',
                 'strategy' => 'round_robin',
                 'max_wait_time' => 120,
@@ -61,7 +61,7 @@ class QueueApiTest extends TestCase
             ->assertJsonFragment(['name' => 'Support Queue', 'strategy' => 'round_robin']);
 
         $this->assertDatabaseHas('queues', [
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
     }
@@ -69,12 +69,12 @@ class QueueApiTest extends TestCase
     public function test_cannot_create_duplicate_queue_name(): void
     {
         Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/queues", [
                 'name' => 'Support Queue',
             ]);
 
@@ -85,12 +85,12 @@ class QueueApiTest extends TestCase
     public function test_can_update_queue(): void
     {
         $queue = Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->putJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}", [
+            ->putJson("/api/v1/organizations/{$this->organization->id}/queues/{$queue->id}", [
                 'strategy' => 'ring_all',
                 'max_wait_time' => 60,
             ]);
@@ -102,12 +102,12 @@ class QueueApiTest extends TestCase
     public function test_can_delete_queue(): void
     {
         $queue = Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}");
+            ->deleteJson("/api/v1/organizations/{$this->organization->id}/queues/{$queue->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('queues', ['id' => $queue->id]);
@@ -116,11 +116,11 @@ class QueueApiTest extends TestCase
     public function test_can_add_member_to_queue(): void
     {
         $queue = Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
-        $extension = $this->tenant->extensions()->create([
+        $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'John',
@@ -128,13 +128,13 @@ class QueueApiTest extends TestCase
         ]);
 
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent 1',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/members", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/queues/{$queue->id}/members", [
                 'agent_id' => $agent->id,
                 'priority' => 1,
             ]);
@@ -149,11 +149,11 @@ class QueueApiTest extends TestCase
     public function test_cannot_add_duplicate_member(): void
     {
         $queue = Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
-        $extension = $this->tenant->extensions()->create([
+        $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'John',
@@ -161,7 +161,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent 1',
         ]);
@@ -169,7 +169,7 @@ class QueueApiTest extends TestCase
         $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 0]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/members", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/queues/{$queue->id}/members", [
                 'agent_id' => $agent->id,
             ]);
 
@@ -179,11 +179,11 @@ class QueueApiTest extends TestCase
     public function test_can_remove_member_from_queue(): void
     {
         $queue = Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
-        $extension = $this->tenant->extensions()->create([
+        $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'John',
@@ -191,7 +191,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent 1',
         ]);
@@ -199,7 +199,7 @@ class QueueApiTest extends TestCase
         $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 0]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->deleteJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/members/{$agent->id}");
+            ->deleteJson("/api/v1/organizations/{$this->organization->id}/queues/{$queue->id}/members/{$agent->id}");
 
         $response->assertStatus(204);
     }
@@ -207,11 +207,11 @@ class QueueApiTest extends TestCase
     public function test_can_list_queue_members(): void
     {
         $queue = Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
-        $extension = $this->tenant->extensions()->create([
+        $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'John',
@@ -219,7 +219,7 @@ class QueueApiTest extends TestCase
         ]);
 
         $agent = Agent::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'extension_id' => $extension->id,
             'name' => 'Agent 1',
         ]);
@@ -227,7 +227,7 @@ class QueueApiTest extends TestCase
         $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 0]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/members");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/queues/{$queue->id}/members");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data');
@@ -236,7 +236,7 @@ class QueueApiTest extends TestCase
     public function test_invalid_strategy_rejected(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues", [
+            ->postJson("/api/v1/organizations/{$this->organization->id}/queues", [
                 'name' => 'Test Queue',
                 'strategy' => 'invalid_strategy',
             ]);
@@ -245,21 +245,21 @@ class QueueApiTest extends TestCase
             ->assertJsonValidationErrors('strategy');
     }
 
-    public function test_tenant_isolation_for_queues(): void
+    public function test_organization_isolation_for_queues(): void
     {
-        $otherTenant = Tenant::create([
+        $otherOrganization = Organization::create([
             'name' => 'Other Corp',
             'domain' => 'other.example.com',
             'max_extensions' => 50,
         ]);
 
         $otherQueue = Queue::create([
-            'tenant_id' => $otherTenant->id,
+            'organization_id' => $otherOrganization->id,
             'name' => 'Other Queue',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/queues/{$otherQueue->id}");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/queues/{$otherQueue->id}");
 
         $response->assertStatus(404);
     }
@@ -267,12 +267,12 @@ class QueueApiTest extends TestCase
     public function test_can_get_realtime_metrics(): void
     {
         $queue = Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/metrics/realtime");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/queues/{$queue->id}/metrics/realtime");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -294,12 +294,12 @@ class QueueApiTest extends TestCase
     public function test_can_aggregate_metrics(): void
     {
         $queue = Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenant->id}/queues/{$queue->id}/metrics/aggregate");
+            ->postJson("/api/v1/organizations/{$this->organization->id}/queues/{$queue->id}/metrics/aggregate");
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('queue_metrics', [
@@ -310,12 +310,12 @@ class QueueApiTest extends TestCase
     public function test_can_get_wallboard(): void
     {
         Queue::create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'name' => 'Support Queue',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/wallboard");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/wallboard");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -330,7 +330,7 @@ class QueueApiTest extends TestCase
     public function test_can_get_agent_states_summary(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenant->id}/agent-states");
+            ->getJson("/api/v1/organizations/{$this->organization->id}/agent-states");
 
         $response->assertStatus(200)
             ->assertJsonStructure([

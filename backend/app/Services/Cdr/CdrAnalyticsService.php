@@ -3,18 +3,18 @@
 namespace App\Services\Cdr;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CdrAnalyticsService
 {
     /**
-     * Get a summary of CDR analytics for a tenant.
+     * Get a summary of CDR analytics for an organization.
      */
-    public function getSummary(Tenant $tenant, Carbon $from, Carbon $to): array
+    public function getSummary(Organization $organization, Carbon $from, Carbon $to): array
     {
-        $query = CallDetailRecord::where('tenant_id', $tenant->id)
+        $query = CallDetailRecord::where('organization_id', $organization->id)
             ->whereBetween('start_stamp', [$from->startOfDay(), $to->endOfDay()]);
 
         $totalCalls = (clone $query)->count();
@@ -58,20 +58,20 @@ class CdrAnalyticsService
                 'average_score' => $avgQuality !== null ? round((float) $avgQuality, 1) : null,
                 'average_mos' => $avgMos !== null ? round((float) $avgMos, 2) : null,
             ],
-            'by_direction' => $this->getCountByDirection($tenant, $from, $to),
-            'by_call_type' => $this->getCountByCallType($tenant, $from, $to),
+            'by_direction' => $this->getCountByDirection($organization, $from, $to),
+            'by_call_type' => $this->getCountByCallType($organization, $from, $to),
         ];
     }
 
     /**
      * Get call volume over time (hourly or daily buckets).
      */
-    public function getVolume(Tenant $tenant, Carbon $from, Carbon $to, string $granularity = 'daily'): array
+    public function getVolume(Organization $organization, Carbon $from, Carbon $to, string $granularity = 'daily'): array
     {
         $dateFormat = $granularity === 'hourly' ? '%Y-%m-%d %H:00:00' : '%Y-%m-%d';
         $dateFormatSql = $granularity === 'hourly' ? "DATE_FORMAT(start_stamp, '{$dateFormat}')" : 'DATE(start_stamp)';
 
-        $results = CallDetailRecord::where('tenant_id', $tenant->id)
+        $results = CallDetailRecord::where('organization_id', $organization->id)
             ->whereBetween('start_stamp', [$from->startOfDay(), $to->endOfDay()])
             ->select(
                 DB::raw("{$dateFormatSql} as period"),
@@ -99,11 +99,11 @@ class CdrAnalyticsService
     /**
      * Get quality metrics trends over time.
      */
-    public function getQualityTrends(Tenant $tenant, Carbon $from, Carbon $to, string $granularity = 'daily'): array
+    public function getQualityTrends(Organization $organization, Carbon $from, Carbon $to, string $granularity = 'daily'): array
     {
         $dateFormatSql = $granularity === 'hourly' ? "DATE_FORMAT(start_stamp, '%Y-%m-%d %H:00:00')" : 'DATE(start_stamp)';
 
-        $results = CallDetailRecord::where('tenant_id', $tenant->id)
+        $results = CallDetailRecord::where('organization_id', $organization->id)
             ->whereBetween('start_stamp', [$from->startOfDay(), $to->endOfDay()])
             ->whereNotNull('quality_score')
             ->select(
@@ -133,9 +133,9 @@ class CdrAnalyticsService
     /**
      * Get top destinations by call count.
      */
-    public function getTopDestinations(Tenant $tenant, Carbon $from, Carbon $to, int $limit = 20): array
+    public function getTopDestinations(Organization $organization, Carbon $from, Carbon $to, int $limit = 20): array
     {
-        $results = CallDetailRecord::where('tenant_id', $tenant->id)
+        $results = CallDetailRecord::where('organization_id', $organization->id)
             ->whereBetween('start_stamp', [$from->startOfDay(), $to->endOfDay()])
             ->select(
                 'destination_number',
@@ -166,9 +166,9 @@ class CdrAnalyticsService
     /**
      * Get call count by direction.
      */
-    protected function getCountByDirection(Tenant $tenant, Carbon $from, Carbon $to): array
+    protected function getCountByDirection(Organization $organization, Carbon $from, Carbon $to): array
     {
-        return CallDetailRecord::where('tenant_id', $tenant->id)
+        return CallDetailRecord::where('organization_id', $organization->id)
             ->whereBetween('start_stamp', [$from->startOfDay(), $to->endOfDay()])
             ->select('direction', DB::raw('COUNT(*) as count'))
             ->groupBy('direction')
@@ -179,9 +179,9 @@ class CdrAnalyticsService
     /**
      * Get call count by call type.
      */
-    protected function getCountByCallType(Tenant $tenant, Carbon $from, Carbon $to): array
+    protected function getCountByCallType(Organization $organization, Carbon $from, Carbon $to): array
     {
-        return CallDetailRecord::where('tenant_id', $tenant->id)
+        return CallDetailRecord::where('organization_id', $organization->id)
             ->whereBetween('start_stamp', [$from->startOfDay(), $to->endOfDay()])
             ->whereNotNull('call_type')
             ->select('call_type', DB::raw('COUNT(*) as count'))

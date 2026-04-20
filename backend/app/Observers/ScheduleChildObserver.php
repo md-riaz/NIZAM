@@ -2,21 +2,21 @@
 
 namespace App\Observers;
 
-use App\Services\TenantManifestBuilder;
+use App\Services\OrganizationManifestBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
 class ScheduleChildObserver
 {
     public function __construct(
-        protected TenantManifestBuilder $manifestBuilder
+        protected OrganizationManifestBuilder $manifestBuilder
     ) {}
 
     protected function rebuildManifest(Model $model): void
     {
         try {
-            if ($model->schedule && $model->schedule->tenant) {
-                $this->manifestBuilder->buildAndActivate($model->schedule->tenant);
+            if ($model->schedule && $model->schedule->organization) {
+                $this->manifestBuilder->buildAndActivate($model->schedule->organization);
             }
         } catch (\Exception $e) {
             Log::error('Failed to rebuild manifest on schedule child change', [

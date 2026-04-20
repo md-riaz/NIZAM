@@ -62,7 +62,7 @@ class MediaArchiveModule extends BaseModule
      */
     public function archiveFromCallEnd(array $payload): ?Recording
     {
-        $tenantId = (string) ($payload['tenant_id'] ?? '');
+        $organizationId = (string) ($payload['organization_id'] ?? '');
         $callUuid = (string) ($payload['call_uuid'] ?? $payload['uuid'] ?? '');
         $sourcePath = $this->normalizeSourcePath($payload['source_path'] ?? $payload['recording_path'] ?? null);
 
@@ -72,12 +72,12 @@ class MediaArchiveModule extends BaseModule
             $payload['metadata']['storage_reference'] = $this->canonicalizeStoragePath($payload['metadata']['storage_reference'] ?? $payload['metadata']['storage_path']);
         }
 
-        if ($tenantId === '' || $callUuid === '' || $sourcePath === null || ! is_file($sourcePath)) {
+        if ($organizationId === '' || $callUuid === '' || $sourcePath === null || ! is_file($sourcePath)) {
             return null;
         }
 
         $existing = Recording::query()
-            ->where('tenant_id', $tenantId)
+            ->where('organization_id', $organizationId)
             ->where('call_uuid', $callUuid)
             ->first();
 
@@ -85,13 +85,13 @@ class MediaArchiveModule extends BaseModule
             return $existing;
         }
 
-        $destinationPath = $this->buildArchivePath($tenantId, $callUuid, $sourcePath, $payload);
+        $destinationPath = $this->buildArchivePath($organizationId, $callUuid, $sourcePath, $payload);
         $archive = $this->storageDriver()->archive($sourcePath, $destinationPath);
         $now = now();
 
         $recording = Recording::query()->updateOrCreate(
             [
-                'tenant_id' => $tenantId,
+                'organization_id' => $organizationId,
                 'call_uuid' => $callUuid,
             ],
             [
@@ -118,7 +118,7 @@ class MediaArchiveModule extends BaseModule
     protected function syncCdrMetadata(Recording $recording, array $archive, array $payload, Carbon $archivedAt): void
     {
         $cdr = CallDetailRecord::query()
-            ->where('tenant_id', $recording->tenant_id)
+            ->where('organization_id', $recording->organization_id)
             ->where('uuid', $recording->call_uuid)
             ->first();
 
@@ -145,7 +145,7 @@ class MediaArchiveModule extends BaseModule
         ])->save();
     }
 
-    protected function buildArchivePath(string $tenantId, string $callUuid, string $sourcePath, array $payload): string
+    protected function buildArchivePath(string $organizationId, string $callUuid, string $sourcePath, array $payload): string
     {
         $timestamp = $payload['ended_at'] ?? $payload['end_stamp'] ?? now()->toIso8601String();
         $archivedAt = Carbon::parse($timestamp);
@@ -155,7 +155,7 @@ class MediaArchiveModule extends BaseModule
         return sprintf(
             '%s/%s/%s/%s.%s',
             trim((string) config('filesystems.archive.recordings_prefix', 'archive/recordings'), '/'),
-            $tenantId,
+            $organizationId,
             $archivedAt->format('Y/m/d'),
             $callUuid,
             $extension

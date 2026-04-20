@@ -7,7 +7,7 @@ use App\Models\CallEventLog;
 use App\Models\Queue;
 use App\Models\QueueEntry;
 use App\Models\Recording;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use App\Models\Webhook;
 use App\Services\DialplanCompiler;
@@ -30,9 +30,9 @@ class SystemCheckpointAuditTest extends TestCase
 {
     use RefreshDatabase;
 
-    private Tenant $tenantA;
+    private Organization $organizationA;
 
-    private Tenant $tenantB;
+    private Organization $organizationB;
 
     private User $userA;
 
@@ -44,33 +44,33 @@ class SystemCheckpointAuditTest extends TestCase
     {
         parent::setUp();
 
-        $this->tenantA = Tenant::create([
-            'name' => 'Tenant Alpha',
+        $this->organizationA = Organization::create([
+            'name' => 'Organization Alpha',
             'domain' => 'alpha.example.com',
             'max_extensions' => 100,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
-        $this->tenantB = Tenant::create([
-            'name' => 'Tenant Beta',
+        $this->organizationB = Organization::create([
+            'name' => 'Organization Beta',
             'domain' => 'beta.example.com',
             'max_extensions' => 100,
-            'status' => Tenant::STATUS_ACTIVE,
+            'status' => Organization::STATUS_ACTIVE,
         ]);
 
         $this->userA = User::factory()->create([
-            'tenant_id' => $this->tenantA->id,
+            'organization_id' => $this->organizationA->id,
             'role' => 'user',
         ]);
 
         $this->userB = User::factory()->create([
-            'tenant_id' => $this->tenantB->id,
+            'organization_id' => $this->organizationB->id,
             'role' => 'user',
         ]);
 
         $this->adminUser = User::factory()->create([
             'role' => 'admin',
-            'tenant_id' => null,
+            'organization_id' => null,
         ]);
     }
 
@@ -80,7 +80,7 @@ class SystemCheckpointAuditTest extends TestCase
 
     public function test_cp1_dialplan_is_compiled_artifact_from_db(): void
     {
-        $ext = $this->tenantA->extensions()->create([
+        $ext = $this->organizationA->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'John',
@@ -88,14 +88,14 @@ class SystemCheckpointAuditTest extends TestCase
         ]);
 
         $compiler = app(DialplanCompiler::class);
-        $xml = $compiler->compileDirectory($this->tenantA->domain);
+        $xml = $compiler->compileDirectory($this->organizationA->domain);
 
         $this->assertStringContainsString('1001', $xml);
-        $this->assertStringContainsString($this->tenantA->domain, $xml);
+        $this->assertStringContainsString($this->organizationA->domain, $xml);
 
         // Verify dialplan updates when DB changes
         $ext->update(['extension' => '1002']);
-        $xml2 = $compiler->compileDirectory($this->tenantA->domain);
+        $xml2 = $compiler->compileDirectory($this->organizationA->domain);
 
         $this->assertStringContainsString('1002', $xml2);
         $this->assertStringNotContainsString('<user id="1001"', $xml2);
@@ -103,14 +103,14 @@ class SystemCheckpointAuditTest extends TestCase
 
     public function test_cp1_db_is_sole_source_of_truth(): void
     {
-        $ext = $this->tenantA->extensions()->create([
+        $ext = $this->organizationA->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'John',
             'directory_last_name' => 'Doe',
         ]);
 
-        $did = $this->tenantA->dids()->create([
+        $did = $this->organizationA->dids()->create([
             'number' => '+15551234567',
             'description' => 'Main Line',
             'destination_type' => 'extension',
@@ -129,101 +129,101 @@ class SystemCheckpointAuditTest extends TestCase
     {
         // All functionality is accessible via API — no UI dependency
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenantA->id}/extensions");
+            ->getJson("/api/v1/organizations/{$this->organizationA->id}/extensions");
         $response->assertStatus(200);
     }
 
     // ========================================================================
-    // CHECKPOINT 2 — MULTI-TENANT ISOLATION
+    // CHECKPOINT 2 — MULTI-ORGANIZATION ISOLATION
     // ========================================================================
 
-    public function test_cp2_same_extension_numbers_across_tenants_no_conflict(): void
+    public function test_cp2_same_extension_numbers_across_organizations_no_conflict(): void
     {
-        $this->tenantA->extensions()->create([
+        $this->organizationA->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'Alice',
             'directory_last_name' => 'Alpha',
         ]);
 
-        $this->tenantB->extensions()->create([
+        $this->organizationB->extensions()->create([
             'extension' => '1001',
             'password' => 'secret456',
             'directory_first_name' => 'Bob',
             'directory_last_name' => 'Beta',
         ]);
 
-        $this->assertCount(1, $this->tenantA->extensions);
-        $this->assertCount(1, $this->tenantB->extensions);
-        $this->assertEquals('Alice', $this->tenantA->extensions->first()->directory_first_name);
-        $this->assertEquals('Bob', $this->tenantB->extensions->first()->directory_first_name);
+        $this->assertCount(1, $this->organizationA->extensions);
+        $this->assertCount(1, $this->organizationB->extensions);
+        $this->assertEquals('Alice', $this->organizationA->extensions->first()->directory_first_name);
+        $this->assertEquals('Bob', $this->organizationB->extensions->first()->directory_first_name);
     }
 
-    public function test_cp2_queue_names_isolated_per_tenant(): void
+    public function test_cp2_queue_names_isolated_per_organization(): void
     {
-        Queue::create(['tenant_id' => $this->tenantA->id, 'name' => 'Support Queue']);
-        Queue::create(['tenant_id' => $this->tenantB->id, 'name' => 'Support Queue']);
+        Queue::create(['organization_id' => $this->organizationA->id, 'name' => 'Support Queue']);
+        Queue::create(['organization_id' => $this->organizationB->id, 'name' => 'Support Queue']);
 
-        $this->assertCount(1, $this->tenantA->queues);
-        $this->assertCount(1, $this->tenantB->queues);
+        $this->assertCount(1, $this->organizationA->queues);
+        $this->assertCount(1, $this->organizationB->queues);
     }
 
-    public function test_cp2_agent_state_scoped_per_tenant(): void
+    public function test_cp2_agent_state_scoped_per_organization(): void
     {
-        $extA = $this->tenantA->extensions()->create([
+        $extA = $this->organizationA->extensions()->create([
             'extension' => '1001', 'password' => 'secret', 'directory_first_name' => 'A', 'directory_last_name' => 'Agent',
         ]);
-        $extB = $this->tenantB->extensions()->create([
+        $extB = $this->organizationB->extensions()->create([
             'extension' => '1001', 'password' => 'secret', 'directory_first_name' => 'B', 'directory_last_name' => 'Agent',
         ]);
 
-        $agentA = Agent::create(['tenant_id' => $this->tenantA->id, 'extension_id' => $extA->id, 'name' => 'Agent A', 'state' => Agent::STATE_AVAILABLE]);
-        $agentB = Agent::create(['tenant_id' => $this->tenantB->id, 'extension_id' => $extB->id, 'name' => 'Agent B', 'state' => Agent::STATE_BUSY]);
+        $agentA = Agent::create(['organization_id' => $this->organizationA->id, 'extension_id' => $extA->id, 'name' => 'Agent A', 'state' => Agent::STATE_AVAILABLE]);
+        $agentB = Agent::create(['organization_id' => $this->organizationB->id, 'extension_id' => $extB->id, 'name' => 'Agent B', 'state' => Agent::STATE_BUSY]);
 
         $this->assertEquals(Agent::STATE_AVAILABLE, $agentA->state);
         $this->assertEquals(Agent::STATE_BUSY, $agentB->state);
 
-        // Changing one tenant's agent doesn't affect other
+        // Changing one organization's agent doesn't affect other
         $agentA->transitionState(Agent::STATE_PAUSED, Agent::PAUSE_LUNCH);
         $agentB->refresh();
         $this->assertEquals(Agent::STATE_BUSY, $agentB->state);
     }
 
-    public function test_cp2_cross_tenant_api_read_attack_blocked(): void
+    public function test_cp2_cross_organization_api_read_attack_blocked(): void
     {
-        $this->tenantA->extensions()->create([
+        $this->organizationA->extensions()->create([
             'extension' => '1001', 'password' => 'secret', 'directory_first_name' => 'A', 'directory_last_name' => 'X',
         ]);
 
-        // Tenant B user tries to access Tenant A resources
+        // Organization B user tries to access Organization A resources
         $response = $this->actingAs($this->userB, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenantA->id}/extensions");
+            ->getJson("/api/v1/organizations/{$this->organizationA->id}/extensions");
 
         $response->assertStatus(403);
     }
 
-    public function test_cp2_cross_tenant_agent_access_blocked(): void
+    public function test_cp2_cross_organization_agent_access_blocked(): void
     {
-        $extA = $this->tenantA->extensions()->create([
+        $extA = $this->organizationA->extensions()->create([
             'extension' => '1001', 'password' => 'secret', 'directory_first_name' => 'A', 'directory_last_name' => 'X',
         ]);
         $agentA = Agent::create([
-            'tenant_id' => $this->tenantA->id, 'extension_id' => $extA->id, 'name' => 'Agent A',
+            'organization_id' => $this->organizationA->id, 'extension_id' => $extA->id, 'name' => 'Agent A',
         ]);
 
-        // Tenant B user tries to read Tenant A's agent via Tenant B's path
+        // Organization B user tries to read Organization A's agent via Organization B's path
         $response = $this->actingAs($this->userB, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenantB->id}/agents/{$agentA->id}");
+            ->getJson("/api/v1/organizations/{$this->organizationB->id}/agents/{$agentA->id}");
 
         $response->assertStatus(404);
     }
 
-    public function test_cp2_cross_tenant_queue_access_blocked(): void
+    public function test_cp2_cross_organization_queue_access_blocked(): void
     {
-        $queueA = Queue::create(['tenant_id' => $this->tenantA->id, 'name' => 'Queue A']);
+        $queueA = Queue::create(['organization_id' => $this->organizationA->id, 'name' => 'Queue A']);
 
         $response = $this->actingAs($this->userB, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenantB->id}/queues/{$queueA->id}");
+            ->getJson("/api/v1/organizations/{$this->organizationB->id}/queues/{$queueA->id}");
 
         $response->assertStatus(404);
     }
@@ -232,11 +232,11 @@ class SystemCheckpointAuditTest extends TestCase
     {
         $metricsService = new MetricsService;
 
-        $queueA = Queue::create(['tenant_id' => $this->tenantA->id, 'name' => 'Q-A']);
-        $queueB = Queue::create(['tenant_id' => $this->tenantB->id, 'name' => 'Q-B']);
+        $queueA = Queue::create(['organization_id' => $this->organizationA->id, 'name' => 'Q-A']);
+        $queueB = Queue::create(['organization_id' => $this->organizationB->id, 'name' => 'Q-B']);
 
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queueA->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queueA->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ANSWERED,
             'join_time' => now()->subMinutes(5), 'wait_duration' => 15,
         ]);
@@ -244,14 +244,14 @@ class SystemCheckpointAuditTest extends TestCase
         $metricsB = $metricsService->getRealTimeMetrics($queueB);
         $this->assertEquals(0, $metricsB['calls_offered']);
 
-        $wallboardB = $metricsService->getWallboardData($this->tenantB->id);
+        $wallboardB = $metricsService->getWallboardData($this->organizationB->id);
         $this->assertEquals(0, $wallboardB['queues'][0]['calls_offered']);
     }
 
     public function test_cp2_webhook_dispatch_isolated(): void
     {
         Webhook::create([
-            'tenant_id' => $this->tenantA->id,
+            'organization_id' => $this->organizationA->id,
             'url' => 'https://alpha.example.com/hook',
             'events' => ['call.created'],
             'secret' => 'alpha-secret-key',
@@ -259,20 +259,20 @@ class SystemCheckpointAuditTest extends TestCase
         ]);
 
         Webhook::create([
-            'tenant_id' => $this->tenantB->id,
+            'organization_id' => $this->organizationB->id,
             'url' => 'https://beta.example.com/hook',
             'events' => ['call.created'],
             'secret' => 'beta-secret-key',
             'is_active' => true,
         ]);
 
-        // Only Tenant A's webhooks should be queried for Tenant A events
-        $tenantAWebhooks = Webhook::where('tenant_id', $this->tenantA->id)
+        // Only Organization A's webhooks should be queried for Organization A events
+        $organizationAWebhooks = Webhook::where('organization_id', $this->organizationA->id)
             ->where('is_active', true)
             ->get();
 
-        $this->assertCount(1, $tenantAWebhooks);
-        $this->assertStringContainsString('alpha', $tenantAWebhooks->first()->url);
+        $this->assertCount(1, $organizationAWebhooks);
+        $this->assertStringContainsString('alpha', $organizationAWebhooks->first()->url);
     }
 
     // ========================================================================
@@ -289,7 +289,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         $callUuid = (string) Str::uuid();
         $baseEvent = [
-            'variable_domain_name' => $this->tenantA->domain,
+            'variable_domain_name' => $this->organizationA->domain,
             'Unique-ID' => $callUuid,
             'Caller-Caller-ID-Name' => 'Test',
             'Caller-Caller-ID-Number' => '+15551234567',
@@ -333,7 +333,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         $processor->process([
             'Event-Name' => 'CHANNEL_CREATE',
-            'variable_domain_name' => $this->tenantA->domain,
+            'variable_domain_name' => $this->organizationA->domain,
             'Unique-ID' => (string) Str::uuid(),
             'Caller-Caller-ID-Name' => 'Test',
             'Caller-Caller-ID-Number' => '+15551234567',
@@ -345,7 +345,7 @@ class SystemCheckpointAuditTest extends TestCase
         $this->assertEquals(CallEventLog::SCHEMA_VERSION, $event->schema_version);
     }
 
-    public function test_cp3_no_orphan_events_without_tenant(): void
+    public function test_cp3_no_orphan_events_without_organization(): void
     {
         $processor = new EventProcessor(
             $this->createMock(WebhookDispatcher::class)
@@ -365,16 +365,16 @@ class SystemCheckpointAuditTest extends TestCase
         $this->assertCount(0, CallEventLog::all());
     }
 
-    public function test_cp3_events_scoped_to_tenant(): void
+    public function test_cp3_events_scoped_to_organization(): void
     {
         $processor = new EventProcessor(
             $this->createMock(WebhookDispatcher::class)
         );
 
-        // Create event for Tenant A
+        // Create event for Organization A
         $processor->process([
             'Event-Name' => 'CHANNEL_CREATE',
-            'variable_domain_name' => $this->tenantA->domain,
+            'variable_domain_name' => $this->organizationA->domain,
             'Unique-ID' => (string) Str::uuid(),
             'Caller-Caller-ID-Name' => 'Test',
             'Caller-Caller-ID-Number' => '+15551234567',
@@ -382,22 +382,22 @@ class SystemCheckpointAuditTest extends TestCase
             'Call-Direction' => 'inbound',
         ]);
 
-        // Verify event belongs to correct tenant
+        // Verify event belongs to correct organization
         $event = CallEventLog::first();
-        $this->assertEquals($this->tenantA->id, $event->tenant_id);
+        $this->assertEquals($this->organizationA->id, $event->organization_id);
     }
 
     // ========================================================================
     // CHECKPOINT 4 — POLICY ENGINE VALIDATION
     // ========================================================================
 
-    public function test_cp4_suspended_tenant_blocks_routing(): void
+    public function test_cp4_suspended_organization_blocks_routing(): void
     {
-        $suspendedTenant = Tenant::create([
+        $suspendedOrganization = Organization::create([
             'name' => 'Suspended Corp',
             'domain' => 'suspended.example.com',
             'max_extensions' => 10,
-            'status' => Tenant::STATUS_SUSPENDED,
+            'status' => Organization::STATUS_SUSPENDED,
             'is_active' => false,
         ]);
 
@@ -405,10 +405,10 @@ class SystemCheckpointAuditTest extends TestCase
             $this->createMock(WebhookDispatcher::class)
         );
 
-        // Event for suspended tenant should not process
+        // Event for suspended organization should not process
         $processor->process([
             'Event-Name' => 'CHANNEL_CREATE',
-            'variable_domain_name' => $suspendedTenant->domain,
+            'variable_domain_name' => $suspendedOrganization->domain,
             'Unique-ID' => (string) Str::uuid(),
             'Caller-Caller-ID-Name' => 'Test',
             'Caller-Caller-ID-Number' => '+15551234567',
@@ -419,43 +419,43 @@ class SystemCheckpointAuditTest extends TestCase
         $this->assertCount(0, CallEventLog::all());
     }
 
-    public function test_cp4_suspended_tenant_blocked_at_api(): void
+    public function test_cp4_suspended_organization_blocked_at_api(): void
     {
-        $this->tenantA->update([
-            'status' => Tenant::STATUS_SUSPENDED,
+        $this->organizationA->update([
+            'status' => Organization::STATUS_SUSPENDED,
             'is_active' => false,
         ]);
 
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenantA->id}/extensions");
+            ->getJson("/api/v1/organizations/{$this->organizationA->id}/extensions");
 
         $response->assertStatus(403);
     }
 
-    public function test_cp4_terminated_tenant_blocked_at_api(): void
+    public function test_cp4_terminated_organization_blocked_at_api(): void
     {
-        $this->tenantA->update([
-            'status' => Tenant::STATUS_TERMINATED,
+        $this->organizationA->update([
+            'status' => Organization::STATUS_TERMINATED,
             'is_active' => false,
         ]);
 
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenantA->id}/extensions");
+            ->getJson("/api/v1/organizations/{$this->organizationA->id}/extensions");
 
         $response->assertStatus(403);
     }
 
-    public function test_cp4_dialplan_rejects_suspended_tenant(): void
+    public function test_cp4_dialplan_rejects_suspended_organization(): void
     {
-        $this->tenantA->update([
-            'status' => Tenant::STATUS_SUSPENDED,
+        $this->organizationA->update([
+            'status' => Organization::STATUS_SUSPENDED,
             'is_active' => false,
         ]);
 
         $compiler = app(DialplanCompiler::class);
-        $xml = $compiler->compileDialplan($this->tenantA->domain, '+15551234567', '1001');
+        $xml = $compiler->compileDialplan($this->organizationA->domain, '+15551234567', '1001');
 
-        // Suspended tenant gets empty dialplan response (no routing allowed)
+        // Suspended organization gets empty dialplan response (no routing allowed)
         $this->assertStringContainsString('<section name="dialplan"', $xml);
         $this->assertStringNotContainsString('<extension', $xml);
     }
@@ -470,7 +470,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         $queueService = new QueueService;
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id,
+            'organization_id' => $this->organizationA->id,
             'name' => 'High Volume',
             'strategy' => Queue::STRATEGY_ROUND_ROBIN,
             'max_wait_time' => 300,
@@ -479,14 +479,14 @@ class SystemCheckpointAuditTest extends TestCase
         // Create 20 agents
         $agents = [];
         for ($i = 0; $i < 20; $i++) {
-            $ext = $this->tenantA->extensions()->create([
+            $ext = $this->organizationA->extensions()->create([
                 'extension' => (string) (2001 + $i),
                 'password' => 'secret123',
                 'directory_first_name' => "Agent{$i}",
                 'directory_last_name' => 'Test',
             ]);
             $agent = Agent::create([
-                'tenant_id' => $this->tenantA->id,
+                'organization_id' => $this->organizationA->id,
                 'extension_id' => $ext->id,
                 'name' => "Agent {$i}",
                 'state' => Agent::STATE_AVAILABLE,
@@ -540,24 +540,24 @@ class SystemCheckpointAuditTest extends TestCase
         $queueService = new QueueService;
 
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id,
+            'organization_id' => $this->organizationA->id,
             'name' => 'Pause Test',
             'strategy' => Queue::STRATEGY_ROUND_ROBIN,
         ]);
 
-        $ext1 = $this->tenantA->extensions()->create([
+        $ext1 = $this->organizationA->extensions()->create([
             'extension' => '3001', 'password' => 'secret', 'directory_first_name' => 'A1', 'directory_last_name' => 'T',
         ]);
-        $ext2 = $this->tenantA->extensions()->create([
+        $ext2 = $this->organizationA->extensions()->create([
             'extension' => '3002', 'password' => 'secret', 'directory_first_name' => 'A2', 'directory_last_name' => 'T',
         ]);
 
         $agent1 = Agent::create([
-            'tenant_id' => $this->tenantA->id, 'extension_id' => $ext1->id,
+            'organization_id' => $this->organizationA->id, 'extension_id' => $ext1->id,
             'name' => 'Agent Paused', 'state' => Agent::STATE_PAUSED, 'pause_reason' => Agent::PAUSE_LUNCH,
         ]);
         $agent2 = Agent::create([
-            'tenant_id' => $this->tenantA->id, 'extension_id' => $ext2->id,
+            'organization_id' => $this->organizationA->id, 'extension_id' => $ext2->id,
             'name' => 'Agent Available', 'state' => Agent::STATE_AVAILABLE,
         ]);
 
@@ -573,18 +573,18 @@ class SystemCheckpointAuditTest extends TestCase
         $queueService = new QueueService;
 
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id,
+            'organization_id' => $this->organizationA->id,
             'name' => 'Ring All Test',
             'strategy' => Queue::STRATEGY_RING_ALL,
         ]);
 
         for ($i = 0; $i < 5; $i++) {
-            $ext = $this->tenantA->extensions()->create([
+            $ext = $this->organizationA->extensions()->create([
                 'extension' => (string) (4001 + $i), 'password' => 'secret',
                 'directory_first_name' => "A{$i}", 'directory_last_name' => 'T',
             ]);
             $agent = Agent::create([
-                'tenant_id' => $this->tenantA->id, 'extension_id' => $ext->id,
+                'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
                 'name' => "Agent {$i}", 'state' => Agent::STATE_AVAILABLE,
             ]);
             $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => $i]);
@@ -600,21 +600,21 @@ class SystemCheckpointAuditTest extends TestCase
         $queueService = new QueueService;
 
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id,
+            'organization_id' => $this->organizationA->id,
             'name' => 'Overflow Test',
             'max_wait_time' => 60,
         ]);
 
         // Entry within time limit
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_WAITING,
             'join_time' => now()->subSeconds(30),
         ]);
 
         // Entry exceeding time limit
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_WAITING,
             'join_time' => now()->subSeconds(120),
         ]);
@@ -629,12 +629,12 @@ class SystemCheckpointAuditTest extends TestCase
 
     public function test_cp6_valid_state_transitions(): void
     {
-        $ext = $this->tenantA->extensions()->create([
+        $ext = $this->organizationA->extensions()->create([
             'extension' => '5001', 'password' => 'secret',
             'directory_first_name' => 'SM', 'directory_last_name' => 'Agent',
         ]);
         $agent = Agent::create([
-            'tenant_id' => $this->tenantA->id, 'extension_id' => $ext->id,
+            'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
             'name' => 'State Machine Agent', 'state' => Agent::STATE_OFFLINE,
         ]);
 
@@ -669,12 +669,12 @@ class SystemCheckpointAuditTest extends TestCase
 
     public function test_cp6_no_impossible_states(): void
     {
-        $ext = $this->tenantA->extensions()->create([
+        $ext = $this->organizationA->extensions()->create([
             'extension' => '5002', 'password' => 'secret',
             'directory_first_name' => 'IS', 'directory_last_name' => 'Agent',
         ]);
         $agent = Agent::create([
-            'tenant_id' => $this->tenantA->id, 'extension_id' => $ext->id,
+            'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
             'name' => 'Impossible State Agent', 'state' => Agent::STATE_AVAILABLE,
         ]);
 
@@ -686,7 +686,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         // Invalid state through API is rejected
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenantA->id}/agents/{$agent->id}/state", [
+            ->postJson("/api/v1/organizations/{$this->organizationA->id}/agents/{$agent->id}/state", [
                 'state' => 'on_call_and_available', // invalid state
             ]);
         $response->assertStatus(422);
@@ -696,16 +696,16 @@ class SystemCheckpointAuditTest extends TestCase
     {
         Event::fake();
 
-        $ext = $this->tenantA->extensions()->create([
+        $ext = $this->organizationA->extensions()->create([
             'extension' => '5003', 'password' => 'secret',
             'directory_first_name' => 'CE', 'directory_last_name' => 'Agent',
         ]);
         $agent = Agent::create([
-            'tenant_id' => $this->tenantA->id, 'extension_id' => $ext->id,
+            'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
             'name' => 'Call Event Agent', 'state' => Agent::STATE_AVAILABLE,
         ]);
 
-        $queue = Queue::create(['tenant_id' => $this->tenantA->id, 'name' => 'CE Queue']);
+        $queue = Queue::create(['organization_id' => $this->organizationA->id, 'name' => 'CE Queue']);
         $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => 0]);
 
         $queueService = new QueueService;
@@ -719,12 +719,12 @@ class SystemCheckpointAuditTest extends TestCase
 
     public function test_cp6_state_changed_at_always_updated(): void
     {
-        $ext = $this->tenantA->extensions()->create([
+        $ext = $this->organizationA->extensions()->create([
             'extension' => '5004', 'password' => 'secret',
             'directory_first_name' => 'TS', 'directory_last_name' => 'Agent',
         ]);
         $agent = Agent::create([
-            'tenant_id' => $this->tenantA->id, 'extension_id' => $ext->id,
+            'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
             'name' => 'Timestamp Agent', 'state' => Agent::STATE_OFFLINE,
         ]);
 
@@ -746,23 +746,23 @@ class SystemCheckpointAuditTest extends TestCase
     {
         $metricsService = new MetricsService;
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id, 'name' => 'Metrics Queue',
+            'organization_id' => $this->organizationA->id, 'name' => 'Metrics Queue',
             'service_level_threshold' => 20,
         ]);
 
         // Create entries with known wait durations
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ANSWERED,
             'join_time' => now()->subMinutes(10), 'wait_duration' => 10,
         ]);
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ANSWERED,
             'join_time' => now()->subMinutes(8), 'wait_duration' => 20,
         ]);
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ANSWERED,
             'join_time' => now()->subMinutes(5), 'wait_duration' => 30,
         ]);
@@ -777,19 +777,19 @@ class SystemCheckpointAuditTest extends TestCase
     public function test_cp7_abandon_rate_correct(): void
     {
         $metricsService = new MetricsService;
-        $queue = Queue::create(['tenant_id' => $this->tenantA->id, 'name' => 'Abandon Queue']);
+        $queue = Queue::create(['organization_id' => $this->organizationA->id, 'name' => 'Abandon Queue']);
 
         // 3 answered, 2 abandoned = 40% abandon rate
         for ($i = 0; $i < 3; $i++) {
             QueueEntry::create([
-                'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+                'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
                 'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ANSWERED,
                 'join_time' => now()->subMinutes(5), 'wait_duration' => 10,
             ]);
         }
         for ($i = 0; $i < 2; $i++) {
             QueueEntry::create([
-                'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+                'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
                 'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ABANDONED,
                 'join_time' => now()->subMinutes(3), 'abandon_time' => now(), 'wait_duration' => 30,
             ]);
@@ -803,28 +803,28 @@ class SystemCheckpointAuditTest extends TestCase
     {
         $metricsService = new MetricsService;
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id, 'name' => 'SLA Queue',
+            'organization_id' => $this->organizationA->id, 'name' => 'SLA Queue',
             'service_level_threshold' => 20,
         ]);
 
         // 2 within SLA (15s, 18s), 1 outside (30s), 1 abandoned
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ANSWERED,
             'join_time' => now()->subMinutes(10), 'wait_duration' => 15,
         ]);
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ANSWERED,
             'join_time' => now()->subMinutes(8), 'wait_duration' => 18,
         ]);
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ANSWERED,
             'join_time' => now()->subMinutes(5), 'wait_duration' => 30,
         ]);
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ABANDONED,
             'join_time' => now()->subMinutes(3), 'abandon_time' => now(), 'wait_duration' => 45,
         ]);
@@ -838,17 +838,17 @@ class SystemCheckpointAuditTest extends TestCase
     public function test_cp7_agent_occupancy_correct(): void
     {
         $metricsService = new MetricsService;
-        $queue = Queue::create(['tenant_id' => $this->tenantA->id, 'name' => 'Occupancy Queue']);
+        $queue = Queue::create(['organization_id' => $this->organizationA->id, 'name' => 'Occupancy Queue']);
 
         // 3 agents: 1 busy, 1 available, 1 paused
         $states = [Agent::STATE_BUSY, Agent::STATE_AVAILABLE, Agent::STATE_PAUSED];
         foreach ($states as $i => $state) {
-            $ext = $this->tenantA->extensions()->create([
+            $ext = $this->organizationA->extensions()->create([
                 'extension' => (string) (6001 + $i), 'password' => 'secret',
                 'directory_first_name' => "O{$i}", 'directory_last_name' => 'A',
             ]);
             $agent = Agent::create([
-                'tenant_id' => $this->tenantA->id, 'extension_id' => $ext->id,
+                'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
                 'name' => "Occ Agent {$i}", 'state' => $state,
                 'pause_reason' => $state === Agent::STATE_PAUSED ? Agent::PAUSE_BREAK : null,
             ]);
@@ -864,7 +864,7 @@ class SystemCheckpointAuditTest extends TestCase
     {
         $metricsService = new MetricsService;
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id, 'name' => 'History Queue',
+            'organization_id' => $this->organizationA->id, 'name' => 'History Queue',
             'service_level_threshold' => 20,
         ]);
 
@@ -872,12 +872,12 @@ class SystemCheckpointAuditTest extends TestCase
 
         // Create entries within this hour
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ANSWERED,
             'join_time' => $periodStart->copy()->addMinutes(5), 'wait_duration' => 12,
         ]);
         QueueEntry::create([
-            'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+            'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
             'call_uuid' => (string) Str::uuid(), 'status' => QueueEntry::STATUS_ABANDONED,
             'join_time' => $periodStart->copy()->addMinutes(15),
             'abandon_time' => $periodStart->copy()->addMinutes(17), 'wait_duration' => 120,
@@ -895,10 +895,10 @@ class SystemCheckpointAuditTest extends TestCase
     // CHECKPOINT 8 — WEBHOOK & AUTOMATION RELIABILITY
     // ========================================================================
 
-    public function test_cp8_webhook_tenant_scoped_subscription(): void
+    public function test_cp8_webhook_organization_scoped_subscription(): void
     {
         Webhook::create([
-            'tenant_id' => $this->tenantA->id,
+            'organization_id' => $this->organizationA->id,
             'url' => 'https://alpha.example.com/hook',
             'events' => ['call.created', 'call.hangup'],
             'secret' => 'alpha-secret-key',
@@ -906,21 +906,21 @@ class SystemCheckpointAuditTest extends TestCase
         ]);
 
         Webhook::create([
-            'tenant_id' => $this->tenantB->id,
+            'organization_id' => $this->organizationB->id,
             'url' => 'https://beta.example.com/hook',
             'events' => ['call.created'],
             'secret' => 'beta-secret-key',
             'is_active' => true,
         ]);
 
-        // Tenant A should only see its own webhooks
+        // Organization A should only see its own webhooks
         $response = $this->actingAs($this->userA, 'sanctum')
-            ->getJson("/api/v1/tenants/{$this->tenantA->id}/webhooks");
+            ->getJson("/api/v1/organizations/{$this->organizationA->id}/webhooks");
 
         $response->assertStatus(200);
         $webhooks = $response->json('data');
         foreach ($webhooks as $webhook) {
-            $this->assertEquals($this->tenantA->id, $webhook['tenant_id']);
+            $this->assertEquals($this->organizationA->id, $webhook['organization_id']);
         }
     }
 
@@ -929,15 +929,15 @@ class SystemCheckpointAuditTest extends TestCase
         $dispatched = [];
         $webhookDispatcher = $this->createMock(WebhookDispatcher::class);
         $webhookDispatcher->method('dispatch')
-            ->willReturnCallback(function ($tenantId, $eventType, $data) use (&$dispatched) {
-                $dispatched[] = ['tenant_id' => $tenantId, 'event_type' => $eventType];
+            ->willReturnCallback(function ($organizationId, $eventType, $data) use (&$dispatched) {
+                $dispatched[] = ['organization_id' => $organizationId, 'event_type' => $eventType];
             });
 
         $processor = new EventProcessor($webhookDispatcher);
 
         $callUuid = (string) Str::uuid();
         $baseEvent = [
-            'variable_domain_name' => $this->tenantA->domain,
+            'variable_domain_name' => $this->organizationA->domain,
             'Unique-ID' => $callUuid,
             'Caller-Caller-ID-Name' => 'Test',
             'Caller-Caller-ID-Number' => '+15551234567',
@@ -961,9 +961,9 @@ class SystemCheckpointAuditTest extends TestCase
         $this->assertContains('call.hangup', $eventTypes);
         $this->assertContains('call.missed', $eventTypes);
 
-        // All dispatches should be scoped to Tenant A
+        // All dispatches should be scoped to Organization A
         foreach ($dispatched as $d) {
-            $this->assertEquals($this->tenantA->id, $d['tenant_id']);
+            $this->assertEquals($this->organizationA->id, $d['organization_id']);
         }
     }
 
@@ -973,18 +973,18 @@ class SystemCheckpointAuditTest extends TestCase
 
     public function test_cp9_call_control_requires_auth(): void
     {
-        $response = $this->postJson("/api/v1/tenants/{$this->tenantA->id}/calls/hangup", [
+        $response = $this->postJson("/api/v1/organizations/{$this->organizationA->id}/calls/hangup", [
             'uuid' => (string) Str::uuid(),
         ]);
 
         $response->assertStatus(401);
     }
 
-    public function test_cp9_tenant_scoped_call_control(): void
+    public function test_cp9_organization_scoped_call_control(): void
     {
-        // Tenant B user cannot access Tenant A's call control
+        // Organization B user cannot access Organization A's call control
         $response = $this->actingAs($this->userB, 'sanctum')
-            ->postJson("/api/v1/tenants/{$this->tenantA->id}/calls/hangup", [
+            ->postJson("/api/v1/organizations/{$this->organizationA->id}/calls/hangup", [
                 'uuid' => (string) Str::uuid(),
             ]);
 
@@ -1007,12 +1007,12 @@ class SystemCheckpointAuditTest extends TestCase
     {
         Event::fake();
 
-        $ext = $this->tenantA->extensions()->create([
+        $ext = $this->organizationA->extensions()->create([
             'extension' => '7001', 'password' => 'secret',
             'directory_first_name' => 'RC', 'directory_last_name' => 'Agent',
         ]);
         $agent = Agent::create([
-            'tenant_id' => $this->tenantA->id, 'extension_id' => $ext->id,
+            'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
             'name' => 'Recovery Agent', 'state' => Agent::STATE_OFFLINE,
         ]);
 
@@ -1046,7 +1046,7 @@ class SystemCheckpointAuditTest extends TestCase
         $queueService = new QueueService;
 
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id, 'name' => 'Recovery Queue',
+            'organization_id' => $this->organizationA->id, 'name' => 'Recovery Queue',
             'max_wait_time' => 300,
         ]);
 
@@ -1057,12 +1057,12 @@ class SystemCheckpointAuditTest extends TestCase
         }
 
         // Mixed operations: answer 3, abandon 3, overflow 2, leave 2 waiting
-        $ext = $this->tenantA->extensions()->create([
+        $ext = $this->organizationA->extensions()->create([
             'extension' => '7010', 'password' => 'secret',
             'directory_first_name' => 'R', 'directory_last_name' => 'A',
         ]);
         $agent = Agent::create([
-            'tenant_id' => $this->tenantA->id, 'extension_id' => $ext->id,
+            'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
             'name' => 'R Agent', 'state' => Agent::STATE_AVAILABLE,
         ]);
 
@@ -1104,7 +1104,7 @@ class SystemCheckpointAuditTest extends TestCase
         $queueService = new QueueService;
 
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id, 'name' => 'Zombie Queue',
+            'organization_id' => $this->organizationA->id, 'name' => 'Zombie Queue',
         ]);
 
         // Create entries and process them all
@@ -1132,18 +1132,18 @@ class SystemCheckpointAuditTest extends TestCase
         $queueService = new QueueService;
 
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id, 'name' => 'Perf Queue',
+            'organization_id' => $this->organizationA->id, 'name' => 'Perf Queue',
             'strategy' => Queue::STRATEGY_ROUND_ROBIN,
         ]);
 
         // Create 50 agents
         for ($i = 0; $i < 50; $i++) {
-            $ext = $this->tenantA->extensions()->create([
+            $ext = $this->organizationA->extensions()->create([
                 'extension' => (string) (8001 + $i), 'password' => 'secret',
                 'directory_first_name' => "P{$i}", 'directory_last_name' => 'A',
             ]);
             $agent = Agent::create([
-                'tenant_id' => $this->tenantA->id, 'extension_id' => $ext->id,
+                'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
                 'name' => "Perf Agent {$i}", 'state' => Agent::STATE_AVAILABLE,
             ]);
             $queue->members()->attach($agent->id, ['id' => Str::uuid(), 'priority' => $i]);
@@ -1174,14 +1174,14 @@ class SystemCheckpointAuditTest extends TestCase
     {
         $metricsService = new MetricsService;
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id, 'name' => 'Perf Metrics Queue',
+            'organization_id' => $this->organizationA->id, 'name' => 'Perf Metrics Queue',
             'service_level_threshold' => 20,
         ]);
 
         // Create 100 entries with deterministic data
         for ($i = 0; $i < 100; $i++) {
             QueueEntry::create([
-                'tenant_id' => $this->tenantA->id, 'queue_id' => $queue->id,
+                'organization_id' => $this->organizationA->id, 'queue_id' => $queue->id,
                 'call_uuid' => (string) Str::uuid(),
                 'status' => $i % 3 === 0 ? QueueEntry::STATUS_ABANDONED : QueueEntry::STATUS_ANSWERED,
                 'join_time' => now()->subMinutes($i + 1),
@@ -1206,7 +1206,7 @@ class SystemCheckpointAuditTest extends TestCase
     {
         // ContactCenterEvent can handle any event type string
         $event = new \App\Events\ContactCenterEvent(
-            $this->tenantA->id,
+            $this->organizationA->id,
             'custom.ai_analysis_complete',
             ['score' => 95, 'analysis_id' => 'abc123']
         );
@@ -1219,7 +1219,7 @@ class SystemCheckpointAuditTest extends TestCase
     {
         // Queue model can store additional strategy types
         $queue = Queue::create([
-            'tenant_id' => $this->tenantA->id,
+            'organization_id' => $this->organizationA->id,
             'name' => 'Future Queue',
             'strategy' => Queue::STRATEGY_ROUND_ROBIN,
         ]);
@@ -1233,7 +1233,7 @@ class SystemCheckpointAuditTest extends TestCase
     public function test_cp12_recording_metadata_prepared_for_ai(): void
     {
         $recording = Recording::factory()->create([
-            'tenant_id' => $this->tenantA->id,
+            'organization_id' => $this->organizationA->id,
             'call_uuid' => (string) Str::uuid(),
             'queue_name' => 'Support Queue',
             'agent_id' => 'agent-uuid',
@@ -1251,9 +1251,9 @@ class SystemCheckpointAuditTest extends TestCase
     public function test_cp12_wallboard_data_consumable_by_external_sdk(): void
     {
         $metricsService = new MetricsService;
-        Queue::create(['tenant_id' => $this->tenantA->id, 'name' => 'SDK Queue']);
+        Queue::create(['organization_id' => $this->organizationA->id, 'name' => 'SDK Queue']);
 
-        $wallboard = $metricsService->getWallboardData($this->tenantA->id);
+        $wallboard = $metricsService->getWallboardData($this->organizationA->id);
 
         // Verify structure is clean JSON-serializable format
         $json = json_encode($wallboard);

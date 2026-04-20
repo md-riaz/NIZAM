@@ -4,9 +4,9 @@
 
 **Goal:** Add a first-wave PBX convenience layer for Nizam covering personal call control, shared office controls, directory/discovery, and matching API/docs/frontend coverage.
 
-**Architecture:** Build these features as additive, event/observer-driven business-phone capabilities on top of the compiled tenant manifest and dialplan compiler. The hot call path remains deterministic and compiled; configuration, provisioning, and visibility are exposed through explicit backend APIs, OpenAPI/docs, and admin frontend pages.
+**Architecture:** Build these features as additive, event/observer-driven business-phone capabilities on top of the compiled organization manifest and dialplan compiler. The hot call path remains deterministic and compiled; configuration, provisioning, and visibility are exposed through explicit backend APIs, OpenAPI/docs, and admin frontend pages.
 
-**Tech Stack:** Laravel, PHPUnit, OpenAPI YAML, React/TypeScript frontend, FreeSWITCH XML/dialplan compilation, tenant-scoped APIs
+**Tech Stack:** Laravel, PHPUnit, OpenAPI YAML, React/TypeScript frontend, FreeSWITCH XML/dialplan compilation, organization-scoped APIs
 
 ---
 
@@ -14,7 +14,7 @@
 
 ### Personal call control
 - `backend/app/Models/Extension.php` — add persistence fields for follow-me/DND convenience where needed
-- `backend/app/Http/Controllers/Api/ExtensionFeatureController.php` — tenant-scoped API for extension-level convenience features
+- `backend/app/Http/Controllers/Api/ExtensionFeatureController.php` — organization-scoped API for extension-level convenience features
 - `backend/app/Services/ExtensionFeatureService.php` — domain logic for follow-me, DND, and service-code behavior
 - `backend/tests/Feature/Api/ExtensionFeatureApiTest.php` — API coverage
 - `backend/tests/Unit/Services/ExtensionFeatureServiceTest.php` — domain logic coverage
@@ -33,7 +33,7 @@
 
 ### Dialplan and manifest integration
 - `backend/app/Services/DialplanCompiler.php`
-- `backend/app/Services/TenantManifestBuilder.php`
+- `backend/app/Services/OrganizationManifestBuilder.php`
 - `backend/tests/Unit/Services/DialplanCompilerExtendedTest.php`
 - `backend/tests/Feature/FreeswitchXmlTest.php`
 
@@ -67,7 +67,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\ExtensionFeatureService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -87,9 +87,9 @@ class ExtensionFeatureServiceTest extends TestCase
 
     public function test_it_can_enable_follow_me_and_dnd_for_an_extension(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
 
         $service = app(ExtensionFeatureService::class);
@@ -192,7 +192,7 @@ git commit -m "feat: add extension convenience feature state"
 namespace Tests\Feature\Api;
 
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -210,14 +210,14 @@ class ExtensionFeatureApiTest extends TestCase
         ]);
     }
 
-    public function test_tenant_admin_can_update_extension_features(): void
+    public function test_organization_admin_can_update_extension_features(): void
     {
-        $tenant = Tenant::factory()->create();
-        $admin = User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
 
         $response = $this->actingAs($admin, 'sanctum')
-            ->putJson("/api/v1/tenants/{$tenant->id}/extensions/{$extension->id}/features", [
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}/features", [
                 'follow_me_enabled' => true,
                 'follow_me_destination' => '+8801712345678',
                 'dnd_enabled' => true,
@@ -246,16 +246,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\ExtensionFeatureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ExtensionFeatureController extends Controller
 {
-    public function update(Request $request, Tenant $tenant, Extension $extension, ExtensionFeatureService $service): JsonResponse
+    public function update(Request $request, Organization $organization, Extension $extension, ExtensionFeatureService $service): JsonResponse
     {
-        abort_unless($extension->tenant_id === $tenant->id, 404);
+        abort_unless($extension->organization_id === $organization->id, 404);
 
         $validated = $request->validate([
             'follow_me_enabled' => ['boolean'],
@@ -292,7 +292,7 @@ git commit -m "feat: add extension convenience feature API"
 
 **Files:**
 - Modify: `backend/app/Services/DialplanCompiler.php`
-- Modify: `backend/app/Services/TenantManifestBuilder.php`
+- Modify: `backend/app/Services/OrganizationManifestBuilder.php`
 - Test: `backend/tests/Unit/Services/DialplanCompilerExtendedTest.php`
 - Test: `backend/tests/Feature/FreeswitchXmlTest.php`
 
@@ -301,9 +301,9 @@ git commit -m "feat: add extension convenience feature API"
 ```php
 public function test_compiled_dialplan_includes_follow_me_and_dnd_service_routes(): void
 {
-    $tenant = Tenant::factory()->create(['domain' => 'pbx.example.com']);
+    $organization = Organization::factory()->create(['domain' => 'pbx.example.com']);
 
-    $xml = app(DialplanCompiler::class)->compileDialplan($tenant->domain, '*98');
+    $xml = app(DialplanCompiler::class)->compileDialplan($organization->domain, '*98');
 
     $this->assertStringContainsString('*98', $xml);
 }
@@ -326,10 +326,10 @@ In `DialplanCompiler`, add helpers that emit service routes using `config('telep
 
 Examples:
 ```php
-protected function compileVoicemailMainRoute(Tenant $tenant): string { /* ... */ }
-protected function compileDndRoute(Tenant $tenant, string $code, bool $enabled): string { /* ... */ }
-protected function compileCallReturnRoute(Tenant $tenant): string { /* ... */ }
-protected function compileSendToVoicemailRoute(Tenant $tenant): string { /* ... */ }
+protected function compileVoicemailMainRoute(Organization $organization): string { /* ... */ }
+protected function compileDndRoute(Organization $organization, string $code, bool $enabled): string { /* ... */ }
+protected function compileCallReturnRoute(Organization $organization): string { /* ... */ }
+protected function compileSendToVoicemailRoute(Organization $organization): string { /* ... */ }
 ```
 
 Then include them in the manifest builder and direct compiler path.
@@ -343,7 +343,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/app/Services/DialplanCompiler.php backend/app/Services/TenantManifestBuilder.php backend/tests/Unit/Services/DialplanCompilerExtendedTest.php backend/tests/Feature/FreeswitchXmlTest.php
+git add backend/app/Services/DialplanCompiler.php backend/app/Services/OrganizationManifestBuilder.php backend/tests/Unit/Services/DialplanCompilerExtendedTest.php backend/tests/Feature/FreeswitchXmlTest.php
 git commit -m "feat: compile personal convenience service routes"
 ```
 
@@ -361,8 +361,8 @@ git commit -m "feat: compile personal convenience service routes"
 - [ ] **Step 1: Write failing unit and feature tests for office controls**
 
 Cover a minimal API such as:
-- `GET /tenants/{tenant}/office-features`
-- `PUT /tenants/{tenant}/office-features`
+- `GET /organizations/{organization}/office-features`
+- `PUT /organizations/{organization}/office-features`
 
 with fields like:
 ```json
@@ -381,13 +381,13 @@ Expected: missing service/controller/routes.
 
 - [ ] **Step 3: Add minimal model-free service + API**
 
-Keep it additive by storing values under `tenant.settings.business_phone.office_features`.
+Keep it additive by storing values under `organization.settings.business_phone.office_features`.
 
 ```php
 class OfficeFeatureService
 {
-    public function get(Tenant $tenant): array { /* merge defaults */ }
-    public function update(Tenant $tenant, array $attributes): array { /* save settings */ }
+    public function get(Organization $organization): array { /* merge defaults */ }
+    public function update(Organization $organization, array $attributes): array { /* save settings */ }
 }
 ```
 
@@ -413,10 +413,10 @@ git commit -m "feat: add office convenience feature API"
 - Test: `backend/tests/Unit/Services/DirectoryServiceTest.php`
 - Test: `backend/tests/Feature/Api/DirectoryApiTest.php`
 
-- [ ] **Step 1: Write failing tests for tenant directory search**
+- [ ] **Step 1: Write failing tests for organization directory search**
 
 Cover behavior such as:
-- only active extensions in the tenant
+- only active extensions in the organization
 - searchable by first name / last name / extension
 - returns directory name + extension
 
@@ -429,9 +429,9 @@ Expected: missing service/controller/routes.
 ```php
 class DirectoryService
 {
-    public function search(Tenant $tenant, ?string $query = null): Collection
+    public function search(Organization $organization, ?string $query = null): Collection
     {
-        return $tenant->extensions()
+        return $organization->extensions()
             ->where('is_active', true)
             ->when($query, function ($builder) use ($query) {
                 $builder->where(function ($q) use ($query) {
@@ -560,7 +560,7 @@ export interface OfficeFeatures {
 
 - [ ] **Step 2: Create Directory admin page**
 
-Build a simple tenant-scoped searchable directory page consuming `GET /api/v1/tenants/{tenant}/directory`.
+Build a simple organization-scoped searchable directory page consuming `GET /api/v1/organizations/{organization}/directory`.
 
 - [ ] **Step 3: Create Office Features admin page**
 

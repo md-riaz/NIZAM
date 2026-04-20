@@ -22,7 +22,7 @@ class UsageRecord extends Model
     public const METRIC_ACTIVE_EXTENSIONS = 'active_extensions';
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'metric',
         'value',
         'metadata',
@@ -38,8 +38,8 @@ class UsageRecord extends Model
         ];
     }
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 }

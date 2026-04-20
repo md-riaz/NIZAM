@@ -5,7 +5,7 @@ namespace Tests\Unit\Services\Call;
 use App\Models\Agent;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\DeliveryTarget;
 use App\Services\Call\DeliveryTargetSet;
 use App\Services\Call\EndpointResolver;
@@ -27,14 +27,14 @@ class EndpointResolverTest extends TestCase
 
     public function test_extension_targets_expand_to_enabled_runtime_endpoint_candidates(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'is_active' => true,
         ]);
         $agent = Agent::factory()->available()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'is_active' => true,
         ]);
@@ -94,14 +94,14 @@ class EndpointResolverTest extends TestCase
 
     public function test_agent_targets_include_agent_and_extension_bound_forward_candidates(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'queue.test']);
+        $organization = Organization::factory()->create(['domain' => 'queue.test']);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '2002',
             'is_active' => true,
         ]);
         $agent = Agent::factory()->available()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
             'is_active' => true,
         ]);
@@ -142,14 +142,14 @@ class EndpointResolverTest extends TestCase
 
     public function test_endpoint_candidates_do_not_use_device_profiles_as_runtime_source(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'devices.test']);
+        $organization = Organization::factory()->create(['domain' => 'devices.test']);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '3003',
             'is_active' => true,
         ]);
         $extension->deviceProfiles()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'Desk Provisioning',
             'vendor' => 'Yealink',
             'model' => 'T46U',
@@ -170,9 +170,9 @@ class EndpointResolverTest extends TestCase
 
     public function test_endpoint_candidates_exclude_runtime_invalid_push_bindings(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'invalid.test']);
+        $organization = Organization::factory()->create(['domain' => 'invalid.test']);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '4004',
             'is_active' => true,
         ]);

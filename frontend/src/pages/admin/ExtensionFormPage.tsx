@@ -25,7 +25,7 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 
 const extensionSchema = z.object({
@@ -49,7 +49,7 @@ export default function ExtensionFormPage() {
     const isEdit = Boolean(id);
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
 
     const form = useForm<ExtensionFormValues>({
         resolver: zodResolver(extensionSchema),
@@ -69,12 +69,12 @@ export default function ExtensionFormPage() {
     });
 
     const { data: extension, isLoading: isFetching } = useQuery({
-        queryKey: ['extension', activeTenant?.id, id],
+        queryKey: ['extension', activeOrganization?.id, id],
         queryFn: async () => {
-            const response = await api.get(`${tenantApiPrefix}/extensions/${id}`);
+            const response = await api.get(`${organizationApiPrefix}/extensions/${id}`);
             return response.data.data;
         },
-        enabled: Boolean(id) && Boolean(activeTenant),
+        enabled: Boolean(id) && Boolean(activeOrganization),
     });
 
     useEffect(() => {
@@ -98,21 +98,21 @@ export default function ExtensionFormPage() {
     const mutation = useMutation({
         mutationFn: async (values: ExtensionFormValues) => {
             if (isEdit) {
-                return api.put(`${tenantApiPrefix}/extensions/${id}`, values);
+                return api.put(`${organizationApiPrefix}/extensions/${id}`, values);
             }
 
-            return api.post(`${tenantApiPrefix}/extensions`, values);
+            return api.post(`${organizationApiPrefix}/extensions`, values);
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['extensions', activeTenant?.id] });
+            await queryClient.invalidateQueries({ queryKey: ['extensions', activeOrganization?.id] });
             navigate('/admin/extensions');
         },
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select a tenant to manage extensions.
+                Select a organization to manage extensions.
             </div>
         );
     }
@@ -125,7 +125,7 @@ export default function ExtensionFormPage() {
                     <span className="sr-only">Back to extensions</span>
                 </Button>
                 <div>
-                    <p className="text-sm text-muted-foreground">{activeTenant.name} › Phone System</p>
+                    <p className="text-sm text-muted-foreground">{activeOrganization.name} › Phone System</p>
                     <h1 className="text-2xl font-bold tracking-tight">
                         {isEdit ? 'Edit Extension' : 'Create Extension'}
                     </h1>

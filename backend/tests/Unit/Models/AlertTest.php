@@ -23,7 +23,7 @@ class AlertTest extends TestCase
     {
         $policy = AlertPolicy::factory()->create();
         $alert = Alert::factory()->create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
         ]);
 

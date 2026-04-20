@@ -7,32 +7,32 @@ use App\Http\Requests\StoreIvrRequest;
 use App\Http\Requests\UpdateIvrRequest;
 use App\Http\Resources\IvrResource;
 use App\Models\Ivr;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API controller for managing IVRs scoped to a tenant.
+ * API controller for managing IVRs scoped to a organization.
  */
 class IvrController extends Controller
 {
     /**
-     * List IVRs for a tenant (paginated).
+     * List IVRs for an organization (paginated).
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', Ivr::class);
 
-        return IvrResource::collection($tenant->ivrs()->paginate(15));
+        return IvrResource::collection($organization->ivrs()->paginate(15));
     }
 
     /**
-     * Create a new IVR for a tenant.
+     * Create a new IVR for an organization.
      */
-    public function store(StoreIvrRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreIvrRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', Ivr::class);
 
-        $ivr = $tenant->ivrs()->create($request->validated());
+        $ivr = $organization->ivrs()->create($request->validated());
 
         return (new IvrResource($ivr))->response()->setStatusCode(201);
     }
@@ -40,9 +40,9 @@ class IvrController extends Controller
     /**
      * Show a single IVR.
      */
-    public function show(Tenant $tenant, Ivr $ivr): JsonResponse|IvrResource
+    public function show(Organization $organization, Ivr $ivr): JsonResponse|IvrResource
     {
-        if ($ivr->tenant_id !== $tenant->id) {
+        if ($ivr->organization_id !== $organization->id) {
             return response()->json(['message' => 'IVR not found.'], 404);
         }
 
@@ -54,9 +54,9 @@ class IvrController extends Controller
     /**
      * Update an existing IVR.
      */
-    public function update(UpdateIvrRequest $request, Tenant $tenant, Ivr $ivr): JsonResponse|IvrResource
+    public function update(UpdateIvrRequest $request, Organization $organization, Ivr $ivr): JsonResponse|IvrResource
     {
-        if ($ivr->tenant_id !== $tenant->id) {
+        if ($ivr->organization_id !== $organization->id) {
             return response()->json(['message' => 'IVR not found.'], 404);
         }
 
@@ -70,9 +70,9 @@ class IvrController extends Controller
     /**
      * Delete an IVR.
      */
-    public function destroy(Tenant $tenant, Ivr $ivr): JsonResponse
+    public function destroy(Organization $organization, Ivr $ivr): JsonResponse
     {
-        if ($ivr->tenant_id !== $tenant->id) {
+        if ($ivr->organization_id !== $organization->id) {
             return response()->json(['message' => 'IVR not found.'], 404);
         }
 

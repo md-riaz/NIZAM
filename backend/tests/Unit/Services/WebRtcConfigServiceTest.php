@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\Extension;
 use App\Models\SipProfile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\WebRtcConfigService;
 use Database\Seeders\SipProfileSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,14 +29,14 @@ class WebRtcConfigServiceTest extends TestCase
     {
         $this->seed(SipProfileSeeder::class);
 
-        $tenant = Tenant::query()->create([
-            'name' => 'Tenant A',
-            'domain' => 'tenant-a.example.com',
+        $organization = Organization::query()->create([
+            'name' => 'Organization A',
+            'domain' => 'organization-a.example.com',
             'is_active' => true,
         ]);
 
         $extension = Extension::query()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1001',
             'password' => 'secret1234',
             'directory_first_name' => 'Test',
@@ -44,7 +44,7 @@ class WebRtcConfigServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        $config = app(WebRtcConfigService::class)->forExtension($extension->load('tenant'), 'https://app.example.com');
+        $config = app(WebRtcConfigService::class)->forExtension($extension->load('organization'), 'https://app.example.com');
 
         $this->assertFalse($config['enabled']);
         $this->assertSame('softphone', $config['endpoint_strategy']['primary']);
@@ -57,14 +57,14 @@ class WebRtcConfigServiceTest extends TestCase
     {
         $this->seed(SipProfileSeeder::class);
 
-        $tenant = Tenant::query()->create([
-            'name' => 'Tenant B',
-            'domain' => 'tenant-b.example.com',
+        $organization = Organization::query()->create([
+            'name' => 'Organization B',
+            'domain' => 'organization-b.example.com',
             'is_active' => true,
         ]);
 
         $extension = Extension::query()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension' => '1002',
             'password' => 'secret5678',
             'directory_first_name' => 'Demo',
@@ -91,7 +91,7 @@ class WebRtcConfigServiceTest extends TestCase
             'telephony.push.fcm.service_account_json' => '{"type":"service_account"}',
         ]);
 
-        $config = app(WebRtcConfigService::class)->forExtension($extension->load('tenant'), 'https://app.example.com');
+        $config = app(WebRtcConfigService::class)->forExtension($extension->load('organization'), 'https://app.example.com');
 
         $this->assertTrue($config['enabled']);
         $this->assertSame('wss://app.example.com:7445', $config['websocket_url']);

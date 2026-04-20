@@ -3,7 +3,7 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\DeliverWebhook;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\Webhook;
 use App\Models\WebhookDeliveryAttempt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,9 +18,9 @@ class DeliverWebhookEnhancedTest extends TestCase
     {
         Http::fake(['*' => Http::response('OK', 200)]);
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $webhook = Webhook::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'url' => 'https://example.com/hook',
             'secret' => 'test-secret-key-12345',
         ]);
@@ -40,9 +40,9 @@ class DeliverWebhookEnhancedTest extends TestCase
     {
         Http::fake(['*' => Http::response('OK', 200)]);
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $webhook = Webhook::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'url' => 'https://example.com/hook',
             'secret' => 'test-secret-key-12345',
         ]);
@@ -59,9 +59,9 @@ class DeliverWebhookEnhancedTest extends TestCase
     {
         Http::fake(['*' => Http::response('OK', 200)]);
 
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $webhook = Webhook::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'url' => 'https://example.com/hook',
             'secret' => 'test-secret-key-12345',
         ]);

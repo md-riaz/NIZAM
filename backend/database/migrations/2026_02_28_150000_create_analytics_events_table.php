@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('analytics_events', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->string('call_uuid')->index();
             $table->integer('version')->default(1);
 

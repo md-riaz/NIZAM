@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const fallbackId = payload.type && payload.tenant_id && payload.timestamp
-                ? `${payload.type}-${payload.tenant_id}-${payload.timestamp}`
+            const fallbackId = payload.type && payload.organization_id && payload.timestamp
+                ? `${payload.type}-${payload.organization_id}-${payload.timestamp}`
                 : null;
             const id = payload.id ?? fallbackId;
             if (!id) {

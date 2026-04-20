@@ -2,12 +2,12 @@
 
 ## Overview
 
-The platform must remediate the alignment and performance issues identified in the full-system audit without breaking tenant isolation or existing telephony flows. The remediation covers schema indexing, model and migration alignment, service and controller boundaries, DTO contracts, caching of hot read paths, and naming consistency across layers.
+The platform must remediate the alignment and performance issues identified in the full-system audit without breaking organization isolation or existing telephony flows. The remediation covers schema indexing, model and migration alignment, service and controller boundaries, DTO contracts, caching of hot read paths, and naming consistency across layers.
 
 ## Requirements
 
 ### Requirement 1: Hot-path database performance
-1. The system SHALL add the missing indexes required by hot tenant-scoped call, queue, and agent queries.
+1. The system SHALL add the missing indexes required by hot organization-scoped call, queue, and agent queries.
 2. The system SHALL align high-volume table indexes with actual service and controller query patterns.
 3. The system SHALL preserve existing data semantics while improving query selectivity.
 
@@ -27,7 +27,7 @@ The platform must remediate the alignment and performance issues identified in t
 3. Resources SHALL remain output contracts and SHALL only expose data prepared by the application layer.
 
 ### Requirement 5: Hot-path caching and aggregation
-1. Tenant wallboard and agent-state endpoints SHALL use caching or pre-aggregated reads instead of repeated request-time fan-out.
+1. Organization wallboard and agent-state endpoints SHALL use caching or pre-aggregated reads instead of repeated request-time fan-out.
 2. Call analysis endpoints SHALL avoid redundant database reads when data is already preloaded.
 3. Historical queue metrics SHALL continue to use durable aggregates rather than request-time recomputation.
 

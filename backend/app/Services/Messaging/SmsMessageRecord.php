@@ -19,7 +19,7 @@ final readonly class SmsMessageRecord
      */
     public function __construct(
         public string $id,
-        public string $tenantDomain,
+        public string $organizationDomain,
         public string $direction,
         public string $from,
         public string $to,

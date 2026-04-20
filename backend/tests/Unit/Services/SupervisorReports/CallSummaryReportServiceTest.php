@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services\SupervisorReports;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\SupervisorReports\CallSummaryReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,10 +14,10 @@ class CallSummaryReportServiceTest extends TestCase
 
     public function test_generates_supervisor_call_summary(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'direction' => 'inbound',
             'start_stamp' => '2026-04-10 10:00:00',
             'answer_stamp' => '2026-04-10 10:00:05',
@@ -27,7 +27,7 @@ class CallSummaryReportServiceTest extends TestCase
         ]);
 
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'direction' => 'inbound',
             'start_stamp' => '2026-04-10 11:00:00',
             'answer_stamp' => null,
@@ -37,7 +37,7 @@ class CallSummaryReportServiceTest extends TestCase
         ]);
 
         CallDetailRecord::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'direction' => 'outbound',
             'destination_number' => 'voicemail',
             'start_stamp' => '2026-04-10 12:00:00',
@@ -48,7 +48,7 @@ class CallSummaryReportServiceTest extends TestCase
         ]);
 
         $report = app(CallSummaryReportService::class)->generate(
-            $tenant,
+            $organization,
             now()->parse('2026-04-10'),
             now()->parse('2026-04-10'),
         );

@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -28,7 +28,7 @@ class CallDetailRecordFactory extends Factory
             ->modify('+'.$duration.' seconds');
 
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'uuid' => fake()->unique()->uuid(),
             'caller_id_name' => fake()->optional(0.7)->name(),
             'caller_id_number' => '+1'.fake()->numerify('##########'),

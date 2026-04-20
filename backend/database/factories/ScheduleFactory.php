@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Schedule;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ScheduleFactory extends Factory
@@ -13,7 +13,7 @@ class ScheduleFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'name' => $this->faker->word,
             'timezone' => 'UTC',
             'is_active' => true,

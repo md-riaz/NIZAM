@@ -3,7 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\CallDetailRecord;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,21 +12,21 @@ class CdrExportTest extends TestCase
 {
     use RefreshDatabase;
 
-    private Tenant $tenant;
+    private Organization $organization;
 
     private User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tenant = Tenant::factory()->create();
-        $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->organization = Organization::factory()->create();
+        $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
     }
 
     public function test_export_returns_csv_with_headers(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'uuid' => 'test-uuid-1',
             'caller_id_name' => 'John',
             'caller_id_number' => '1001',
@@ -36,7 +36,7 @@ class CdrExportTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->get("/api/v1/tenants/{$this->tenant->id}/cdrs/export");
+            ->get("/api/v1/organizations/{$this->organization->id}/cdrs/export");
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -50,18 +50,18 @@ class CdrExportTest extends TestCase
     public function test_export_respects_direction_filter(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'direction' => 'inbound',
             'uuid' => 'inbound-uuid',
         ]);
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'direction' => 'outbound',
             'uuid' => 'outbound-uuid',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->get("/api/v1/tenants/{$this->tenant->id}/cdrs/export?direction=inbound");
+            ->get("/api/v1/organizations/{$this->organization->id}/cdrs/export?direction=inbound");
 
         $content = $response->streamedContent();
         $this->assertStringContainsString('inbound-uuid', $content);
@@ -71,18 +71,18 @@ class CdrExportTest extends TestCase
     public function test_export_respects_date_filters(): void
     {
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'start_stamp' => '2024-01-15 10:00:00',
             'uuid' => 'in-range-uuid',
         ]);
         CallDetailRecord::factory()->create([
-            'tenant_id' => $this->tenant->id,
+            'organization_id' => $this->organization->id,
             'start_stamp' => '2024-06-01 10:00:00',
             'uuid' => 'out-range-uuid',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
-            ->get("/api/v1/tenants/{$this->tenant->id}/cdrs/export?date_from=2024-01-01&date_to=2024-02-01");
+            ->get("/api/v1/organizations/{$this->organization->id}/cdrs/export?date_from=2024-01-01&date_to=2024-02-01");
 
         $content = $response->streamedContent();
         $this->assertStringContainsString('in-range-uuid', $content);
@@ -91,7 +91,7 @@ class CdrExportTest extends TestCase
 
     public function test_export_requires_authentication(): void
     {
-        $response = $this->getJson("/api/v1/tenants/{$this->tenant->id}/cdrs/export");
+        $response = $this->getJson("/api/v1/organizations/{$this->organization->id}/cdrs/export");
 
         $response->assertStatus(401);
     }

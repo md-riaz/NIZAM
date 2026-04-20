@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('recordings', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained()->cascadeOnDelete();
             $table->string('call_uuid')->index();
             $table->string('file_path');
             $table->string('file_name');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('destination_number')->nullable();
             $table->timestamps();
 
-            $table->index(['tenant_id', 'created_at']);
+            $table->index(['organization_id', 'created_at']);
         });
     }
 

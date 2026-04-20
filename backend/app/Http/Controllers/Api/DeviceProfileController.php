@@ -7,32 +7,32 @@ use App\Http\Requests\StoreDeviceProfileRequest;
 use App\Http\Requests\UpdateDeviceProfileRequest;
 use App\Http\Resources\DeviceProfileResource;
 use App\Models\DeviceProfile;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 /**
- * API controller for managing device profiles scoped to a tenant.
+ * API controller for managing device profiles scoped to a organization.
  */
 class DeviceProfileController extends Controller
 {
     /**
-     * List device profiles for a tenant (paginated).
+     * List device profiles for an organization (paginated).
      */
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         $this->authorize('viewAny', DeviceProfile::class);
 
-        return DeviceProfileResource::collection($tenant->deviceProfiles()->paginate(15));
+        return DeviceProfileResource::collection($organization->deviceProfiles()->paginate(15));
     }
 
     /**
-     * Create a new device profile for a tenant.
+     * Create a new device profile for an organization.
      */
-    public function store(StoreDeviceProfileRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreDeviceProfileRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('create', DeviceProfile::class);
 
-        $deviceProfile = $tenant->deviceProfiles()->create($request->validated());
+        $deviceProfile = $organization->deviceProfiles()->create($request->validated());
 
         return (new DeviceProfileResource($deviceProfile))->response()->setStatusCode(201);
     }
@@ -40,9 +40,9 @@ class DeviceProfileController extends Controller
     /**
      * Show a single device profile.
      */
-    public function show(Tenant $tenant, DeviceProfile $deviceProfile): JsonResponse|DeviceProfileResource
+    public function show(Organization $organization, DeviceProfile $deviceProfile): JsonResponse|DeviceProfileResource
     {
-        if ($deviceProfile->tenant_id !== $tenant->id) {
+        if ($deviceProfile->organization_id !== $organization->id) {
             return response()->json(['message' => 'Device profile not found.'], 404);
         }
 
@@ -54,9 +54,9 @@ class DeviceProfileController extends Controller
     /**
      * Update an existing device profile.
      */
-    public function update(UpdateDeviceProfileRequest $request, Tenant $tenant, DeviceProfile $deviceProfile): JsonResponse|DeviceProfileResource
+    public function update(UpdateDeviceProfileRequest $request, Organization $organization, DeviceProfile $deviceProfile): JsonResponse|DeviceProfileResource
     {
-        if ($deviceProfile->tenant_id !== $tenant->id) {
+        if ($deviceProfile->organization_id !== $organization->id) {
             return response()->json(['message' => 'Device profile not found.'], 404);
         }
 
@@ -70,9 +70,9 @@ class DeviceProfileController extends Controller
     /**
      * Delete a device profile.
      */
-    public function destroy(Tenant $tenant, DeviceProfile $deviceProfile): JsonResponse
+    public function destroy(Organization $organization, DeviceProfile $deviceProfile): JsonResponse
     {
-        if ($deviceProfile->tenant_id !== $tenant->id) {
+        if ($deviceProfile->organization_id !== $organization->id) {
             return response()->json(['message' => 'Device profile not found.'], 404);
         }
 

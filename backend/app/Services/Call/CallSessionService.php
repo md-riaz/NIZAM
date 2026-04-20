@@ -5,7 +5,7 @@ namespace App\Services\Call;
 use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
 use App\Models\Did;
-use App\Models\Tenant;
+use App\Models\Organization;
 
 class CallSessionService
 {
@@ -14,7 +14,7 @@ class CallSessionService
     ) {}
 
     public function getOrCreateInboundSession(
-        Tenant $tenant,
+        Organization $organization,
         string $callUuid,
         ?Did $did = null,
         array $variables = []
@@ -24,7 +24,7 @@ class CallSessionService
         $wasRecentlyCreated = ! $session->exists;
 
         $session->fill([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'did_id' => $did?->id,
             'state' => $session->state ?: 'initiated',
             'variables' => array_merge($session->variables ?? [], $variables),
@@ -35,7 +35,7 @@ class CallSessionService
 
         if ($wasRecentlyCreated) {
             $this->traceWriter->write($session, 'call_session.created', [
-                'tenant_id' => $tenant->id,
+                'organization_id' => $organization->id,
                 'did_id' => $did?->id,
             ]);
         }

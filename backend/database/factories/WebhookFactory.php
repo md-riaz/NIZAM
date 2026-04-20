@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\Webhook;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -17,7 +17,7 @@ class WebhookFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'url' => fake()->url(),
             'events' => fake()->randomElements(
                 ['call.created', 'call.answered', 'call.missed', 'call.hangup', 'voicemail.received', 'device.registered'],

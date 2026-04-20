@@ -6,7 +6,7 @@ use App\Events\CallDeliveryPushRequested;
 use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
 use App\Models\EndpointBinding;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\CallOfferExecutor;
 use App\Services\Call\DeliveryPlan;
 use App\Services\Call\DeliveryPlanItem;
@@ -33,16 +33,16 @@ class CallOfferExecutorTest extends TestCase
     {
         Event::fake([CallDeliveryPushRequested::class]);
 
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $callSession = CallSession::factory()->for($tenant)->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $callSession = CallSession::factory()->for($organization)->create([
             'variables' => [
                 'caller_id_name' => 'Alice',
                 'caller_id_number' => '+15550001111',
             ],
         ]);
 
-        $sipBinding = EndpointBinding::factory()->for($tenant)->forExtension(
-            $tenant->extensions()->create([
+        $sipBinding = EndpointBinding::factory()->for($organization)->forExtension(
+            $organization->extensions()->create([
                 'extension' => '1001',
                 'password' => 'secret',
                 'directory_first_name' => 'Desk',
@@ -154,8 +154,8 @@ class CallOfferExecutorTest extends TestCase
     {
         Event::fake([CallDeliveryPushRequested::class]);
 
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret',
             'directory_first_name' => 'Repeat',
@@ -163,7 +163,7 @@ class CallOfferExecutorTest extends TestCase
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $callSession = CallSession::factory()->for($organization)->create();
         $binding = EndpointBinding::factory()->forExtension($extension)->create([
             'type' => EndpointBinding::TYPE_MOBILE_APP,
             'push_token' => 'push-token',
@@ -221,8 +221,8 @@ class CallOfferExecutorTest extends TestCase
 
     public function test_offer_failures_are_persisted_as_failed_attempts(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '1003',
             'password' => 'secret',
             'directory_first_name' => 'Fail',
@@ -230,7 +230,7 @@ class CallOfferExecutorTest extends TestCase
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);
-        $callSession = CallSession::factory()->for($tenant)->create();
+        $callSession = CallSession::factory()->for($organization)->create();
         $binding = EndpointBinding::factory()->forExtension($extension)->create([
             'type' => EndpointBinding::TYPE_DESK_PHONE,
             'is_push_capable' => false,

@@ -117,7 +117,7 @@ class MetricsService
                 'period_start' => $periodStart,
             ],
             [
-                'tenant_id' => $queue->tenant_id,
+                'organization_id' => $queue->organization_id,
                 'calls_offered' => $offered,
                 'calls_answered' => $answered,
                 'calls_abandoned' => $abandoned,
@@ -131,15 +131,15 @@ class MetricsService
     }
 
     /**
-     * Get agent states summary for a tenant.
+     * Get agent states summary for an organization.
      */
-    public function getAgentStatesSummary(string $tenantId): array
+    public function getAgentStatesSummary(string $organizationId): array
     {
         return Cache::remember(
-            sprintf('metrics:%s:agent-states', $tenantId),
+            sprintf('metrics:%s:agent-states', $organizationId),
             now()->addSeconds(15),
-            function () use ($tenantId): array {
-                $states = Agent::where('tenant_id', $tenantId)
+            function () use ($organizationId): array {
+                $states = Agent::where('organization_id', $organizationId)
                     ->where('is_active', true)
                     ->select('state', DB::raw('count(*) as count'))
                     ->groupBy('state')
@@ -158,10 +158,10 @@ class MetricsService
     }
 
     /**
-     * Get wallboard data for a tenant.
+     * Get wallboard data for an organization.
      */
-    public function getWallboardData(string $tenantId): array
+    public function getWallboardData(string $organizationId): array
     {
-        return app(WallboardProjectionService::class)->getWallboardData($tenantId);
+        return app(WallboardProjectionService::class)->getWallboardData($organizationId);
     }
 }

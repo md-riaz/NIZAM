@@ -161,7 +161,7 @@ class AlertService
     {
         return [
             'alert_id' => $alert->id,
-            'tenant_id' => $alert->tenant_id,
+            'organization_id' => $alert->organization_id,
             'severity' => $alert->severity,
             'metric' => $alert->metric,
             'current_value' => $alert->current_value,
@@ -192,13 +192,13 @@ class AlertService
                     'text' => [
                         'type' => 'mrkdwn',
                         'text' => sprintf(
-                            "%s *%s*\n*Metric:* %s\n*Current:* %.2f | *Threshold:* %.2f\n*Tenant:* %s",
+                            "%s *%s*\n*Metric:* %s\n*Current:* %.2f | *Threshold:* %.2f\n*Organization:* %s",
                             $emoji,
                             $alert->message,
                             $alert->metric,
                             (float) $alert->current_value,
                             (float) $alert->threshold_value,
-                            $alert->tenant_id
+                            $alert->organization_id
                         ),
                     ],
                 ],

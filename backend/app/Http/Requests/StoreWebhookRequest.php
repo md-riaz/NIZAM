@@ -16,7 +16,7 @@ class StoreWebhookRequest extends FormRequest
         return [
             'url' => 'required|url|max:2048',
             'events' => 'required|array|min:1',
-            'events.*' => 'string|in:call.created,call.answered,call.missed,call.bridged,call.hangup,recording.created,voicemail.received,device.registered,device.unregistered,extension.created,extension.updated,extension.deleted,did.created,did.updated,did.deleted,tenant.updated',
+            'events.*' => 'string|in:call.created,call.answered,call.missed,call.bridged,call.hangup,recording.created,voicemail.received,device.registered,device.unregistered,extension.created,extension.updated,extension.deleted,did.created,did.updated,did.deleted,organization.updated',
             'secret' => 'nullable|string|min:16',
             'description' => 'nullable|string|max:255',
             'is_active' => 'boolean',

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Queue;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\MetricsService;
 use App\Services\WallboardProjectionService;
 use Illuminate\Http\JsonResponse;
@@ -20,9 +20,9 @@ class QueueMetricsController extends Controller
     /**
      * Get real-time metrics for a specific queue.
      */
-    public function realtime(Tenant $tenant, Queue $queue): JsonResponse
+    public function realtime(Organization $organization, Queue $queue): JsonResponse
     {
-        if ($queue->tenant_id !== $tenant->id) {
+        if ($queue->organization_id !== $organization->id) {
             return response()->json(['message' => 'Queue not found.'], 404);
         }
 
@@ -34,9 +34,9 @@ class QueueMetricsController extends Controller
     /**
      * Aggregate metrics for a queue (trigger historical snapshot).
      */
-    public function aggregate(Request $request, Tenant $tenant, Queue $queue): JsonResponse
+    public function aggregate(Request $request, Organization $organization, Queue $queue): JsonResponse
     {
-        if ($queue->tenant_id !== $tenant->id) {
+        if ($queue->organization_id !== $organization->id) {
             return response()->json(['message' => 'Queue not found.'], 404);
         }
 
@@ -55,9 +55,9 @@ class QueueMetricsController extends Controller
     /**
      * Get historical metrics for a queue.
      */
-    public function history(Request $request, Tenant $tenant, Queue $queue): JsonResponse
+    public function history(Request $request, Organization $organization, Queue $queue): JsonResponse
     {
-        if ($queue->tenant_id !== $tenant->id) {
+        if ($queue->organization_id !== $organization->id) {
             return response()->json(['message' => 'Queue not found.'], 404);
         }
 
@@ -70,22 +70,22 @@ class QueueMetricsController extends Controller
     }
 
     /**
-     * Get wallboard data for a tenant.
+     * Get wallboard data for an organization.
      */
-    public function wallboard(Tenant $tenant): JsonResponse
+    public function wallboard(Organization $organization): JsonResponse
     {
         return response()->json([
-            'data' => $this->wallboardProjectionService->getWallboardData($tenant->id),
+            'data' => $this->wallboardProjectionService->getWallboardData($organization->id),
         ]);
     }
 
     /**
-     * Get agent states summary for a tenant.
+     * Get agent states summary for an organization.
      */
-    public function agentStates(Tenant $tenant): JsonResponse
+    public function agentStates(Organization $organization): JsonResponse
     {
         return response()->json([
-            'data' => $this->metricsService->getAgentStatesSummary($tenant->id),
+            'data' => $this->metricsService->getAgentStatesSummary($organization->id),
         ]);
     }
 }

@@ -10,8 +10,8 @@ return new class extends Migration
     {
         if (Schema::hasTable('dids')) {
             Schema::table('dids', function (Blueprint $table) {
-                $table->dropUnique(['tenant_id', 'number', 'gateway_id', 'gateway_registration_id']);
-                $table->unique(['tenant_id', 'number', 'gateway_id']);
+                $table->dropUnique(['organization_id', 'number', 'gateway_id', 'gateway_registration_id']);
+                $table->unique(['organization_id', 'number', 'gateway_id']);
             });
 
             if (Schema::hasColumn('dids', 'gateway_registration_id')) {
@@ -47,7 +47,7 @@ return new class extends Migration
 
         if (Schema::hasTable('dids')) {
             Schema::table('dids', function (Blueprint $table) {
-                $table->dropUnique(['tenant_id', 'number', 'gateway_id']);
+                $table->dropUnique(['organization_id', 'number', 'gateway_id']);
             });
 
             if (! Schema::hasColumn('dids', 'gateway_registration_id')) {
@@ -57,7 +57,7 @@ return new class extends Migration
             }
 
             Schema::table('dids', function (Blueprint $table) {
-                $table->unique(['tenant_id', 'number', 'gateway_id', 'gateway_registration_id']);
+                $table->unique(['organization_id', 'number', 'gateway_id', 'gateway_registration_id']);
             });
         }
     }

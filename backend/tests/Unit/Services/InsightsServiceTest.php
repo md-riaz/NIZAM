@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\AnalyticsEvent;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\InsightsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -22,9 +22,9 @@ class InsightsServiceTest extends TestCase
 
     public function test_score_event_with_perfect_call(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
         $event = AnalyticsEvent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'wait_time' => 5,
             'talk_time' => 120,
             'abandon' => false,
@@ -90,24 +90,24 @@ class InsightsServiceTest extends TestCase
         $this->assertEquals(10.0, $scored->score_breakdown['webhook_score']);
     }
 
-    public function test_compute_tenant_health_score_with_no_events(): void
+    public function test_compute_organization_health_score_with_no_events(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
-        $result = $this->service->computeTenantHealthScore($tenant->id);
+        $result = $this->service->computeOrganizationHealthScore($organization->id);
 
         $this->assertEquals(100.0, $result['health_score']);
         $this->assertEquals(0, $result['sample_size']);
-        $this->assertEquals($tenant->id, $result['tenant_id']);
+        $this->assertEquals($organization->id, $result['organization_id']);
     }
 
-    public function test_compute_tenant_health_score_with_events(): void
+    public function test_compute_organization_health_score_with_events(): void
     {
-        $tenant = Tenant::factory()->create();
+        $organization = Organization::factory()->create();
 
         // Create and score events
         $event1 = AnalyticsEvent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'health_score' => 80,
             'score_breakdown' => [
                 'wait_time_score' => 80,
@@ -120,7 +120,7 @@ class InsightsServiceTest extends TestCase
         ]);
 
         $event2 = AnalyticsEvent::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'health_score' => 60,
             'score_breakdown' => [
                 'wait_time_score' => 60,
@@ -132,7 +132,7 @@ class InsightsServiceTest extends TestCase
             ],
         ]);
 
-        $result = $this->service->computeTenantHealthScore($tenant->id);
+        $result = $this->service->computeOrganizationHealthScore($organization->id);
 
         $this->assertEquals(70.0, $result['health_score']);
         $this->assertEquals(2, $result['sample_size']);

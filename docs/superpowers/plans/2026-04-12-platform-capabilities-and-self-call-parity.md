@@ -42,14 +42,14 @@ Add to `backend/tests/Feature/FreeswitchXmlTest.php`:
 ```php
 public function test_dialplan_routes_self_call_to_voicemail_check(): void
 {
-    $tenant = Tenant::create([
-        'name' => 'Self Call Parity Tenant',
+    $organization = Organization::create([
+        'name' => 'Self Call Parity Organization',
         'domain' => 'parity.example.com',
-        'slug' => 'parity-tenant',
+        'slug' => 'parity-organization',
         'is_active' => true,
     ]);
 
-    $tenant->extensions()->create([
+    $organization->extensions()->create([
         'extension' => '1001',
         'password' => 'secret1234',
         'is_active' => true,
@@ -76,15 +76,15 @@ Expected: FAIL (currently does `bridge user/...`)
 - [ ] **Step 3: Update `compileSelfCallDialplan` in `DialplanCompiler.php`**
 
 ```php
-protected function compileSelfCallDialplan(Tenant $tenant, Extension $extension): string
+protected function compileSelfCallDialplan(Organization $organization, Extension $extension): string
 {
-    $xml = $this->dialplanHeader($tenant->domain);
+    $xml = $this->dialplanHeader($organization->domain);
     $xml .= '        <extension name="self-call-voicemail-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
     $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
     // FusionPBX parity: enter voicemail management menu instead of bridging
     $xml .= '            <action application="answer"/>'."\n";
     $xml .= '            <action application="sleep" data="1000"/>'."\n";
-    $xml .= '            <action application="voicemail" data="check default '.htmlspecialchars($tenant->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+    $xml .= '            <action application="voicemail" data="check default '.htmlspecialchars($organization->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
     $xml .= '          </condition>'."\n";
     $xml .= '        </extension>'."\n";
     $xml .= $this->dialplanFooter();
@@ -185,9 +185,9 @@ class CapabilityService
                 'category' => 'Performance',
             ],
             [
-                'id' => 'tenant_isolation',
+                'id' => 'organization_isolation',
                 'name' => 'Context-Isolated Routing',
-                'description' => 'Strict multi-tenant traffic separation using domain-keyed dialplan contexts to prevent cross-tenant exposure.',
+                'description' => 'Strict multi-organization traffic separation using domain-keyed dialplan contexts to prevent cross-organization exposure.',
                 'status' => 'active',
                 'category' => 'Security',
             ],

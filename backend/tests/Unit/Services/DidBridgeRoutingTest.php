@@ -4,7 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\Bridge;
 use App\Models\Did;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DialplanCompiler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,8 +15,8 @@ class DidBridgeRoutingTest extends TestCase
 
     public function test_did_can_route_to_bridge_destination(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'tenant.example.com', 'is_active' => true]);
-        $gateway = $tenant->gateways()->create([
+        $organization = Organization::factory()->create(['domain' => 'organization.example.com', 'is_active' => true]);
+        $gateway = $organization->gateways()->create([
             'name' => 'Carrier A',
             'host' => 'sip.carrier.test',
             'port' => 5060,
@@ -26,7 +26,7 @@ class DidBridgeRoutingTest extends TestCase
             'is_active' => true,
         ]);
         $bridge = Bridge::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'gateway_id' => $gateway->id,
             'destination_template' => '+15550123456',
             'bridge_type' => 'gateway',
@@ -34,14 +34,14 @@ class DidBridgeRoutingTest extends TestCase
         ]);
 
         Did::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'number' => '+15550002222',
             'destination_type' => 'bridge',
             'destination_id' => $bridge->id,
             'is_active' => true,
         ]);
 
-        $xml = app(DialplanCompiler::class)->compileDialplan($tenant->domain, '+15550002222');
+        $xml = app(DialplanCompiler::class)->compileDialplan($organization->domain, '+15550002222');
 
         $this->assertStringContainsString('sofia/gateway/v_'.$gateway->id.'/+15550123456', $xml);
     }

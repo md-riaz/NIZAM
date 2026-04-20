@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -12,18 +12,18 @@ class WebhookEventExpansionTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function adminUser(Tenant $tenant): User
+    private function adminUser(Organization $organization): User
     {
-        return User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
+        return User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
     }
 
     public function test_webhook_can_subscribe_to_extension_events(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create();
+        $user = $this->adminUser($organization);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/webhooks", [
+            ->postJson("/api/v1/organizations/{$organization->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
                 'events' => ['extension.created', 'extension.updated', 'extension.deleted'],
             ]);
@@ -33,11 +33,11 @@ class WebhookEventExpansionTest extends TestCase
 
     public function test_webhook_can_subscribe_to_did_events(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create();
+        $user = $this->adminUser($organization);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/webhooks", [
+            ->postJson("/api/v1/organizations/{$organization->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
                 'events' => ['did.created', 'did.updated', 'did.deleted'],
             ]);
@@ -45,15 +45,15 @@ class WebhookEventExpansionTest extends TestCase
         $response->assertStatus(201);
     }
 
-    public function test_webhook_can_subscribe_to_recording_and_tenant_events(): void
+    public function test_webhook_can_subscribe_to_recording_and_organization_events(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create();
+        $user = $this->adminUser($organization);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/webhooks", [
+            ->postJson("/api/v1/organizations/{$organization->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
-                'events' => ['recording.created', 'tenant.updated', 'call.bridged'],
+                'events' => ['recording.created', 'organization.updated', 'call.bridged'],
             ]);
 
         $response->assertStatus(201);
@@ -61,11 +61,11 @@ class WebhookEventExpansionTest extends TestCase
 
     public function test_webhook_rejects_invalid_event_types(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create();
+        $user = $this->adminUser($organization);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/webhooks", [
+            ->postJson("/api/v1/organizations/{$organization->id}/webhooks", [
                 'url' => 'https://example.com/webhook',
                 'events' => ['invalid.event'],
             ]);
@@ -78,11 +78,11 @@ class WebhookEventExpansionTest extends TestCase
     {
         Queue::fake();
 
-        $tenant = Tenant::factory()->create();
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create();
+        $user = $this->adminUser($organization);
 
         // Create a webhook subscribed to extension events
-        $tenant->webhooks()->create([
+        $organization->webhooks()->create([
             'url' => 'https://example.com/webhook',
             'events' => ['extension.created', 'extension.updated', 'extension.deleted'],
             'secret' => 'test-secret-1234567890',
@@ -91,7 +91,7 @@ class WebhookEventExpansionTest extends TestCase
 
         // Create extension
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/extensions", [
+            ->postJson("/api/v1/organizations/{$organization->id}/extensions", [
                 'extension' => '1001',
                 'password' => 'secret123456',
                 'directory_first_name' => 'Test',
@@ -106,10 +106,10 @@ class WebhookEventExpansionTest extends TestCase
     {
         Queue::fake();
 
-        $tenant = Tenant::factory()->create();
-        $user = $this->adminUser($tenant);
+        $organization = Organization::factory()->create();
+        $user = $this->adminUser($organization);
 
-        $extension = $tenant->extensions()->create([
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
             'directory_first_name' => 'Test',
@@ -117,7 +117,7 @@ class WebhookEventExpansionTest extends TestCase
         ]);
 
         // Create a webhook subscribed to DID events
-        $tenant->webhooks()->create([
+        $organization->webhooks()->create([
             'url' => 'https://example.com/webhook',
             'events' => ['did.created', 'did.updated', 'did.deleted'],
             'secret' => 'test-secret-1234567890',
@@ -126,7 +126,7 @@ class WebhookEventExpansionTest extends TestCase
 
         // Create DID
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/v1/tenants/{$tenant->id}/dids", [
+            ->postJson("/api/v1/organizations/{$organization->id}/dids", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
                 'destination_id' => $extension->id,

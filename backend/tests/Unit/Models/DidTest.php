@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Did;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,22 +13,22 @@ class DidTest extends TestCase
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        $tenant = Tenant::factory()->create();
-        $did = Did::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $did = Did::factory()->create(['organization_id' => $organization->id]);
 
         $this->assertDatabaseHas('dids', [
             'id' => $did->id,
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
     }
 
-    public function test_belongs_to_a_tenant(): void
+    public function test_belongs_to_a_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $did = Did::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $did = Did::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertInstanceOf(Tenant::class, $did->tenant);
-        $this->assertEquals($tenant->id, $did->tenant->id);
+        $this->assertInstanceOf(Organization::class, $did->organization);
+        $this->assertEquals($organization->id, $did->organization->id);
     }
 
     public function test_is_active_is_cast_to_boolean(): void
@@ -42,7 +42,7 @@ class DidTest extends TestCase
     public function test_has_correct_fillable_attributes(): void
     {
         $did = new Did;
-        $expected = ['tenant_id', 'gateway_id', 'number', 'normalized_number', 'description', 'destination_type', 'destination_id', 'is_active'];
+        $expected = ['organization_id', 'gateway_id', 'number', 'normalized_number', 'description', 'destination_type', 'destination_id', 'is_active'];
 
         $this->assertEquals($expected, $did->getFillable());
     }

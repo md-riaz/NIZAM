@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,7 +13,7 @@ class LogViewerTest extends TestCase
 
     public function test_platform_admin_can_list_log_files(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/admin/logs');
@@ -27,7 +27,7 @@ class LogViewerTest extends TestCase
 
     public function test_platform_admin_can_view_application_logs(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/admin/logs/application?lines=50');
@@ -44,7 +44,7 @@ class LogViewerTest extends TestCase
 
     public function test_platform_admin_can_query_freeswitch_logs(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/admin/logs/freeswitch?level=info');
@@ -64,10 +64,10 @@ class LogViewerTest extends TestCase
         }
     }
 
-    public function test_tenant_admin_cannot_access_logs(): void
+    public function test_organization_admin_cannot_access_logs(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/admin/logs');
@@ -77,8 +77,8 @@ class LogViewerTest extends TestCase
 
     public function test_regular_user_cannot_access_logs(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['role' => 'user', 'tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['role' => 'user', 'organization_id' => $organization->id]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/admin/logs');
@@ -95,7 +95,7 @@ class LogViewerTest extends TestCase
 
     public function test_invalid_log_level_returns_400(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/admin/logs/freeswitch?level=invalid');
@@ -106,7 +106,7 @@ class LogViewerTest extends TestCase
 
     public function test_application_logs_respects_line_limit(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson('/api/admin/logs/application?lines=10');
@@ -117,7 +117,7 @@ class LogViewerTest extends TestCase
 
     public function test_application_logs_enforces_max_limit(): void
     {
-        $user = User::factory()->create(['role' => 'admin', 'tenant_id' => null]);
+        $user = User::factory()->create(['role' => 'admin', 'organization_id' => null]);
 
         // Request more than max (1000)
         $response = $this->actingAs($user, 'sanctum')

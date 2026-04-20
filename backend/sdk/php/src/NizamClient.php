@@ -15,7 +15,7 @@ use Nizam\Sdk\Resources\DidResource;
 use Nizam\Sdk\Resources\ExtensionResource;
 use Nizam\Sdk\Resources\QueueResource;
 use Nizam\Sdk\Resources\RecordingResource;
-use Nizam\Sdk\Resources\TenantResource;
+use Nizam\Sdk\Resources\OrganizationResource;
 use Nizam\Sdk\Resources\WebhookResource;
 
 class NizamClient
@@ -46,54 +46,54 @@ class NizamClient
         return new AuthResource($this);
     }
 
-    public function tenants(): TenantResource
+    public function organizations(): OrganizationResource
     {
-        return new TenantResource($this);
+        return new OrganizationResource($this);
     }
 
-    public function extensions(string $tenantId): ExtensionResource
+    public function extensions(string $organizationId): ExtensionResource
     {
-        return new ExtensionResource($this, $tenantId);
+        return new ExtensionResource($this, $organizationId);
     }
 
-    public function dids(string $tenantId): DidResource
+    public function dids(string $organizationId): DidResource
     {
-        return new DidResource($this, $tenantId);
+        return new DidResource($this, $organizationId);
     }
 
-    public function queues(string $tenantId): QueueResource
+    public function queues(string $organizationId): QueueResource
     {
-        return new QueueResource($this, $tenantId);
+        return new QueueResource($this, $organizationId);
     }
 
-    public function agents(string $tenantId): AgentResource
+    public function agents(string $organizationId): AgentResource
     {
-        return new AgentResource($this, $tenantId);
+        return new AgentResource($this, $organizationId);
     }
 
-    public function webhooks(string $tenantId): WebhookResource
+    public function webhooks(string $organizationId): WebhookResource
     {
-        return new WebhookResource($this, $tenantId);
+        return new WebhookResource($this, $organizationId);
     }
 
-    public function calls(string $tenantId): CallResource
+    public function calls(string $organizationId): CallResource
     {
-        return new CallResource($this, $tenantId);
+        return new CallResource($this, $organizationId);
     }
 
-    public function recordings(string $tenantId): RecordingResource
+    public function recordings(string $organizationId): RecordingResource
     {
-        return new RecordingResource($this, $tenantId);
+        return new RecordingResource($this, $organizationId);
     }
 
-    public function cdrs(string $tenantId): CdrResource
+    public function cdrs(string $organizationId): CdrResource
     {
-        return new CdrResource($this, $tenantId);
+        return new CdrResource($this, $organizationId);
     }
 
-    public function callEvents(string $tenantId): CallEventResource
+    public function callEvents(string $organizationId): CallEventResource
     {
-        return new CallEventResource($this, $tenantId);
+        return new CallEventResource($this, $organizationId);
     }
 
     /**

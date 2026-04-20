@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\AnalyticsEvent;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,7 +16,7 @@ class AnalyticsEventFactory extends Factory
     public function definition(): array
     {
         return [
-            'tenant_id' => Tenant::factory(),
+            'organization_id' => Organization::factory(),
             'call_uuid' => fake()->unique()->uuid(),
             'version' => 1,
             'wait_time' => fake()->randomFloat(2, 0, 120),

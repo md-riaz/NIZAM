@@ -5,7 +5,7 @@ namespace Tests\Unit\Services\Call;
 use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
 use App\Models\EndpointBinding;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\Call\CallDeliveryEntrypointService;
 use App\Services\Call\DeliveryPlanItem;
 use App\Services\Call\LiveRegistrationVisibility;
@@ -34,8 +34,8 @@ class CallDeliveryEntrypointServiceTest extends TestCase
 
     public function test_entrypoint_creates_or_loads_session_parks_caller_and_invokes_orchestration_once(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret',
             'directory_first_name' => 'Desk',
@@ -51,7 +51,7 @@ class CallDeliveryEntrypointServiceTest extends TestCase
             'voip_push_token' => null,
         ]);
 
-        $service = $this->makeServiceWithLiveRegistrations($tenant, [
+        $service = $this->makeServiceWithLiveRegistrations($organization, [
             '1001' => [
                 'registered' => true,
                 'registration_user' => '1001',
@@ -59,14 +59,14 @@ class CallDeliveryEntrypointServiceTest extends TestCase
             ],
         ]);
 
-        $session = $service->enter($tenant, 'call-uuid-1', [
+        $session = $service->enter($organization, 'call-uuid-1', [
             'target_type' => 'extension',
             'target_id' => $extension->id,
             'caller_leg_uuid' => 'call-uuid-1',
             'caller_id_name' => 'Alice',
             'caller_id_number' => '+15550001111',
             'destination_number' => 'call_delivery_entrypoint',
-            'domain' => $tenant->domain,
+            'domain' => $organization->domain,
             'auto_answer_enabled' => true,
             'auto_answer_call_info' => 'answer-after=0',
             'auto_answer_alert_info' => 'intercom',
@@ -93,8 +93,8 @@ class CallDeliveryEntrypointServiceTest extends TestCase
 
     public function test_entrypoint_is_idempotent_when_active_attempts_already_exist(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret',
             'directory_first_name' => 'Repeat',
@@ -110,7 +110,7 @@ class CallDeliveryEntrypointServiceTest extends TestCase
             'voip_push_token' => null,
         ]);
 
-        $service = $this->makeServiceWithLiveRegistrations($tenant, [
+        $service = $this->makeServiceWithLiveRegistrations($organization, [
             '1002' => [
                 'registered' => true,
                 'registration_user' => '1002',
@@ -118,20 +118,20 @@ class CallDeliveryEntrypointServiceTest extends TestCase
             ],
         ]);
 
-        $service->enter($tenant, 'call-uuid-2', [
+        $service->enter($organization, 'call-uuid-2', [
             'target_type' => 'extension',
             'target_id' => $extension->id,
             'caller_leg_uuid' => 'call-uuid-2',
             'caller_id_number' => '+15550002222',
-            'domain' => $tenant->domain,
+            'domain' => $organization->domain,
         ]);
 
-        $service->enter($tenant, 'call-uuid-2', [
+        $service->enter($organization, 'call-uuid-2', [
             'target_type' => 'extension',
             'target_id' => $extension->id,
             'caller_leg_uuid' => 'call-uuid-2',
             'caller_id_number' => '+15550002222',
-            'domain' => $tenant->domain,
+            'domain' => $organization->domain,
         ]);
 
         $session = CallSession::query()->where('call_uuid', 'call-uuid-2')->firstOrFail();
@@ -143,8 +143,8 @@ class CallDeliveryEntrypointServiceTest extends TestCase
 
     public function test_entrypoint_does_not_restart_after_winner_commit(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $extension = $tenant->extensions()->create([
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $extension = $organization->extensions()->create([
             'extension' => '1003',
             'password' => 'secret',
             'directory_first_name' => 'Winner',
@@ -160,7 +160,7 @@ class CallDeliveryEntrypointServiceTest extends TestCase
             'voip_push_token' => null,
         ]);
 
-        $session = CallSession::factory()->for($tenant)->create([
+        $session = CallSession::factory()->for($organization)->create([
             'call_uuid' => 'call-uuid-3',
             'state' => 'bridged',
             'variables' => [
@@ -185,7 +185,7 @@ class CallDeliveryEntrypointServiceTest extends TestCase
             ],
         ])->save();
 
-        $service = $this->makeServiceWithLiveRegistrations($tenant, [
+        $service = $this->makeServiceWithLiveRegistrations($organization, [
             '1003' => [
                 'registered' => true,
                 'registration_user' => '1003',
@@ -193,12 +193,12 @@ class CallDeliveryEntrypointServiceTest extends TestCase
             ],
         ]);
 
-        $service->enter($tenant, 'call-uuid-3', [
+        $service->enter($organization, 'call-uuid-3', [
             'target_type' => 'extension',
             'target_id' => $extension->id,
             'caller_leg_uuid' => 'call-uuid-3',
             'caller_id_number' => '+15550003333',
-            'domain' => $tenant->domain,
+            'domain' => $organization->domain,
         ]);
 
         $session->refresh();
@@ -209,11 +209,11 @@ class CallDeliveryEntrypointServiceTest extends TestCase
         $this->assertSame(1, data_get($session->variables, 'delivery_entrypoint_invocations'));
     }
 
-    protected function makeServiceWithLiveRegistrations(Tenant $tenant, array $registrations): CallDeliveryEntrypointService
+    protected function makeServiceWithLiveRegistrations(Organization $organization, array $registrations): CallDeliveryEntrypointService
     {
         $visibility = $this->createMock(LiveRegistrationVisibility::class);
-        $visibility->method('forTenant')
-            ->willReturnCallback(fn (Tenant $resolvedTenant): array => $resolvedTenant->id === $tenant->id ? $registrations : []);
+        $visibility->method('forOrganization')
+            ->willReturnCallback(fn (Organization $resolvedOrganization): array => $resolvedOrganization->id === $organization->id ? $registrations : []);
 
         $this->app->instance(ReachabilityResolver::class, new ReachabilityResolver(new ReachabilityCache, $visibility));
         $this->app->instance(OfferCommandDispatcher::class, new FakeEntrypointOfferCommandDispatcher);

@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
 
@@ -42,7 +42,7 @@ export default function AgentFormPage() {
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id);
     const navigate = useNavigate();
-    const { activeTenant } = useTenant();
+    const { activeOrganization } = useOrganization();
 
     const form = useForm<AgentFormValues>({
         resolver: zodResolver(agentSchema),
@@ -56,23 +56,23 @@ export default function AgentFormPage() {
     });
 
     const { data: agent, isLoading: isFetching } = useQuery({
-        queryKey: ['agent', activeTenant?.id, id],
+        queryKey: ['agent', activeOrganization?.id, id],
         queryFn: async () => {
-            if (!activeTenant) return null;
-            const response = await api.get(`tenants/${activeTenant.id}/agents/${id}`);
+            if (!activeOrganization) return null;
+            const response = await api.get(`organizations/${activeOrganization.id}/agents/${id}`);
             return response.data.data;
         },
-        enabled: isEdit && !!activeTenant,
+        enabled: isEdit && !!activeOrganization,
     });
 
     const { data: extensions = [], isLoading: isLoadingExtensions } = useQuery({
-        queryKey: ['extensions', activeTenant?.id],
+        queryKey: ['extensions', activeOrganization?.id],
         queryFn: async () => {
-            if (!activeTenant) return [];
-            const response = await api.get(`tenants/${activeTenant.id}/extensions`);
+            if (!activeOrganization) return [];
+            const response = await api.get(`organizations/${activeOrganization.id}/extensions`);
             return response.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     useEffect(() => {
@@ -89,18 +89,18 @@ export default function AgentFormPage() {
 
     const mutation = useApiMutation({
         mutationFn: async (values: AgentFormValues) => {
-            if (!activeTenant) throw new Error('No active tenant');
+            if (!activeOrganization) throw new Error('No active organization');
             if (isEdit) {
-                return api.put(`tenants/${activeTenant.id}/agents/${id}`, values);
+                return api.put(`organizations/${activeOrganization.id}/agents/${id}`, values);
             }
-            return api.post(`tenants/${activeTenant.id}/agents`, values);
+            return api.post(`organizations/${activeOrganization.id}/agents`, values);
         },
         successMessage: `Agent ${isEdit ? 'updated' : 'created'} successfully`,
-        invalidateQueries: [['agents', activeTenant?.id || '']],
+        invalidateQueries: [['agents', activeOrganization?.id || '']],
         onSuccess: () => navigate('/admin/agents'),
     });
 
-    if (!activeTenant) return null;
+    if (!activeOrganization) return null;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">

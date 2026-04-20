@@ -136,7 +136,7 @@ The active mode is also returned by the WebRTC configuration API so browser clie
 ### Get WebRTC Configuration
 
 ```
-GET /api/v1/tenants/{tenant_id}/extensions/{extension_id}/webrtc-config
+GET /api/v1/organizations/{organization_id}/extensions/{extension_id}/webrtc-config
 ```
 
 **Response:**
@@ -204,16 +204,16 @@ GET /api/v1/tenants/{tenant_id}/extensions/{extension_id}/webrtc-config
 
   <script>
     // Fetch WebRTC config from NIZAM API
-    async function getConfig(tenantId, extensionId, token) {
+    async function getConfig(organizationId, extensionId, token) {
       const res = await fetch(
-        `/api/v1/tenants/${tenantId}/extensions/${extensionId}/webrtc-config`,
+        `/api/v1/organizations/${organizationId}/extensions/${extensionId}/webrtc-config`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       return (await res.json()).data;
     }
 
     async function init() {
-      const config = await getConfig('TENANT_ID', 'EXTENSION_ID', 'YOUR_TOKEN');
+      const config = await getConfig('ORGANIZATION_ID', 'EXTENSION_ID', 'YOUR_TOKEN');
 
       const userAgent = new SIP.UserAgent({
         uri: SIP.UserAgent.makeURI(config.sip_uri),
@@ -275,7 +275,7 @@ Ensure these ports are open:
 ### Registration Fails
 
 1. **Credentials**: Verify extension username/password via the API
-2. **Domain**: Ensure `sip_domain` matches the tenant domain in FreeSWITCH
+2. **Domain**: Ensure `sip_domain` matches the organization domain in FreeSWITCH
 3. **Profile**: Verify the internal profile is loaded and listening for WebSocket transport: `fs_cli -x "sofia status profile internal"`
 
 ### Codec Negotiation Issues

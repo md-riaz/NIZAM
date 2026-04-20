@@ -15,16 +15,16 @@ class FlowCompiledArtifact extends Model
     public const ARTIFACT_TYPE_ROUTING_GRAPH = 'routing_graph_v1';
 
     protected $fillable = [
-        'tenant_id',
+        'organization_id',
         'flow_version_id',
         'artifact_type',
         'content',
         'checksum',
     ];
 
-    public function tenant(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function flowVersion(): BelongsTo

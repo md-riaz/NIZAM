@@ -4,7 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\DeviceProfile;
 use App\Models\Extension;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -24,30 +24,30 @@ class DeviceProfileTest extends TestCase
 
     public function test_can_be_created_with_valid_attributes(): void
     {
-        $tenant = Tenant::factory()->create();
-        $profile = DeviceProfile::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $profile = DeviceProfile::factory()->create(['organization_id' => $organization->id]);
 
         $this->assertDatabaseHas('device_profiles', [
             'id' => $profile->id,
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
         ]);
     }
 
-    public function test_belongs_to_a_tenant(): void
+    public function test_belongs_to_a_organization(): void
     {
-        $tenant = Tenant::factory()->create();
-        $profile = DeviceProfile::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $profile = DeviceProfile::factory()->create(['organization_id' => $organization->id]);
 
-        $this->assertInstanceOf(Tenant::class, $profile->tenant);
-        $this->assertEquals($tenant->id, $profile->tenant->id);
+        $this->assertInstanceOf(Organization::class, $profile->organization);
+        $this->assertEquals($organization->id, $profile->organization->id);
     }
 
     public function test_belongs_to_an_extension(): void
     {
-        $tenant = Tenant::factory()->create();
-        $extension = Extension::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $profile = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'extension_id' => $extension->id,
         ]);
 
@@ -66,7 +66,7 @@ class DeviceProfileTest extends TestCase
     public function test_has_correct_fillable_attributes(): void
     {
         $profile = new DeviceProfile;
-        $expected = ['tenant_id', 'user_id', 'name', 'vendor', 'mac_address', 'template', 'extension_id', 'is_active'];
+        $expected = ['organization_id', 'user_id', 'name', 'vendor', 'mac_address', 'template', 'extension_id', 'is_active'];
 
         $this->assertEquals($expected, $profile->getFillable());
     }
@@ -80,10 +80,10 @@ class DeviceProfileTest extends TestCase
 
     public function test_can_optionally_belong_to_a_user(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
         $profile = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
         ]);
 
@@ -93,14 +93,14 @@ class DeviceProfileTest extends TestCase
 
     public function test_can_resolve_user_through_extension_mapping(): void
     {
-        $tenant = Tenant::factory()->create();
-        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create(['organization_id' => $organization->id]);
         $extension = Extension::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => $user->id,
         ]);
         $profile = DeviceProfile::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'user_id' => null,
             'extension_id' => $extension->id,
         ]);

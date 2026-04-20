@@ -30,39 +30,39 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import type { RingGroup } from '@/types/models';
 
 export default function RingGroupsPage() {
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [groupToDelete, setGroupToDelete] = useState<RingGroup | null>(null);
 
     const { data: groups = [], isLoading } = useQuery({
-        queryKey: ['ring-groups', activeTenant?.id],
+        queryKey: ['ring-groups', activeOrganization?.id],
         queryFn: async () => {
-            const res = await api.get<{ data: RingGroup[] }>(`${tenantApiPrefix}/ring-groups`);
+            const res = await api.get<{ data: RingGroup[] }>(`${organizationApiPrefix}/ring-groups`);
             return res.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
-            await api.delete(`${tenantApiPrefix}/ring-groups/${id}`);
+            await api.delete(`${organizationApiPrefix}/ring-groups/${id}`);
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['ring-groups', activeTenant?.id] });
+            await queryClient.invalidateQueries({ queryKey: ['ring-groups', activeOrganization?.id] });
             setGroupToDelete(null);
         },
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select a tenant to view ring groups.
+                Select a organization to view ring groups.
             </div>
         );
     }
@@ -71,7 +71,7 @@ export default function RingGroupsPage() {
         <div className="space-y-6 p-6 lg:p-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm text-muted-foreground">{activeTenant.name} &rsaquo; Routing</p>
+                    <p className="text-sm text-muted-foreground">{activeOrganization.name} &rsaquo; Routing</p>
                     <h1 className="text-2xl font-bold tracking-tight">Ring Groups</h1>
                     <p className="text-muted-foreground">
                         Simultaneous and sequential ring strategies for call distribution.
@@ -86,7 +86,7 @@ export default function RingGroupsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>All Ring Groups</CardTitle>
-                    <CardDescription>{groups.length} ring groups for {activeTenant.domain}</CardDescription>
+                    <CardDescription>{groups.length} ring groups for {activeOrganization.domain}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\DirectoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,10 +14,10 @@ class DirectoryController extends Controller
         protected DirectoryService $directoryService,
     ) {}
 
-    public function index(Request $request, Tenant $tenant): JsonResponse
+    public function index(Request $request, Organization $organization): JsonResponse
     {
         $extensions = $this->directoryService->search(
-            $tenant,
+            $organization,
             $request->query('search'),
             (int) $request->integer('limit', 50),
         );

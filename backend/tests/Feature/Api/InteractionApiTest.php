@@ -8,7 +8,7 @@ use App\Models\CallSession;
 use App\Models\CallTraceEvent;
 use App\Models\EndpointBinding;
 use App\Models\PushNotificationLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -25,18 +25,18 @@ class InteractionApiTest extends TestCase
         config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
     }
 
-    public function test_show_returns_tenant_scoped_interaction_overview(): void
+    public function test_show_returns_organization_scoped_interaction_overview(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'admin']);
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
         $endpoint = EndpointBinding::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'type' => EndpointBinding::TYPE_MOBILE_APP,
             'platform' => EndpointBinding::PLATFORM_IOS,
         ]);
 
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => 'call-123',
             'state' => 'bridged',
             'started_at' => Carbon::parse('2026-04-12 10:00:00'),
@@ -48,7 +48,7 @@ class InteractionApiTest extends TestCase
 
         CallEventLog::query()->create([
             'call_session_id' => $callSession->id,
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'call_uuid' => $callSession->call_uuid,
             'event_id' => 'event-1',
             'event_type' => CallEventLog::EVENT_CALL_CREATED,
@@ -98,7 +98,7 @@ class InteractionApiTest extends TestCase
         ])->save();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$tenant->id}/interactions/{$callSession->id}");
+            ->getJson("/api/v1/organizations/{$organization->id}/interactions/{$callSession->id}");
 
         $response->assertOk()
             ->assertJsonPath('data.id', $callSession->id)
@@ -120,15 +120,15 @@ class InteractionApiTest extends TestCase
             ->assertJsonPath('data.trace_analysis.errors', []);
     }
 
-    public function test_show_returns_not_found_for_call_session_from_another_tenant(): void
+    public function test_show_returns_not_found_for_call_session_from_another_organization(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $otherTenant = Tenant::factory()->create(['domain' => 'other.test']);
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'admin']);
-        $callSession = CallSession::factory()->create(['tenant_id' => $otherTenant->id]);
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $otherOrganization = Organization::factory()->create(['domain' => 'other.test']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
+        $callSession = CallSession::factory()->create(['organization_id' => $otherOrganization->id]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$tenant->id}/interactions/{$callSession->id}")
+            ->getJson("/api/v1/organizations/{$organization->id}/interactions/{$callSession->id}")
             ->assertNotFound()
             ->assertJson([
                 'message' => 'Interaction not found.',

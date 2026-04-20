@@ -7,7 +7,7 @@ use App\Models\CallSession;
 use App\Models\CallTraceEvent;
 use App\Models\EndpointBinding;
 use App\Models\PushNotificationLog;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -25,11 +25,11 @@ class CallSessionApiTest extends TestCase
 
     public function test_show_includes_delivery_attempt_winner_and_push_metadata(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'admin']);
-        $endpoint = EndpointBinding::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
+        $endpoint = EndpointBinding::factory()->create(['organization_id' => $organization->id]);
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'winner_attempt_id' => null,
                 'winner_leg_uuid' => 'winner-leg-from-session',
@@ -83,7 +83,7 @@ class CallSessionApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$tenant->id}/calls/{$callSession->id}");
+            ->getJson("/api/v1/organizations/{$organization->id}/calls/{$callSession->id}");
 
         $response->assertOk()
             ->assertJsonPath('data.winner.attempt_id', $winningAttempt->id)
@@ -101,11 +101,11 @@ class CallSessionApiTest extends TestCase
 
     public function test_analyze_includes_delivery_attempt_winner_and_push_observability(): void
     {
-        $tenant = Tenant::factory()->create(['domain' => 'acme.test']);
-        $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'admin']);
-        $endpoint = EndpointBinding::factory()->create(['tenant_id' => $tenant->id]);
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
+        $endpoint = EndpointBinding::factory()->create(['organization_id' => $organization->id]);
         $callSession = CallSession::factory()->create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'variables' => [
                 'winner_leg_uuid' => 'session-leg-uuid',
             ],
@@ -157,7 +157,7 @@ class CallSessionApiTest extends TestCase
         ])->save();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/v1/tenants/{$tenant->id}/calls/{$callSession->id}/analyze");
+            ->getJson("/api/v1/organizations/{$organization->id}/calls/{$callSession->id}/analyze");
 
         $response->assertOk()
             ->assertJsonPath('data.winner.attempt_id', $winningAttempt->id)

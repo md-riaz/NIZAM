@@ -2,23 +2,23 @@ import { z } from 'zod';
 
 // ─── User & Auth ──────────────────────────────────────────────
 
-export const TenantSchema = z.object({
-    id: z.number(),
+export const OrganizationSchema = z.object({
+    id: z.union([z.string(), z.number()]),
     name: z.string(),
     domain: z.string(),
     created_at: z.string(),
     updated_at: z.string(),
 });
-export type Tenant = z.infer<typeof TenantSchema>;
+export type Organization = z.infer<typeof OrganizationSchema>;
 
 export const UserSchema = z.object({
-    id: z.number(),
+    id: z.union([z.string(), z.number()]),
     name: z.string(),
     email: z.string().email(),
-    tenant_id: z.number().nullable(),
+    organization_id: z.union([z.string(), z.number()]).nullable(),
     role: z.string(),
     email_verified_at: z.string().nullable(),
-    tenant: TenantSchema.nullable().optional(),
+    organization: OrganizationSchema.nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
 });
@@ -46,7 +46,7 @@ export interface ApiError {
 // ─── Dashboard Stats ──────────────────────────────────────────
 
 export interface DashboardStats {
-    tenants: number;
+    organizations: number;
     extensions: number;
     active_calls: number;
     gateways: number;

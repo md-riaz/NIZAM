@@ -14,7 +14,7 @@ class UpdateGatewayRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tenant_id' => 'nullable|uuid|exists:tenants,id',
+            'organization_id' => 'nullable|uuid|exists:organizations,id',
             'name' => 'string|max:255',
             'vendor' => 'nullable|string|max:100',
             'host' => 'string|max:255',

@@ -195,7 +195,7 @@ class RoutingGraphCompiler
                 'artifact_type' => FlowCompiledArtifact::ARTIFACT_TYPE_ROUTING_GRAPH,
             ],
             [
-                'tenant_id' => $flowVersion->flow->tenant_id,
+                'organization_id' => $flowVersion->flow->organization_id,
                 'content' => json_encode($graph, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
                 'checksum' => $graph['checksum'],
             ],

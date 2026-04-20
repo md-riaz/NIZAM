@@ -28,7 +28,7 @@ These figures are used as regression thresholds for all subsequent releases.
 | WebSocket clients | 500 |
 | Webhook events/min | 1,000 |
 | Test duration | 10 minutes |
-| Tenants | 10 (20 concurrent calls each) |
+| Organizations | 10 (20 concurrent calls each) |
 
 ---
 
@@ -39,9 +39,9 @@ These figures are used as regression thresholds for all subsequent releases.
 | Endpoint | P50 | P95 | P99 |
 |----------|-----|-----|-----|
 | `GET /api/v1/health` | < 5ms | < 20ms | < 50ms |
-| `GET /api/v1/tenants/{id}/extensions` | < 30ms | < 80ms | < 150ms |
-| `POST /api/v1/tenants/{id}/extensions` | < 50ms | < 120ms | < 200ms |
-| `GET /api/v1/tenants/{id}/queues/{id}/metrics` | < 40ms | < 100ms | < 200ms |
+| `GET /api/v1/organizations/{id}/extensions` | < 30ms | < 80ms | < 150ms |
+| `POST /api/v1/organizations/{id}/extensions` | < 50ms | < 120ms | < 200ms |
+| `GET /api/v1/organizations/{id}/queues/{id}/metrics` | < 40ms | < 100ms | < 200ms |
 | Dialplan XML generation (`mod_xml_curl`) | < 50ms | < 120ms | < 200ms |
 
 ### Call Processing
@@ -108,7 +108,7 @@ To reproduce this baseline:
 # 1. Start the full Docker Compose stack
 docker compose up -d
 
-# 2. Seed load test data (10 tenants, 300 agents, 200 DIDs)
+# 2. Seed load test data (10 organizations, 300 agents, 200 DIDs)
 php artisan nizam:load-test:seed
 
 # 3. Run the API load test (requires k6)

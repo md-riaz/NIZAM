@@ -7,21 +7,21 @@ use App\Http\Requests\StoreHolidayCalendarRequest;
 use App\Http\Requests\UpdateHolidayCalendarRequest;
 use App\Http\Resources\HolidayCalendarResource;
 use App\Models\HolidayCalendar;
-use App\Models\Tenant;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 
 class HolidayCalendarController extends Controller
 {
-    public function index(Tenant $tenant)
+    public function index(Organization $organization)
     {
         return HolidayCalendarResource::collection(
-            $tenant->holidayCalendars()->with('holidays')->paginate(15)
+            $organization->holidayCalendars()->with('holidays')->paginate(15)
         );
     }
 
-    public function store(StoreHolidayCalendarRequest $request, Tenant $tenant): JsonResponse
+    public function store(StoreHolidayCalendarRequest $request, Organization $organization): JsonResponse
     {
-        $calendar = $tenant->holidayCalendars()->create($request->safe()->except(['holidays']));
+        $calendar = $organization->holidayCalendars()->create($request->safe()->except(['holidays']));
 
         foreach ($request->validated()['holidays'] ?? [] as $holiday) {
             $calendar->holidays()->create($holiday);
@@ -30,18 +30,18 @@ class HolidayCalendarController extends Controller
         return (new HolidayCalendarResource($calendar->load('holidays')))->response()->setStatusCode(201);
     }
 
-    public function show(Tenant $tenant, HolidayCalendar $holidayCalendar): JsonResponse|HolidayCalendarResource
+    public function show(Organization $organization, HolidayCalendar $holidayCalendar): JsonResponse|HolidayCalendarResource
     {
-        if ($holidayCalendar->tenant_id !== $tenant->id) {
+        if ($holidayCalendar->organization_id !== $organization->id) {
             return response()->json(['message' => 'Holiday calendar not found.'], 404);
         }
 
         return new HolidayCalendarResource($holidayCalendar->load('holidays'));
     }
 
-    public function update(UpdateHolidayCalendarRequest $request, Tenant $tenant, HolidayCalendar $holidayCalendar): JsonResponse|HolidayCalendarResource
+    public function update(UpdateHolidayCalendarRequest $request, Organization $organization, HolidayCalendar $holidayCalendar): JsonResponse|HolidayCalendarResource
     {
-        if ($holidayCalendar->tenant_id !== $tenant->id) {
+        if ($holidayCalendar->organization_id !== $organization->id) {
             return response()->json(['message' => 'Holiday calendar not found.'], 404);
         }
 
@@ -58,9 +58,9 @@ class HolidayCalendarController extends Controller
         return new HolidayCalendarResource($holidayCalendar->load('holidays'));
     }
 
-    public function destroy(Tenant $tenant, HolidayCalendar $holidayCalendar): JsonResponse
+    public function destroy(Organization $organization, HolidayCalendar $holidayCalendar): JsonResponse
     {
-        if ($holidayCalendar->tenant_id !== $tenant->id) {
+        if ($holidayCalendar->organization_id !== $organization->id) {
             return response()->json(['message' => 'Holiday calendar not found.'], 404);
         }
 

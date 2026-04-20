@@ -17,7 +17,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/context/TenantContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import type { AuditLog } from '@/types/models';
 
@@ -35,23 +35,23 @@ function eventBadge(action?: string | null) {
 }
 
 export default function AuditLogsPage() {
-    const { activeTenant, tenantApiPrefix } = useTenant();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
 
     const { data: logs = [], isLoading } = useQuery({
-        queryKey: ['audit-logs', activeTenant?.id],
+        queryKey: ['audit-logs', activeOrganization?.id],
         queryFn: async () => {
             const res = await api.get<{ data: AuditLog[] }>(
-                `${tenantApiPrefix}/audit-logs`,
+                `${organizationApiPrefix}/audit-logs`,
             );
             return res.data.data;
         },
-        enabled: !!activeTenant,
+        enabled: !!activeOrganization,
     });
 
-    if (!activeTenant) {
+    if (!activeOrganization) {
         return (
             <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Select a tenant to view audit logs.
+                Select a organization to view audit logs.
             </div>
         );
     }
@@ -61,7 +61,7 @@ export default function AuditLogsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm text-muted-foreground">
-                        {activeTenant.name} &rsaquo; System
+                        {activeOrganization.name} &rsaquo; System
                     </p>
                     <h1 className="text-2xl font-bold tracking-tight">Audit Log</h1>
                     <p className="text-muted-foreground">
@@ -75,7 +75,7 @@ export default function AuditLogsPage() {
                 <CardHeader>
                     <CardTitle>Recent Activity</CardTitle>
                     <CardDescription>
-                        Showing recent audit entries for {activeTenant.domain}
+                        Showing recent audit entries for {activeOrganization.domain}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

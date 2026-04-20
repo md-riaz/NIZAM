@@ -14,11 +14,11 @@ use Illuminate\Support\Collection;
 class AnomalyDetectorService
 {
     /**
-     * Run all anomaly detectors for a tenant.
+     * Run all anomaly detectors for an organization.
      */
-    public function detectAnomalies(string $tenantId): Collection
+    public function detectAnomalies(string $organizationId): Collection
     {
-        $policies = AlertPolicy::where('tenant_id', $tenantId)
+        $policies = AlertPolicy::where('organization_id', $organizationId)
             ->where('is_active', true)
             ->get();
 
@@ -64,10 +64,10 @@ class AnomalyDetectorService
         $windowStart = now()->subMinutes($policy->window_minutes);
 
         return match ($policy->metric) {
-            AlertPolicy::METRIC_ABANDON_RATE => $this->computeAbandonRate($policy->tenant_id, $windowStart),
-            AlertPolicy::METRIC_WEBHOOK_FAILURES => $this->computeWebhookFailures($policy->tenant_id, $windowStart),
-            AlertPolicy::METRIC_GATEWAY_FLAPPING => $this->computeGatewayFlapping($policy->tenant_id, $windowStart),
-            AlertPolicy::METRIC_SLA_DROP => $this->computeSlaLevel($policy->tenant_id, $windowStart),
+            AlertPolicy::METRIC_ABANDON_RATE => $this->computeAbandonRate($policy->organization_id, $windowStart),
+            AlertPolicy::METRIC_WEBHOOK_FAILURES => $this->computeWebhookFailures($policy->organization_id, $windowStart),
+            AlertPolicy::METRIC_GATEWAY_FLAPPING => $this->computeGatewayFlapping($policy->organization_id, $windowStart),
+            AlertPolicy::METRIC_SLA_DROP => $this->computeSlaLevel($policy->organization_id, $windowStart),
             default => null,
         };
     }
@@ -75,9 +75,9 @@ class AnomalyDetectorService
     /**
      * Compute abandon rate in the given window.
      */
-    protected function computeAbandonRate(string $tenantId, Carbon $windowStart): float
+    protected function computeAbandonRate(string $organizationId, Carbon $windowStart): float
     {
-        $events = AnalyticsEvent::where('tenant_id', $tenantId)
+        $events = AnalyticsEvent::where('organization_id', $organizationId)
             ->where('created_at', '>=', $windowStart)
             ->get();
 
@@ -94,9 +94,9 @@ class AnomalyDetectorService
     /**
      * Compute webhook failure count in the given window.
      */
-    protected function computeWebhookFailures(string $tenantId, Carbon $windowStart): float
+    protected function computeWebhookFailures(string $organizationId, Carbon $windowStart): float
     {
-        return (float) WebhookDeliveryAttempt::where('tenant_id', $tenantId)
+        return (float) WebhookDeliveryAttempt::where('organization_id', $organizationId)
             ->where('status', 'failed')
             ->where('created_at', '>=', $windowStart)
             ->count();
@@ -105,9 +105,9 @@ class AnomalyDetectorService
     /**
      * Compute gateway registration flapping (register/unregister cycles).
      */
-    protected function computeGatewayFlapping(string $tenantId, Carbon $windowStart): float
+    protected function computeGatewayFlapping(string $organizationId, Carbon $windowStart): float
     {
-        $registrations = CallEventLog::where('tenant_id', $tenantId)
+        $registrations = CallEventLog::where('organization_id', $organizationId)
             ->whereIn('event_type', [
                 CallEventLog::EVENT_DEVICE_REGISTERED,
                 CallEventLog::EVENT_DEVICE_UNREGISTERED,
@@ -121,9 +121,9 @@ class AnomalyDetectorService
     /**
      * Compute current SLA level (inverse: alert when it drops below threshold).
      */
-    protected function computeSlaLevel(string $tenantId, Carbon $windowStart): float
+    protected function computeSlaLevel(string $organizationId, Carbon $windowStart): float
     {
-        $metrics = QueueMetric::where('tenant_id', $tenantId)
+        $metrics = QueueMetric::where('organization_id', $organizationId)
             ->where('created_at', '>=', $windowStart)
             ->get();
 
@@ -142,7 +142,7 @@ class AnomalyDetectorService
         $severity = $this->determineSeverity($policy, $currentValue);
 
         $alert = Alert::create([
-            'tenant_id' => $policy->tenant_id,
+            'organization_id' => $policy->organization_id,
             'alert_policy_id' => $policy->id,
             'severity' => $severity,
             'metric' => $policy->metric,

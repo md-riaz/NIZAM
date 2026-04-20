@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('alert_policies', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('organization_id')->constrained('organizations')->cascadeOnDelete();
             $table->string('name');
             $table->string('metric'); // abandon_rate, webhook_failures, gateway_flapping, sla_drop
             $table->string('condition'); // gt, lt, gte, lte, eq

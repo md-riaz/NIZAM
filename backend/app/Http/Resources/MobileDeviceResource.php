@@ -11,7 +11,7 @@ class MobileDeviceResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'tenant_id' => $this->tenant_id,
+            'organization_id' => $this->organization_id,
             'extension_id' => $this->extension_id,
             'type' => $this->type,
             'device_uuid' => $this->device_uuid,

@@ -5,7 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\Agent;
 use App\Models\Queue;
 use App\Models\QueueEntry;
-use App\Models\Tenant;
+use App\Models\Organization;
 use App\Services\MetricsService;
 use App\Services\QueueService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,14 +30,14 @@ class QueueStressTest extends TestCase
 
     private function createStressSetup(int $agentCount = 20): array
     {
-        $tenant = Tenant::create([
+        $organization = Organization::create([
             'name' => 'Stress Corp',
             'domain' => 'stress.example.com',
             'max_extensions' => 500,
         ]);
 
         $queue = Queue::create([
-            'tenant_id' => $tenant->id,
+            'organization_id' => $organization->id,
             'name' => 'High Volume Queue',
             'strategy' => Queue::STRATEGY_ROUND_ROBIN,
             'max_wait_time' => 300,
@@ -46,7 +46,7 @@ class QueueStressTest extends TestCase
 
         $agents = [];
         for ($i = 0; $i < $agentCount; $i++) {
-            $ext = $tenant->extensions()->create([
+            $ext = $organization->extensions()->create([
                 'extension' => (string) (1001 + $i),
                 'password' => 'secret123',
                 'directory_first_name' => "Agent{$i}",
@@ -54,7 +54,7 @@ class QueueStressTest extends TestCase
             ]);
 
             $agent = Agent::create([
-                'tenant_id' => $tenant->id,
+                'organization_id' => $organization->id,
                 'extension_id' => $ext->id,
                 'name' => "Stress Agent {$i}",
                 'state' => Agent::STATE_AVAILABLE,
@@ -68,14 +68,14 @@ class QueueStressTest extends TestCase
             $agents[] = $agent;
         }
 
-        return [$tenant, $queue, $agents];
+        return [$organization, $queue, $agents];
     }
 
     public function test_100_queued_calls_with_20_agents(): void
     {
         Event::fake();
 
-        [$tenant, $queue, $agents] = $this->createStressSetup(20);
+        [$organization, $queue, $agents] = $this->createStressSetup(20);
 
         $entries = [];
         for ($i = 0; $i < 100; $i++) {
@@ -124,7 +124,7 @@ class QueueStressTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue, $agents] = $this->createStressSetup(20);
+        [$organization, $queue, $agents] = $this->createStressSetup(20);
 
         // Random state transitions
         $states = Agent::VALID_STATES;
@@ -136,7 +136,7 @@ class QueueStressTest extends TestCase
         }
 
         // Verify no agent is in an invalid state
-        $allAgents = Agent::where('tenant_id', $tenant->id)->get();
+        $allAgents = Agent::where('organization_id', $organization->id)->get();
         foreach ($allAgents as $agent) {
             $this->assertContains($agent->state, Agent::VALID_STATES);
             if ($agent->state !== Agent::STATE_PAUSED) {
@@ -150,7 +150,7 @@ class QueueStressTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue, $agents] = $this->createStressSetup(5);
+        [$organization, $queue, $agents] = $this->createStressSetup(5);
 
         // Add 20 calls
         $entries = [];
@@ -204,13 +204,13 @@ class QueueStressTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue, $agents] = $this->createStressSetup(5);
+        [$organization, $queue, $agents] = $this->createStressSetup(5);
 
         // Process 5 calls sequentially, each with all agents available
         $assignedAgents = [];
         for ($i = 0; $i < 5; $i++) {
             // Refresh all agents from DB and make available
-            Agent::where('tenant_id', $tenant->id)->update([
+            Agent::where('organization_id', $organization->id)->update([
                 'state' => Agent::STATE_AVAILABLE,
                 'state_changed_at' => now(),
             ]);
@@ -237,7 +237,7 @@ class QueueStressTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue, $agents] = $this->createStressSetup(10);
+        [$organization, $queue, $agents] = $this->createStressSetup(10);
 
         // Create 50 calls with mixed outcomes
         for ($i = 0; $i < 30; $i++) {
@@ -276,7 +276,7 @@ class QueueStressTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue] = $this->createStressSetup(0); // No agents
+        [$organization, $queue] = $this->createStressSetup(0); // No agents
 
         // 50 calls, all abandoned
         for ($i = 0; $i < 50; $i++) {
@@ -292,34 +292,34 @@ class QueueStressTest extends TestCase
         $this->assertEquals(100.0, $metrics['abandon_rate']);
     }
 
-    public function test_multi_tenant_isolation_under_stress(): void
+    public function test_multi_organization_isolation_under_stress(): void
     {
         Event::fake();
 
-        [$tenant1, $queue1, $agents1] = $this->createStressSetup(5);
+        [$organization1, $queue1, $agents1] = $this->createStressSetup(5);
 
-        $tenant2 = Tenant::create([
+        $organization2 = Organization::create([
             'name' => 'Other Corp',
             'domain' => 'other.example.com',
             'max_extensions' => 500,
         ]);
 
         $queue2 = Queue::create([
-            'tenant_id' => $tenant2->id,
+            'organization_id' => $organization2->id,
             'name' => 'Other Queue',
         ]);
 
-        // Add 50 calls to tenant 1
+        // Add 50 calls to organization 1
         for ($i = 0; $i < 50; $i++) {
             $this->queueService->addToQueue($queue1, (string) Str::uuid());
         }
 
-        // Tenant 2 should have no calls
+        // Organization 2 should have no calls
         $metrics2 = $this->metricsService->getRealTimeMetrics($queue2);
         $this->assertEquals(0, $metrics2['calls_offered']);
         $this->assertEquals(0, $metrics2['waiting_count']);
 
-        $wallboard2 = $this->metricsService->getWallboardData($tenant2->id);
+        $wallboard2 = $this->metricsService->getWallboardData($organization2->id);
         $this->assertEquals(0, $wallboard2['queues'][0]['calls_offered']);
     }
 
@@ -327,7 +327,7 @@ class QueueStressTest extends TestCase
     {
         Event::fake();
 
-        [$tenant, $queue, $agents] = $this->createStressSetup(20);
+        [$organization, $queue, $agents] = $this->createStressSetup(20);
 
         // Rapidly transition all agents through all states
         foreach (Agent::VALID_STATES as $state) {
@@ -338,7 +338,7 @@ class QueueStressTest extends TestCase
         }
 
         // All agents should be in last state (offline)
-        $allAgents = Agent::where('tenant_id', $tenant->id)->get();
+        $allAgents = Agent::where('organization_id', $organization->id)->get();
         foreach ($allAgents as $agent) {
             $this->assertEquals(Agent::STATE_OFFLINE, $agent->state);
             $this->assertNull($agent->pause_reason);
