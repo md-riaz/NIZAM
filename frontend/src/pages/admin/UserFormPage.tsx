@@ -208,7 +208,16 @@ export default function UserFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Role</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (value !== 'admin' && value !== 'agent') {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select role" />
@@ -231,7 +240,16 @@ export default function UserFormPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Organization scope</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
+                                            <Select
+                                                onValueChange={(value) => {
+                                                    if (value !== 'global' && !organizations.some((organization) => organization.id === value)) {
+                                                        return;
+                                                    }
+
+                                                    field.onChange(value);
+                                                }}
+                                                value={field.value}
+                                            >
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select organization scope" />

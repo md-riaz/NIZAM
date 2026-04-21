@@ -69,6 +69,39 @@ type DestinationOption = {
     label: string;
 };
 
+type CountryCallingCodeOption = {
+    value: string;
+    storedValue: string;
+    label: string;
+};
+
+const countryCallingCodeOptions: CountryCallingCodeOption[] = [
+    { value: '__none__', storedValue: '', label: 'No country code' },
+    { value: '+880', storedValue: '+880', label: 'Bangladesh (+880)' },
+    { value: '+1', storedValue: '+1', label: 'United States/Canada (+1)' },
+    { value: '+44', storedValue: '+44', label: 'United Kingdom (+44)' },
+    { value: '+61', storedValue: '+61', label: 'Australia (+61)' },
+    { value: '+65', storedValue: '+65', label: 'Singapore (+65)' },
+    { value: '+91', storedValue: '+91', label: 'India (+91)' },
+    { value: '+971', storedValue: '+971', label: 'UAE (+971)' },
+];
+
+const noCountryCodeOptionValue = '__none__';
+
+function getCountryOptionValue(storedValue: string): string {
+    return storedValue || noCountryCodeOptionValue;
+}
+
+function getStoredCountryCode(optionValue: string): string {
+    return countryCallingCodeOptions.find((option) => option.value === optionValue)?.storedValue ?? '';
+}
+
+function getCountryCodeMatches(): CountryCallingCodeOption[] {
+    return countryCallingCodeOptions
+        .filter((option) => option.storedValue)
+        .sort((left, right) => right.storedValue.length - left.storedValue.length);
+}
+
 const emptyProviderValues: ProviderFormValues = {
     name: '',
     host: '',
@@ -101,6 +134,42 @@ function toProviderFormValues(gateway?: ProviderResponse | null): ProviderFormVa
         register: gateway?.register ?? true,
         is_active: gateway?.is_active ?? true,
     };
+}
+
+function splitPhoneNumber(value?: string | null): { countryCode: string; nationalNumber: string } {
+    const normalized = value?.trim() ?? '';
+
+    if (!normalized.startsWith('+')) {
+        return {
+            countryCode: '',
+            nationalNumber: normalized,
+        };
+    }
+
+    const matchedCountryCode = getCountryCodeMatches()
+        .find((option) => normalized.startsWith(option.storedValue));
+
+    if (!matchedCountryCode) {
+        return {
+            countryCode: '',
+            nationalNumber: normalized,
+        };
+    }
+
+    return {
+        countryCode: matchedCountryCode.storedValue,
+        nationalNumber: normalized.slice(matchedCountryCode.storedValue.length),
+    };
+}
+
+function buildStoredPhoneNumber(countryCode: string, nationalNumber: string): string {
+    if (!countryCode) {
+        return nationalNumber.replace(/[^\d+]/g, '');
+    }
+
+    const digits = nationalNumber.replace(/\D/g, '');
+
+    return digits ? `${countryCode}${digits}` : '';
 }
 
 function getDestinationOptions(
@@ -192,6 +261,7 @@ export default function DidFormPage() {
         defaultValues: emptyProviderValues,
     });
 
+    const phoneNumber = numberForm.watch('number');
     const destType = numberForm.watch('destination_type');
     const selectedDestinationId = numberForm.watch('destination_id');
 
@@ -227,6 +297,11 @@ export default function DidFormPage() {
         [destType, extensions, flows],
     );
 
+    const phoneNumberParts = useMemo(
+        () => splitPhoneNumber(phoneNumber),
+        [phoneNumber],
+    );
+
     const destinationOptionsWithCurrent = useMemo(() => {
         if (!selectedDestinationId || destinationOptions.some((option) => option.id === selectedDestinationId)) {
             return destinationOptions;
@@ -246,9 +321,7 @@ export default function DidFormPage() {
 
         numberForm.reset(toDidFormValues(did));
 
-        if (did.gateway) {
-            providerForm.reset(toProviderFormValues(did.gateway));
-        }
+        providerForm.reset(did.gateway ? toProviderFormValues(did.gateway) : emptyProviderValues);
 
         setSavedDidId(did.id);
     }, [did, numberForm, providerForm]);
@@ -257,25 +330,25 @@ export default function DidFormPage() {
     useEffect(() => {
         const emptyDestinationId = '00000000-0000-0000-0000-000000000000';
 
+        if (currentDidId) {
+            return;
+        }
+
         if (destinationOptions.length === 0) {
             if (selectedDestinationId !== emptyDestinationId) {
                 numberForm.setValue('destination_id', emptyDestinationId, {
                     shouldValidate: true,
-                    shouldDirty: !currentDidId,
+                    shouldDirty: true,
                 });
             }
             return;
         }
 
         if (!destinationOptions.some((option) => option.id === selectedDestinationId)) {
-            const nextDestinationId = destinationOptions[0].id;
-
-            if (selectedDestinationId !== nextDestinationId) {
-                numberForm.setValue('destination_id', nextDestinationId, {
-                    shouldValidate: true,
-                    shouldDirty: !currentDidId,
-                });
-            }
+            numberForm.setValue('destination_id', destinationOptions[0].id, {
+                shouldValidate: true,
+                shouldDirty: true,
+            });
         }
     }, [currentDidId, destinationOptions, numberForm, selectedDestinationId]);
 
@@ -455,11 +528,43 @@ export default function DidFormPage() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Number</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="e.g. 18005551234" {...field} />
-                                                    </FormControl>
+                                                    <div className="grid gap-3 sm:grid-cols-[220px_minmax(0,1fr)]">
+                                                        <Select
+                                                            value={getCountryOptionValue(phoneNumberParts.countryCode)}
+                                                            onValueChange={(value) => {
+                                                                field.onChange(buildStoredPhoneNumber(getStoredCountryCode(value), phoneNumberParts.nationalNumber));
+                                                            }}
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select country code" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                {countryCallingCodeOptions.map((option) => (
+                                                                    <SelectItem key={option.value} value={option.value}>
+                                                                        {option.label}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormControl>
+                                                            <Input
+                                                                type="tel"
+                                                                inputMode="tel"
+                                                                placeholder="e.g. 9644196197"
+                                                                value={phoneNumberParts.nationalNumber}
+                                                                onChange={(event) => {
+                                                                    field.onChange(buildStoredPhoneNumber(phoneNumberParts.countryCode, event.target.value));
+                                                                }}
+                                                                name={field.name}
+                                                                onBlur={field.onBlur}
+                                                                ref={field.ref}
+                                                            />
+                                                        </FormControl>
+                                                    </div>
                                                     <FormDescription>
-                                                        Phone number customers dial to reach this route.
+                                                        Choose country code for E.164 format, or leave empty to keep local number format.
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -489,9 +594,12 @@ export default function DidFormPage() {
                                                         <FormLabel>Destination Type</FormLabel>
                                                         <Select
                                                             onValueChange={(value) => {
-                                                                const nextType = value === 'flow' ? 'flow' : 'extension';
-                                                                field.onChange(nextType);
-                                                                const nextOptions = getDestinationOptions(nextType, extensions, flows);
+                                                                if (value !== 'extension' && value !== 'flow') {
+                                                                    return;
+                                                                }
+
+                                                                field.onChange(value);
+                                                                const nextOptions = getDestinationOptions(value, extensions, flows);
                                                                 numberForm.setValue(
                                                                     'destination_id',
                                                                     nextOptions[0]?.id ?? '00000000-0000-0000-0000-000000000000',

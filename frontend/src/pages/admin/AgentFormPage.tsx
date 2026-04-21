@@ -151,7 +151,16 @@ export default function AgentFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Linked Extension</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!extensions.some((ext: any) => ext.id === value)) {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger disabled={isLoadingExtensions}>
                                                             <SelectValue placeholder="Select an extension" />
@@ -176,7 +185,16 @@ export default function AgentFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Role</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!agentRoles.includes(value as (typeof agentRoles)[number])) {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select role" />
@@ -201,7 +219,16 @@ export default function AgentFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Initial State</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!agentStates.includes(value as (typeof agentStates)[number])) {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select state" />

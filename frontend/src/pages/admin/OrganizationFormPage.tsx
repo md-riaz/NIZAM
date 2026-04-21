@@ -384,7 +384,16 @@ export default function OrganizationFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Status</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!getOrganizationStatusOptions(organization?.status).includes(value)) {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select status" />

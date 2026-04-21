@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Hash, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Hash, Pencil, Trash2, Activity } from 'lucide-react';
 
 import api from '@/lib/api';
 import { useOrganization } from '@/context/OrganizationContext';
@@ -34,6 +34,32 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+type SipGateway = {
+    name: string;
+    freeswitch_name?: string;
+    profile: string | null;
+    uri?: string;
+    status: string;
+};
+
+function getGatewayStatusVariant(status: string): 'success' | 'secondary' | 'destructive' | 'default' {
+    const normalized = status.toLowerCase();
+
+    if (normalized === 'running' || normalized.includes('reged')) {
+        return 'success';
+    }
+
+    if (normalized === 'noreg' || normalized.includes('down')) {
+        return 'secondary';
+    }
+
+    if (normalized.includes('fail') || normalized.includes('error')) {
+        return 'destructive';
+    }
+
+    return 'default';
+}
+
 export default function DidsPage() {
     const { activeOrganization, organizationApiPrefix } = useOrganization();
     const navigate = useNavigate();
@@ -50,6 +76,21 @@ export default function DidsPage() {
         },
         enabled: !!activeOrganization,
     });
+
+    const { data: gatewayStatuses = [] } = useQuery({
+        queryKey: ['admin-sip-gateways'],
+        queryFn: async () => {
+            const res = await api.get<{ data: SipGateway[] }>('admin/sip-status/gateways');
+            return res.data.data;
+        },
+        refetchInterval: 10000,
+        enabled: !!activeOrganization,
+    });
+
+    const gatewayStatusByName = useMemo(
+        () => new Map(gatewayStatuses.map((gateway) => [gateway.name, gateway])),
+        [gatewayStatuses],
+    );
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
@@ -107,60 +148,82 @@ export default function DidsPage() {
                                     <TableHead>Description</TableHead>
                                     <TableHead>Destination</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead>Provider</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {dids.map((did) => (
-                                    <TableRow key={did.id}>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Hash className="size-4 text-muted-foreground" />
-                                                <span className="font-mono font-semibold">
-                                                    {did.number}
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            {did.description ?? '—'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {did.destination_type ? (
-                                                <Badge variant="outline">
-                                                    {did.destination_type}
+                                {dids.map((did) => {
+                                    const gatewayStatus = did.gateway?.name
+                                        ? gatewayStatusByName.get(did.gateway.name)
+                                        : null;
+
+                                    return (
+                                        <TableRow key={did.id}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Hash className="size-4 text-muted-foreground" />
+                                                    <span className="font-mono font-semibold">
+                                                        {did.number}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {did.description ?? '—'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {did.destination_type ? (
+                                                    <Badge variant="outline">
+                                                        {did.destination_type}
+                                                    </Badge>
+                                                ) : (
+                                                    <span className="text-muted-foreground">Unrouted</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={did.is_active !== false ? 'success' : 'secondary'}>
+                                                    {did.is_active !== false ? 'Active' : 'Disabled'}
                                                 </Badge>
-                                            ) : (
-                                                <span className="text-muted-foreground">Unrouted</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={did.is_active !== false ? 'success' : 'secondary'}>
-                                                {did.is_active !== false ? 'Active' : 'Disabled'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon"
-                                                    onClick={() => navigate(`/admin/numbers/${did.id}/edit`)}
-                                                >
-                                                    <Pencil className="size-4" />
-                                                </Button>
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon"
-                                                    onClick={() => setDidToDelete(did)}
-                                                >
-                                                    <Trash2 className="size-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                            </TableCell>
+                                            <TableCell>
+                                                {did.gateway ? (
+                                                    <div className="space-y-1">
+                                                        <div className="text-sm font-medium">{did.gateway.name}</div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Activity className="size-3 text-muted-foreground" />
+                                                            <Badge variant={gatewayStatus ? getGatewayStatusVariant(gatewayStatus.status) : 'secondary'}>
+                                                                {gatewayStatus ? gatewayStatus.status : 'Unknown'}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-muted-foreground">No provider</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => navigate(`/admin/numbers/${did.id}/edit`)}
+                                                    >
+                                                        <Pencil className="size-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setDidToDelete(did)}
+                                                    >
+                                                        <Trash2 className="size-4 text-destructive" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                                 {dids.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                                             No numbers assigned.
                                         </TableCell>
                                     </TableRow>

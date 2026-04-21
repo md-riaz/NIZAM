@@ -197,7 +197,16 @@ export default function RingGroupFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Strategy</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!['simultaneous', 'round_robin', 'linear', 'ring_all'].includes(value)) {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select strategy" />

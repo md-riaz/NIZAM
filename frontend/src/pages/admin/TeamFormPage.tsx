@@ -137,7 +137,16 @@ export default function TeamFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Strategy</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!teamStrategies.includes(value as (typeof teamStrategies)[number])) {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select strategy" />

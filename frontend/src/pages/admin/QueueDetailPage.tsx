@@ -150,7 +150,16 @@ export default function QueueDetailPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Agent</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!availableAgents.some((ag) => ag.id === value)) {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select an agent" />

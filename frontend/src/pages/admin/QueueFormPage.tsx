@@ -152,7 +152,16 @@ export default function QueueFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Dispatch Strategy</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!queueStrategies.includes(value as (typeof queueStrategies)[number])) {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select strategy" />
@@ -205,7 +214,16 @@ export default function QueueFormPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Overflow Action</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!overflowActions.includes(value as (typeof overflowActions)[number])) {
+                                                            return;
+                                                        }
+
+                                                        field.onChange(value);
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select overflow" />
