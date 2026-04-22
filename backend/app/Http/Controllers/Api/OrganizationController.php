@@ -33,11 +33,11 @@ class OrganizationController extends Controller
         $user = request()->user();
 
         if ($user->isSuperadmin()) {
-            return OrganizationResource::collection(Organization::paginate(15));
+            return OrganizationResource::collection(Organization::orderByDesc('id')->paginate(15));
         }
 
         return OrganizationResource::collection(
-            Organization::where('id', $user->organization_id)->paginate(15)
+            Organization::where('id', $user->organization_id)->orderByDesc('id')->paginate(15)
         );
     }
 

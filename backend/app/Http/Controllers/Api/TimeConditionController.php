@@ -22,7 +22,7 @@ class TimeConditionController extends Controller
     {
         $this->authorize('viewAny', TimeCondition::class);
 
-        return TimeConditionResource::collection($organization->timeConditions()->paginate(15));
+        return TimeConditionResource::collection($organization->timeConditions()->orderByDesc('id')->paginate(15));
     }
 
     /**

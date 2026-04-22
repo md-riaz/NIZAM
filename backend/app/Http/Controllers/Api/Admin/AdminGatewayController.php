@@ -21,7 +21,7 @@ class AdminGatewayController extends Controller
     {
         $this->authorize('viewAny', Gateway::class);
 
-        return GatewayResource::collection(Gateway::with('organization')->paginate(20));
+        return GatewayResource::collection(Gateway::with('organization')->orderByDesc('id')->paginate(20));
     }
 
     /**

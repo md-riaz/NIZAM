@@ -22,7 +22,7 @@ class DeviceProfileController extends Controller
     {
         $this->authorize('viewAny', DeviceProfile::class);
 
-        return DeviceProfileResource::collection($organization->deviceProfiles()->paginate(15));
+        return DeviceProfileResource::collection($organization->deviceProfiles()->orderByDesc('id')->paginate(15));
     }
 
     /**

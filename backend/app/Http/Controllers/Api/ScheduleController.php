@@ -15,7 +15,7 @@ class ScheduleController extends Controller
     public function index(Organization $organization)
     {
         return ScheduleResource::collection(
-            $organization->schedules()->with(['rules', 'breaks', 'exceptions'])->paginate(15)
+            $organization->schedules()->with(['rules', 'breaks', 'exceptions'])->orderByDesc('id')->paginate(15)
         );
     }
 

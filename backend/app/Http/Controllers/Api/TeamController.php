@@ -14,7 +14,7 @@ class TeamController extends Controller
 {
     public function index(Organization $organization)
     {
-        return TeamResource::collection($organization->teams()->with('members')->paginate(15));
+        return TeamResource::collection($organization->teams()->with('members')->orderByDesc('id')->paginate(15));
     }
 
     public function store(StoreTeamRequest $request, Organization $organization): JsonResponse

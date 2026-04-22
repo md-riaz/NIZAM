@@ -32,7 +32,7 @@ class UserController extends Controller
             $query->where('role', $request->input('role'));
         }
 
-        return UserResource::collection($query->paginate(15));
+        return UserResource::collection($query->orderByDesc('id')->paginate(15));
     }
 
     public function show(User $user): UserResource

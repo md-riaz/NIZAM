@@ -19,7 +19,7 @@ class BlockedDestinationController extends Controller
              // Basic multi-tenancy check if not superadmin (though these routes are currently admin prefixed)
         }
 
-        return $query->get();
+        return $query->orderByDesc('id')->get();
     }
 
     public function store(Request $request)

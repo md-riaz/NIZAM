@@ -20,7 +20,7 @@ class AgentController extends Controller
     public function index(Organization $organization)
     {
         return AgentResource::collection(
-            $organization->agents()->with('extension')->paginate(15)
+            $organization->agents()->with('extension')->orderByDesc('id')->paginate(15)
         );
     }
 

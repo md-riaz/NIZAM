@@ -20,7 +20,7 @@ class FlowController extends Controller
 
     public function index(Organization $organization)
     {
-        return FlowResource::collection($organization->flows()->with(['activeVersion', 'latestVersion', 'versions'])->paginate(15));
+        return FlowResource::collection($organization->flows()->with(['activeVersion', 'latestVersion', 'versions'])->orderByDesc('id')->paginate(15));
     }
 
     public function store(StoreFlowRequest $request, Organization $organization): JsonResponse

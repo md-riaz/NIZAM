@@ -11,7 +11,7 @@ class SipProfileController extends Controller
 {
     public function index()
     {
-        return SipProfile::with('settings')->get();
+        return SipProfile::with('settings')->orderByDesc('id')->get();
     }
 
     public function store(Request $request)

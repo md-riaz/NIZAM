@@ -24,7 +24,7 @@ class WebhookController extends Controller
     {
         $this->authorize('viewAny', Webhook::class);
 
-        return WebhookResource::collection($organization->webhooks()->paginate(15));
+        return WebhookResource::collection($organization->webhooks()->orderByDesc('id')->paginate(15));
     }
 
     /**

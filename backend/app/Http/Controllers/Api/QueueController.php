@@ -28,7 +28,7 @@ class QueueController extends Controller
     public function index(Organization $organization)
     {
         return QueueResource::collection(
-            $organization->queues()->withCount('members')->paginate(15)
+            $organization->queues()->withCount('members')->orderByDesc('id')->paginate(15)
         );
     }
 

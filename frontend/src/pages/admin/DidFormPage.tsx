@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Save, Trash2 } from 'lucide-react';
 import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
 
@@ -242,6 +242,7 @@ export default function DidFormPage() {
     const queryClient = useQueryClient();
     const [savedDidId, setSavedDidId] = useState<string | null>(id ?? null);
     const [activeTab, setActiveTab] = useState<'number' | 'provider'>('number');
+    const [isProviderPasswordVisible, setIsProviderPasswordVisible] = useState(false);
 
     const currentDidId = savedDidId ?? id ?? null;
 
@@ -777,8 +778,28 @@ export default function DidFormPage() {
                                                     <FormItem>
                                                         <FormLabel>Password</FormLabel>
                                                         <FormControl>
-                                                            <Input type="password" placeholder="Optional" {...field} />
+                                                            <div className="relative">
+                                                                <Input
+                                                                    type={isProviderPasswordVisible ? 'text' : 'password'}
+                                                                    placeholder="Optional"
+                                                                    className="pr-11"
+                                                                    {...field}
+                                                                />
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="absolute right-1 top-1/2 size-8 -translate-y-1/2"
+                                                                    onClick={() => setIsProviderPasswordVisible((visible) => !visible)}
+                                                                    aria-label={isProviderPasswordVisible ? 'Hide password' : 'Show password'}
+                                                                >
+                                                                    {isProviderPasswordVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                                                                </Button>
+                                                            </div>
                                                         </FormControl>
+                                                        <FormDescription>
+                                                            Hidden by default. Reveal to verify saved provider password.
+                                                        </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}

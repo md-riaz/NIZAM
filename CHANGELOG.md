@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-04-22]
+
+### Fixed
+- **Stable List Ordering**: Added explicit ordering across backend list endpoints so records no longer jump position after edits; most admin/API lists now use newest-first ordering by ID, while DIDs and extensions keep semantic ordering by number.
+- **Provider Password Cross-Check**: Updated the numbers provider editor to keep saved passwords masked by default while allowing a temporary reveal toggle for verification during edits.
+
 ## [2026-04-21]
 
 ### Fixed

@@ -22,7 +22,7 @@ class IvrController extends Controller
     {
         $this->authorize('viewAny', Ivr::class);
 
-        return IvrResource::collection($organization->ivrs()->paginate(15));
+        return IvrResource::collection($organization->ivrs()->orderByDesc('id')->paginate(15));
     }
 
     /**

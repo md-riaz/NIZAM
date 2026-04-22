@@ -30,7 +30,7 @@ class ExtensionController extends Controller
     {
         $this->authorize('viewAny', Extension::class);
 
-        return ExtensionResource::collection($organization->extensions()->paginate(15));
+        return ExtensionResource::collection($organization->extensions()->orderBy('extension')->paginate(15));
     }
 
     /**

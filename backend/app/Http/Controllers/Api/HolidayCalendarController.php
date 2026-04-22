@@ -15,7 +15,7 @@ class HolidayCalendarController extends Controller
     public function index(Organization $organization)
     {
         return HolidayCalendarResource::collection(
-            $organization->holidayCalendars()->with('holidays')->paginate(15)
+            $organization->holidayCalendars()->with('holidays')->orderByDesc('id')->paginate(15)
         );
     }
 

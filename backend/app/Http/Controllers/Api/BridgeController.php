@@ -16,7 +16,7 @@ class BridgeController extends Controller
     {
         $this->authorize('viewAny', Bridge::class);
 
-        return BridgeResource::collection($organization->bridges()->paginate(15));
+        return BridgeResource::collection($organization->bridges()->orderByDesc('id')->paginate(15));
     }
 
     public function store(StoreBridgeRequest $request, Organization $organization): JsonResponse

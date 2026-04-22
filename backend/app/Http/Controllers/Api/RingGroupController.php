@@ -22,7 +22,7 @@ class RingGroupController extends Controller
     {
         $this->authorize('viewAny', RingGroup::class);
 
-        return RingGroupResource::collection($organization->ringGroups()->paginate(15));
+        return RingGroupResource::collection($organization->ringGroups()->orderByDesc('id')->paginate(15));
     }
 
     /**

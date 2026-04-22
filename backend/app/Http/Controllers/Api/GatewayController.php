@@ -22,7 +22,7 @@ class GatewayController extends Controller
     {
         $this->authorize('viewAny', Gateway::class);
 
-        return GatewayResource::collection($organization->gateways()->paginate(15));
+        return GatewayResource::collection($organization->gateways()->orderByDesc('id')->paginate(15));
     }
 
     /**

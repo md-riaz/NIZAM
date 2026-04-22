@@ -27,7 +27,7 @@ class DidController extends Controller
     {
         $this->authorize('viewAny', Did::class);
 
-        return DidResource::collection($organization->dids()->with('gateway')->paginate(15));
+        return DidResource::collection($organization->dids()->with('gateway')->orderBy('number')->paginate(15));
     }
 
     /**
