@@ -19,8 +19,8 @@ class ExtensionObserver
         $provisioningFields = [
             'password',
             'extension',
-            'directory_first_name',
-            'directory_last_name',
+            'first_name',
+            'last_name',
             'effective_caller_id_name',
             'effective_caller_id_number',
             'voicemail_enabled',

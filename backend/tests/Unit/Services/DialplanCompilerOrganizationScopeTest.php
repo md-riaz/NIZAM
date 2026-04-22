@@ -36,8 +36,8 @@ class DialplanCompilerOrganizationScopeTest extends TestCase
             'extension' => '2001',
             'password' => 'secret',
             'is_active' => true,
-            'directory_first_name' => 'Other',
-            'directory_last_name' => 'Organization',
+            'first_name' => 'Other',
+            'last_name' => 'Organization',
         ]);
 
         // DID on organization A references organization B's extension ID (cross-organization)
@@ -62,8 +62,8 @@ class DialplanCompilerOrganizationScopeTest extends TestCase
             'extension' => '1001',
             'password' => 'secret',
             'is_active' => true,
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         $organization->dids()->create([

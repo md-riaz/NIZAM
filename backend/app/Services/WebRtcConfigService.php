@@ -125,7 +125,7 @@ class WebRtcConfigService
             'sip_password' => $extension->password,
             'sip_domain' => $extension->organization->domain,
             'sip_realm' => $extension->organization->domain,
-            'display_name' => trim(($extension->directory_first_name ?? '').' '.($extension->directory_last_name ?? '')),
+            'display_name' => trim(($extension->first_name ?? '').' '.($extension->last_name ?? '')),
             'ice_servers' => $iceServers,
             'codec_prefs' => $codecPrefs,
             'source_profile' => 'internal',

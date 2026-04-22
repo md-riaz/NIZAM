@@ -17,8 +17,8 @@ class ExtensionObserverTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'original-password',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -47,8 +47,8 @@ class ExtensionObserverTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'test-password',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -76,8 +76,8 @@ class ExtensionObserverTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'test-password',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -94,7 +94,7 @@ class ExtensionObserverTest extends TestCase
 
         $this->travel(5)->seconds();
 
-        $extension->update(['directory_first_name' => 'Jane']);
+        $extension->update(['first_name' => 'Jane']);
 
         $profile->refresh();
         $this->assertGreaterThan($originalUpdatedAt, $profile->updated_at);

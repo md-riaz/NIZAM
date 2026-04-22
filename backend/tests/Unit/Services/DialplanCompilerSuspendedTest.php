@@ -35,8 +35,8 @@ class DialplanCompilerSuspendedTest extends TestCase
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         $xml = $this->compiler->compileDirectory($organization->domain);
@@ -56,8 +56,8 @@ class DialplanCompilerSuspendedTest extends TestCase
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         $xml = $this->compiler->compileDialplan($organization->domain, '1001');
@@ -77,8 +77,8 @@ class DialplanCompilerSuspendedTest extends TestCase
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         $xml = $this->compiler->compileDirectory($organization->domain);
@@ -97,8 +97,8 @@ class DialplanCompilerSuspendedTest extends TestCase
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         $xml = $this->compiler->compileDirectory($organization->domain);
@@ -117,8 +117,8 @@ class DialplanCompilerSuspendedTest extends TestCase
             'extension' => '1001',
             'password' => 'secret123',
             'is_active' => true,
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         $xml = $this->compiler->compileDirectory($organization->domain);

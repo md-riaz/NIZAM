@@ -83,8 +83,8 @@ class SystemCheckpointAuditTest extends TestCase
         $ext = $this->organizationA->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $compiler = app(DialplanCompiler::class);
@@ -106,8 +106,8 @@ class SystemCheckpointAuditTest extends TestCase
         $ext = $this->organizationA->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $did = $this->organizationA->dids()->create([
@@ -142,21 +142,21 @@ class SystemCheckpointAuditTest extends TestCase
         $this->organizationA->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'Alice',
-            'directory_last_name' => 'Alpha',
+            'first_name' => 'Alice',
+            'last_name' => 'Alpha',
         ]);
 
         $this->organizationB->extensions()->create([
             'extension' => '1001',
             'password' => 'secret456',
-            'directory_first_name' => 'Bob',
-            'directory_last_name' => 'Beta',
+            'first_name' => 'Bob',
+            'last_name' => 'Beta',
         ]);
 
         $this->assertCount(1, $this->organizationA->extensions);
         $this->assertCount(1, $this->organizationB->extensions);
-        $this->assertEquals('Alice', $this->organizationA->extensions->first()->directory_first_name);
-        $this->assertEquals('Bob', $this->organizationB->extensions->first()->directory_first_name);
+        $this->assertEquals('Alice', $this->organizationA->extensions->first()->first_name);
+        $this->assertEquals('Bob', $this->organizationB->extensions->first()->first_name);
     }
 
     public function test_cp2_queue_names_isolated_per_organization(): void
@@ -171,10 +171,10 @@ class SystemCheckpointAuditTest extends TestCase
     public function test_cp2_agent_state_scoped_per_organization(): void
     {
         $extA = $this->organizationA->extensions()->create([
-            'extension' => '1001', 'password' => 'secret', 'directory_first_name' => 'A', 'directory_last_name' => 'Agent',
+            'extension' => '1001', 'password' => 'secret', 'first_name' => 'A', 'last_name' => 'Agent',
         ]);
         $extB = $this->organizationB->extensions()->create([
-            'extension' => '1001', 'password' => 'secret', 'directory_first_name' => 'B', 'directory_last_name' => 'Agent',
+            'extension' => '1001', 'password' => 'secret', 'first_name' => 'B', 'last_name' => 'Agent',
         ]);
 
         $agentA = Agent::create(['organization_id' => $this->organizationA->id, 'extension_id' => $extA->id, 'name' => 'Agent A', 'state' => Agent::STATE_AVAILABLE]);
@@ -192,7 +192,7 @@ class SystemCheckpointAuditTest extends TestCase
     public function test_cp2_cross_organization_api_read_attack_blocked(): void
     {
         $this->organizationA->extensions()->create([
-            'extension' => '1001', 'password' => 'secret', 'directory_first_name' => 'A', 'directory_last_name' => 'X',
+            'extension' => '1001', 'password' => 'secret', 'first_name' => 'A', 'last_name' => 'X',
         ]);
 
         // Organization B user tries to access Organization A resources
@@ -205,7 +205,7 @@ class SystemCheckpointAuditTest extends TestCase
     public function test_cp2_cross_organization_agent_access_blocked(): void
     {
         $extA = $this->organizationA->extensions()->create([
-            'extension' => '1001', 'password' => 'secret', 'directory_first_name' => 'A', 'directory_last_name' => 'X',
+            'extension' => '1001', 'password' => 'secret', 'first_name' => 'A', 'last_name' => 'X',
         ]);
         $agentA = Agent::create([
             'organization_id' => $this->organizationA->id, 'extension_id' => $extA->id, 'name' => 'Agent A',
@@ -482,8 +482,8 @@ class SystemCheckpointAuditTest extends TestCase
             $ext = $this->organizationA->extensions()->create([
                 'extension' => (string) (2001 + $i),
                 'password' => 'secret123',
-                'directory_first_name' => "Agent{$i}",
-                'directory_last_name' => 'Test',
+                'first_name' => "Agent{$i}",
+                'last_name' => 'Test',
             ]);
             $agent = Agent::create([
                 'organization_id' => $this->organizationA->id,
@@ -546,10 +546,10 @@ class SystemCheckpointAuditTest extends TestCase
         ]);
 
         $ext1 = $this->organizationA->extensions()->create([
-            'extension' => '3001', 'password' => 'secret', 'directory_first_name' => 'A1', 'directory_last_name' => 'T',
+            'extension' => '3001', 'password' => 'secret', 'first_name' => 'A1', 'last_name' => 'T',
         ]);
         $ext2 = $this->organizationA->extensions()->create([
-            'extension' => '3002', 'password' => 'secret', 'directory_first_name' => 'A2', 'directory_last_name' => 'T',
+            'extension' => '3002', 'password' => 'secret', 'first_name' => 'A2', 'last_name' => 'T',
         ]);
 
         $agent1 = Agent::create([
@@ -581,7 +581,7 @@ class SystemCheckpointAuditTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $ext = $this->organizationA->extensions()->create([
                 'extension' => (string) (4001 + $i), 'password' => 'secret',
-                'directory_first_name' => "A{$i}", 'directory_last_name' => 'T',
+                'first_name' => "A{$i}", 'last_name' => 'T',
             ]);
             $agent = Agent::create([
                 'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
@@ -631,7 +631,7 @@ class SystemCheckpointAuditTest extends TestCase
     {
         $ext = $this->organizationA->extensions()->create([
             'extension' => '5001', 'password' => 'secret',
-            'directory_first_name' => 'SM', 'directory_last_name' => 'Agent',
+            'first_name' => 'SM', 'last_name' => 'Agent',
         ]);
         $agent = Agent::create([
             'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
@@ -671,7 +671,7 @@ class SystemCheckpointAuditTest extends TestCase
     {
         $ext = $this->organizationA->extensions()->create([
             'extension' => '5002', 'password' => 'secret',
-            'directory_first_name' => 'IS', 'directory_last_name' => 'Agent',
+            'first_name' => 'IS', 'last_name' => 'Agent',
         ]);
         $agent = Agent::create([
             'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
@@ -698,7 +698,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         $ext = $this->organizationA->extensions()->create([
             'extension' => '5003', 'password' => 'secret',
-            'directory_first_name' => 'CE', 'directory_last_name' => 'Agent',
+            'first_name' => 'CE', 'last_name' => 'Agent',
         ]);
         $agent = Agent::create([
             'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
@@ -721,7 +721,7 @@ class SystemCheckpointAuditTest extends TestCase
     {
         $ext = $this->organizationA->extensions()->create([
             'extension' => '5004', 'password' => 'secret',
-            'directory_first_name' => 'TS', 'directory_last_name' => 'Agent',
+            'first_name' => 'TS', 'last_name' => 'Agent',
         ]);
         $agent = Agent::create([
             'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
@@ -845,7 +845,7 @@ class SystemCheckpointAuditTest extends TestCase
         foreach ($states as $i => $state) {
             $ext = $this->organizationA->extensions()->create([
                 'extension' => (string) (6001 + $i), 'password' => 'secret',
-                'directory_first_name' => "O{$i}", 'directory_last_name' => 'A',
+                'first_name' => "O{$i}", 'last_name' => 'A',
             ]);
             $agent = Agent::create([
                 'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
@@ -1009,7 +1009,7 @@ class SystemCheckpointAuditTest extends TestCase
 
         $ext = $this->organizationA->extensions()->create([
             'extension' => '7001', 'password' => 'secret',
-            'directory_first_name' => 'RC', 'directory_last_name' => 'Agent',
+            'first_name' => 'RC', 'last_name' => 'Agent',
         ]);
         $agent = Agent::create([
             'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
@@ -1059,7 +1059,7 @@ class SystemCheckpointAuditTest extends TestCase
         // Mixed operations: answer 3, abandon 3, overflow 2, leave 2 waiting
         $ext = $this->organizationA->extensions()->create([
             'extension' => '7010', 'password' => 'secret',
-            'directory_first_name' => 'R', 'directory_last_name' => 'A',
+            'first_name' => 'R', 'last_name' => 'A',
         ]);
         $agent = Agent::create([
             'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,
@@ -1140,7 +1140,7 @@ class SystemCheckpointAuditTest extends TestCase
         for ($i = 0; $i < 50; $i++) {
             $ext = $this->organizationA->extensions()->create([
                 'extension' => (string) (8001 + $i), 'password' => 'secret',
-                'directory_first_name' => "P{$i}", 'directory_last_name' => 'A',
+                'first_name' => "P{$i}", 'last_name' => 'A',
             ]);
             $agent = Agent::create([
                 'organization_id' => $this->organizationA->id, 'extension_id' => $ext->id,

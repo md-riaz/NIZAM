@@ -19,8 +19,8 @@ class AuditLogTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -38,12 +38,12 @@ class AuditLogTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
-        $extension->update(['directory_first_name' => 'Jane']);
+        $extension->update(['first_name' => 'Jane']);
 
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'updated',
@@ -59,8 +59,8 @@ class AuditLogTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 

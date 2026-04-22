@@ -34,8 +34,8 @@ class HandleCallDeliveryPushRequestedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '2001',
             'password' => 'secret',
-            'directory_first_name' => 'Push',
-            'directory_last_name' => 'Test',
+            'first_name' => 'Push',
+            'last_name' => 'Test',
             'voicemail_enabled' => false,
             'is_active' => true,
         ]);
@@ -83,8 +83,8 @@ class HandleCallDeliveryPushRequestedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '2002',
             'password' => 'secret',
-            'directory_first_name' => 'Push',
-            'directory_last_name' => 'NoLog',
+            'first_name' => 'Push',
+            'last_name' => 'NoLog',
             'voicemail_enabled' => false,
             'is_active' => true,
         ]);
@@ -116,8 +116,8 @@ class HandleCallDeliveryPushRequestedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '2003',
             'password' => 'secret',
-            'directory_first_name' => 'Push',
-            'directory_last_name' => 'Sent',
+            'first_name' => 'Push',
+            'last_name' => 'Sent',
             'voicemail_enabled' => false,
             'is_active' => true,
         ]);

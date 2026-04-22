@@ -209,5 +209,13 @@ class OrganizationApiTest extends TestCase
         $this->assertNotNull($starterDid);
         $this->assertSame('flow', $starterDid->destination_type);
         $this->assertSame((string) $starterFlow->id, (string) $starterDid->destination_id);
+
+        $starterExtension = $organization->extensions()->first();
+        $this->assertNotNull($starterExtension);
+        $this->assertSame('101', $starterExtension->extension);
+        $this->assertSame('Main', $starterExtension->first_name);
+        $this->assertSame('User', $starterExtension->last_name);
+        $this->assertTrue($starterExtension->is_active);
+        $this->assertTrue($starterExtension->voicemail_enabled);
     }
 }

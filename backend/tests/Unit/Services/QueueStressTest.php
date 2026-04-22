@@ -49,8 +49,8 @@ class QueueStressTest extends TestCase
             $ext = $organization->extensions()->create([
                 'extension' => (string) (1001 + $i),
                 'password' => 'secret123',
-                'directory_first_name' => "Agent{$i}",
-                'directory_last_name' => 'Stress',
+                'first_name' => "Agent{$i}",
+                'last_name' => 'Stress',
             ]);
 
             $agent = Agent::create([

@@ -29,8 +29,8 @@ class ProvisioningServiceTest extends TestCase
             'organization_id' => $organization->id,
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $profile = DeviceProfile::factory()->create([
@@ -58,8 +58,8 @@ class ProvisioningServiceTest extends TestCase
             'organization_id' => $organization->id,
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $profile = DeviceProfile::factory()->create([

@@ -30,7 +30,7 @@ class DispatchCallDeliveryPushTest extends TestCase
         $organization = Organization::factory()->create(['domain' => $domain]);
         $extension = $organization->extensions()->create([
             'extension' => $ext, 'password' => 'secret',
-            'directory_first_name' => 'Test', 'directory_last_name' => 'User',
+            'first_name' => 'Test', 'last_name' => 'User',
             'voicemail_enabled' => false, 'is_active' => true,
         ]);
         $binding = EndpointBinding::factory()->forExtension($extension)->create(array_merge([
@@ -164,7 +164,7 @@ class DispatchCallDeliveryPushTest extends TestCase
         $organization = Organization::factory()->create(['domain' => 'nob.test']);
         $extension = $organization->extensions()->create([
             'extension' => '4005', 'password' => 'x',
-            'directory_first_name' => 'A', 'directory_last_name' => 'B',
+            'first_name' => 'A', 'last_name' => 'B',
             'voicemail_enabled' => false, 'is_active' => true,
         ]);
         $binding = EndpointBinding::factory()->forExtension($extension)->create([

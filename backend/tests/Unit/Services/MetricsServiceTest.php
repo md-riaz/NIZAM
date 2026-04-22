@@ -47,8 +47,8 @@ class MetricsServiceTest extends TestCase
         $ext = $organization->extensions()->create([
             'extension' => (string) fake()->unique()->numberBetween(1000, 9999),
             'password' => 'secret123',
-            'directory_first_name' => fake()->firstName(),
-            'directory_last_name' => fake()->lastName(),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
         ]);
 
         return Agent::create([

@@ -26,24 +26,24 @@ class DirectoryApiTest extends TestCase
         $john = Extension::factory()->create([
             'organization_id' => $organization->id,
             'extension' => '1001',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Smith',
+            'first_name' => 'John',
+            'last_name' => 'Smith',
             'is_active' => true,
         ]);
 
         $jane = Extension::factory()->create([
             'organization_id' => $organization->id,
             'extension' => '2002',
-            'directory_first_name' => 'Jane',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
         Extension::factory()->inactive()->create([
             'organization_id' => $organization->id,
             'extension' => '3003',
-            'directory_first_name' => 'Inactive',
-            'directory_last_name' => 'Person',
+            'first_name' => 'Inactive',
+            'last_name' => 'Person',
         ]);
 
         $otherOrganization = Organization::create([
@@ -54,8 +54,8 @@ class DirectoryApiTest extends TestCase
         Extension::factory()->create([
             'organization_id' => $otherOrganization->id,
             'extension' => '4004',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Outside',
+            'first_name' => 'John',
+            'last_name' => 'Outside',
             'is_active' => true,
         ]);
 
@@ -78,7 +78,7 @@ class DirectoryApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $jane->id)
-            ->assertJsonPath('data.0.directory_first_name', 'Jane');
+            ->assertJsonPath('data.0.first_name', 'Jane');
     }
 
     public function test_directory_route_requires_organization_access(): void
@@ -100,8 +100,8 @@ class DirectoryApiTest extends TestCase
         Extension::factory()->create([
             'organization_id' => $organization->id,
             'extension' => '1001',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Smith',
+            'first_name' => 'John',
+            'last_name' => 'Smith',
             'is_active' => true,
         ]);
 

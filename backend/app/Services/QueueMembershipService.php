@@ -42,7 +42,7 @@ class QueueMembershipService
     public function listMembers(Queue $queue): Collection
     {
         return $queue->members()
-            ->with('extension:id,extension,directory_first_name,directory_last_name')
+            ->with('extension:id,extension,first_name,last_name')
             ->get()
             ->map(fn (Agent $agent) => [
                 'agent_id' => $agent->id,

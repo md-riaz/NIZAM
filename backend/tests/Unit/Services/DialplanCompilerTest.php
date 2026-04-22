@@ -35,8 +35,8 @@ class DialplanCompilerTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'effective_caller_id_name' => 'John Doe',
             'effective_caller_id_number' => '1001',
             'is_active' => true,

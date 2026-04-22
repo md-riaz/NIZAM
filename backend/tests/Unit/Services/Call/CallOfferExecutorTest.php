@@ -45,8 +45,8 @@ class CallOfferExecutorTest extends TestCase
             $organization->extensions()->create([
                 'extension' => '1001',
                 'password' => 'secret',
-                'directory_first_name' => 'Desk',
-                'directory_last_name' => 'Phone',
+                'first_name' => 'Desk',
+                'last_name' => 'Phone',
                 'voicemail_enabled' => true,
                 'is_active' => true,
             ])
@@ -158,8 +158,8 @@ class CallOfferExecutorTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret',
-            'directory_first_name' => 'Repeat',
-            'directory_last_name' => 'Target',
+            'first_name' => 'Repeat',
+            'last_name' => 'Target',
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);
@@ -225,8 +225,8 @@ class CallOfferExecutorTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1003',
             'password' => 'secret',
-            'directory_first_name' => 'Fail',
-            'directory_last_name' => 'Case',
+            'first_name' => 'Fail',
+            'last_name' => 'Case',
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);

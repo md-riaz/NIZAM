@@ -50,7 +50,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'sometimes|string|in:admin,agent',
+            'role' => 'sometimes|string|in:superadmin,admin,agent',
             'organization_id' => 'nullable|exists:organizations,id',
         ]);
 
@@ -73,7 +73,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|unique:users,email,'.$user->id,
             'password' => 'sometimes|string|min:8',
-            'role' => 'sometimes|string|in:admin,agent',
+            'role' => 'sometimes|string|in:superadmin,admin,agent',
             'organization_id' => 'nullable|exists:organizations,id',
         ]);
 

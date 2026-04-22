@@ -71,8 +71,8 @@ class PolicyTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'pass',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $policy = new ExtensionPolicy;
@@ -87,8 +87,8 @@ class PolicyTest extends TestCase
         $extension = $organizationB->extensions()->create([
             'extension' => '1001',
             'password' => 'pass',
-            'directory_first_name' => 'Jane',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
         ]);
 
         $policy = new ExtensionPolicy;

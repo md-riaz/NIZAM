@@ -32,8 +32,8 @@ class GraphFlowDemoSeeder extends Seeder
             ['organization_id' => $organization->id, 'extension' => '2001'],
             [
                 'password' => 'pass2001',
-                'directory_first_name' => 'Sales',
-                'directory_last_name' => 'One',
+                'first_name' => 'Sales',
+                'last_name' => 'One',
                 'effective_caller_id_name' => 'Sales One',
                 'effective_caller_id_number' => '2001',
                 'voicemail_enabled' => true,
@@ -46,8 +46,8 @@ class GraphFlowDemoSeeder extends Seeder
             ['organization_id' => $organization->id, 'extension' => '2002'],
             [
                 'password' => 'pass2002',
-                'directory_first_name' => 'Sales',
-                'directory_last_name' => 'Two',
+                'first_name' => 'Sales',
+                'last_name' => 'Two',
                 'effective_caller_id_name' => 'Sales Two',
                 'effective_caller_id_number' => '2002',
                 'voicemail_enabled' => true,

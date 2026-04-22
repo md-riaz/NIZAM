@@ -34,8 +34,8 @@ class AnsweredElsewhereServiceTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret',
-            'directory_first_name' => 'Mobile',
-            'directory_last_name' => 'User',
+            'first_name' => 'Mobile',
+            'last_name' => 'User',
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);

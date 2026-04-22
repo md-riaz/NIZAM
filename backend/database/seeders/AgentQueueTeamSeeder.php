@@ -41,17 +41,17 @@ class AgentQueueTeamSeeder extends Seeder
         // Create Agents
         $agent1 = Agent::firstOrCreate(
             ['organization_id' => $organization->id, 'extension_id' => $extensions[0]->id],
-            ['name' => 'Agent ' . $extensions[0]->directory_first_name, 'role' => 'agent', 'state' => 'available', 'is_active' => true]
+            ['name' => 'Agent ' . $extensions[0]->first_name, 'role' => 'agent', 'state' => 'available', 'is_active' => true]
         );
 
         $agent2 = Agent::firstOrCreate(
             ['organization_id' => $organization->id, 'extension_id' => $extensions[1]->id],
-            ['name' => 'Agent ' . $extensions[1]->directory_first_name, 'role' => 'agent', 'state' => 'available', 'is_active' => true]
+            ['name' => 'Agent ' . $extensions[1]->first_name, 'role' => 'agent', 'state' => 'available', 'is_active' => true]
         );
 
         $agent3 = Agent::firstOrCreate(
             ['organization_id' => $organization->id, 'extension_id' => $extensions[2]->id],
-            ['name' => 'Supervisor ' . $extensions[2]->directory_first_name, 'role' => 'supervisor', 'state' => 'available', 'is_active' => true]
+            ['name' => 'Supervisor ' . $extensions[2]->first_name, 'role' => 'supervisor', 'state' => 'available', 'is_active' => true]
         );
 
 

@@ -12,6 +12,8 @@ class SystemSetting extends Model
     use HasFactory, HasUuids;
 
     public const ORGANIZATION_DOMAIN_SUFFIX = 'organization_domain_suffix';
+    public const EXTENSION_RANGE_START = 'extension_range_start';
+    public const EXTENSION_RANGE_END = 'extension_range_end';
 
     /**
      * @var list<string>
@@ -64,6 +66,36 @@ class SystemSetting extends Model
             [
                 'value' => ['value' => $value],
                 'value_type' => 'string',
+            ],
+        );
+    }
+
+    public static function platformInteger(string $key, ?int $default = null): ?int
+    {
+        $setting = static::query()
+            ->whereNull('organization_id')
+            ->where('key', $key)
+            ->first();
+
+        if (! $setting) {
+            return $default;
+        }
+
+        $value = $setting->value['value'] ?? null;
+
+        return is_numeric($value) ? (int) $value : $default;
+    }
+
+    public static function upsertPlatformInteger(string $key, int $value): self
+    {
+        return static::query()->updateOrCreate(
+            [
+                'organization_id' => null,
+                'key' => $key,
+            ],
+            [
+                'value' => ['value' => $value],
+                'value_type' => 'integer',
             ],
         );
     }

@@ -36,8 +36,8 @@ class TimeConditionEvaluationTest extends TestCase
         $ext = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'pass123',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -78,8 +78,8 @@ class TimeConditionEvaluationTest extends TestCase
         $ext = $organization->extensions()->create([
             'extension' => '2001',
             'password' => 'pass123',
-            'directory_first_name' => 'Jane',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -121,8 +121,8 @@ class TimeConditionEvaluationTest extends TestCase
         $ext = $organization->extensions()->create([
             'extension' => '3001',
             'password' => 'pass123',
-            'directory_first_name' => 'Bob',
-            'directory_last_name' => 'Smith',
+            'first_name' => 'Bob',
+            'last_name' => 'Smith',
             'is_active' => true,
         ]);
 
@@ -163,8 +163,8 @@ class TimeConditionEvaluationTest extends TestCase
         $ext = $organization->extensions()->create([
             'extension' => '4001',
             'password' => 'pass123',
-            'directory_first_name' => 'Alice',
-            'directory_last_name' => 'Jones',
+            'first_name' => 'Alice',
+            'last_name' => 'Jones',
             'is_active' => true,
         ]);
 
@@ -208,8 +208,8 @@ class TimeConditionEvaluationTest extends TestCase
         $ext = $organization->extensions()->create([
             'extension' => '5001',
             'password' => 'pass123',
-            'directory_first_name' => 'Charlie',
-            'directory_last_name' => 'Brown',
+            'first_name' => 'Charlie',
+            'last_name' => 'Brown',
             'is_active' => true,
         ]);
 

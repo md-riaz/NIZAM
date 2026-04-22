@@ -86,8 +86,8 @@ class DatabaseSeeder extends Seeder
                 ['organization_id' => $organization->id, 'extension' => $ext],
                 [
                     'password'                    => 'Nzm' . $ext . '!',
-                    'directory_first_name'        => $first,
-                    'directory_last_name'         => $last,
+                    'first_name'        => $first,
+                    'last_name'         => $last,
                     'effective_caller_id_name'    => "$first $last",
                     'effective_caller_id_number'  => $ext,
                     'outbound_caller_id_name'     => $organization->name,

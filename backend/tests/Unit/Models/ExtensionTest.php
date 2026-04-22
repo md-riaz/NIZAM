@@ -36,8 +36,8 @@ class ExtensionTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'effective_caller_id_name' => 'John Doe',
             'effective_caller_id_number' => '1001',
             'voicemail_enabled' => true,
@@ -46,7 +46,7 @@ class ExtensionTest extends TestCase
 
         $this->assertDatabaseHas('extensions', [
             'extension' => '1001',
-            'directory_first_name' => 'John',
+            'first_name' => 'John',
             'organization_id' => $organization->id,
         ]);
         $this->assertNotNull($extension->id);
@@ -59,8 +59,8 @@ class ExtensionTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $this->assertInstanceOf(Organization::class, $extension->organization);
@@ -74,8 +74,8 @@ class ExtensionTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $array = $extension->toArray();
@@ -89,8 +89,8 @@ class ExtensionTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'voicemail_pin' => '1234',
         ]);
 
@@ -105,8 +105,8 @@ class ExtensionTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'voicemail_enabled' => 1,
         ]);
 
@@ -121,8 +121,8 @@ class ExtensionTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         // The model should return the decrypted original value
@@ -142,8 +142,8 @@ class ExtensionTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'voicemail_pin' => '5678',
         ]);
 
@@ -166,8 +166,8 @@ class ExtensionTest extends TestCase
             'user_id' => $user->id,
             'extension' => '1002',
             'password' => 'secret1234',
-            'directory_first_name' => 'Jane',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
             'is_primary' => true,
         ]);
 

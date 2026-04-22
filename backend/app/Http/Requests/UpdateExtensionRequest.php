@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\ExtensionNumberingService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateExtensionRequest extends FormRequest
@@ -21,14 +22,16 @@ class UpdateExtensionRequest extends FormRequest
                 'required',
                 'string',
                 function ($attribute, $value, $fail) use ($organization, $extension) {
+                    app(ExtensionNumberingService::class)->validate((string) $value, $fail);
+
                     if ($organization->extensions()->where('extension', $value)->where('id', '!=', $extension->id)->exists()) {
                         $fail('The extension has already been taken for this organization.');
                     }
                 },
             ],
             'password' => 'required|string|min:8',
-            'directory_first_name' => 'required|string',
-            'directory_last_name' => 'required|string',
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
             'effective_caller_id_name' => 'nullable|string',
             'effective_caller_id_number' => 'nullable|string',
             'outbound_caller_id_name' => 'nullable|string',

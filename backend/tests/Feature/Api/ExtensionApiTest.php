@@ -30,8 +30,8 @@ class ExtensionApiTest extends TestCase
         $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
@@ -47,8 +47,8 @@ class ExtensionApiTest extends TestCase
             ->postJson("/api/v1/organizations/{$this->organization->id}/extensions", [
                 'extension' => '1002',
                 'password' => 'secret1234',
-                'directory_first_name' => 'Jane',
-                'directory_last_name' => 'Doe',
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
                 'voicemail_enabled' => false,
             ]);
 
@@ -64,8 +64,8 @@ class ExtensionApiTest extends TestCase
         $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
@@ -80,22 +80,22 @@ class ExtensionApiTest extends TestCase
         $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->putJson("/api/v1/organizations/{$this->organization->id}/extensions/{$extension->id}", [
                 'extension' => '1001',
                 'password' => 'updated1234',
-                'directory_first_name' => 'Johnny',
-                'directory_last_name' => 'Doe',
+                'first_name' => 'Johnny',
+                'last_name' => 'Doe',
             ]);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('extensions', [
             'id' => $extension->id,
-            'directory_first_name' => 'Johnny',
+            'first_name' => 'Johnny',
         ]);
     }
 
@@ -104,8 +104,8 @@ class ExtensionApiTest extends TestCase
         $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
@@ -121,6 +121,6 @@ class ExtensionApiTest extends TestCase
             ->postJson("/api/v1/organizations/{$this->organization->id}/extensions", []);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['extension', 'password', 'directory_first_name', 'directory_last_name']);
+        $response->assertJsonValidationErrors(['extension', 'password', 'first_name', 'last_name']);
     }
 }

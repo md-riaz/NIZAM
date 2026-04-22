@@ -171,7 +171,7 @@ class WallboardReadService
         return Agent::query()
             ->where('organization_id', $organizationId)
             ->where('is_active', true)
-            ->with('extension:id,extension,directory_first_name,directory_last_name')
+            ->with('extension:id,extension,first_name,last_name')
             ->get()
             ->map(fn (Agent $agent) => [
                 'id' => $agent->id,

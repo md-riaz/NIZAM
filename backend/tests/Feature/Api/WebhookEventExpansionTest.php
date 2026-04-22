@@ -94,8 +94,8 @@ class WebhookEventExpansionTest extends TestCase
             ->postJson("/api/v1/organizations/{$organization->id}/extensions", [
                 'extension' => '1001',
                 'password' => 'secret123456',
-                'directory_first_name' => 'Test',
-                'directory_last_name' => 'User',
+                'first_name' => 'Test',
+                'last_name' => 'User',
             ]);
 
         $response->assertStatus(201);
@@ -112,8 +112,8 @@ class WebhookEventExpansionTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         // Create a webhook subscribed to DID events

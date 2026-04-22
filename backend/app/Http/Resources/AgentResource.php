@@ -22,7 +22,7 @@ class AgentResource extends JsonResource
             'extension' => $this->whenLoaded('extension', fn () => [
                 'id' => $this->extension->id,
                 'extension' => $this->extension->extension,
-                'name' => trim($this->extension->directory_first_name.' '.$this->extension->directory_last_name),
+                'name' => trim($this->extension->first_name.' '.$this->extension->last_name),
             ]),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

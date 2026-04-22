@@ -43,8 +43,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -75,16 +75,16 @@ class DialplanCompilerExtendedTest extends TestCase
         $ext1 = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
         $ext2 = $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret1234',
-            'directory_first_name' => 'Jane',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -124,8 +124,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $ext1 = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -164,8 +164,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1003',
             'password' => 'secret1234',
-            'directory_first_name' => 'Follow',
-            'directory_last_name' => 'Me',
+            'first_name' => 'Follow',
+            'last_name' => 'Me',
             'is_active' => true,
             'follow_me_enabled' => true,
             'follow_me_destination' => '+15557654321',
@@ -212,8 +212,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1004',
             'password' => 'secret1234',
-            'directory_first_name' => 'Do',
-            'directory_last_name' => 'NotDisturb',
+            'first_name' => 'Do',
+            'last_name' => 'NotDisturb',
             'is_active' => true,
             'dnd_enabled' => true,
         ]);
@@ -242,8 +242,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -286,8 +286,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -352,8 +352,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -382,8 +382,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -431,8 +431,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Primary',
-            'directory_last_name' => 'User',
+            'first_name' => 'Primary',
+            'last_name' => 'User',
             'is_active' => true,
             'is_primary' => true,
         ]);
@@ -440,16 +440,16 @@ class DialplanCompilerExtendedTest extends TestCase
         $organization->extensions()->create([
             'extension' => '2000',
             'password' => 'secret1234',
-            'directory_first_name' => 'Operator',
-            'directory_last_name' => 'User',
+            'first_name' => 'Operator',
+            'last_name' => 'User',
             'is_active' => true,
         ]);
 
         $organization->extensions()->create([
             'extension' => '3000',
             'password' => 'secret1234',
-            'directory_first_name' => 'Voicemail',
-            'directory_last_name' => 'User',
+            'first_name' => 'Voicemail',
+            'last_name' => 'User',
             'is_active' => true,
         ]);
 
@@ -481,8 +481,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $organization->extensions()->create([
             'extension' => '4100',
             'password' => 'secret1234',
-            'directory_first_name' => 'Fallback',
-            'directory_last_name' => 'Primary',
+            'first_name' => 'Fallback',
+            'last_name' => 'Primary',
             'is_active' => true,
             'is_primary' => true,
         ]);
@@ -510,8 +510,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $organization->extensions()->create([
             'extension' => '4100',
             'password' => 'secret1234',
-            'directory_first_name' => 'Fallback',
-            'directory_last_name' => 'Operator',
+            'first_name' => 'Fallback',
+            'last_name' => 'Operator',
             'is_active' => true,
             'is_primary' => true,
         ]);
@@ -608,8 +608,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'voicemail_enabled' => true,
             'voicemail_pin' => '1234',
             'is_active' => true,
@@ -633,8 +633,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'effective_caller_id_name' => 'John Doe',
             'effective_caller_id_number' => '1001',
             'outbound_caller_id_name' => 'Company',
@@ -675,16 +675,16 @@ class DialplanCompilerExtendedTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Active',
-            'directory_last_name' => 'User',
+            'first_name' => 'Active',
+            'last_name' => 'User',
             'is_active' => true,
         ]);
 
         $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret1234',
-            'directory_first_name' => 'Inactive',
-            'directory_last_name' => 'User',
+            'first_name' => 'Inactive',
+            'last_name' => 'User',
             'is_active' => false,
         ]);
 
@@ -705,8 +705,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 

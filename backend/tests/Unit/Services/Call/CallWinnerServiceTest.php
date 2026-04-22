@@ -131,8 +131,8 @@ class CallWinnerServiceTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret',
-            'directory_first_name' => 'Winner',
-            'directory_last_name' => 'User',
+            'first_name' => 'Winner',
+            'last_name' => 'User',
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);
@@ -220,8 +220,8 @@ class CallWinnerServiceTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1000',
             'password' => 'secret',
-            'directory_first_name' => 'Race',
-            'directory_last_name' => 'User',
+            'first_name' => 'Race',
+            'last_name' => 'User',
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);

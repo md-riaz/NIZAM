@@ -123,8 +123,8 @@ class QueueApiTest extends TestCase
         $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $agent = Agent::create([
@@ -156,8 +156,8 @@ class QueueApiTest extends TestCase
         $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $agent = Agent::create([
@@ -186,8 +186,8 @@ class QueueApiTest extends TestCase
         $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $agent = Agent::create([
@@ -214,8 +214,8 @@ class QueueApiTest extends TestCase
         $extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $agent = Agent::create([

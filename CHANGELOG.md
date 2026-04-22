@@ -8,9 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [2026-04-22]
 
+### Added
+- **Starter Extension Provisioning**: New organizations now auto-provision one active starter extension during setup so a fresh account has an immediately usable extension.
+
+### Changed
+- **Global Extension Numbering Policy**: Added platform-wide extension range settings (`101`–`500`) in System Settings and enforced that range for manual extension create/edit flows.
+- **Extension Naming Language**: Renamed extension business fields from legacy `directory_*` terminology to `first_name` / `last_name` across API, backend domain logic, tests, and admin UI while keeping switch-specific mapping internal.
+
 ### Fixed
 - **Stable List Ordering**: Added explicit ordering across backend list endpoints so records no longer jump position after edits; most admin/API lists now use newest-first ordering by ID, while DIDs and extensions keep semantic ordering by number.
 - **Provider Password Cross-Check**: Updated the numbers provider editor to keep saved passwords masked by default while allowing a temporary reveal toggle for verification during edits.
+- **DID Destination Hydration**: Fixed the numbers edit form so saved `ring_group` destinations hydrate with the correct destination type and selected ring group instead of falling back to extension.
+- **Superadmin Role Hydration**: Fixed platform user editing so persisted `superadmin` users show the correct role in the role select instead of being coerced to agent.
+- **Extension Admin Terminology**: Reworked extension admin screens to show business-friendly labels like `Name`, `First name`, and `Last name` instead of exposing FreeSWITCH-era directory terminology.
 
 ## [2026-04-21]
 

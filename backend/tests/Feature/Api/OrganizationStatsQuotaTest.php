@@ -24,8 +24,8 @@ class OrganizationStatsQuotaTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'is_active' => true,
         ]);
 

@@ -38,8 +38,8 @@ class CallDeliveryEntrypointServiceTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret',
-            'directory_first_name' => 'Desk',
-            'directory_last_name' => 'Phone',
+            'first_name' => 'Desk',
+            'last_name' => 'Phone',
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);
@@ -97,8 +97,8 @@ class CallDeliveryEntrypointServiceTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret',
-            'directory_first_name' => 'Repeat',
-            'directory_last_name' => 'Target',
+            'first_name' => 'Repeat',
+            'last_name' => 'Target',
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);
@@ -147,8 +147,8 @@ class CallDeliveryEntrypointServiceTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1003',
             'password' => 'secret',
-            'directory_first_name' => 'Winner',
-            'directory_last_name' => 'Committed',
+            'first_name' => 'Winner',
+            'last_name' => 'Committed',
             'voicemail_enabled' => true,
             'is_active' => true,
         ]);

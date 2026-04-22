@@ -35,8 +35,8 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -62,16 +62,16 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
         $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret5678',
-            'directory_first_name' => 'Jane',
-            'directory_last_name' => 'Smith',
+            'first_name' => 'Jane',
+            'last_name' => 'Smith',
             'is_active' => true,
         ]);
 
@@ -98,16 +98,16 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '2001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Alice',
-            'directory_last_name' => 'Jones',
+            'first_name' => 'Alice',
+            'last_name' => 'Jones',
             'is_active' => true,
         ]);
 
         $organization->extensions()->create([
             'extension' => '2002',
             'password' => 'secret5678',
-            'directory_first_name' => 'Bob',
-            'directory_last_name' => 'Brown',
+            'first_name' => 'Bob',
+            'last_name' => 'Brown',
             'is_active' => true,
         ]);
 
@@ -134,8 +134,8 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '3001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Chris',
-            'directory_last_name' => 'Green',
+            'first_name' => 'Chris',
+            'last_name' => 'Green',
             'is_active' => true,
         ]);
 
@@ -162,8 +162,8 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Self',
-            'directory_last_name' => 'Caller',
+            'first_name' => 'Self',
+            'last_name' => 'Caller',
             'is_active' => true,
         ]);
 
@@ -191,8 +191,8 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Self',
-            'directory_last_name' => 'Caller',
+            'first_name' => 'Self',
+            'last_name' => 'Caller',
             'is_active' => true,
         ]);
 
@@ -219,16 +219,16 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Caller',
-            'directory_last_name' => 'One',
+            'first_name' => 'Caller',
+            'last_name' => 'One',
             'is_active' => true,
         ]);
 
         $organization->extensions()->create([
             'extension' => '1002',
             'password' => 'secret5678',
-            'directory_first_name' => 'Callee',
-            'directory_last_name' => 'Two',
+            'first_name' => 'Callee',
+            'last_name' => 'Two',
             'is_active' => true,
         ]);
 
@@ -344,8 +344,8 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '4001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Dial',
-            'directory_last_name' => 'String',
+            'first_name' => 'Dial',
+            'last_name' => 'String',
             'is_active' => true,
         ]);
 
@@ -371,8 +371,8 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'is_active' => true,
         ]);
 
@@ -406,8 +406,8 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Primary',
-            'directory_last_name' => 'User',
+            'first_name' => 'Primary',
+            'last_name' => 'User',
             'is_active' => true,
             'is_primary' => true,
         ]);
@@ -415,16 +415,16 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '2000',
             'password' => 'secret1234',
-            'directory_first_name' => 'Operator',
-            'directory_last_name' => 'User',
+            'first_name' => 'Operator',
+            'last_name' => 'User',
             'is_active' => true,
         ]);
 
         $organization->extensions()->create([
             'extension' => '3000',
             'password' => 'secret1234',
-            'directory_first_name' => 'Voicemail',
-            'directory_last_name' => 'User',
+            'first_name' => 'Voicemail',
+            'last_name' => 'User',
             'is_active' => true,
         ]);
 
@@ -454,8 +454,8 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Primary',
-            'directory_last_name' => 'User',
+            'first_name' => 'Primary',
+            'last_name' => 'User',
             'is_active' => true,
             'is_primary' => true,
         ]);
@@ -493,8 +493,8 @@ class FreeswitchXmlTest extends TestCase
         $organization->extensions()->create([
             'extension' => '6100',
             'password' => 'secret1234',
-            'directory_first_name' => 'Front',
-            'directory_last_name' => 'Desk',
+            'first_name' => 'Front',
+            'last_name' => 'Desk',
             'is_active' => true,
             'is_primary' => true,
         ]);
@@ -575,8 +575,8 @@ class FreeswitchXmlTest extends TestCase
             'destination_id' => $organization->extensions()->create([
                 'extension' => '2001',
                 'password' => 'pass1234',
-                'directory_first_name' => 'Jane',
-                'directory_last_name' => 'Doe',
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
                 'is_active' => true,
             ])->id,
             'is_active' => true,
@@ -612,8 +612,8 @@ class FreeswitchXmlTest extends TestCase
             'destination_id' => $organization->extensions()->create([
                 'extension' => '2002',
                 'password' => 'pass1234',
-                'directory_first_name' => 'Bob',
-                'directory_last_name' => 'Smith',
+                'first_name' => 'Bob',
+                'last_name' => 'Smith',
                 'is_active' => true,
             ])->id,
             'is_active' => true,

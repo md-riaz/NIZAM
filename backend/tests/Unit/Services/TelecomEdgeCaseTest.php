@@ -100,8 +100,8 @@ class TelecomEdgeCaseTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret',
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'Agent',
+            'first_name' => 'Test',
+            'last_name' => 'Agent',
         ]);
 
         $agent = Agent::create([

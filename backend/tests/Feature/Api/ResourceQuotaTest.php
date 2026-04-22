@@ -26,8 +26,8 @@ class ResourceQuotaTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         // Try creating second extension (should fail)
@@ -35,8 +35,8 @@ class ResourceQuotaTest extends TestCase
             ->postJson("/api/v1/organizations/{$organization->id}/extensions", [
                 'extension' => '1002',
                 'password' => 'secret456789',
-                'directory_first_name' => 'Test',
-                'directory_last_name' => 'Two',
+                'first_name' => 'Test',
+                'last_name' => 'Two',
             ]);
 
         $response->assertStatus(422);
@@ -52,8 +52,8 @@ class ResourceQuotaTest extends TestCase
             ->postJson("/api/v1/organizations/{$organization->id}/extensions", [
                 'extension' => '1001',
                 'password' => 'secret123456',
-                'directory_first_name' => 'Test',
-                'directory_last_name' => 'User',
+                'first_name' => 'Test',
+                'last_name' => 'User',
             ]);
 
         $response->assertStatus(201);
@@ -67,8 +67,8 @@ class ResourceQuotaTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         // Create first DID
@@ -98,8 +98,8 @@ class ResourceQuotaTest extends TestCase
         $extension = $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
         ]);
 
         // Create first ring group

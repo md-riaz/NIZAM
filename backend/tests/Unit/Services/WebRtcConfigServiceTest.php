@@ -39,8 +39,8 @@ class WebRtcConfigServiceTest extends TestCase
             'organization_id' => $organization->id,
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'Test',
-            'directory_last_name' => 'User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'is_active' => true,
         ]);
 
@@ -67,8 +67,8 @@ class WebRtcConfigServiceTest extends TestCase
             'organization_id' => $organization->id,
             'extension' => '1002',
             'password' => 'secret5678',
-            'directory_first_name' => 'Demo',
-            'directory_last_name' => 'User',
+            'first_name' => 'Demo',
+            'last_name' => 'User',
             'is_active' => true,
         ]);
 

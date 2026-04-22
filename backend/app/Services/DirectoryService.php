@@ -18,16 +18,16 @@ class DirectoryService
         $query = Extension::query()
             ->where('organization_id', $organization->id)
             ->where('is_active', true)
-            ->orderBy('directory_first_name')
-            ->orderBy('directory_last_name')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
             ->orderBy('extension');
 
         $search = trim((string) $search);
 
         if ($search !== '') {
             $query->where(function ($query) use ($search) {
-                $query->where('directory_first_name', 'like', "%{$search}%")
-                    ->orWhere('directory_last_name', 'like', "%{$search}%")
+                $query->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('extension', 'like', "%{$search}%");
             });
         }

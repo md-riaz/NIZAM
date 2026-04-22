@@ -19,7 +19,7 @@ class OutboundOriginateServiceTest extends TestCase
         $extension = Extension::factory()->create([
             'organization_id' => $organization->id,
             'extension' => '1001',
-            'directory_first_name' => 'John',
+            'first_name' => 'John',
             'effective_caller_id_name' => 'John Doe',
             'effective_caller_id_number' => '8801555123456',
         ]);
@@ -39,7 +39,7 @@ class OutboundOriginateServiceTest extends TestCase
         $extension = Extension::factory()->create([
             'organization_id' => $organization->id,
             'extension' => '1001',
-            'directory_first_name' => 'John',
+            'first_name' => 'John',
             'effective_caller_id_name' => 'John Doe',
             'effective_caller_id_number' => '8801555123456',
         ]);

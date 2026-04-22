@@ -26,8 +26,8 @@ class DirectoryController extends Controller
             'data' => $extensions->map(fn ($extension) => [
                 'id' => $extension->id,
                 'extension' => $extension->extension,
-                'directory_first_name' => $extension->directory_first_name,
-                'directory_last_name' => $extension->directory_last_name,
+                'first_name' => $extension->first_name,
+                'last_name' => $extension->last_name,
             ])->values(),
         ]);
     }

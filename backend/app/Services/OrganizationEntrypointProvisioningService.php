@@ -9,18 +9,21 @@ use App\Models\Schedule;
 use App\Models\ScheduleRule;
 use App\Models\Organization;
 use App\Services\Flow\FlowApplicationService;
+use App\Services\StarterExtensionProvisioningService;
 
 class OrganizationEntrypointProvisioningService
 {
     public function __construct(
         protected FlowApplicationService $flowApplicationService,
         protected OrganizationManifestBuilder $organizationManifestBuilder,
+        protected StarterExtensionProvisioningService $starterExtensionProvisioningService,
     ) {}
 
     public function provision(Organization $organization): Organization
     {
         $schedule = $this->provisionDefaultSchedule($organization);
         $flow = $this->provisionStarterMainFlow($organization, $schedule);
+        $this->starterExtensionProvisioningService->provision($organization);
 
         $settings = $organization->settings ?? [];
         $settings['timezone'] ??= (string) config('telephony.bootstrap.default_timezone', 'Asia/Dhaka');

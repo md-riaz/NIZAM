@@ -16,7 +16,7 @@ class OutboundOriginateService
         ?string $callerIdNumber = null,
         ?Gateway $gateway = null,
     ): string {
-        $callerIdName ??= $extension->effective_caller_id_name ?? $extension->directory_first_name;
+        $callerIdName ??= $extension->effective_caller_id_name ?? $extension->first_name;
         $callerIdNumber ??= $extension->effective_caller_id_number ?? $extension->extension;
 
         $endpoint = $gateway

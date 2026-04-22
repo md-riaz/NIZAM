@@ -68,8 +68,8 @@ class OrganizationTest extends TestCase
         $organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret1234',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $this->assertCount(1, $organization->extensions);

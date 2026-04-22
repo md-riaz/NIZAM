@@ -36,8 +36,8 @@ class AgentApiTest extends TestCase
         $this->extension = $this->organization->extensions()->create([
             'extension' => '1001',
             'password' => 'secret123',
-            'directory_first_name' => 'John',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
     }
 
@@ -229,8 +229,8 @@ class AgentApiTest extends TestCase
         $otherExt = $otherOrganization->extensions()->create([
             'extension' => '2001',
             'password' => 'secret123',
-            'directory_first_name' => 'Jane',
-            'directory_last_name' => 'Doe',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
         ]);
 
         $otherAgent = Agent::create([
