@@ -10,12 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - **Starter Extension Provisioning**: New organizations now auto-provision one active starter extension during setup so a fresh account has an immediately usable extension.
+- **Phase 1 Extension Ownership Model**: Added device-owned extension support with backend ownership guards and admin UI owner selectors so extensions can now be user-owned, device-owned, or kept unassigned.
 
 ### Changed
 - **Global Extension Numbering Policy**: Added platform-wide extension range settings (`101`–`500`) in System Settings and enforced that range for manual extension create/edit flows.
 - **Extension Naming Language**: Renamed extension business fields from legacy `directory_*` terminology to `first_name` / `last_name` across API, backend domain logic, tests, and admin UI while keeping switch-specific mapping internal.
+- **Extension Ownership Visibility**: Updated extension list, detail, and edit/create screens to show explicit owner state and assignment controls instead of treating all extensions as implicitly user-centric.
+- **Owner Picker Data Loading**: Extended user and device profile admin endpoints with higher `per_page` support so ownership selectors can load complete option lists in admin flows.
 
 ### Fixed
+- **Ownership Integrity Guards**: Enforced one personal extension per user, one extension per shared device, and mutual exclusivity between user-owned and device-owned assignment paths.
 - **Stable List Ordering**: Added explicit ordering across backend list endpoints so records no longer jump position after edits; most admin/API lists now use newest-first ordering by ID, while DIDs and extensions keep semantic ordering by number.
 - **Provider Password Cross-Check**: Updated the numbers provider editor to keep saved passwords masked by default while allowing a temporary reveal toggle for verification during edits.
 - **DID Destination Hydration**: Fixed the numbers edit form so saved `ring_group` destinations hydrate with the correct destination type and selected ring group instead of falling back to extension.

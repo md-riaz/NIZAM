@@ -9,6 +9,7 @@ use App\Http\Resources\DeviceProfileResource;
 use App\Models\DeviceProfile;
 use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * API controller for managing device profiles scoped to a organization.
@@ -18,11 +19,13 @@ class DeviceProfileController extends Controller
     /**
      * List device profiles for an organization (paginated).
      */
-    public function index(Organization $organization)
+    public function index(Request $request, Organization $organization)
     {
         $this->authorize('viewAny', DeviceProfile::class);
 
-        return DeviceProfileResource::collection($organization->deviceProfiles()->orderByDesc('id')->paginate(15));
+        $perPage = max(1, min($request->integer('per_page', 15), 500));
+
+        return DeviceProfileResource::collection($organization->deviceProfiles()->orderByDesc('id')->paginate($perPage));
     }
 
     /**

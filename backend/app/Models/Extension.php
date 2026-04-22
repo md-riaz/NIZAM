@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 
 class Extension extends Model
 {
@@ -23,6 +24,7 @@ class Extension extends Model
     protected $fillable = [
         'organization_id',
         'user_id',
+        'device_profile_id',
         'extension',
         'password',
         'first_name',
@@ -87,6 +89,11 @@ class Extension extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function ownerDeviceProfile(): BelongsTo
+    {
+        return $this->belongsTo(DeviceProfile::class, 'device_profile_id');
+    }
+
     public function deviceProfiles(): HasMany
     {
         return $this->hasMany(DeviceProfile::class);
@@ -110,5 +117,21 @@ class Extension extends Model
     public function agent(): HasOne
     {
         return $this->hasOne(Agent::class);
+    }
+
+    public function ownerType(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): string => $this->device_profile_id ? 'device' : ($this->user_id ? 'user' : 'unassigned'),
+        );
+    }
+
+    public function ownerLabel(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): string => $this->device_profile_id
+                ? ($this->ownerDeviceProfile?->name ?? 'Shared device')
+                : ($this->user?->name ?? 'Unassigned'),
+        );
     }
 }

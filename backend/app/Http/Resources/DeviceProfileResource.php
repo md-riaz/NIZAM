@@ -12,6 +12,7 @@ class DeviceProfileResource extends JsonResource
         return [
             'id' => $this->id,
             'organization_id' => $this->organization_id,
+            'user_id' => $this->user_id,
             'name' => $this->name,
             'vendor' => $this->vendor,
             'mac_address' => $this->mac_address,

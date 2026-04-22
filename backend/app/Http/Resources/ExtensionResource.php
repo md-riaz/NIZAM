@@ -12,6 +12,10 @@ class ExtensionResource extends JsonResource
         return [
             'id' => $this->id,
             'organization_id' => $this->organization_id,
+            'user_id' => $this->user_id,
+            'device_profile_id' => $this->device_profile_id,
+            'owner_type' => $this->owner_type,
+            'owner_label' => $this->owner_label,
             'extension' => $this->extension,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,

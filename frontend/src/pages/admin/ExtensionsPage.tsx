@@ -152,6 +152,7 @@ export default function ExtensionsPage() {
                                 <TableRow>
                                     <TableHead>Extension</TableHead>
                                     <TableHead>Name</TableHead>
+                                    <TableHead>Owner</TableHead>
                                     <TableHead>Caller ID</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>IP / Agent</TableHead>
@@ -177,6 +178,15 @@ export default function ExtensionsPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell>{directoryName || '—'}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">
+                                                    {ext.owner_type === 'device'
+                                                        ? `Device: ${ext.owner_label ?? 'Shared device'}`
+                                                        : ext.owner_type === 'user'
+                                                          ? `User: ${ext.owner_label ?? 'Assigned user'}`
+                                                          : 'Unassigned'}
+                                                </Badge>
+                                            </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {ext.effective_caller_id_name || ext.effective_caller_id_number
                                                     ? `${ext.effective_caller_id_name ?? ''} ${ext.effective_caller_id_number ?? ''}`.trim()
@@ -223,7 +233,7 @@ export default function ExtensionsPage() {
                                 })}
                                 {extensions.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                                             No extensions provisioned. Create your first extension to get started.
                                         </TableCell>
                                     </TableRow>

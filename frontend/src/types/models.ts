@@ -31,6 +31,10 @@ export type Organization = z.infer<typeof OrganizationSchema>;
 export const ExtensionSchema = z.object({
     id: idSchema,
     organization_id: idSchema,
+    user_id: idSchema.nullable().optional(),
+    device_profile_id: idSchema.nullable().optional(),
+    owner_type: z.enum(['user', 'device', 'unassigned']).optional(),
+    owner_label: z.string().optional(),
     extension: z.string(),
     password: z.string().optional(),
     first_name: z.string().nullable().optional(),
@@ -73,6 +77,21 @@ export const RingGroupSchema = z.object({
 export type RingGroup = z.infer<typeof RingGroupSchema>;
 
 // ─── Gateway ─────────────────────────────────────────────────
+
+export const DeviceProfileSchema = z.object({
+    id: idSchema,
+    organization_id: idSchema,
+    user_id: idSchema.nullable().optional(),
+    name: z.string(),
+    vendor: z.string().nullable().optional(),
+    mac_address: z.string().nullable().optional(),
+    template: z.string().nullable().optional(),
+    extension_id: idSchema.nullable().optional(),
+    is_active: z.boolean().optional(),
+    created_at: z.string(),
+    updated_at: z.string(),
+});
+export type DeviceProfile = z.infer<typeof DeviceProfileSchema>;
 
 export const GatewaySchema = z.object({
     id: idSchema,

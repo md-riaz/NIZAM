@@ -70,6 +70,13 @@ export default function ExtensionDetailPage() {
                             <CardTitle className="flex items-center gap-2">
                                 <Phone className="size-5 text-primary" />
                                 {extension.extension}
+                                <Badge variant="outline" className="ml-2">
+                                    {extension.owner_type === 'device'
+                                        ? `Device: ${extension.owner_label ?? 'Shared device'}`
+                                        : extension.owner_type === 'user'
+                                          ? `User: ${extension.owner_label ?? 'Assigned user'}`
+                                          : 'Unassigned'}
+                                </Badge>
                             </CardTitle>
                             <CardDescription>
                                 {extension.first_name || extension.last_name

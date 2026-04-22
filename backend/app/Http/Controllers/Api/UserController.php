@@ -23,6 +23,7 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         $query = User::with('organization');
+        $perPage = max(1, min($request->integer('per_page', 15), 500));
 
         if ($request->filled('organization_id')) {
             $query->where('organization_id', $request->input('organization_id'));
@@ -32,7 +33,7 @@ class UserController extends Controller
             $query->where('role', $request->input('role'));
         }
 
-        return UserResource::collection($query->orderByDesc('id')->paginate(15));
+        return UserResource::collection($query->orderByDesc('id')->paginate($perPage));
     }
 
     public function show(User $user): UserResource

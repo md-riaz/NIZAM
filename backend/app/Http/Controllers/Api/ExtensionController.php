@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateExtensionRequest;
 use App\Http\Resources\ExtensionResource;
 use App\Models\Extension;
 use App\Models\Organization;
+use App\Models\DeviceProfile;
 use App\Services\WebRtcConfigService;
 use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
@@ -46,7 +47,9 @@ class ExtensionController extends Controller
             ], 422);
         }
 
-        $extension = $organization->extensions()->create(ExtensionData::fromArray($request->validated())->attributes);
+        $attributes = ExtensionData::fromArray($request->validated())->attributes;
+        $extension = $organization->extensions()->create($attributes);
+        $this->syncOwnedDevice($extension, $attributes['device_profile_id'] ?? null);
 
         $this->webhookDispatcher->dispatch($organization->id, 'extension.created', [
             'extension_id' => $extension->id,
@@ -81,7 +84,9 @@ class ExtensionController extends Controller
 
         $this->authorize('update', $extension);
 
-        $extension->update(ExtensionData::fromArray($request->validated())->attributes);
+        $attributes = ExtensionData::fromArray($request->validated())->attributes;
+        $extension->update($attributes);
+        $this->syncOwnedDevice($extension, $attributes['device_profile_id'] ?? null);
 
         $this->webhookDispatcher->dispatch($organization->id, 'extension.updated', [
             'extension_id' => $extension->id,
@@ -131,5 +136,25 @@ class ExtensionController extends Controller
         $config = $this->webRtcConfigService->forExtension($extension->loadMissing('organization'), config('app.url'));
 
         return response()->json(['data' => $config]);
+    }
+
+    protected function syncOwnedDevice(Extension $extension, ?string $deviceProfileId): void
+    {
+        if ($deviceProfileId) {
+            DeviceProfile::where('organization_id', $extension->organization_id)
+                ->where('extension_id', $extension->id)
+                ->where('id', '!=', $deviceProfileId)
+                ->update(['extension_id' => null]);
+
+            DeviceProfile::where('organization_id', $extension->organization_id)
+                ->where('id', $deviceProfileId)
+                ->update(['extension_id' => $extension->id]);
+
+            return;
+        }
+
+        DeviceProfile::where('organization_id', $extension->organization_id)
+            ->where('extension_id', $extension->id)
+            ->update(['extension_id' => null]);
     }
 }
