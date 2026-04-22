@@ -28,6 +28,11 @@ import api from '@/lib/api';
 
 const systemSettingsSchema = z.object({
     organization_domain_suffix: z.string().min(1, 'Domain suffix is required'),
+    extension_range_start: z.coerce.number().int().min(1, 'Range start is required'),
+    extension_range_end: z.coerce.number().int().min(1, 'Range end is required'),
+}).refine((values) => values.extension_range_end >= values.extension_range_start, {
+    message: 'Range end must be greater than or equal to range start',
+    path: ['extension_range_end'],
 });
 
 type SystemSettingsValues = z.infer<typeof systemSettingsSchema>;
@@ -40,6 +45,8 @@ export default function SystemSettingsPage() {
         resolver: zodResolver(systemSettingsSchema),
         defaultValues: {
             organization_domain_suffix: '',
+            extension_range_start: 101,
+            extension_range_end: 500,
         },
     });
 
@@ -55,6 +62,8 @@ export default function SystemSettingsPage() {
         if (settings) {
             form.reset({
                 organization_domain_suffix: settings.organization_domain_suffix ?? '',
+                extension_range_start: settings.extension_range_start ?? 101,
+                extension_range_end: settings.extension_range_end ?? 500,
             });
         }
     }, [settings, form]);
@@ -119,6 +128,41 @@ export default function SystemSettingsPage() {
                                         </FormItem>
                                     )}
                                 />
+
+                                <div className="grid gap-6 md:grid-cols-2">
+                                    <FormField
+                                        control={form.control}
+                                        name="extension_range_start"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Extension range start</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min={1} {...field} />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    First allowed extension number for all organizations.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="extension_range_end"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Extension range end</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min={1} {...field} />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Last allowed extension number for all organizations.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
 
                                 <div className="flex justify-end">
                                     <Button type="submit" disabled={mutation.isPending}>

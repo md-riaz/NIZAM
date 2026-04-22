@@ -198,7 +198,7 @@ function getDestinationOptions(
     }
 
     return extensions.map((ext) => {
-        const displayName = [ext.directory_first_name, ext.directory_last_name]
+        const displayName = [ext.first_name, ext.last_name]
             .filter(Boolean)
             .join(' ');
 

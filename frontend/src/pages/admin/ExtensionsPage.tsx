@@ -151,7 +151,7 @@ export default function ExtensionsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Extension</TableHead>
-                                    <TableHead>Directory Name</TableHead>
+                                    <TableHead>Name</TableHead>
                                     <TableHead>Caller ID</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>IP / Agent</TableHead>
@@ -162,7 +162,7 @@ export default function ExtensionsPage() {
                                 {extensions.map((ext) => {
                                     const status = statusMap[ext.extension];
                                     const isOnline = status?.status === 'registered';
-                                    const directoryName = [ext.directory_first_name, ext.directory_last_name]
+                                    const directoryName = [ext.first_name, ext.last_name]
                                         .filter(Boolean)
                                         .join(' ');
 

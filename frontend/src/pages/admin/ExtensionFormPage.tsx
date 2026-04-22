@@ -31,8 +31,8 @@ import api from '@/lib/api';
 const extensionSchema = z.object({
     extension: z.string().min(1, 'Extension number is required'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
-    directory_first_name: z.string().optional(),
-    directory_last_name: z.string().optional(),
+    first_name: z.string().min(1, 'First name is required'),
+    last_name: z.string().min(1, 'Last name is required'),
     effective_caller_id_name: z.string().optional(),
     effective_caller_id_number: z.string().optional(),
     outbound_caller_id_name: z.string().optional(),
@@ -56,8 +56,8 @@ export default function ExtensionFormPage() {
         defaultValues: {
             extension: '',
             password: '',
-            directory_first_name: '',
-            directory_last_name: '',
+            first_name: '',
+            last_name: '',
             effective_caller_id_name: '',
             effective_caller_id_number: '',
             outbound_caller_id_name: '',
@@ -82,8 +82,8 @@ export default function ExtensionFormPage() {
             form.reset({
                 extension: extension.extension ?? '',
                 password: '',
-                directory_first_name: extension.directory_first_name ?? '',
-                directory_last_name: extension.directory_last_name ?? '',
+                first_name: extension.first_name ?? '',
+                last_name: extension.last_name ?? '',
                 effective_caller_id_name: extension.effective_caller_id_name ?? '',
                 effective_caller_id_number: extension.effective_caller_id_number ?? '',
                 outbound_caller_id_name: extension.outbound_caller_id_name ?? '',
@@ -136,7 +136,7 @@ export default function ExtensionFormPage() {
                 <CardHeader>
                     <CardTitle>Extension profile</CardTitle>
                     <CardDescription>
-                        Configure SIP credentials, directory details, and caller ID information.
+                        Configure SIP credentials, user details, and caller ID information.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -182,10 +182,10 @@ export default function ExtensionFormPage() {
                                     />
                                     <FormField
                                         control={form.control}
-                                        name="directory_first_name"
+                                        name="first_name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Directory first name</FormLabel>
+                                                <FormLabel>First name</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="Jane" {...field} />
                                                 </FormControl>
@@ -195,10 +195,10 @@ export default function ExtensionFormPage() {
                                     />
                                     <FormField
                                         control={form.control}
-                                        name="directory_last_name"
+                                        name="last_name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Directory last name</FormLabel>
+                                                <FormLabel>Last name</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="Doe" {...field} />
                                                 </FormControl>

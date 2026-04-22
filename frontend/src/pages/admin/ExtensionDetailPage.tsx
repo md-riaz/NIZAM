@@ -72,9 +72,9 @@ export default function ExtensionDetailPage() {
                                 {extension.extension}
                             </CardTitle>
                             <CardDescription>
-                                {extension.directory_first_name || extension.directory_last_name
-                                    ? `${extension.directory_first_name ?? ''} ${extension.directory_last_name ?? ''}`.trim()
-                                    : 'No directory name configured.'}
+                                {extension.first_name || extension.last_name
+                                    ? `${extension.first_name ?? ''} ${extension.last_name ?? ''}`.trim()
+                                    : 'No name configured.'}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-4 md:grid-cols-2">
