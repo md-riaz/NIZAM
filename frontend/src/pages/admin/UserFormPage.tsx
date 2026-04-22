@@ -38,7 +38,7 @@ const userSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('A valid email is required'),
     password: z.string().optional(),
-    role: z.enum(['admin', 'agent']),
+    role: z.enum(['superadmin', 'admin', 'agent']),
     organization_id: z.string().optional(),
 });
 
@@ -68,7 +68,7 @@ export default function UserFormPage() {
             password: '',
             role: 'agent',
             organization_id: 'global',
-        },
+        } satisfies UserFormValues,
     });
 
     const { data: user, isLoading: isFetching } = useQuery({
@@ -94,7 +94,7 @@ export default function UserFormPage() {
                 name: user.name ?? '',
                 email: user.email ?? '',
                 password: '',
-                role: user.role === 'admin' ? 'admin' : 'agent',
+                role: user.role === 'superadmin' || user.role === 'admin' ? user.role : 'agent',
                 organization_id: user.organization_id ?? 'global',
             });
         }
@@ -210,7 +210,7 @@ export default function UserFormPage() {
                                                 <FormLabel>Role</FormLabel>
                                                 <Select
                                                     onValueChange={(value) => {
-                                                        if (value !== 'admin' && value !== 'agent') {
+                                                        if (value !== 'superadmin' && value !== 'admin' && value !== 'agent') {
                                                             return;
                                                         }
 
@@ -224,6 +224,7 @@ export default function UserFormPage() {
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
+                                                        <SelectItem value="superadmin">Superadmin</SelectItem>
                                                         <SelectItem value="admin">Admin</SelectItem>
                                                         <SelectItem value="agent">Agent</SelectItem>
                                                     </SelectContent>

@@ -37,12 +37,12 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Did, Extension, Flow, Gateway } from '@/types/models';
+import type { Did, Extension, Flow, Gateway, RingGroup } from '@/types/models';
 
 const didSchema = z.object({
     number: z.string().min(1, 'Number is required'),
     description: z.string().optional(),
-    destination_type: z.enum(['extension', 'flow'], {
+    destination_type: z.enum(['extension', 'ring_group', 'flow'], {
         errorMap: () => ({ message: 'Destination type is required' }),
     }),
     destination_id: z.string().uuid('Destination is required'),
@@ -116,10 +116,12 @@ function isUuid(value?: string | null): value is string {
 }
 
 function toDidFormValues(did?: DidResponse | null): DidFormValues {
+    const destinationType = did?.destination_type;
+
     return {
         number: did?.number || '',
         description: did?.description || '',
-        destination_type: did?.destination_type === 'flow' ? 'flow' : 'extension',
+        destination_type: destinationType === 'flow' || destinationType === 'ring_group' ? destinationType : 'extension',
         destination_id: isUuid(did?.destination_id) ? did.destination_id : '00000000-0000-0000-0000-000000000000',
         is_active: did?.is_active ?? true,
     };
@@ -175,6 +177,7 @@ function buildStoredPhoneNumber(countryCode: string, nationalNumber: string): st
 function getDestinationOptions(
     destinationType: DidFormValues['destination_type'],
     extensions: Extension[],
+    ringGroups: RingGroup[],
     flows: Flow[],
 ): DestinationOption[] {
     if (destinationType === 'flow') {
@@ -184,6 +187,13 @@ function getDestinationOptions(
         return source.map((flow) => ({
             id: flow.id,
             label: `${flow.name}${flow.active_version?.is_published ? ' (published)' : ' (draft)'}`,
+        }));
+    }
+
+    if (destinationType === 'ring_group') {
+        return ringGroups.map((ringGroup) => ({
+            id: ringGroup.id,
+            label: ringGroup.name,
         }));
     }
 
@@ -284,6 +294,15 @@ export default function DidFormPage() {
         enabled: !!activeOrganization,
     });
 
+    const { data: ringGroups = [] } = useQuery<RingGroup[]>({
+        queryKey: ['ring-groups', activeOrganization?.id],
+        queryFn: async () => {
+            const res = await api.get<{ data: RingGroup[] }>(`${organizationApiPrefix}/ring-groups`);
+            return res.data.data;
+        },
+        enabled: !!activeOrganization,
+    });
+
     const { data: flows = [] } = useQuery<Flow[]>({
         queryKey: ['flows', activeOrganization?.id],
         queryFn: async () => {
@@ -294,8 +313,8 @@ export default function DidFormPage() {
     });
 
     const destinationOptions = useMemo(
-        () => getDestinationOptions(destType, extensions, flows),
-        [destType, extensions, flows],
+        () => getDestinationOptions(destType, extensions, ringGroups, flows),
+        [destType, extensions, ringGroups, flows],
     );
 
     const phoneNumberParts = useMemo(
@@ -312,7 +331,11 @@ export default function DidFormPage() {
             ...destinationOptions,
             {
                 id: selectedDestinationId,
-                label: destType === 'flow' ? 'Current flow' : 'Current extension',
+                label: destType === 'flow'
+                    ? 'Current flow'
+                    : destType === 'ring_group'
+                        ? 'Current ring group'
+                        : 'Current extension',
             },
         ];
     }, [destType, destinationOptions, selectedDestinationId]);
@@ -595,12 +618,12 @@ export default function DidFormPage() {
                                                         <FormLabel>Destination Type</FormLabel>
                                                         <Select
                                                             onValueChange={(value) => {
-                                                                if (value !== 'extension' && value !== 'flow') {
+                                                                if (value !== 'extension' && value !== 'ring_group' && value !== 'flow') {
                                                                     return;
                                                                 }
 
                                                                 field.onChange(value);
-                                                                const nextOptions = getDestinationOptions(value, extensions, flows);
+                                                                const nextOptions = getDestinationOptions(value, extensions, ringGroups, flows);
                                                                 numberForm.setValue(
                                                                     'destination_id',
                                                                     nextOptions[0]?.id ?? '00000000-0000-0000-0000-000000000000',
@@ -616,6 +639,7 @@ export default function DidFormPage() {
                                                             </FormControl>
                                                             <SelectContent>
                                                                 <SelectItem value="extension">Extension</SelectItem>
+                                                                <SelectItem value="ring_group">Ring Group</SelectItem>
                                                                 <SelectItem value="flow">Call Flow</SelectItem>
                                                             </SelectContent>
                                                         </Select>
@@ -630,7 +654,11 @@ export default function DidFormPage() {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>
-                                                            {destType === 'flow' ? 'Destination Flow' : 'Destination Extension'}
+                                                            {destType === 'flow'
+                                                                ? 'Destination Flow'
+                                                                : destType === 'ring_group'
+                                                                    ? 'Destination Ring Group'
+                                                                    : 'Destination Extension'}
                                                         </FormLabel>
                                                         <Select
                                                             onValueChange={field.onChange}
@@ -639,7 +667,7 @@ export default function DidFormPage() {
                                                         >
                                                             <FormControl>
                                                                 <SelectTrigger>
-                                                                    <SelectValue placeholder={destType === 'flow' ? 'Select flow' : 'Select extension'} />
+                                                                    <SelectValue placeholder={destType === 'flow' ? 'Select flow' : destType === 'ring_group' ? 'Select ring group' : 'Select extension'} />
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
@@ -653,7 +681,9 @@ export default function DidFormPage() {
                                                                     <SelectItem value="__empty" disabled>
                                                                         {destType === 'flow'
                                                                             ? 'Create or publish a call flow first'
-                                                                            : 'Create an extension first'}
+                                                                            : destType === 'ring_group'
+                                                                                ? 'Create a ring group first'
+                                                                                : 'Create an extension first'}
                                                                     </SelectItem>
                                                                 )}
                                                             </SelectContent>
@@ -661,7 +691,9 @@ export default function DidFormPage() {
                                                         <FormDescription>
                                                             {destType === 'flow'
                                                                 ? 'Choose flow that should answer inbound call and execute published routing graph.'
-                                                                : 'Choose extension that should receive inbound calls.'}
+                                                                : destType === 'ring_group'
+                                                                    ? 'Choose ring group that should receive inbound calls.'
+                                                                    : 'Choose extension that should receive inbound calls.'}
                                                         </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
