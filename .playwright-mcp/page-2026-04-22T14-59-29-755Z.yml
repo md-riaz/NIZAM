@@ -1,0 +1,230 @@
+- generic:
+  - generic:
+    - generic:
+      - complementary:
+        - generic:
+          - generic:
+            - img
+          - generic:
+            - generic: App
+            - paragraph: ORGANIZATION MANAGEMENT
+        - navigation:
+          - generic:
+            - paragraph: General
+            - link:
+              - /url: /admin
+              - img
+              - generic: Dashboard
+            - link:
+              - /url: /admin/organizations
+              - img
+              - generic: Organizations
+            - link:
+              - /url: /admin/users
+              - img
+              - generic: Users
+          - generic:
+            - paragraph: Phone System
+            - link:
+              - /url: /admin/extensions
+              - img
+              - generic: Extensions
+            - link:
+              - /url: /admin/flows
+              - img
+              - generic: Call Flows
+            - link:
+              - /url: /admin/ring-groups
+              - img
+              - generic: Ring Groups
+            - link:
+              - /url: /admin/numbers
+              - img
+              - generic: Numbers
+          - generic:
+            - paragraph: Contact Center
+            - link:
+              - /url: /admin/queues
+              - img
+              - generic: Queues
+            - link:
+              - /url: /admin/teams
+              - img
+              - generic: Teams
+            - link:
+              - /url: /admin/agents
+              - img
+              - generic: Agents
+          - generic:
+            - paragraph: Calls
+            - link:
+              - /url: /admin/call-history
+              - img
+              - generic: Call History
+          - generic:
+            - paragraph: Security
+            - link:
+              - /url: /admin/auth-tokens
+              - img
+              - generic: Auth Tokens
+            - link:
+              - /url: /admin/sip-profiles
+              - img
+              - generic: SIP Profiles
+            - link:
+              - /url: /admin/blocked-destinations
+              - img
+              - generic: Blocked Destinations
+          - generic:
+            - paragraph: System
+            - link:
+              - /url: /admin/capabilities
+              - img
+              - generic: Capabilities
+            - link:
+              - /url: /admin/system-settings
+              - img
+              - generic: System Settings
+            - link:
+              - /url: /admin/freeswitch/modules
+              - img
+              - generic: FreeSWITCH Modules
+            - link:
+              - /url: /admin/logs
+              - img
+              - generic: Audit Logs
+            - link:
+              - /url: /admin/system-logs
+              - img
+              - generic: System Logs
+            - link:
+              - /url: /admin/sip-status
+              - img
+              - generic: SIP Status
+        - generic:
+          - button:
+            - img
+            - generic: Dark
+          - button:
+            - img
+        - generic:
+          - button:
+            - generic:
+              - generic: PA
+            - generic:
+              - paragraph: Platform Administrator
+              - paragraph: Platform Admin
+      - generic:
+        - banner:
+          - generic:
+            - generic:
+              - generic: Communications Platform
+              - generic: "Organization: App"
+          - button:
+            - img
+            - generic: App
+            - img
+        - main:
+          - generic:
+            - generic:
+              - button:
+                - img
+                - generic: Back to extensions
+              - generic:
+                - paragraph: App › Phone System
+                - heading [level=1]: Create Extension
+            - generic:
+              - generic:
+                - generic: Extension profile
+                - generic: Configure SIP credentials, user details, and caller ID information.
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: Extension
+                      - textbox:
+                        - /placeholder: "1001"
+                      - paragraph: Extension number is required
+                    - generic:
+                      - generic: SIP password
+                      - textbox
+                      - paragraph: Required for phone registration and WebRTC clients.
+                      - paragraph: Password must be at least 8 characters
+                    - generic:
+                      - generic: Owner type
+                      - combobox [expanded]:
+                        - generic: User
+                        - img
+                      - combobox
+                      - paragraph: Personal extension. One extension per user.
+                    - generic:
+                      - generic: Assigned user
+                      - combobox:
+                        - generic: Select a user
+                        - img
+                      - combobox
+                      - paragraph: Each user can have only one personal extension.
+                      - paragraph: Select a user for this personal extension.
+                    - generic:
+                      - generic: First name
+                      - textbox:
+                        - /placeholder: Jane
+                      - paragraph: First name is required
+                    - generic:
+                      - generic: Last name
+                      - textbox:
+                        - /placeholder: Doe
+                      - paragraph: Last name is required
+                    - generic:
+                      - generic: Caller ID name
+                      - textbox:
+                        - /placeholder: Jane Doe
+                    - generic:
+                      - generic: Caller ID number
+                      - textbox:
+                        - /placeholder: "1001"
+                    - generic:
+                      - generic: Outbound caller ID name
+                      - textbox:
+                        - /placeholder: Support
+                    - generic:
+                      - generic: Outbound caller ID number
+                      - textbox:
+                        - /placeholder: "18005550123"
+                  - generic:
+                    - generic:
+                      - generic: Voicemail PIN
+                      - textbox:
+                        - /placeholder: "1234"
+                  - generic:
+                    - generic:
+                      - checkbox [checked]:
+                        - generic:
+                          - img
+                      - checkbox [checked]
+                      - generic:
+                        - generic: Enable voicemail
+                        - paragraph: Allow callers to leave messages for this extension.
+                    - generic:
+                      - checkbox [checked]:
+                        - generic:
+                          - img
+                      - checkbox [checked]
+                      - generic:
+                        - generic: Extension active
+                        - paragraph: Inactive extensions cannot register or receive calls.
+                  - generic:
+                    - button:
+                      - img
+                      - text: Create Extension
+    - region "Notifications alt+T"
+  - listbox [ref=e465]:
+    - option "Unassigned" [ref=e466]:
+      - generic [ref=e467]: Unassigned
+    - option "User" [active] [selected] [ref=e468]:
+      - generic:
+        - generic:
+          - img
+      - generic [ref=e469]: User
+    - option "Device" [ref=e470]:
+      - generic [ref=e471]: Device

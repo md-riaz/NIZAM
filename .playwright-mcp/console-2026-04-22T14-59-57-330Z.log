@@ -1,0 +1,2 @@
+[     100ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=f2f71b01:20102
+[   39225ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:5173/api/v1/organizations/019d9e70-1fb0-72d0-9498-3cf63749b5c2/extensions:0

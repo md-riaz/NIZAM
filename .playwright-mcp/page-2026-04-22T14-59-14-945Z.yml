@@ -1,0 +1,212 @@
+- generic [ref=e2]:
+  - generic [ref=e7]:
+    - complementary [ref=e8]:
+      - generic [ref=e9]:
+        - img [ref=e11]
+        - generic [ref=e15]:
+          - generic [ref=e16]: App
+          - paragraph [ref=e17]: ORGANIZATION MANAGEMENT
+      - navigation [ref=e18]:
+        - generic [ref=e19]:
+          - paragraph [ref=e20]: General
+          - link "Dashboard" [ref=e21] [cursor=pointer]:
+            - /url: /admin
+            - img [ref=e22]
+            - generic [ref=e27]: Dashboard
+          - link "Organizations" [ref=e28] [cursor=pointer]:
+            - /url: /admin/organizations
+            - img [ref=e29]
+            - generic [ref=e33]: Organizations
+          - link "Users" [ref=e34] [cursor=pointer]:
+            - /url: /admin/users
+            - img [ref=e35]
+            - generic [ref=e40]: Users
+        - generic [ref=e41]:
+          - paragraph [ref=e42]: Phone System
+          - link "Extensions" [ref=e43] [cursor=pointer]:
+            - /url: /admin/extensions
+            - img [ref=e44]
+            - generic [ref=e46]: Extensions
+          - link "Call Flows" [ref=e47] [cursor=pointer]:
+            - /url: /admin/flows
+            - img [ref=e48]
+            - generic [ref=e52]: Call Flows
+          - link "Ring Groups" [ref=e53] [cursor=pointer]:
+            - /url: /admin/ring-groups
+            - img [ref=e54]
+            - generic [ref=e58]: Ring Groups
+          - link "Numbers" [ref=e59] [cursor=pointer]:
+            - /url: /admin/numbers
+            - img [ref=e60]
+            - generic [ref=e63]: Numbers
+        - generic [ref=e64]:
+          - paragraph [ref=e65]: Contact Center
+          - link "Queues" [ref=e66] [cursor=pointer]:
+            - /url: /admin/queues
+            - img [ref=e67]
+            - generic [ref=e71]: Queues
+          - link "Teams" [ref=e72] [cursor=pointer]:
+            - /url: /admin/teams
+            - img [ref=e73]
+            - generic [ref=e78]: Teams
+          - link "Agents" [ref=e79] [cursor=pointer]:
+            - /url: /admin/agents
+            - img [ref=e80]
+            - generic [ref=e83]: Agents
+        - generic [ref=e84]:
+          - paragraph [ref=e85]: Calls
+          - link "Call History" [ref=e86] [cursor=pointer]:
+            - /url: /admin/call-history
+            - img [ref=e87]
+            - generic [ref=e91]: Call History
+        - generic [ref=e92]:
+          - paragraph [ref=e93]: Security
+          - link "Auth Tokens" [ref=e94] [cursor=pointer]:
+            - /url: /admin/auth-tokens
+            - img [ref=e95]
+            - generic [ref=e98]: Auth Tokens
+          - link "SIP Profiles" [ref=e99] [cursor=pointer]:
+            - /url: /admin/sip-profiles
+            - img [ref=e100]
+            - generic [ref=e106]: SIP Profiles
+          - link "Blocked Destinations" [ref=e107] [cursor=pointer]:
+            - /url: /admin/blocked-destinations
+            - img [ref=e108]
+            - generic [ref=e110]: Blocked Destinations
+        - generic [ref=e111]:
+          - paragraph [ref=e112]: System
+          - link "Capabilities" [ref=e113] [cursor=pointer]:
+            - /url: /admin/capabilities
+            - img [ref=e114]
+            - generic [ref=e117]: Capabilities
+          - link "System Settings" [ref=e118] [cursor=pointer]:
+            - /url: /admin/system-settings
+            - img [ref=e119]
+            - generic [ref=e122]: System Settings
+          - link "FreeSWITCH Modules" [ref=e123] [cursor=pointer]:
+            - /url: /admin/freeswitch/modules
+            - img [ref=e124]
+            - generic [ref=e130]: FreeSWITCH Modules
+          - link "Audit Logs" [ref=e131] [cursor=pointer]:
+            - /url: /admin/logs
+            - img [ref=e132]
+            - generic [ref=e135]: Audit Logs
+          - link "System Logs" [ref=e136] [cursor=pointer]:
+            - /url: /admin/system-logs
+            - img [ref=e137]
+            - generic [ref=e140]: System Logs
+          - link "SIP Status" [ref=e141] [cursor=pointer]:
+            - /url: /admin/sip-status
+            - img [ref=e142]
+            - generic [ref=e148]: SIP Status
+      - generic [ref=e149]:
+        - button "Dark" [ref=e150] [cursor=pointer]:
+          - img
+          - generic [ref=e151]: Dark
+        - button "Collapse sidebar" [ref=e152] [cursor=pointer]:
+          - img
+      - button "PA Platform Administrator Platform Admin" [ref=e154]:
+        - generic [ref=e156]: PA
+        - generic [ref=e157]:
+          - paragraph [ref=e158]: Platform Administrator
+          - paragraph [ref=e159]: Platform Admin
+    - generic [ref=e160]:
+      - banner [ref=e161]:
+        - generic [ref=e163]:
+          - generic [ref=e164]: Communications Platform
+          - generic [ref=e165]: "Organization: App"
+        - button "App" [ref=e166]:
+          - img
+          - generic [ref=e167]: App
+          - img
+      - main [ref=e168]:
+        - generic [ref=e386]:
+          - generic [ref=e387]:
+            - button "Back to extensions" [ref=e388]:
+              - img
+              - generic [ref=e389]: Back to extensions
+            - generic [ref=e390]:
+              - paragraph [ref=e391]: App › Phone System
+              - heading "Create Extension" [level=1] [ref=e392]
+          - generic [ref=e393]:
+            - generic [ref=e394]:
+              - generic [ref=e395]: Extension profile
+              - generic [ref=e396]: Configure SIP credentials, user details, and caller ID information.
+            - generic [ref=e398]:
+              - generic [ref=e399]:
+                - generic [ref=e400]:
+                  - generic [ref=e401]: Extension
+                  - textbox "Extension" [active] [ref=e402]:
+                    - /placeholder: "1001"
+                  - paragraph [ref=e460]: Extension number is required
+                - generic [ref=e403]:
+                  - generic [ref=e404]: SIP password
+                  - textbox "SIP password" [ref=e405]
+                  - paragraph [ref=e406]: Required for phone registration and WebRTC clients.
+                  - paragraph [ref=e461]: Password must be at least 8 characters
+                - generic [ref=e407]:
+                  - generic [ref=e408]: Owner type
+                  - combobox "Owner type" [ref=e409]:
+                    - generic: User
+                    - img
+                  - combobox [ref=e410]
+                  - paragraph [ref=e411]: Personal extension. One extension per user.
+                - generic [ref=e455]:
+                  - generic [ref=e456]: Assigned user
+                  - combobox "Assigned user" [ref=e457]:
+                    - generic: Select a user
+                    - img
+                  - combobox [ref=e458]
+                  - paragraph [ref=e459]: Each user can have only one personal extension.
+                  - paragraph [ref=e462]: Select a user for this personal extension.
+                - generic [ref=e413]:
+                  - generic [ref=e414]: First name
+                  - textbox "First name" [ref=e415]:
+                    - /placeholder: Jane
+                  - paragraph [ref=e463]: First name is required
+                - generic [ref=e416]:
+                  - generic [ref=e417]: Last name
+                  - textbox "Last name" [ref=e418]:
+                    - /placeholder: Doe
+                  - paragraph [ref=e464]: Last name is required
+                - generic [ref=e419]:
+                  - generic [ref=e420]: Caller ID name
+                  - textbox "Caller ID name" [ref=e421]:
+                    - /placeholder: Jane Doe
+                - generic [ref=e422]:
+                  - generic [ref=e423]: Caller ID number
+                  - textbox "Caller ID number" [ref=e424]:
+                    - /placeholder: "1001"
+                - generic [ref=e425]:
+                  - generic [ref=e426]: Outbound caller ID name
+                  - textbox "Outbound caller ID name" [ref=e427]:
+                    - /placeholder: Support
+                - generic [ref=e428]:
+                  - generic [ref=e429]: Outbound caller ID number
+                  - textbox "Outbound caller ID number" [ref=e430]:
+                    - /placeholder: "18005550123"
+              - generic [ref=e432]:
+                - generic [ref=e433]: Voicemail PIN
+                - textbox "Voicemail PIN" [ref=e434]:
+                  - /placeholder: "1234"
+              - generic [ref=e435]:
+                - generic [ref=e436]:
+                  - checkbox "Enable voicemail" [checked] [ref=e437]:
+                    - generic:
+                      - img
+                  - checkbox [checked]
+                  - generic [ref=e438]:
+                    - generic [ref=e439]: Enable voicemail
+                    - paragraph [ref=e440]: Allow callers to leave messages for this extension.
+                - generic [ref=e441]:
+                  - checkbox "Extension active" [checked] [ref=e442]:
+                    - generic:
+                      - img
+                  - checkbox [checked]
+                  - generic [ref=e443]:
+                    - generic [ref=e444]: Extension active
+                    - paragraph [ref=e445]: Inactive extensions cannot register or receive calls.
+              - button "Create Extension" [ref=e447]:
+                - img
+                - text: Create Extension
+  - region "Notifications alt+T"

@@ -1,0 +1,343 @@
+- generic [ref=e2]:
+  - generic [ref=e7]:
+    - complementary [ref=e8]:
+      - generic [ref=e9]:
+        - img [ref=e11]
+        - generic [ref=e15]:
+          - generic [ref=e16]: App
+          - paragraph [ref=e17]: ORGANIZATION MANAGEMENT
+      - navigation [ref=e18]:
+        - generic [ref=e19]:
+          - paragraph [ref=e20]: General
+          - link "Dashboard" [ref=e21] [cursor=pointer]:
+            - /url: /admin
+            - img [ref=e22]
+            - generic [ref=e27]: Dashboard
+          - link "Organizations" [ref=e28] [cursor=pointer]:
+            - /url: /admin/organizations
+            - img [ref=e29]
+            - generic [ref=e33]: Organizations
+          - link "Users" [ref=e34] [cursor=pointer]:
+            - /url: /admin/users
+            - img [ref=e35]
+            - generic [ref=e40]: Users
+        - generic [ref=e41]:
+          - paragraph [ref=e42]: Phone System
+          - link "Extensions" [ref=e43] [cursor=pointer]:
+            - /url: /admin/extensions
+            - img [ref=e44]
+            - generic [ref=e46]: Extensions
+          - link "Call Flows" [ref=e47] [cursor=pointer]:
+            - /url: /admin/flows
+            - img [ref=e48]
+            - generic [ref=e52]: Call Flows
+          - link "Ring Groups" [ref=e53] [cursor=pointer]:
+            - /url: /admin/ring-groups
+            - img [ref=e54]
+            - generic [ref=e58]: Ring Groups
+          - link "Numbers" [ref=e59] [cursor=pointer]:
+            - /url: /admin/numbers
+            - img [ref=e60]
+            - generic [ref=e63]: Numbers
+        - generic [ref=e64]:
+          - paragraph [ref=e65]: Contact Center
+          - link "Queues" [ref=e66] [cursor=pointer]:
+            - /url: /admin/queues
+            - img [ref=e67]
+            - generic [ref=e71]: Queues
+          - link "Teams" [ref=e72] [cursor=pointer]:
+            - /url: /admin/teams
+            - img [ref=e73]
+            - generic [ref=e78]: Teams
+          - link "Agents" [ref=e79] [cursor=pointer]:
+            - /url: /admin/agents
+            - img [ref=e80]
+            - generic [ref=e83]: Agents
+        - generic [ref=e84]:
+          - paragraph [ref=e85]: Calls
+          - link "Call History" [ref=e86] [cursor=pointer]:
+            - /url: /admin/call-history
+            - img [ref=e87]
+            - generic [ref=e91]: Call History
+        - generic [ref=e92]:
+          - paragraph [ref=e93]: Security
+          - link "Auth Tokens" [ref=e94] [cursor=pointer]:
+            - /url: /admin/auth-tokens
+            - img [ref=e95]
+            - generic [ref=e98]: Auth Tokens
+          - link "SIP Profiles" [ref=e99] [cursor=pointer]:
+            - /url: /admin/sip-profiles
+            - img [ref=e100]
+            - generic [ref=e106]: SIP Profiles
+          - link "Blocked Destinations" [ref=e107] [cursor=pointer]:
+            - /url: /admin/blocked-destinations
+            - img [ref=e108]
+            - generic [ref=e110]: Blocked Destinations
+        - generic [ref=e111]:
+          - paragraph [ref=e112]: System
+          - link "Capabilities" [ref=e113] [cursor=pointer]:
+            - /url: /admin/capabilities
+            - img [ref=e114]
+            - generic [ref=e117]: Capabilities
+          - link "System Settings" [ref=e118] [cursor=pointer]:
+            - /url: /admin/system-settings
+            - img [ref=e119]
+            - generic [ref=e122]: System Settings
+          - link "FreeSWITCH Modules" [ref=e123] [cursor=pointer]:
+            - /url: /admin/freeswitch/modules
+            - img [ref=e124]
+            - generic [ref=e130]: FreeSWITCH Modules
+          - link "Audit Logs" [ref=e131] [cursor=pointer]:
+            - /url: /admin/logs
+            - img [ref=e132]
+            - generic [ref=e135]: Audit Logs
+          - link "System Logs" [ref=e136] [cursor=pointer]:
+            - /url: /admin/system-logs
+            - img [ref=e137]
+            - generic [ref=e140]: System Logs
+          - link "SIP Status" [ref=e141] [cursor=pointer]:
+            - /url: /admin/sip-status
+            - img [ref=e142]
+            - generic [ref=e148]: SIP Status
+      - generic [ref=e149]:
+        - button "Dark" [ref=e150] [cursor=pointer]:
+          - img
+          - generic [ref=e151]: Dark
+        - button "Collapse sidebar" [ref=e152] [cursor=pointer]:
+          - img
+      - button "PA Platform Administrator Platform Admin" [ref=e154]:
+        - generic [ref=e156]: PA
+        - generic [ref=e157]:
+          - paragraph [ref=e158]: Platform Administrator
+          - paragraph [ref=e159]: Platform Admin
+    - generic [ref=e160]:
+      - banner [ref=e161]:
+        - generic [ref=e163]:
+          - generic [ref=e164]: Communications Platform
+          - generic [ref=e165]: "Organization: App"
+        - button "App" [ref=e166]:
+          - img
+          - generic [ref=e167]: App
+          - img
+      - main [ref=e168]:
+        - generic [ref=e169]:
+          - generic [ref=e170]:
+            - generic [ref=e171]:
+              - paragraph [ref=e172]: App › Phone System
+              - heading "Extensions" [level=1] [ref=e173]
+              - paragraph [ref=e174]: Manage and provision internal SIP extensions for app.local.
+            - button "Create Extension" [ref=e175]:
+              - img
+              - text: Create Extension
+          - generic [ref=e176]:
+            - generic [ref=e177]:
+              - generic [ref=e179]: Total Capacity
+              - generic [ref=e181]: "8"
+            - generic [ref=e182]:
+              - generic [ref=e184]: Online Now
+              - generic [ref=e185]:
+                - generic [ref=e186]: "0"
+                - paragraph [ref=e187]: Active SIP links
+            - generic [ref=e188]:
+              - generic [ref=e190]: Offline
+              - generic [ref=e192]: "8"
+          - generic [ref=e193]:
+            - generic [ref=e194]:
+              - generic [ref=e195]: All Extensions
+              - generic [ref=e196]: Showing 8 extensions for app.local
+            - table [ref=e199]:
+              - rowgroup [ref=e200]:
+                - row "Extension Name Owner Caller ID Status IP / Agent Actions" [ref=e201]:
+                  - columnheader "Extension" [ref=e202]
+                  - columnheader "Name" [ref=e203]
+                  - columnheader "Owner" [ref=e204]
+                  - columnheader "Caller ID" [ref=e205]
+                  - columnheader "Status" [ref=e206]
+                  - columnheader "IP / Agent" [ref=e207]
+                  - columnheader "Actions" [ref=e208]
+              - rowgroup [ref=e209]:
+                - row "1001 — Unassigned Fatima Rahman 1001 Unregistered — View extension details Edit extension Delete extension" [ref=e210]:
+                  - cell "1001" [ref=e211]:
+                    - generic [ref=e212]:
+                      - img [ref=e214]
+                      - generic [ref=e216]: "1001"
+                  - cell "—" [ref=e217]
+                  - cell "Unassigned" [ref=e218]:
+                    - generic [ref=e219]: Unassigned
+                  - cell "Fatima Rahman 1001" [ref=e220]
+                  - cell "Unregistered" [ref=e221]:
+                    - generic [ref=e222]: Unregistered
+                  - cell "—" [ref=e223]
+                  - cell "View extension details Edit extension Delete extension" [ref=e224]:
+                    - generic [ref=e225]:
+                      - button "View extension details" [ref=e226]:
+                        - img
+                        - generic [ref=e227]: View extension details
+                      - button "Edit extension" [ref=e228]:
+                        - img
+                        - generic [ref=e229]: Edit extension
+                      - button "Delete extension" [ref=e230]:
+                        - img
+                        - generic [ref=e231]: Delete extension
+                - row "1002 — Unassigned Karim Hassan 1002 Unregistered — View extension details Edit extension Delete extension" [ref=e232]:
+                  - cell "1002" [ref=e233]:
+                    - generic [ref=e234]:
+                      - img [ref=e236]
+                      - generic [ref=e238]: "1002"
+                  - cell "—" [ref=e239]
+                  - cell "Unassigned" [ref=e240]:
+                    - generic [ref=e241]: Unassigned
+                  - cell "Karim Hassan 1002" [ref=e242]
+                  - cell "Unregistered" [ref=e243]:
+                    - generic [ref=e244]: Unregistered
+                  - cell "—" [ref=e245]
+                  - cell "View extension details Edit extension Delete extension" [ref=e246]:
+                    - generic [ref=e247]:
+                      - button "View extension details" [ref=e248]:
+                        - img
+                        - generic [ref=e249]: View extension details
+                      - button "Edit extension" [ref=e250]:
+                        - img
+                        - generic [ref=e251]: Edit extension
+                      - button "Delete extension" [ref=e252]:
+                        - img
+                        - generic [ref=e253]: Delete extension
+                - row "1003 — Unassigned Ayesha Malik 1003 Unregistered — View extension details Edit extension Delete extension" [ref=e254]:
+                  - cell "1003" [ref=e255]:
+                    - generic [ref=e256]:
+                      - img [ref=e258]
+                      - generic [ref=e260]: "1003"
+                  - cell "—" [ref=e261]
+                  - cell "Unassigned" [ref=e262]:
+                    - generic [ref=e263]: Unassigned
+                  - cell "Ayesha Malik 1003" [ref=e264]
+                  - cell "Unregistered" [ref=e265]:
+                    - generic [ref=e266]: Unregistered
+                  - cell "—" [ref=e267]
+                  - cell "View extension details Edit extension Delete extension" [ref=e268]:
+                    - generic [ref=e269]:
+                      - button "View extension details" [ref=e270]:
+                        - img
+                        - generic [ref=e271]: View extension details
+                      - button "Edit extension" [ref=e272]:
+                        - img
+                        - generic [ref=e273]: Edit extension
+                      - button "Delete extension" [ref=e274]:
+                        - img
+                        - generic [ref=e275]: Delete extension
+                - row "1004 — Unassigned Tariq Uddin 1004 Unregistered — View extension details Edit extension Delete extension" [ref=e276]:
+                  - cell "1004" [ref=e277]:
+                    - generic [ref=e278]:
+                      - img [ref=e280]
+                      - generic [ref=e282]: "1004"
+                  - cell "—" [ref=e283]
+                  - cell "Unassigned" [ref=e284]:
+                    - generic [ref=e285]: Unassigned
+                  - cell "Tariq Uddin 1004" [ref=e286]
+                  - cell "Unregistered" [ref=e287]:
+                    - generic [ref=e288]: Unregistered
+                  - cell "—" [ref=e289]
+                  - cell "View extension details Edit extension Delete extension" [ref=e290]:
+                    - generic [ref=e291]:
+                      - button "View extension details" [ref=e292]:
+                        - img
+                        - generic [ref=e293]: View extension details
+                      - button "Edit extension" [ref=e294]:
+                        - img
+                        - generic [ref=e295]: Edit extension
+                      - button "Delete extension" [ref=e296]:
+                        - img
+                        - generic [ref=e297]: Delete extension
+                - row "1005 — Unassigned Nadia Hossain 1005 Unregistered — View extension details Edit extension Delete extension" [ref=e298]:
+                  - cell "1005" [ref=e299]:
+                    - generic [ref=e300]:
+                      - img [ref=e302]
+                      - generic [ref=e304]: "1005"
+                  - cell "—" [ref=e305]
+                  - cell "Unassigned" [ref=e306]:
+                    - generic [ref=e307]: Unassigned
+                  - cell "Nadia Hossain 1005" [ref=e308]
+                  - cell "Unregistered" [ref=e309]:
+                    - generic [ref=e310]: Unregistered
+                  - cell "—" [ref=e311]
+                  - cell "View extension details Edit extension Delete extension" [ref=e312]:
+                    - generic [ref=e313]:
+                      - button "View extension details" [ref=e314]:
+                        - img
+                        - generic [ref=e315]: View extension details
+                      - button "Edit extension" [ref=e316]:
+                        - img
+                        - generic [ref=e317]: Edit extension
+                      - button "Delete extension" [ref=e318]:
+                        - img
+                        - generic [ref=e319]: Delete extension
+                - row "1006 — Unassigned Imran Ali 1006 Unregistered — View extension details Edit extension Delete extension" [ref=e320]:
+                  - cell "1006" [ref=e321]:
+                    - generic [ref=e322]:
+                      - img [ref=e324]
+                      - generic [ref=e326]: "1006"
+                  - cell "—" [ref=e327]
+                  - cell "Unassigned" [ref=e328]:
+                    - generic [ref=e329]: Unassigned
+                  - cell "Imran Ali 1006" [ref=e330]
+                  - cell "Unregistered" [ref=e331]:
+                    - generic [ref=e332]: Unregistered
+                  - cell "—" [ref=e333]
+                  - cell "View extension details Edit extension Delete extension" [ref=e334]:
+                    - generic [ref=e335]:
+                      - button "View extension details" [ref=e336]:
+                        - img
+                        - generic [ref=e337]: View extension details
+                      - button "Edit extension" [ref=e338]:
+                        - img
+                        - generic [ref=e339]: Edit extension
+                      - button "Delete extension" [ref=e340]:
+                        - img
+                        - generic [ref=e341]: Delete extension
+                - row "1007 — Unassigned Sabrina Khan 1007 Unregistered — View extension details Edit extension Delete extension" [ref=e342]:
+                  - cell "1007" [ref=e343]:
+                    - generic [ref=e344]:
+                      - img [ref=e346]
+                      - generic [ref=e348]: "1007"
+                  - cell "—" [ref=e349]
+                  - cell "Unassigned" [ref=e350]:
+                    - generic [ref=e351]: Unassigned
+                  - cell "Sabrina Khan 1007" [ref=e352]
+                  - cell "Unregistered" [ref=e353]:
+                    - generic [ref=e354]: Unregistered
+                  - cell "—" [ref=e355]
+                  - cell "View extension details Edit extension Delete extension" [ref=e356]:
+                    - generic [ref=e357]:
+                      - button "View extension details" [ref=e358]:
+                        - img
+                        - generic [ref=e359]: View extension details
+                      - button "Edit extension" [ref=e360]:
+                        - img
+                        - generic [ref=e361]: Edit extension
+                      - button "Delete extension" [ref=e362]:
+                        - img
+                        - generic [ref=e363]: Delete extension
+                - row "1008 — Unassigned Rashid Ahmed 1008 Unregistered — View extension details Edit extension Delete extension" [ref=e364]:
+                  - cell "1008" [ref=e365]:
+                    - generic [ref=e366]:
+                      - img [ref=e368]
+                      - generic [ref=e370]: "1008"
+                  - cell "—" [ref=e371]
+                  - cell "Unassigned" [ref=e372]:
+                    - generic [ref=e373]: Unassigned
+                  - cell "Rashid Ahmed 1008" [ref=e374]
+                  - cell "Unregistered" [ref=e375]:
+                    - generic [ref=e376]: Unregistered
+                  - cell "—" [ref=e377]
+                  - cell "View extension details Edit extension Delete extension" [ref=e378]:
+                    - generic [ref=e379]:
+                      - button "View extension details" [ref=e380]:
+                        - img
+                        - generic [ref=e381]: View extension details
+                      - button "Edit extension" [ref=e382]:
+                        - img
+                        - generic [ref=e383]: Edit extension
+                      - button "Delete extension" [ref=e384]:
+                        - img
+                        - generic [ref=e385]: Delete extension
+  - region "Notifications alt+T"
