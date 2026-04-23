@@ -5,4 +5,5 @@
 /vendor
 /reference/
 /.worktrees/
+/.claude/worktrees/
 /.playwright-mcp/
