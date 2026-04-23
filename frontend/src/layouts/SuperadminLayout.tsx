@@ -9,6 +9,7 @@ import {
     Globe,
     Hash,
     KeyRound,
+    Laptop,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -74,6 +75,7 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Phone System',
         items: [
             { label: 'Extensions', icon: Phone, href: '/admin/extensions', organizationRequired: true },
+            { label: 'Devices', icon: Laptop, href: '/admin/device-profiles', organizationRequired: true },
             { label: 'Call Flows', icon: Route, href: '/admin/flows', organizationRequired: true },
             { label: 'Ring Groups', icon: GitBranch, href: '/admin/ring-groups', organizationRequired: true },
             { label: 'Numbers', icon: Hash, href: '/admin/numbers', adminOnly: true, organizationRequired: true },

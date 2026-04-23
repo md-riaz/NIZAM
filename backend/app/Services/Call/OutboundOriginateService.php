@@ -5,9 +5,14 @@ namespace App\Services\Call;
 use App\Models\Extension;
 use App\Models\Gateway;
 use App\Models\Organization;
+use App\Services\PhoneNumberAccessResolver;
 
 class OutboundOriginateService
 {
+    public function __construct(
+        protected ?PhoneNumberAccessResolver $phoneNumberAccessResolver = null,
+    ) {}
+
     public function buildCommand(
         Organization $organization,
         Extension $extension,
@@ -16,8 +21,10 @@ class OutboundOriginateService
         ?string $callerIdNumber = null,
         ?Gateway $gateway = null,
     ): string {
-        $callerIdName ??= $extension->effective_caller_id_name ?? $extension->first_name;
-        $callerIdNumber ??= $extension->effective_caller_id_number ?? $extension->extension;
+        $resolvedCallerId = ($this->phoneNumberAccessResolver ?? new PhoneNumberAccessResolver)->resolveForExtension($extension);
+
+        $callerIdName ??= $resolvedCallerId['name'];
+        $callerIdNumber ??= $resolvedCallerId['number'];
 
         $endpoint = $gateway
             ? sprintf('&bridge(sofia/gateway/v_%s/%s)', $gateway->id, $destination)

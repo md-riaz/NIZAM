@@ -14,18 +14,21 @@ class TeamController extends Controller
 {
     public function index(Organization $organization)
     {
-        return TeamResource::collection($organization->teams()->with('members')->orderByDesc('id')->paginate(15));
+        return TeamResource::collection($organization->teams()->with(['members', 'phoneNumbers'])->orderByDesc('id')->paginate(15));
     }
 
     public function store(StoreTeamRequest $request, Organization $organization): JsonResponse
     {
-        $team = $organization->teams()->create($request->safe()->except('members'));
+        $validated = $request->validated();
+        $team = $organization->teams()->create(collect($request->safe()->except('members'))->except(['phone_number_ids'])->all());
 
-        foreach ($request->validated()['members'] ?? [] as $member) {
+        foreach ($validated['members'] ?? [] as $member) {
             $team->members()->create($member);
         }
 
-        return (new TeamResource($team->load('members')))->response()->setStatusCode(201);
+        $team->phoneNumbers()->sync($validated['phone_number_ids'] ?? []);
+
+        return (new TeamResource($team->load('members', 'phoneNumbers')))->response()->setStatusCode(201);
     }
 
     public function show(Organization $organization, Team $team): JsonResponse|TeamResource
@@ -34,7 +37,7 @@ class TeamController extends Controller
             return response()->json(['message' => 'Team not found.'], 404);
         }
 
-        return new TeamResource($team->load('members'));
+        return new TeamResource($team->load('members', 'phoneNumbers'));
     }
 
     public function update(UpdateTeamRequest $request, Organization $organization, Team $team): JsonResponse|TeamResource
@@ -43,17 +46,22 @@ class TeamController extends Controller
             return response()->json(['message' => 'Team not found.'], 404);
         }
 
-        $team->update($request->safe()->except('members'));
+        $validated = $request->validated();
+        $team->update(collect($request->safe()->except('members'))->except(['phone_number_ids'])->all());
 
         if ($request->has('members')) {
             $team->members()->delete();
 
-            foreach ($request->validated()['members'] ?? [] as $member) {
+            foreach ($validated['members'] ?? [] as $member) {
                 $team->members()->create($member);
             }
         }
 
-        return new TeamResource($team->load('members'));
+        if ($request->has('phone_number_ids')) {
+            $team->phoneNumbers()->sync($validated['phone_number_ids'] ?? []);
+        }
+
+        return new TeamResource($team->load('members', 'phoneNumbers'));
     }
 
     public function destroy(Organization $organization, Team $team): JsonResponse

@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
+import type { Did } from '@/types/models';
 
 const teamStrategies = ['simultaneous', 'round_robin', 'priority'] as const;
 
@@ -31,6 +32,7 @@ const teamSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     strategy: z.enum(teamStrategies),
     timeout: z.coerce.number().min(1).max(300),
+    phone_number_ids: z.array(z.string()).default([]),
     is_active: z.boolean(),
 });
 
@@ -48,6 +50,7 @@ export default function TeamFormPage() {
             name: '',
             strategy: 'simultaneous',
             timeout: 30,
+            phone_number_ids: [],
             is_active: true,
         },
     });
@@ -62,12 +65,23 @@ export default function TeamFormPage() {
         enabled: isEdit && !!activeOrganization,
     });
 
+    const { data: phoneNumbers = [] } = useQuery({
+        queryKey: ['dids', activeOrganization?.id, 'team-phone-options'],
+        queryFn: async () => {
+            if (!activeOrganization) return [] as Did[];
+            const response = await api.get<{ data: Did[] }>(`organizations/${activeOrganization.id}/dids`);
+            return response.data.data;
+        },
+        enabled: !!activeOrganization,
+    });
+
     useEffect(() => {
         if (team) {
             form.reset({
                 name: team.name ?? '',
                 strategy: (team.strategy as any) ?? 'simultaneous',
                 timeout: team.timeout ?? 30,
+                phone_number_ids: team.phone_numbers?.map((phoneNumber: Did) => phoneNumber.id) ?? [],
                 is_active: team.is_active ?? true,
             });
         }
@@ -182,6 +196,43 @@ export default function TeamFormPage() {
                                         )}
                                     />
                                 </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="phone_number_ids"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                            <div>
+                                                <FormLabel>Granted phone numbers</FormLabel>
+                                                <FormDescription>
+                                                    Team phone numbers become effective outbound caller-ID options for member users.
+                                                </FormDescription>
+                                            </div>
+                                            <div className="space-y-3 rounded-md border p-4">
+                                                {phoneNumbers.length === 0 ? (
+                                                    <p className="text-sm text-muted-foreground">No phone numbers available in this organization.</p>
+                                                ) : (
+                                                    phoneNumbers.map((phoneNumber: Did) => (
+                                                        <label key={phoneNumber.id} className="flex items-start gap-3 text-sm">
+                                                            <Checkbox
+                                                                checked={field.value.includes(phoneNumber.id)}
+                                                                onCheckedChange={(checked) => {
+                                                                    field.onChange(
+                                                                        checked
+                                                                            ? [...field.value, phoneNumber.id]
+                                                                            : field.value.filter((id) => id !== phoneNumber.id),
+                                                                    );
+                                                                }}
+                                                            />
+                                                            <span>{phoneNumber.description ? `${phoneNumber.number} — ${phoneNumber.description}` : phoneNumber.number}</span>
+                                                        </label>
+                                                    ))
+                                                )}
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
                                 <FormField
                                     control={form.control}

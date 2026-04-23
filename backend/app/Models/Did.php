@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
@@ -77,6 +78,21 @@ class Did extends Model
     public function gateway(): BelongsTo
     {
         return $this->belongsTo(Gateway::class);
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'phone_number_user_access')->withTimestamps();
+    }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'phone_number_team_access')->withTimestamps();
+    }
+
+    public function deviceProfiles(): BelongsToMany
+    {
+        return $this->belongsToMany(DeviceProfile::class, 'phone_number_device_access')->withTimestamps();
     }
 
 }

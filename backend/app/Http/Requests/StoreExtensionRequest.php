@@ -19,7 +19,7 @@ class StoreExtensionRequest extends FormRequest
         return [
             'user_id' => [
                 'nullable',
-                'uuid',
+                'integer',
                 function ($attribute, $value, $fail) use ($organization) {
                     if (! $value) {
                         return;

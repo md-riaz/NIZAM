@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -29,6 +33,7 @@ class User extends Authenticatable
         'organization_id',
         'schedule_id',
         'holiday_calendar_id',
+        'default_outbound_did_id',
         'role',
     ];
 
@@ -70,6 +75,11 @@ class User extends Authenticatable
         return $this->belongsTo(HolidayCalendar::class);
     }
 
+    public function defaultOutboundDid(): BelongsTo
+    {
+        return $this->belongsTo(Did::class, 'default_outbound_did_id');
+    }
+
     public function effectiveSchedule(): ?Schedule
     {
         return $this->schedule ?: $this->organization?->defaultSchedule;
@@ -98,6 +108,74 @@ class User extends Authenticatable
     public function deviceProfiles(): HasMany
     {
         return $this->hasMany(DeviceProfile::class);
+    }
+
+    public function directPhoneNumbers(): BelongsToMany
+    {
+        return $this->belongsToMany(Did::class, 'phone_number_user_access', 'user_id', 'did_id')->withTimestamps();
+    }
+
+    public function teams(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Team::class,
+            TeamMember::class,
+            'endpoint_id',
+            'id',
+            'id',
+            'team_id'
+        )->where('team_members.endpoint_type', 'extension')
+            ->whereHas('members', fn ($query) => $query
+                ->where('endpoint_type', 'extension')
+                ->where('endpoint_id', $this->getKey())
+            );
+    }
+
+    public function teamPhoneNumbers(): BelongsToMany
+    {
+        return $this->belongsToMany(Did::class, 'phone_number_team_access', 'team_id', 'did_id');
+    }
+
+    public function effectivePhoneNumbers(): Collection
+    {
+        $extensionIds = $this->extensions()->pluck('id')->filter();
+
+        $teamIds = TeamMember::query()
+            ->where('endpoint_type', 'extension')
+            ->whereIn('endpoint_id', $extensionIds)
+            ->pluck('team_id')
+            ->unique()
+            ->values();
+
+        $direct = $this->directPhoneNumbers()->get();
+        $teamGranted = $teamIds->isEmpty()
+            ? collect()
+            : Did::query()
+                ->whereHas('teams', fn ($query) => $query->whereIn('teams.id', $teamIds))
+                ->get();
+
+        return $direct
+            ->concat($teamGranted)
+            ->unique(fn (Did $did) => (string) $did->id)
+            ->values();
+    }
+
+    public function canUsePhoneNumber(?string $didId): bool
+    {
+        if (! $didId || ! Str::isUuid($didId)) {
+            return false;
+        }
+
+        return $this->effectivePhoneNumbers()->contains(fn (Did $did) => (string) $did->id === $didId);
+    }
+
+    public function resolveOutboundDid(): ?Did
+    {
+        if ($this->default_outbound_did_id && $this->canUsePhoneNumber($this->default_outbound_did_id)) {
+            return $this->effectivePhoneNumbers()->firstWhere('id', $this->default_outbound_did_id);
+        }
+
+        return $this->effectivePhoneNumbers()->first();
     }
 
     public function isSuperadmin(): bool

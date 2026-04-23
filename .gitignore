@@ -5,3 +5,4 @@
 /vendor
 /reference/
 /.worktrees/
+/.playwright-mcp/

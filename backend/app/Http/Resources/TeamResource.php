@@ -17,6 +17,7 @@ class TeamResource extends JsonResource
             'timeout' => $this->timeout,
             'is_active' => $this->is_active,
             'members' => $this->whenLoaded('members'),
+            'phone_numbers' => DidResource::collection($this->whenLoaded('phoneNumbers')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

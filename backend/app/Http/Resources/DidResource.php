@@ -19,6 +19,9 @@ class DidResource extends JsonResource
             'destination_id' => $this->destination_id,
             'is_active' => $this->is_active,
             'gateway' => GatewayResource::make($this->whenLoaded('gateway')),
+            'users' => UserResource::collection($this->whenLoaded('users')),
+            'teams' => TeamResource::collection($this->whenLoaded('teams')),
+            'device_profiles' => DeviceProfileResource::collection($this->whenLoaded('deviceProfiles')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

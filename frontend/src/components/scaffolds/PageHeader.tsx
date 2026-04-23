@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 interface PageHeaderProps {
     title: string;
@@ -22,8 +22,6 @@ export function PageHeader({
     actionIcon,
     onAction,
 }: PageHeaderProps) {
-    const navigate = useNavigate();
-
     return (
         <div className="flex items-center justify-between">
             <div>
@@ -37,10 +35,19 @@ export function PageHeader({
             </div>
             {actionLabel && (actionRoute || onAction) && (
                 <div className="flex items-center gap-2">
-                    <Button onClick={() => actionRoute ? navigate(actionRoute) : onAction?.()}>
-                        {actionIcon || <Plus className="size-4 mr-2" />}
-                        {actionLabel}
-                    </Button>
+                    {actionRoute ? (
+                        <Button asChild>
+                            <Link to={actionRoute}>
+                                {actionIcon || <Plus className="size-4 mr-2" />}
+                                {actionLabel}
+                            </Link>
+                        </Button>
+                    ) : (
+                        <Button type="button" onClick={onAction}>
+                            {actionIcon || <Plus className="size-4 mr-2" />}
+                            {actionLabel}
+                        </Button>
+                    )}
                 </div>
             )}
         </div>

@@ -2,6 +2,39 @@ import { z } from 'zod';
 
 const idSchema = z.union([z.string(), z.number()]).transform((value) => String(value));
 
+const DidSummarySchema = z.object({
+    id: idSchema,
+    number: z.string(),
+    description: z.string().nullable().optional(),
+}).passthrough();
+
+const DidAssignmentUserSchema = z.object({
+    id: idSchema,
+    name: z.string().optional(),
+    email: z.string().email().optional(),
+    organization_id: idSchema.nullable().optional(),
+    role: z.string().optional(),
+}).passthrough();
+
+const DidAssignmentTeamSchema = z.object({
+    id: idSchema,
+    organization_id: idSchema.optional(),
+    name: z.string().optional(),
+    strategy: z.string().optional(),
+    timeout: z.number().optional(),
+    is_active: z.boolean().optional(),
+}).passthrough();
+
+const DidAssignmentDeviceProfileSchema = z.object({
+    id: idSchema,
+    organization_id: idSchema.optional(),
+    user_id: idSchema.nullable().optional(),
+    name: z.string().optional(),
+    extension_id: idSchema.nullable().optional(),
+    default_outbound_did_id: idSchema.nullable().optional(),
+    is_active: z.boolean().optional(),
+}).passthrough();
+
 // ─── Organization ──────────────────────────────────────────────────
 
 export const OrganizationSchema = z.object({
@@ -87,11 +120,27 @@ export const DeviceProfileSchema = z.object({
     mac_address: z.string().nullable().optional(),
     template: z.string().nullable().optional(),
     extension_id: idSchema.nullable().optional(),
+    default_outbound_did_id: idSchema.nullable().optional(),
+    phone_numbers: z.array(DidSummarySchema).default([]),
     is_active: z.boolean().optional(),
     created_at: z.string(),
     updated_at: z.string(),
 });
 export type DeviceProfile = z.infer<typeof DeviceProfileSchema>;
+
+export const TeamSchema = z.object({
+    id: idSchema,
+    organization_id: idSchema,
+    name: z.string(),
+    strategy: z.string(),
+    timeout: z.number().optional(),
+    is_active: z.boolean().optional(),
+    members: z.array(z.unknown()).default([]),
+    phone_numbers: z.array(DidSummarySchema).default([]),
+    created_at: z.string(),
+    updated_at: z.string().optional(),
+});
+export type Team = z.infer<typeof TeamSchema>;
 
 export const GatewaySchema = z.object({
     id: idSchema,
@@ -125,6 +174,9 @@ export const DidSchema = z.object({
     enabled: z.boolean().optional(),
     is_active: z.boolean().optional(),
     gateway: GatewaySchema.nullable().optional(),
+    users: z.array(DidAssignmentUserSchema).default([]),
+    teams: z.array(DidAssignmentTeamSchema).default([]),
+    device_profiles: z.array(DidAssignmentDeviceProfileSchema).default([]),
     created_at: z.string(),
     updated_at: z.string(),
 });
@@ -348,6 +400,9 @@ export const UserSchema = z.object({
     email: z.string().email(),
     organization_id: idSchema.nullable().optional(),
     role: z.string(),
+    default_outbound_did_id: idSchema.nullable().optional(),
+    direct_phone_numbers: z.array(DidSummarySchema).default([]),
+    effective_phone_numbers: z.array(DidSummarySchema).default([]),
     email_verified_at: z.string().nullable().optional(),
     organization: OrganizationSchema.nullable().optional(),
     created_at: z.string(),

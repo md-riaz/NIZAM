@@ -20,7 +20,7 @@ class UpdateExtensionRequest extends FormRequest
         return [
             'user_id' => [
                 'nullable',
-                'uuid',
+                'integer',
                 function ($attribute, $value, $fail) use ($organization, $extension) {
                     if (! $value) {
                         return;
@@ -62,7 +62,9 @@ class UpdateExtensionRequest extends FormRequest
                 'required',
                 'string',
                 function ($attribute, $value, $fail) use ($organization, $extension) {
-                    app(ExtensionNumberingService::class)->validate((string) $value, $fail);
+                    if ((string) $value !== (string) $extension->extension) {
+                        app(ExtensionNumberingService::class)->validate((string) $value, $fail);
+                    }
 
                     if ($organization->extensions()->where('extension', $value)->where('id', '!=', $extension->id)->exists()) {
                         $fail('The extension has already been taken for this organization.');

@@ -25,7 +25,9 @@ class DeviceProfileController extends Controller
 
         $perPage = max(1, min($request->integer('per_page', 15), 500));
 
-        return DeviceProfileResource::collection($organization->deviceProfiles()->orderByDesc('id')->paginate($perPage));
+        return DeviceProfileResource::collection(
+            $organization->deviceProfiles()->with('phoneNumbers')->orderByDesc('id')->paginate($perPage)
+        );
     }
 
     /**
@@ -35,9 +37,11 @@ class DeviceProfileController extends Controller
     {
         $this->authorize('create', DeviceProfile::class);
 
-        $deviceProfile = $organization->deviceProfiles()->create($request->validated());
+        $validated = $request->validated();
+        $deviceProfile = $organization->deviceProfiles()->create(collect($validated)->except(['phone_number_ids'])->all());
+        $deviceProfile->phoneNumbers()->sync($validated['phone_number_ids'] ?? []);
 
-        return (new DeviceProfileResource($deviceProfile))->response()->setStatusCode(201);
+        return (new DeviceProfileResource($deviceProfile->load('phoneNumbers')))->response()->setStatusCode(201);
     }
 
     /**
@@ -51,7 +55,7 @@ class DeviceProfileController extends Controller
 
         $this->authorize('view', $deviceProfile);
 
-        return new DeviceProfileResource($deviceProfile);
+        return new DeviceProfileResource($deviceProfile->load('phoneNumbers'));
     }
 
     /**
@@ -65,9 +69,11 @@ class DeviceProfileController extends Controller
 
         $this->authorize('update', $deviceProfile);
 
-        $deviceProfile->update($request->validated());
+        $validated = $request->validated();
+        $deviceProfile->update(collect($validated)->except(['phone_number_ids'])->all());
+        $deviceProfile->phoneNumbers()->sync($validated['phone_number_ids'] ?? []);
 
-        return new DeviceProfileResource($deviceProfile);
+        return new DeviceProfileResource($deviceProfile->load('phoneNumbers'));
     }
 
     /**

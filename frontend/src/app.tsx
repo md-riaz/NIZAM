@@ -24,6 +24,8 @@ const UserPermissionsPage = lazy(() => import('@/pages/admin/UserPermissionsPage
 const ExtensionsPage = lazy(() => import('@/pages/admin/ExtensionsPage'));
 const ExtensionFormPage = lazy(() => import('@/pages/admin/ExtensionFormPage'));
 const ExtensionDetailPage = lazy(() => import('@/pages/admin/ExtensionDetailPage'));
+const DeviceProfilesPage = lazy(() => import('@/pages/admin/DeviceProfilesPage'));
+const DeviceProfileFormPage = lazy(() => import('@/pages/admin/DeviceProfileFormPage'));
 const DidsPage = lazy(() => import('@/pages/admin/DidsPage'));
 const DidFormPage = lazy(() => import('@/pages/admin/DidFormPage'));
 const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
@@ -155,6 +157,9 @@ const router = createBrowserRouter(
                 <Route path="extensions/create" element={<ExtensionFormPage />} />
                 <Route path="extensions/:id" element={<ExtensionDetailPage />} />
                 <Route path="extensions/:id/edit" element={<ExtensionFormPage />} />
+                <Route path="device-profiles" element={<DeviceProfilesPage />} />
+                <Route path="device-profiles/create" element={<DeviceProfileFormPage />} />
+                <Route path="device-profiles/:id/edit" element={<DeviceProfileFormPage />} />
                 <Route path="ring-groups" element={<RingGroupsPage />} />
                 <Route path="ring-groups/create" element={<RingGroupFormPage />} />
                 <Route path="ring-groups/:id/edit" element={<RingGroupFormPage />} />

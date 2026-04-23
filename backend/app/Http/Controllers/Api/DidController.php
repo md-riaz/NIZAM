@@ -27,7 +27,9 @@ class DidController extends Controller
     {
         $this->authorize('viewAny', Did::class);
 
-        return DidResource::collection($organization->dids()->with('gateway')->orderBy('number')->paginate(15));
+        return DidResource::collection(
+            $organization->dids()->with(['gateway', 'users', 'teams', 'deviceProfiles'])->orderBy('number')->paginate(15)
+        );
     }
 
     /**
@@ -43,7 +45,11 @@ class DidController extends Controller
             ], 422);
         }
 
-        $did = $organization->dids()->create($request->validated());
+        $validated = $request->validated();
+        $did = $organization->dids()->create(collect($validated)->except(['user_ids', 'team_ids', 'device_profile_ids'])->all());
+        $did->users()->sync($validated['user_ids'] ?? []);
+        $did->teams()->sync($validated['team_ids'] ?? []);
+        $did->deviceProfiles()->sync($validated['device_profile_ids'] ?? []);
 
         $this->webhookDispatcher->dispatch($organization->id, 'did.created', [
             'did_id' => $did->id,
@@ -64,7 +70,7 @@ class DidController extends Controller
 
         $this->authorize('view', $did);
 
-        $did->loadMissing('gateway');
+        $did->loadMissing(['gateway', 'users', 'teams', 'deviceProfiles']);
 
         return new DidResource($did);
     }
@@ -80,14 +86,18 @@ class DidController extends Controller
 
         $this->authorize('update', $did);
 
-        $did->update($request->validated());
+        $validated = $request->validated();
+        $did->update(collect($validated)->except(['user_ids', 'team_ids', 'device_profile_ids'])->all());
+        $did->users()->sync($validated['user_ids'] ?? []);
+        $did->teams()->sync($validated['team_ids'] ?? []);
+        $did->deviceProfiles()->sync($validated['device_profile_ids'] ?? []);
 
         $this->webhookDispatcher->dispatch($organization->id, 'did.updated', [
             'did_id' => $did->id,
             'number' => $did->number,
         ]);
 
-        $did->loadMissing('gateway');
+        $did->loadMissing(['gateway', 'users', 'teams', 'deviceProfiles']);
 
         return new DidResource($did);
     }
