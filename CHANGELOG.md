@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-04-23 22:55:24 UTC]
+
+### Fixed
+- **DID Gateway Validation**: DID create and update requests now validate `gateway_id` against active gateways in same organization so number edits cannot attach invalid provider links.
+
 ## [2026-04-23 22:51:55 UTC]
 
 ### Changed
