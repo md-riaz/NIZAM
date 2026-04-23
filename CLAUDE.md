@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Local reference repositories
+
+- Use `/root/projects/NIZAM/reference/fspbx` as local reference clone for `https://github.com/nemerald-voip/fspbx.git`.
+- Use `/root/projects/NIZAM/reference/fusionpbx` as local reference clone for `https://github.com/fusionpbx/fusionpbx.git`.
+- Reference repos are for comparison and research. Do not modify them unless explicitly asked.
+
 ## Runtime and command rules
 
 - Run repo commands in Docker containers, not host machine.
