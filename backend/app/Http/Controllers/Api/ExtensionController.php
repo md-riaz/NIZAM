@@ -31,7 +31,12 @@ class ExtensionController extends Controller
     {
         $this->authorize('viewAny', Extension::class);
 
-        return ExtensionResource::collection($organization->extensions()->orderBy('extension')->paginate(15));
+        return ExtensionResource::collection(
+            $organization->extensions()
+                ->with(['allowedOutboundDids:id', 'allowedOutboundGateways:id'])
+                ->orderBy('extension')
+                ->paginate(15)
+        );
     }
 
     /**
@@ -48,7 +53,12 @@ class ExtensionController extends Controller
         }
 
         $attributes = ExtensionData::fromArray($request->validated())->attributes;
+        $allowedOutboundDidIds = $attributes['allowed_outbound_did_ids'] ?? [];
+        $allowedOutboundGatewayIds = $attributes['allowed_outbound_gateway_ids'] ?? [];
+        unset($attributes['allowed_outbound_did_ids'], $attributes['allowed_outbound_gateway_ids']);
+
         $extension = $organization->extensions()->create($attributes);
+        $this->syncOutboundPolicy($extension, $allowedOutboundDidIds, $allowedOutboundGatewayIds);
         $this->syncOwnedDevice($extension, $attributes['device_profile_id'] ?? null);
 
         $this->webhookDispatcher->dispatch($organization->id, 'extension.created', [
@@ -56,7 +66,7 @@ class ExtensionController extends Controller
             'extension' => $extension->extension,
         ]);
 
-        return (new ExtensionResource($extension))->response()->setStatusCode(201);
+        return (new ExtensionResource($extension->load(['allowedOutboundDids:id', 'allowedOutboundGateways:id'])))->response()->setStatusCode(201);
     }
 
     /**
@@ -70,7 +80,7 @@ class ExtensionController extends Controller
 
         $this->authorize('view', $extension);
 
-        return new ExtensionResource($extension);
+        return new ExtensionResource($extension->load(['allowedOutboundDids:id', 'allowedOutboundGateways:id']));
     }
 
     /**
@@ -85,7 +95,12 @@ class ExtensionController extends Controller
         $this->authorize('update', $extension);
 
         $attributes = ExtensionData::fromArray($request->validated())->attributes;
+        $allowedOutboundDidIds = $attributes['allowed_outbound_did_ids'] ?? [];
+        $allowedOutboundGatewayIds = $attributes['allowed_outbound_gateway_ids'] ?? [];
+        unset($attributes['allowed_outbound_did_ids'], $attributes['allowed_outbound_gateway_ids']);
+
         $extension->update($attributes);
+        $this->syncOutboundPolicy($extension, $allowedOutboundDidIds, $allowedOutboundGatewayIds);
         $this->syncOwnedDevice($extension, $attributes['device_profile_id'] ?? null);
 
         $this->webhookDispatcher->dispatch($organization->id, 'extension.updated', [
@@ -93,7 +108,7 @@ class ExtensionController extends Controller
             'extension' => $extension->extension,
         ]);
 
-        return new ExtensionResource($extension);
+        return new ExtensionResource($extension->load(['allowedOutboundDids:id', 'allowedOutboundGateways:id']));
     }
 
     /**
@@ -136,6 +151,12 @@ class ExtensionController extends Controller
         $config = $this->webRtcConfigService->forExtension($extension->loadMissing('organization'), config('app.url'));
 
         return response()->json(['data' => $config]);
+    }
+
+    protected function syncOutboundPolicy(Extension $extension, array $allowedOutboundDidIds, array $allowedOutboundGatewayIds): void
+    {
+        $extension->allowedOutboundDids()->sync($allowedOutboundDidIds);
+        $extension->allowedOutboundGateways()->sync($allowedOutboundGatewayIds);
     }
 
     protected function syncOwnedDevice(Extension $extension, ?string $deviceProfileId): void

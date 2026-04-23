@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Gateway;
 use App\Models\Organization;
@@ -20,23 +21,30 @@ class CallOriginateApiTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_originate_uses_internal_dialplan_when_gateway_is_not_supplied(): void
+    public function test_originate_uses_extension_default_outbound_did_when_gateway_is_not_supplied(): void
     {
         $organization = Organization::factory()->create(['domain' => 'acme.test']);
         $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
-        Extension::factory()->create([
+        $extension = Extension::factory()->create([
             'organization_id' => $organization->id,
             'extension' => '1001',
             'first_name' => 'John',
             'effective_caller_id_name' => 'John Doe',
-            'effective_caller_id_number' => '8801555123456',
             'is_active' => true,
         ]);
+        $did = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'gateway_id' => null,
+            'number' => '+15551234567',
+            'normalized_number' => '+15551234567',
+        ]);
+        $extension->allowedOutboundDids()->attach($did->id);
+        $extension->update(['default_outbound_did_id' => $did->id]);
 
         $esl = Mockery::mock();
         $esl->shouldReceive('connect')->once()->andReturnTrue();
         $esl->shouldReceive('bgapi')->once()->with(
-            'originate {origination_caller_id_name=John Doe,origination_caller_id_number=8801555123456}user/1001@acme.test 2001 XML acme.test'
+            'originate {origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test 2001 XML acme.test'
         )->andReturn('+OK Job-UUID: test');
         $esl->shouldReceive('disconnect')->once();
 
@@ -51,24 +59,33 @@ class CallOriginateApiTest extends TestCase
             ->assertJsonPath('message', 'Call originated.');
     }
 
-    public function test_originate_bridges_via_gateway_when_gateway_id_is_supplied(): void
+    public function test_originate_bridges_via_allowed_gateway_linked_to_selected_did(): void
     {
         $organization = Organization::factory()->create(['domain' => 'acme.test']);
         $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
-        Extension::factory()->create([
+        $gateway = Gateway::factory()->create(['organization_id' => $organization->id]);
+        $extension = Extension::factory()->create([
             'organization_id' => $organization->id,
             'extension' => '1001',
             'first_name' => 'John',
             'effective_caller_id_name' => 'John Doe',
-            'effective_caller_id_number' => '8801555123456',
+            'default_outbound_gateway_id' => $gateway->id,
             'is_active' => true,
         ]);
-        $gateway = Gateway::factory()->create(['organization_id' => $organization->id]);
+        $did = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'gateway_id' => $gateway->id,
+            'number' => '+15551234567',
+            'normalized_number' => '+15551234567',
+        ]);
+        $extension->allowedOutboundDids()->attach($did->id);
+        $extension->allowedOutboundGateways()->attach($gateway->id);
+        $extension->update(['default_outbound_did_id' => $did->id]);
 
         $esl = Mockery::mock();
         $esl->shouldReceive('connect')->once()->andReturnTrue();
         $esl->shouldReceive('bgapi')->once()->with(sprintf(
-            'originate {origination_caller_id_name=John Doe,origination_caller_id_number=8801555123456}user/1001@acme.test &bridge(sofia/gateway/v_%s/+15551234567)',
+            'originate {origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test &bridge(sofia/gateway/v_%s/+15551234567)',
             $gateway->id,
         ))->andReturn('+OK Job-UUID: test');
         $esl->shouldReceive('disconnect')->once();
@@ -78,6 +95,7 @@ class CallOriginateApiTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/organizations/{$organization->id}/calls/originate", [
             'extension' => '1001',
             'destination' => '+15551234567',
+            'did_id' => $did->id,
             'gateway_id' => $gateway->id,
         ]);
 
@@ -85,25 +103,57 @@ class CallOriginateApiTest extends TestCase
             ->assertJsonPath('message', 'Call originated.');
     }
 
-    public function test_originate_rejects_gateway_from_another_organization(): void
+    public function test_originate_rejects_direct_caller_id_number_override(): void
     {
         $organization = Organization::factory()->create(['domain' => 'acme.test']);
-        $otherOrganization = Organization::factory()->create(['domain' => 'other.test']);
         $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
         Extension::factory()->create([
             'organization_id' => $organization->id,
             'extension' => '1001',
             'is_active' => true,
         ]);
-        $gateway = Gateway::factory()->create(['organization_id' => $otherOrganization->id]);
 
         $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/organizations/{$organization->id}/calls/originate", [
             'extension' => '1001',
             'destination' => '+15551234567',
-            'gateway_id' => $gateway->id,
+            'caller_id_number' => '+19999999999',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['gateway_id']);
+            ->assertJsonValidationErrors(['caller_id_number']);
+    }
+
+    public function test_originate_rejects_gateway_not_allowed_for_extension(): void
+    {
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
+        $allowedGateway = Gateway::factory()->create(['organization_id' => $organization->id]);
+        $blockedGateway = Gateway::factory()->create(['organization_id' => $organization->id]);
+        $extension = Extension::factory()->create([
+            'organization_id' => $organization->id,
+            'extension' => '1001',
+            'first_name' => 'John',
+            'is_active' => true,
+            'default_outbound_gateway_id' => $allowedGateway->id,
+        ]);
+        $did = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'gateway_id' => null,
+            'number' => '+15551234567',
+            'normalized_number' => '+15551234567',
+        ]);
+        $extension->allowedOutboundDids()->attach($did->id);
+        $extension->allowedOutboundGateways()->attach($allowedGateway->id);
+        $extension->update(['default_outbound_did_id' => $did->id]);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/organizations/{$organization->id}/calls/originate", [
+            'extension' => '1001',
+            'destination' => '+15551234567',
+            'gateway_id' => $blockedGateway->id,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('message', 'The given data was invalid.')
+            ->assertJsonPath('errors.outbound_policy.0', 'The requested outbound gateway is not allowed for this extension.');
     }
 }

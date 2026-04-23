@@ -2,52 +2,90 @@
 
 namespace App\Services;
 
-use App\Models\DeviceProfile;
 use App\Models\Did;
 use App\Models\Extension;
-use App\Models\User;
+use App\Models\Gateway;
+use InvalidArgumentException;
 
 class PhoneNumberAccessResolver
 {
     /**
-     * @return array{name: string, number: string}
+     * @return array{did:?Did,gateway:?Gateway}
      */
-    public function resolveForExtension(Extension $extension): array
-    {
-        $extension->loadMissing('user', 'ownerDeviceProfile');
+    public function resolve(
+        Extension $extension,
+        ?string $requestedDidId = null,
+        ?string $requestedGatewayId = null,
+    ): array {
+        $extension->loadMissing(['organization', 'defaultOutboundDid.gateway', 'defaultOutboundGateway']);
 
-        $did = $this->resolveDidForExtension($extension);
+        $did = $this->resolveDid($extension, $requestedDidId);
+        $gateway = $this->resolveGateway($extension, $did, $requestedGatewayId);
 
         return [
-            'name' => $did?->description ?: $extension->effective_caller_id_name ?: $extension->first_name ?: $extension->extension,
-            'number' => $did?->number ?: $extension->effective_caller_id_number ?: $extension->extension,
+            'did' => $did,
+            'gateway' => $gateway,
         ];
     }
 
-    public function resolveDidForExtension(Extension $extension): ?Did
+    protected function resolveDid(Extension $extension, ?string $requestedDidId): ?Did
     {
-        if ($extension->user) {
-            return $this->resolveDidForUser($extension->user);
+        if ($requestedDidId === null) {
+            return $extension->defaultOutboundDid;
         }
 
-        if ($extension->ownerDeviceProfile) {
-            return $this->resolveDidForDevice($extension->ownerDeviceProfile);
+        if (! $extension->hasAllowedOutboundDid($requestedDidId)) {
+            throw new InvalidArgumentException('The requested outbound DID is not allowed for this extension.');
         }
 
-        return null;
+        $did = $extension->allowedOutboundDids()
+            ->where('dids.organization_id', $extension->organization_id)
+            ->where('dids.is_active', true)
+            ->with('gateway')
+            ->find($requestedDidId);
+
+        if (! $did) {
+            throw new InvalidArgumentException('The requested outbound DID is invalid for this organization.');
+        }
+
+        return $did;
     }
 
-    public function resolveDidForUser(User $user): ?Did
+    protected function resolveGateway(Extension $extension, ?Did $did, ?string $requestedGatewayId): ?Gateway
     {
-        $user->loadMissing('defaultOutboundDid');
+        $didGatewayId = $did?->gateway_id;
 
-        return $user->resolveOutboundDid();
-    }
+        if ($requestedGatewayId !== null) {
+            if (! $extension->hasAllowedOutboundGateway($requestedGatewayId)) {
+                throw new InvalidArgumentException('The requested outbound gateway is not allowed for this extension.');
+            }
 
-    public function resolveDidForDevice(DeviceProfile $deviceProfile): ?Did
-    {
-        $deviceProfile->loadMissing('defaultOutboundDid');
+            $gateway = $extension->allowedOutboundGateways()
+                ->where('gateways.organization_id', $extension->organization_id)
+                ->where('gateways.is_active', true)
+                ->find($requestedGatewayId);
 
-        return $deviceProfile->resolveOutboundDid();
+            if (! $gateway) {
+                throw new InvalidArgumentException('The requested outbound gateway is invalid for this organization.');
+            }
+
+            if ($didGatewayId !== null && $didGatewayId !== $gateway->id) {
+                throw new InvalidArgumentException('The selected outbound DID is linked to a different gateway.');
+            }
+
+            return $gateway;
+        }
+
+        $defaultGateway = $extension->defaultOutboundGateway;
+
+        if ($didGatewayId !== null) {
+            if ($defaultGateway !== null && $defaultGateway->id !== $didGatewayId) {
+                throw new InvalidArgumentException('The default outbound gateway conflicts with the selected outbound DID gateway.');
+            }
+
+            return $did->gateway;
+        }
+
+        return $defaultGateway;
     }
 }

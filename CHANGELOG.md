@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-04-23 09:25:55 UTC]
+
+### Added
+- **Extension Outbound Policy Enforcement**: Added extension-scoped outbound DID and gateway policy storage, resolver logic, and API exposure so outbound identity and route authorization now live on the extension.
+
+### Changed
+- **Originate Authorization Path**: Reworked outbound call origination to require extension-allowed DID and gateway combinations instead of accepting direct caller-ID number overrides.
+- **Extension Admin API**: Extended extension create/update/list/show payloads with default outbound DID/gateway fields and allowed outbound DID/gateway assignments.
+
+### Fixed
+- **Extension Validation Safety**: Preserved bigint `user_id` validation while enforcing current extension numbering rules in create and update flows.
+- **Outbound Call Coverage**: Updated targeted unit and API tests to verify latest-only extension outbound policy behavior.
+
 ## [2026-04-22]
 
 ### Added

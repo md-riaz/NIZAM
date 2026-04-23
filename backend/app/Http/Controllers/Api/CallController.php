@@ -9,6 +9,7 @@ use App\Services\EslConnectionManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use InvalidArgumentException;
 
 /**
  * API controller for call operations.
@@ -29,7 +30,18 @@ class CallController extends Controller
             'extension' => 'required|string',
             'destination' => 'required|string',
             'caller_id_name' => 'nullable|string',
-            'caller_id_number' => 'nullable|string',
+            'caller_id_number' => [
+                'prohibited',
+            ],
+            'did_id' => [
+                'nullable',
+                'uuid',
+                function ($attribute, $value, $fail) use ($organization) {
+                    if ($value && ! $organization->dids()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('The selected outbound DID is invalid for this organization.');
+                    }
+                },
+            ],
             'gateway_id' => [
                 'nullable',
                 'uuid',
@@ -56,18 +68,23 @@ class CallController extends Controller
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
         }
 
-        $gateway = ! empty($validated['gateway_id'])
-            ? $organization->gateways()->find($validated['gateway_id'])
-            : null;
-
-        $originateString = $this->outboundOriginateService->buildCommand(
-            organization: $organization,
-            extension: $extension,
-            destination: $validated['destination'],
-            callerIdName: $validated['caller_id_name'] ?? null,
-            callerIdNumber: $validated['caller_id_number'] ?? null,
-            gateway: $gateway,
-        );
+        try {
+            $originateString = $this->outboundOriginateService->buildCommand(
+                organization: $organization,
+                extension: $extension,
+                destination: $validated['destination'],
+                callerIdName: $validated['caller_id_name'] ?? null,
+                didId: $validated['did_id'] ?? null,
+                gatewayId: $validated['gateway_id'] ?? null,
+            );
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [
+                    'outbound_policy' => [$exception->getMessage()],
+                ],
+            ], 422);
+        }
 
         $response = $esl->bgapi($originateString);
         $esl->disconnect();

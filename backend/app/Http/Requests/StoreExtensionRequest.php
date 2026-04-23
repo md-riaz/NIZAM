@@ -57,6 +57,48 @@ class StoreExtensionRequest extends FormRequest
                     }
                 },
             ],
+            'default_outbound_did_id' => [
+                'nullable',
+                'uuid',
+                function ($attribute, $value, $fail) use ($organization) {
+                    if ($value && ! $organization->dids()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('Selected default outbound DID is invalid for this organization.');
+                    }
+                },
+            ],
+            'default_outbound_gateway_id' => [
+                'nullable',
+                'uuid',
+                function ($attribute, $value, $fail) use ($organization) {
+                    if ($value && ! $organization->gateways()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('Selected default outbound gateway is invalid for this organization.');
+                    }
+                },
+            ],
+            'allowed_outbound_did_ids' => [
+                'sometimes',
+                'array',
+            ],
+            'allowed_outbound_did_ids.*' => [
+                'uuid',
+                function ($attribute, $value, $fail) use ($organization) {
+                    if (! $organization->dids()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('Selected allowed outbound DID is invalid for this organization.');
+                    }
+                },
+            ],
+            'allowed_outbound_gateway_ids' => [
+                'sometimes',
+                'array',
+            ],
+            'allowed_outbound_gateway_ids.*' => [
+                'uuid',
+                function ($attribute, $value, $fail) use ($organization) {
+                    if (! $organization->gateways()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('Selected allowed outbound gateway is invalid for this organization.');
+                    }
+                },
+            ],
             'extension' => [
                 'required',
                 'string',
@@ -89,6 +131,19 @@ class StoreExtensionRequest extends FormRequest
         return [function ($validator) {
             if ($this->filled('user_id') && $this->filled('device_profile_id')) {
                 $validator->errors()->add('device_profile_id', 'Extension cannot belong to both a user and a device.');
+            }
+
+            $allowedDidIds = collect($this->input('allowed_outbound_did_ids', []))->filter();
+            $allowedGatewayIds = collect($this->input('allowed_outbound_gateway_ids', []))->filter();
+            $defaultDidId = $this->input('default_outbound_did_id');
+            $defaultGatewayId = $this->input('default_outbound_gateway_id');
+
+            if ($defaultDidId && ! $allowedDidIds->contains($defaultDidId)) {
+                $validator->errors()->add('default_outbound_did_id', 'Default outbound DID must also be listed in allowed outbound DIDs.');
+            }
+
+            if ($defaultGatewayId && ! $allowedGatewayIds->contains($defaultGatewayId)) {
+                $validator->errors()->add('default_outbound_gateway_id', 'Default outbound gateway must also be listed in allowed outbound gateways.');
             }
         }];
     }

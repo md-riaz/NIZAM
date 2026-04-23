@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
@@ -25,6 +26,8 @@ class Extension extends Model
         'organization_id',
         'user_id',
         'device_profile_id',
+        'default_outbound_did_id',
+        'default_outbound_gateway_id',
         'extension',
         'password',
         'first_name',
@@ -68,6 +71,36 @@ class Extension extends Model
             'is_primary' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function defaultOutboundDid(): BelongsTo
+    {
+        return $this->belongsTo(Did::class, 'default_outbound_did_id');
+    }
+
+    public function defaultOutboundGateway(): BelongsTo
+    {
+        return $this->belongsTo(Gateway::class, 'default_outbound_gateway_id');
+    }
+
+    public function allowedOutboundDids(): BelongsToMany
+    {
+        return $this->belongsToMany(Did::class, 'extension_outbound_did', 'extension_id', 'did_id');
+    }
+
+    public function allowedOutboundGateways(): BelongsToMany
+    {
+        return $this->belongsToMany(Gateway::class, 'extension_outbound_gateway', 'extension_id', 'gateway_id');
+    }
+
+    public function hasAllowedOutboundDid(string $didId): bool
+    {
+        return $this->allowedOutboundDids()->whereKey($didId)->exists();
+    }
+
+    public function hasAllowedOutboundGateway(string $gatewayId): bool
+    {
+        return $this->allowedOutboundGateways()->whereKey($gatewayId)->exists();
     }
 
     public function organization(): BelongsTo
