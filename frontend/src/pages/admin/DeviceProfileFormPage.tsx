@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
-import type { DeviceProfile, Did, Extension } from '@/types/models';
+import type { DeviceProfile, Extension } from '@/types/models';
 
 const deviceProfileSchema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -32,24 +32,14 @@ const deviceProfileSchema = z.object({
     mac_address: z.string().optional(),
     template: z.string().optional(),
     extension_id: z.string().optional(),
-    phone_number_ids: z.array(z.string()).default([]),
-    default_outbound_did_id: z.string().optional(),
     is_active: z.boolean(),
-}).superRefine((values, ctx) => {
-    if (values.default_outbound_did_id && values.default_outbound_did_id !== 'none' && !values.phone_number_ids.includes(values.default_outbound_did_id)) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['default_outbound_did_id'],
-            message: 'Default outbound number must also be granted to this device.',
-        });
-    }
 });
 
 type DeviceProfileFormValues = z.infer<typeof deviceProfileSchema>;
 
 export default function DeviceProfileFormPage() {
     const { id } = useParams<{ id: string }>();
-    const isEdit = Boolean(id);
+    const isEdit = Boolean(id && id !== 'new');
     const navigate = useNavigate();
     const { activeOrganization } = useOrganization();
 
@@ -61,8 +51,6 @@ export default function DeviceProfileFormPage() {
             mac_address: '',
             template: '',
             extension_id: 'none',
-            phone_number_ids: [],
-            default_outbound_did_id: 'none',
             is_active: true,
         },
     });
@@ -92,17 +80,6 @@ export default function DeviceProfileFormPage() {
         enabled: !!activeOrganization,
     });
 
-    const { data: phoneNumbers = [] } = useQuery<Did[]>({
-        queryKey: ['dids', activeOrganization?.id, 'device-profile-options'],
-        queryFn: async () => {
-            if (!activeOrganization) return [];
-            const response = await api.get<{ data: Did[] }>(`organizations/${activeOrganization.id}/dids`, {
-                params: { per_page: 500 },
-            });
-            return response.data.data;
-        },
-        enabled: !!activeOrganization,
-    });
 
     useEffect(() => {
         if (deviceProfile) {
@@ -112,8 +89,6 @@ export default function DeviceProfileFormPage() {
                 mac_address: deviceProfile.mac_address ?? '',
                 template: deviceProfile.template ?? '',
                 extension_id: deviceProfile.extension_id ?? 'none',
-                phone_number_ids: deviceProfile.phone_numbers?.map((phoneNumber) => phoneNumber.id) ?? [],
-                default_outbound_did_id: deviceProfile.default_outbound_did_id ?? 'none',
                 is_active: deviceProfile.is_active ?? true,
             });
         }
@@ -126,9 +101,6 @@ export default function DeviceProfileFormPage() {
             const payload = {
                 ...values,
                 extension_id: values.extension_id && values.extension_id !== 'none' ? values.extension_id : null,
-                default_outbound_did_id: values.default_outbound_did_id && values.default_outbound_did_id !== 'none'
-                    ? values.default_outbound_did_id
-                    : null,
             };
 
             if (isEdit) {
@@ -142,13 +114,7 @@ export default function DeviceProfileFormPage() {
         onSuccess: () => navigate('/admin/device-profiles'),
     });
 
-    const selectedPhoneNumberIds = form.watch('phone_number_ids');
-
     if (!activeOrganization) return null;
-
-    const grantedPhoneNumbers = phoneNumbers.filter((phoneNumber) =>
-        selectedPhoneNumberIds.includes(phoneNumber.id),
-    );
 
     return (
         <div className="space-y-6 p-6 lg:p-8">
@@ -164,7 +130,7 @@ export default function DeviceProfileFormPage() {
                 <CardHeader>
                     <CardTitle>Device Profile</CardTitle>
                     <CardDescription>
-                        Configure shared or standalone device provisioning and outbound caller-ID access.
+                        Configure shared or standalone device provisioning and assigned extension.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -272,83 +238,8 @@ export default function DeviceProfileFormPage() {
                                         )}
                                     />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="default_outbound_did_id"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Default Outbound Number</FormLabel>
-                                                <Select
-                                                    onValueChange={(value) => {
-                                                        if (value !== 'none' && !grantedPhoneNumbers.some((phoneNumber) => phoneNumber.id === value)) {
-                                                            return;
-                                                        }
-                                                        field.onChange(value);
-                                                    }}
-                                                    value={field.value}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select a default outbound number" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="none">No default outbound number</SelectItem>
-                                                        {grantedPhoneNumbers.map((phoneNumber) => (
-                                                            <SelectItem key={phoneNumber.id} value={phoneNumber.id}>
-                                                                {phoneNumber.description ? `${phoneNumber.number} — ${phoneNumber.description}` : phoneNumber.number}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormDescription>
-                                                    Default must be chosen from this device&apos;s granted phone numbers.
-                                                </FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
                                 </div>
 
-                                <FormField
-                                    control={form.control}
-                                    name="phone_number_ids"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-3">
-                                            <div>
-                                                <FormLabel>Granted Phone Numbers</FormLabel>
-                                                <FormDescription>
-                                                    These numbers become available outbound caller-ID options for this device.
-                                                </FormDescription>
-                                            </div>
-                                            <div className="space-y-3 rounded-md border p-4">
-                                                {phoneNumbers.length === 0 ? (
-                                                    <p className="text-sm text-muted-foreground">No phone numbers available in this organization.</p>
-                                                ) : (
-                                                    phoneNumbers.map((phoneNumber) => (
-                                                        <label key={phoneNumber.id} className="flex items-start gap-3 text-sm">
-                                                            <Checkbox
-                                                                checked={field.value.includes(phoneNumber.id)}
-                                                                onCheckedChange={(checked) => {
-                                                                    field.onChange(
-                                                                        checked
-                                                                            ? [...field.value, phoneNumber.id]
-                                                                            : field.value.filter((value) => value !== phoneNumber.id),
-                                                                    );
-                                                                    if (form.getValues('default_outbound_did_id') === phoneNumber.id && !checked) {
-                                                                        form.setValue('default_outbound_did_id', 'none');
-                                                                    }
-                                                                }}
-                                                            />
-                                                            <span>{phoneNumber.description ? `${phoneNumber.number} — ${phoneNumber.description}` : phoneNumber.number}</span>
-                                                        </label>
-                                                    ))
-                                                )}
-                                            </div>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
 
                                 <FormField
                                     control={form.control}

@@ -64,7 +64,6 @@ export default function DeviceProfilesPage() {
                             <TableHead>Vendor</TableHead>
                             <TableHead>MAC Address</TableHead>
                             <TableHead>Assigned Extension</TableHead>
-                            <TableHead>Default Outbound Number</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="w-[100px] text-right">Actions</TableHead>
                         </TableRow>
@@ -72,39 +71,29 @@ export default function DeviceProfilesPage() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                                     Loading devices...
                                 </TableCell>
                             </TableRow>
                         ) : deviceProfiles.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                                     No devices found. Create one to get started.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            deviceProfiles.map((deviceProfile) => {
-                                const defaultDid = deviceProfile.phone_numbers.find(
-                                    (phoneNumber) => phoneNumber.id === deviceProfile.default_outbound_did_id,
-                                );
-
-                                return (
-                                    <TableRow key={deviceProfile.id}>
-                                        <TableCell className="font-medium">{deviceProfile.name}</TableCell>
-                                        <TableCell>{deviceProfile.vendor || '-'}</TableCell>
-                                        <TableCell>{deviceProfile.mac_address || '-'}</TableCell>
-                                        <TableCell>{deviceProfile.extension_id || '-'}</TableCell>
-                                        <TableCell>
-                                            {defaultDid
-                                                ? (defaultDid.description ? `${defaultDid.number} — ${defaultDid.description}` : defaultDid.number)
-                                                : '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={deviceProfile.is_active ? 'default' : 'secondary'}>
-                                                {deviceProfile.is_active ? 'Active' : 'Inactive'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
+                            deviceProfiles.map((deviceProfile) => (
+                                <TableRow key={deviceProfile.id}>
+                                    <TableCell className="font-medium">{deviceProfile.name}</TableCell>
+                                    <TableCell>{deviceProfile.vendor || '-'}</TableCell>
+                                    <TableCell>{deviceProfile.mac_address || '-'}</TableCell>
+                                    <TableCell>{deviceProfile.extension_id || '-'}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={deviceProfile.is_active ? 'default' : 'secondary'}>
+                                            {deviceProfile.is_active ? 'Active' : 'Inactive'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Button variant="ghost" size="icon" asChild>
                                                     <Link to={`/admin/device-profiles/${deviceProfile.id}/edit`}>
@@ -121,10 +110,9 @@ export default function DeviceProfilesPage() {
                                                     <span className="sr-only">Delete device profile</span>
                                                 </Button>
                                             </div>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })
+                                    </TableCell>
+                                </TableRow>
+                            ))
                         )}
                     </TableBody>
                 </Table>

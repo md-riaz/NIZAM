@@ -103,18 +103,6 @@ export default function ExtensionDetailPage() {
                                 <p className="text-sm text-muted-foreground">Caller ID name</p>
                                 <p className="mt-1 text-sm font-medium">{extension.effective_caller_id_name ?? '—'}</p>
                             </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Caller ID number</p>
-                                <p className="mt-1 text-sm font-medium">{extension.effective_caller_id_number ?? '—'}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Outbound name</p>
-                                <p className="mt-1 text-sm font-medium">{extension.outbound_caller_id_name ?? '—'}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Outbound number</p>
-                                <p className="mt-1 text-sm font-medium">{extension.outbound_caller_id_number ?? '—'}</p>
-                            </div>
                         </CardContent>
                     </Card>
 

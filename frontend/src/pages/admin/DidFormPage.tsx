@@ -37,7 +37,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Did, DeviceProfile, Extension, Flow, Gateway, RingGroup, Team, User } from '@/types/models';
+import type { Did, Extension, Flow, Gateway, RingGroup } from '@/types/models';
 
 const didSchema = z.object({
     number: z.string().min(1, 'Number is required'),
@@ -46,9 +46,6 @@ const didSchema = z.object({
         errorMap: () => ({ message: 'Destination type is required' }),
     }),
     destination_id: z.string().uuid('Destination is required'),
-    user_ids: z.array(z.string()).default([]),
-    team_ids: z.array(z.string()).default([]),
-    device_profile_ids: z.array(z.string()).default([]),
     is_active: z.boolean(),
 });
 
@@ -126,9 +123,6 @@ function toDidFormValues(did?: DidResponse | null): DidFormValues {
         description: did?.description || '',
         destination_type: destinationType === 'flow' || destinationType === 'ring_group' ? destinationType : 'extension',
         destination_id: isUuid(did?.destination_id) ? did.destination_id : '00000000-0000-0000-0000-000000000000',
-        user_ids: did?.users?.map((user) => user.id) ?? [],
-        team_ids: did?.teams?.map((team) => team.id) ?? [],
-        device_profile_ids: did?.device_profiles?.map((deviceProfile) => deviceProfile.id) ?? [],
         is_active: did?.is_active ?? true,
     };
 }
@@ -253,10 +247,11 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 
 export default function DidFormPage() {
     const { id } = useParams<{ id: string }>();
+    const isEdit = Boolean(id && id !== 'new');
     const navigate = useNavigate();
     const { activeOrganization, organizationApiPrefix } = useOrganization();
     const queryClient = useQueryClient();
-    const [savedDidId, setSavedDidId] = useState<string | null>(id ?? null);
+    const [savedDidId, setSavedDidId] = useState<string | null>(isEdit ? (id ?? null) : null);
     const [activeTab, setActiveTab] = useState<'number' | 'provider'>('number');
     const [isProviderPasswordVisible, setIsProviderPasswordVisible] = useState(false);
 
@@ -269,9 +264,6 @@ export default function DidFormPage() {
             description: '',
             destination_type: 'extension',
             destination_id: '00000000-0000-0000-0000-000000000000',
-            user_ids: [],
-            team_ids: [],
-            device_profile_ids: [],
             is_active: true,
         },
     });
@@ -291,7 +283,7 @@ export default function DidFormPage() {
             const res = await api.get(`${organizationApiPrefix}/dids/${currentDidId}`);
             return res.data.data;
         },
-        enabled: !!currentDidId && !!activeOrganization,
+        enabled: isEdit && !!currentDidId && !!activeOrganization,
     });
 
     const { data: extensions = [] } = useQuery<Extension[]>({
@@ -321,60 +313,6 @@ export default function DidFormPage() {
         enabled: !!activeOrganization,
     });
 
-    const { data: users = [] } = useQuery<User[]>({
-        queryKey: ['users', activeOrganization?.id, 'did-access-options'],
-        queryFn: async () => {
-            const res = await api.get<{ data: User[] }>('users', {
-                params: { organization_id: activeOrganization?.id, per_page: 500 },
-            });
-            return res.data.data;
-        },
-        enabled: !!activeOrganization,
-    });
-
-    const { data: teams = [] } = useQuery<Team[]>({
-        queryKey: ['teams', activeOrganization?.id, 'did-access-options'],
-        queryFn: async () => {
-            const res = await api.get<{ data: Team[] }>(`${organizationApiPrefix}/teams`);
-            return res.data.data;
-        },
-        enabled: !!activeOrganization,
-    });
-
-    const { data: deviceProfiles = [] } = useQuery<DeviceProfile[]>({
-        queryKey: ['device-profiles', activeOrganization?.id, 'did-access-options'],
-        queryFn: async () => {
-            const res = await api.get<{ data: DeviceProfile[] }>(`${organizationApiPrefix}/device-profiles`, {
-                params: { per_page: 500 },
-            });
-            return res.data.data;
-        },
-        enabled: !!activeOrganization,
-    });
-
-    const toggleSelection = (selected: string[], id: string, checked: boolean) =>
-        checked ? [...selected, id] : selected.filter((value) => value !== id);
-
-    const renderAssignmentCheckboxes = (
-        items: Array<{ id: string; label: string }>,
-        selected: string[],
-        onChange: (next: string[]) => void,
-        emptyLabel: string,
-    ) => {
-        if (items.length === 0) {
-            return <p className="text-sm text-muted-foreground">{emptyLabel}</p>;
-        }
-
-        return items.map((item) => (
-            <label key={item.id} className="flex items-start gap-3 text-sm">
-                <Checkbox
-                    checked={selected.includes(item.id)}
-                    onCheckedChange={(checked) => onChange(toggleSelection(selected, item.id, Boolean(checked)))}
-                />
-                <span>{item.label}</span>
-            </label>
-        ));
-    };
 
     const destinationOptions = useMemo(
         () => getDestinationOptions(destType, extensions, ringGroups, flows),
@@ -474,7 +412,7 @@ export default function DidFormPage() {
                 const errors = data && typeof data === 'object' ? Reflect.get(data, 'errors') : null;
 
                 if (errors && typeof errors === 'object') {
-                    for (const fieldName of ['number', 'description', 'destination_type', 'destination_id', 'user_ids', 'team_ids', 'device_profile_ids'] as const) {
+                    for (const fieldName of ['number', 'description', 'destination_type', 'destination_id'] as const) {
                         const fieldErrors = Reflect.get(errors, fieldName);
                         const fieldMessage = Array.isArray(fieldErrors)
                             ? fieldErrors.find((value) => typeof value === 'string')
@@ -759,74 +697,6 @@ export default function DidFormPage() {
                                                                     ? 'Choose ring group that should receive inbound calls.'
                                                                     : 'Choose extension that should receive inbound calls.'}
                                                         </FormDescription>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-6 lg:grid-cols-3">
-                                            <FormField
-                                                control={numberForm.control}
-                                                name="user_ids"
-                                                render={({ field }) => (
-                                                    <FormItem className="space-y-3">
-                                                        <div>
-                                                            <FormLabel>Granted users</FormLabel>
-                                                            <FormDescription>Direct user grants.</FormDescription>
-                                                        </div>
-                                                        <div className="space-y-3 rounded-md border p-4">
-                                                            {renderAssignmentCheckboxes(
-                                                                users.map((user) => ({ id: user.id, label: user.name || user.email })),
-                                                                field.value,
-                                                                field.onChange,
-                                                                'No users available in this organization.',
-                                                            )}
-                                                        </div>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <FormField
-                                                control={numberForm.control}
-                                                name="team_ids"
-                                                render={({ field }) => (
-                                                    <FormItem className="space-y-3">
-                                                        <div>
-                                                            <FormLabel>Granted teams</FormLabel>
-                                                            <FormDescription>Team grants flow through to member users.</FormDescription>
-                                                        </div>
-                                                        <div className="space-y-3 rounded-md border p-4">
-                                                            {renderAssignmentCheckboxes(
-                                                                teams.map((team) => ({ id: team.id, label: team.name })),
-                                                                field.value,
-                                                                field.onChange,
-                                                                'No teams available in this organization.',
-                                                            )}
-                                                        </div>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <FormField
-                                                control={numberForm.control}
-                                                name="device_profile_ids"
-                                                render={({ field }) => (
-                                                    <FormItem className="space-y-3">
-                                                        <div>
-                                                            <FormLabel>Granted devices</FormLabel>
-                                                            <FormDescription>Direct device grants for shared endpoints.</FormDescription>
-                                                        </div>
-                                                        <div className="space-y-3 rounded-md border p-4">
-                                                            {renderAssignmentCheckboxes(
-                                                                deviceProfiles.map((deviceProfile) => ({ id: deviceProfile.id, label: deviceProfile.name })),
-                                                                field.value,
-                                                                field.onChange,
-                                                                'No devices available in this organization.',
-                                                            )}
-                                                        </div>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}

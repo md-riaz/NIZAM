@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-04-23 22:51:55 UTC]
+
+### Changed
+- **Extension Outbound Policy Admin UI**: Reworked extension create/edit screens to manage allowed/default outbound DIDs and gateways directly on the extension, keeping ownership assignment intact.
+- **Inbound-Only Team Admin**: Replaced stale outbound number assignment controls on team admin screens with inbound routing schedule and holiday calendar selectors.
+- **Frontend Model Contracts**: Updated shared frontend PBX models so users, device profiles, teams, DIDs, and extensions align with extension-centric outbound policy resources.
+
+### Fixed
+- **Stale Direct Grant Forms**: Removed obsolete direct outbound DID grant controls from user, device profile, and DID admin forms so they no longer submit deprecated fields.
+- **Extension/List Detail Drift**: Removed legacy outbound caller-ID number displays from extension list/detail views and device profile list views to match current API responses.
+- **Admin Create Route Stability**: Fixed admin form edit/create detection so create routes stop behaving like edit pages during load.
+
 ## [2026-04-23 12:08:13 UTC]
 
 ### Changed

@@ -188,9 +188,7 @@ export default function ExtensionsPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {ext.effective_caller_id_name || ext.effective_caller_id_number
-                                                    ? `${ext.effective_caller_id_name ?? ''} ${ext.effective_caller_id_number ?? ''}`.trim()
-                                                    : '—'}
+                                                {ext.effective_caller_id_name ?? '—'}
                                             </TableCell>
                                             <TableCell>
                                                 {isOnline ? (

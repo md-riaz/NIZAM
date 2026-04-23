@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/select';
 import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
-import type { DeviceProfile, User } from '@/types/models';
+import type { DeviceProfile, Did, Gateway, User } from '@/types/models';
 
 const ownerTypes = ['unassigned', 'user', 'device'] as const;
 
@@ -47,9 +47,10 @@ const extensionSchema = z.object({
     user_id: z.string().optional(),
     device_profile_id: z.string().optional(),
     effective_caller_id_name: z.string().optional(),
-    effective_caller_id_number: z.string().optional(),
-    outbound_caller_id_name: z.string().optional(),
-    outbound_caller_id_number: z.string().optional(),
+    allowed_outbound_did_ids: z.array(z.string()).default([]),
+    default_outbound_did_id: z.string().optional(),
+    allowed_outbound_gateway_ids: z.array(z.string()).default([]),
+    default_outbound_gateway_id: z.string().optional(),
     voicemail_enabled: z.boolean(),
     voicemail_pin: z.string().optional(),
     is_active: z.boolean(),
@@ -67,6 +68,22 @@ const extensionSchema = z.object({
             code: z.ZodIssueCode.custom,
             path: ['device_profile_id'],
             message: 'Select a device for this shared extension.',
+        });
+    }
+
+    if (values.default_outbound_did_id && values.default_outbound_did_id !== 'none' && !values.allowed_outbound_did_ids.includes(values.default_outbound_did_id)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['default_outbound_did_id'],
+            message: 'Default outbound number must be included in allowed outbound numbers.',
+        });
+    }
+
+    if (values.default_outbound_gateway_id && values.default_outbound_gateway_id !== 'none' && !values.allowed_outbound_gateway_ids.includes(values.default_outbound_gateway_id)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['default_outbound_gateway_id'],
+            message: 'Default outbound gateway must be included in allowed outbound gateways.',
         });
     }
 });
@@ -136,7 +153,7 @@ const applyServerErrors = (
             return;
         }
 
-        if (key === 'user_id' || key === 'device_profile_id' || key === 'extension' || key === 'password' || key === 'first_name' || key === 'last_name' || key === 'voicemail_pin') {
+        if (key === 'user_id' || key === 'device_profile_id' || key === 'extension' || key === 'password' || key === 'first_name' || key === 'last_name' || key === 'voicemail_pin' || key === 'default_outbound_did_id' || key === 'default_outbound_gateway_id') {
             setError(key, { type: 'server', message });
         }
     });
@@ -173,7 +190,7 @@ type ExtensionFormValues = z.infer<typeof extensionSchema>;
 
 export default function ExtensionFormPage() {
     const { id } = useParams<{ id: string }>();
-    const isEdit = Boolean(id);
+    const isEdit = Boolean(id && id !== 'new');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { activeOrganization, organizationApiPrefix } = useOrganization();
@@ -189,9 +206,10 @@ export default function ExtensionFormPage() {
             user_id: '',
             device_profile_id: '',
             effective_caller_id_name: '',
-            effective_caller_id_number: '',
-            outbound_caller_id_name: '',
-            outbound_caller_id_number: '',
+            allowed_outbound_did_ids: [],
+            default_outbound_did_id: 'none',
+            allowed_outbound_gateway_ids: [],
+            default_outbound_gateway_id: 'none',
             voicemail_enabled: true,
             voicemail_pin: '',
             is_active: true,
@@ -204,7 +222,7 @@ export default function ExtensionFormPage() {
             const response = await api.get(`${organizationApiPrefix}/extensions/${id}`);
             return response.data.data;
         },
-        enabled: Boolean(id) && Boolean(activeOrganization),
+        enabled: isEdit && Boolean(activeOrganization),
     });
 
     const { data: users = [], isLoading: isLoadingUsers } = useQuery({
@@ -229,6 +247,28 @@ export default function ExtensionFormPage() {
         enabled: Boolean(activeOrganization),
     });
 
+    const { data: dids = [] } = useQuery({
+        queryKey: ['dids', activeOrganization?.id, 'extension-outbound-options'],
+        queryFn: async () => {
+            const response = await api.get<{ data: Did[] }>(`${organizationApiPrefix}/dids`, {
+                params: { per_page: 500 },
+            });
+            return response.data.data;
+        },
+        enabled: Boolean(activeOrganization),
+    });
+
+    const { data: gateways = [] } = useQuery({
+        queryKey: ['gateways', activeOrganization?.id, 'extension-outbound-options'],
+        queryFn: async () => {
+            const response = await api.get<{ data: Gateway[] }>(`${organizationApiPrefix}/gateways`, {
+                params: { per_page: 500 },
+            });
+            return response.data.data;
+        },
+        enabled: Boolean(activeOrganization),
+    });
+
     useEffect(() => {
         if (extension) {
             form.reset({
@@ -240,9 +280,10 @@ export default function ExtensionFormPage() {
                 user_id: getAssignedUserId(extension),
                 device_profile_id: getAssignedDeviceId(extension),
                 effective_caller_id_name: extension.effective_caller_id_name ?? '',
-                effective_caller_id_number: extension.effective_caller_id_number ?? '',
-                outbound_caller_id_name: extension.outbound_caller_id_name ?? '',
-                outbound_caller_id_number: extension.outbound_caller_id_number ?? '',
+                allowed_outbound_did_ids: extension.allowed_outbound_did_ids ?? [],
+                default_outbound_did_id: extension.default_outbound_did_id ?? 'none',
+                allowed_outbound_gateway_ids: extension.allowed_outbound_gateway_ids ?? [],
+                default_outbound_gateway_id: extension.default_outbound_gateway_id ?? 'none',
                 voicemail_enabled: extension.voicemail_enabled ?? true,
                 voicemail_pin: extension.voicemail_pin ?? '',
                 is_active: extension.is_active ?? true,
@@ -252,7 +293,15 @@ export default function ExtensionFormPage() {
 
     const mutation = useMutation({
         mutationFn: async (values: ExtensionFormValues) => {
-            const payload = normalizeOwnerPayload(values);
+            const payload = {
+                ...normalizeOwnerPayload(values),
+                default_outbound_did_id: values.default_outbound_did_id && values.default_outbound_did_id !== 'none'
+                    ? values.default_outbound_did_id
+                    : null,
+                default_outbound_gateway_id: values.default_outbound_gateway_id && values.default_outbound_gateway_id !== 'none'
+                    ? values.default_outbound_gateway_id
+                    : null,
+            };
 
             if (isEdit) {
                 return api.put(`${organizationApiPrefix}/extensions/${id}`, payload);
@@ -312,6 +361,9 @@ export default function ExtensionFormPage() {
         }
     }, [form, ownerType, selectedUserId, users]);
 
+    const allowedOutboundDids = dids.filter((did) => did.is_active ?? true);
+    const allowedOutboundGateways = gateways.filter((gateway) => gateway.is_active ?? gateway.enabled ?? true);
+
     const availableUsers = users;
 
     const availableDeviceProfiles = deviceProfiles.filter((device) => {
@@ -355,7 +407,7 @@ export default function ExtensionFormPage() {
                 <CardHeader>
                     <CardTitle>Extension profile</CardTitle>
                     <CardDescription>
-                        Configure SIP credentials, user details, and caller ID information.
+                        Configure SIP credentials, ownership, and outbound DID and gateway policy.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -543,44 +595,163 @@ export default function ExtensionFormPage() {
                                             </FormItem>
                                         )}
                                     />
+                                </div>
+
+                                <div className="grid gap-6 lg:grid-cols-2">
                                     <FormField
                                         control={form.control}
-                                        name="effective_caller_id_number"
+                                        name="allowed_outbound_did_ids"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Caller ID number</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="1001" {...field} />
-                                                </FormControl>
+                                            <FormItem className="space-y-3">
+                                                <div>
+                                                    <FormLabel>Allowed outbound numbers</FormLabel>
+                                                    <FormDescription>
+                                                        Select numbers this extension can present on outbound calls.
+                                                    </FormDescription>
+                                                </div>
+                                                <div className="space-y-3 rounded-md border p-4">
+                                                    {allowedOutboundDids.length === 0 ? (
+                                                        <p className="text-sm text-muted-foreground">No active numbers available in this organization.</p>
+                                                    ) : (
+                                                        allowedOutboundDids.map((did) => (
+                                                            <label key={did.id} className="flex items-start gap-3 text-sm">
+                                                                <Checkbox
+                                                                    checked={field.value.includes(did.id)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        field.onChange(
+                                                                            checked
+                                                                                ? [...field.value, did.id]
+                                                                                : field.value.filter((value) => value !== did.id),
+                                                                        );
+                                                                        if (form.getValues('default_outbound_did_id') === did.id && !checked) {
+                                                                            form.setValue('default_outbound_did_id', 'none');
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <span>{did.description ? `${did.number} — ${did.description}` : did.number}</span>
+                                                            </label>
+                                                        ))
+                                                    )}
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                     <FormField
                                         control={form.control}
-                                        name="outbound_caller_id_name"
+                                        name="allowed_outbound_gateway_ids"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Outbound caller ID name</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Support" {...field} />
-                                                </FormControl>
+                                            <FormItem className="space-y-3">
+                                                <div>
+                                                    <FormLabel>Allowed outbound gateways</FormLabel>
+                                                    <FormDescription>
+                                                        Select gateways this extension can use for outbound routing.
+                                                    </FormDescription>
+                                                </div>
+                                                <div className="space-y-3 rounded-md border p-4">
+                                                    {allowedOutboundGateways.length === 0 ? (
+                                                        <p className="text-sm text-muted-foreground">No active gateways available in this organization.</p>
+                                                    ) : (
+                                                        allowedOutboundGateways.map((gateway) => (
+                                                            <label key={gateway.id} className="flex items-start gap-3 text-sm">
+                                                                <Checkbox
+                                                                    checked={field.value.includes(gateway.id)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        field.onChange(
+                                                                            checked
+                                                                                ? [...field.value, gateway.id]
+                                                                                : field.value.filter((value) => value !== gateway.id),
+                                                                        );
+                                                                        if (form.getValues('default_outbound_gateway_id') === gateway.id && !checked) {
+                                                                            form.setValue('default_outbound_gateway_id', 'none');
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <span>{gateway.name}</span>
+                                                            </label>
+                                                        ))
+                                                    )}
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
+                                </div>
+
+                                <div className="grid gap-6 md:grid-cols-2">
                                     <FormField
                                         control={form.control}
-                                        name="outbound_caller_id_number"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Outbound caller ID number</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="18005550123" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
+                                        name="default_outbound_did_id"
+                                        render={({ field }) => {
+                                            const availableDefaultDids = allowedOutboundDids.filter((did) =>
+                                                form.getValues('allowed_outbound_did_ids').includes(did.id),
+                                            );
+
+                                            return (
+                                                <FormItem>
+                                                    <FormLabel>Default outbound number</FormLabel>
+                                                    <Select
+                                                        onValueChange={field.onChange}
+                                                        value={field.value || 'none'}
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select default outbound number" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="none">No default outbound number</SelectItem>
+                                                            {availableDefaultDids.map((did) => (
+                                                                <SelectItem key={did.id} value={did.id}>
+                                                                    {did.description ? `${did.number} — ${did.description}` : did.number}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormDescription>
+                                                        Default must come from this extension&apos;s allowed outbound numbers.
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            );
+                                        }}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="default_outbound_gateway_id"
+                                        render={({ field }) => {
+                                            const availableDefaultGateways = allowedOutboundGateways.filter((gateway) =>
+                                                form.getValues('allowed_outbound_gateway_ids').includes(gateway.id),
+                                            );
+
+                                            return (
+                                                <FormItem>
+                                                    <FormLabel>Default outbound gateway</FormLabel>
+                                                    <Select
+                                                        onValueChange={field.onChange}
+                                                        value={field.value || 'none'}
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select default outbound gateway" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="none">No default outbound gateway</SelectItem>
+                                                            {availableDefaultGateways.map((gateway) => (
+                                                                <SelectItem key={gateway.id} value={gateway.id}>
+                                                                    {gateway.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormDescription>
+                                                        Default must come from this extension&apos;s allowed outbound gateways.
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            );
+                                        }}
                                     />
                                 </div>
 
