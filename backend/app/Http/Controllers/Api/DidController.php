@@ -28,7 +28,7 @@ class DidController extends Controller
         $this->authorize('viewAny', Did::class);
 
         return DidResource::collection(
-            $organization->dids()->with(['gateway', 'users', 'teams', 'deviceProfiles'])->orderBy('number')->paginate(15)
+            $organization->dids()->with('gateway')->orderBy('number')->paginate(15)
         );
     }
 
@@ -45,18 +45,14 @@ class DidController extends Controller
             ], 422);
         }
 
-        $validated = $request->validated();
-        $did = $organization->dids()->create(collect($validated)->except(['user_ids', 'team_ids', 'device_profile_ids'])->all());
-        $did->users()->sync($validated['user_ids'] ?? []);
-        $did->teams()->sync($validated['team_ids'] ?? []);
-        $did->deviceProfiles()->sync($validated['device_profile_ids'] ?? []);
+        $did = $organization->dids()->create($request->validated());
 
         $this->webhookDispatcher->dispatch($organization->id, 'did.created', [
             'did_id' => $did->id,
             'number' => $did->number,
         ]);
 
-        return (new DidResource($did))->response()->setStatusCode(201);
+        return (new DidResource($did->load('gateway')))->response()->setStatusCode(201);
     }
 
     /**
@@ -70,7 +66,7 @@ class DidController extends Controller
 
         $this->authorize('view', $did);
 
-        $did->loadMissing(['gateway', 'users', 'teams', 'deviceProfiles']);
+        $did->loadMissing('gateway');
 
         return new DidResource($did);
     }
@@ -86,18 +82,14 @@ class DidController extends Controller
 
         $this->authorize('update', $did);
 
-        $validated = $request->validated();
-        $did->update(collect($validated)->except(['user_ids', 'team_ids', 'device_profile_ids'])->all());
-        $did->users()->sync($validated['user_ids'] ?? []);
-        $did->teams()->sync($validated['team_ids'] ?? []);
-        $did->deviceProfiles()->sync($validated['device_profile_ids'] ?? []);
+        $did->update($request->validated());
 
         $this->webhookDispatcher->dispatch($organization->id, 'did.updated', [
             'did_id' => $did->id,
             'number' => $did->number,
         ]);
 
-        $did->loadMissing(['gateway', 'users', 'teams', 'deviceProfiles']);
+        $did->loadMissing('gateway');
 
         return new DidResource($did);
     }

@@ -41,12 +41,34 @@ class ProvisioningService
                 '{{PASSWORD}}' => $extension->password,
                 '{{DISPLAY_NAME}}' => trim(($extension->first_name ?? '').' '.($extension->last_name ?? '')),
                 '{{CALLER_ID_NAME}}' => $extension->effective_caller_id_name ?? $extension->first_name ?? '',
-                '{{CALLER_ID_NUMBER}}' => $extension->effective_caller_id_number ?? $extension->extension,
+                '{{CALLER_ID_NUMBER}}' => $this->resolveProvisioningCallerIdNumber($extension),
                 '{{VOICEMAIL_ENABLED}}' => $extension->voicemail_enabled ? 'true' : 'false',
             ]);
         }
 
         return str_replace(array_keys($variables), array_values($variables), $template);
+    }
+
+    protected function resolveProvisioningCallerIdNumber(Extension $extension): string
+    {
+        $extension->loadMissing(['defaultOutboundDid', 'allowedOutboundDids']);
+
+        $defaultDid = $extension->defaultOutboundDid;
+
+        if ($defaultDid !== null
+            && $defaultDid->organization_id === $extension->organization_id
+            && $defaultDid->is_active
+            && $extension->hasAllowedOutboundDid($defaultDid->id)) {
+            return $defaultDid->normalized_number ?? $defaultDid->number;
+        }
+
+        $did = $extension->allowedOutboundDids()
+            ->where('dids.organization_id', $extension->organization_id)
+            ->where('dids.is_active', true)
+            ->orderBy('dids.number')
+            ->first();
+
+        return $did?->normalized_number ?? $did?->number ?? '';
     }
 
     /**

@@ -99,42 +99,16 @@ class DialplanCompiler
         $xml .= '                <variable name="effective_caller_id_name" value="'.htmlspecialchars($extension->effective_caller_id_name ?? '', ENT_QUOTES | ENT_XML1).'"/>'."\n";
         $xml .= '                <variable name="effective_caller_id_number" value="'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
 
-        $defaultCountryCode = (string) data_get($extension->organization?->settings, 'default_country_code', '1');
+        $privacyMode = data_get($extension->organization?->settings, 'outbound_caller_id_privacy', 'none');
 
-        if ($extension->effective_caller_id_number) {
-            $normalizedEffective = ltrim(DidNormalizationService::toE164($extension->effective_caller_id_number, $defaultCountryCode), '+');
-            $xml .= '                <variable name="effective_caller_id_number" value="'.htmlspecialchars($normalizedEffective, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-        }
-        if ($extension->outbound_caller_id_name) {
-            $xml .= '                <variable name="outbound_caller_id_name" value="'.htmlspecialchars($extension->outbound_caller_id_name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-        }
-        if ($extension->outbound_caller_id_number) {
-            $normalizedOutboundE164 = DidNormalizationService::toE164($extension->outbound_caller_id_number, $defaultCountryCode);
-            $normalizedOutbound = ltrim($normalizedOutboundE164, '+');
-            $xml .= '                <variable name="outbound_caller_id_number" value="'.htmlspecialchars($normalizedOutbound, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-            
-            // P-Asserted-Identity injection from Organization settings
-            $sendPai = data_get($extension->organization?->settings, 'outbound_caller_id_pai');
-            if ($sendPai === null) {
-                $sendPai = config('telephony.media.outbound_caller_id_pai', false);
-            }
-            
-            if ($sendPai) {
-                $xml .= '                <variable name="sip_h_P-Asserted-Identity" value="&lt;sip:'.htmlspecialchars($normalizedOutboundE164, ENT_QUOTES | ENT_XML1).'@${domain}&gt;"/>'."\n";
-            }
+        if ($privacyMode !== 'none') {
+            $privacy = htmlspecialchars($privacyMode, ENT_QUOTES | ENT_XML1);
+            $xml .= '                <variable name="sip_h_Privacy" value="'.$privacy.'"/>'."\n";
+            $xml .= '                <variable name="origination_privacy" value="'.$privacy.'"/>'."\n";
 
-            // Privacy header manipulation from Organization settings
-            $privacyMode = data_get($extension->organization?->settings, 'outbound_caller_id_privacy', 'none');
-
-            if ($privacyMode !== 'none') {
-                $privacy = htmlspecialchars($privacyMode, ENT_QUOTES | ENT_XML1);
-                $xml .= '                <variable name="sip_h_Privacy" value="'.$privacy.'"/>'."\n";
-                $xml .= '                <variable name="origination_privacy" value="'.$privacy.'"/>'."\n";
-                
-                if ($privacyMode === 'hide' || $privacyMode === 'full') {
-                    $xml .= '                <variable name="effective_caller_id_number" value="anonymous"/>'."\n";
-                    $xml .= '                <variable name="effective_caller_id_name" value="Anonymous"/>'."\n";
-                }
+            if ($privacyMode === 'hide' || $privacyMode === 'full') {
+                $xml .= '                <variable name="effective_caller_id_number" value="anonymous"/>'."\n";
+                $xml .= '                <variable name="effective_caller_id_name" value="Anonymous"/>'."\n";
             }
         }
 

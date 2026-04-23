@@ -13,12 +13,30 @@ class StoreTeamRequest extends FormRequest
 
     public function rules(): array
     {
+        $organization = $this->route('organization');
+
         return [
+            'schedule_id' => [
+                'nullable',
+                'uuid',
+                function ($attribute, $value, $fail) use ($organization) {
+                    if ($value && ! $organization->schedules()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('The selected schedule is invalid for this organization.');
+                    }
+                },
+            ],
+            'holiday_calendar_id' => [
+                'nullable',
+                'uuid',
+                function ($attribute, $value, $fail) use ($organization) {
+                    if ($value && ! $organization->holidayCalendars()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('The selected holiday calendar is invalid for this organization.');
+                    }
+                },
+            ],
             'name' => 'required|string|max:255',
             'strategy' => 'required|string|in:simultaneous,round_robin,priority',
             'timeout' => 'required|integer|min:1|max:300',
-            'phone_number_ids' => 'nullable|array',
-            'phone_number_ids.*' => 'uuid',
             'is_active' => 'boolean',
             'members' => 'nullable|array',
             'members.*.endpoint_type' => 'required|string|max:64',
@@ -28,17 +46,4 @@ class StoreTeamRequest extends FormRequest
         ];
     }
 
-    public function after(): array
-    {
-        return [function ($validator) {
-            $organization = $this->route('organization');
-
-            foreach (($this->input('phone_number_ids') ?? []) as $didId) {
-                if (! $organization->dids()->whereKey($didId)->exists()) {
-                    $validator->errors()->add('phone_number_ids', 'Selected phone number must belong to this organization.');
-                    break;
-                }
-            }
-        }];
-    }
 }

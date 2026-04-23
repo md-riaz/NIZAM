@@ -28,7 +28,7 @@ class ExtensionApiTest extends TestCase
     public function test_can_list_extensions_for_a_organization(): void
     {
         $this->organization->extensions()->create([
-            'extension' => '1001',
+            'extension' => '101',
             'password' => 'secret1234',
             'first_name' => 'John',
             'last_name' => 'Doe',
@@ -38,14 +38,14 @@ class ExtensionApiTest extends TestCase
             ->getJson("/api/v1/organizations/{$this->organization->id}/extensions");
 
         $response->assertStatus(200);
-        $response->assertJsonFragment(['extension' => '1001']);
+        $response->assertJsonFragment(['extension' => '101']);
     }
 
     public function test_can_create_an_extension_for_a_organization(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
             ->postJson("/api/v1/organizations/{$this->organization->id}/extensions", [
-                'extension' => '1002',
+                'extension' => '102',
                 'password' => 'secret1234',
                 'first_name' => 'Jane',
                 'last_name' => 'Doe',
@@ -54,7 +54,7 @@ class ExtensionApiTest extends TestCase
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('extensions', [
-            'extension' => '1002',
+            'extension' => '102',
             'organization_id' => $this->organization->id,
         ]);
     }
@@ -62,7 +62,7 @@ class ExtensionApiTest extends TestCase
     public function test_can_show_an_extension(): void
     {
         $extension = $this->organization->extensions()->create([
-            'extension' => '1001',
+            'extension' => '101',
             'password' => 'secret1234',
             'first_name' => 'John',
             'last_name' => 'Doe',
@@ -72,13 +72,13 @@ class ExtensionApiTest extends TestCase
             ->getJson("/api/v1/organizations/{$this->organization->id}/extensions/{$extension->id}");
 
         $response->assertStatus(200);
-        $response->assertJsonFragment(['extension' => '1001']);
+        $response->assertJsonFragment(['extension' => '101']);
     }
 
     public function test_can_update_an_extension(): void
     {
         $extension = $this->organization->extensions()->create([
-            'extension' => '1001',
+            'extension' => '101',
             'password' => 'secret1234',
             'first_name' => 'John',
             'last_name' => 'Doe',
@@ -86,7 +86,7 @@ class ExtensionApiTest extends TestCase
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->putJson("/api/v1/organizations/{$this->organization->id}/extensions/{$extension->id}", [
-                'extension' => '1001',
+                'extension' => '101',
                 'password' => 'updated1234',
                 'first_name' => 'Johnny',
                 'last_name' => 'Doe',
@@ -102,7 +102,7 @@ class ExtensionApiTest extends TestCase
     public function test_can_delete_an_extension(): void
     {
         $extension = $this->organization->extensions()->create([
-            'extension' => '1001',
+            'extension' => '101',
             'password' => 'secret1234',
             'first_name' => 'John',
             'last_name' => 'Doe',
@@ -122,5 +122,43 @@ class ExtensionApiTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['extension', 'password', 'first_name', 'last_name']);
+    }
+
+    public function test_rejects_legacy_caller_id_number_fields_on_create(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/extensions", [
+                'extension' => '102',
+                'password' => 'secret1234',
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
+                'effective_caller_id_number' => '+15551234567',
+                'outbound_caller_id_number' => '+15557654321',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['effective_caller_id_number', 'outbound_caller_id_number']);
+    }
+
+    public function test_rejects_legacy_caller_id_number_fields_on_update(): void
+    {
+        $extension = $this->organization->extensions()->create([
+            'extension' => '101',
+            'password' => 'secret1234',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->putJson("/api/v1/organizations/{$this->organization->id}/extensions/{$extension->id}", [
+                'extension' => '101',
+                'password' => 'updated1234',
+                'first_name' => 'Johnny',
+                'last_name' => 'Doe',
+                'effective_caller_id_number' => '+15551234567',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['effective_caller_id_number']);
     }
 }

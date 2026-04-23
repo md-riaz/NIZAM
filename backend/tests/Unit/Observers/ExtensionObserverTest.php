@@ -99,4 +99,43 @@ class ExtensionObserverTest extends TestCase
         $profile->refresh();
         $this->assertGreaterThan($originalUpdatedAt, $profile->updated_at);
     }
+
+    public function test_updating_default_outbound_did_touches_device_profiles(): void
+    {
+        $organization = Organization::factory()->create();
+        $extension = $organization->extensions()->create([
+            'extension' => '1001',
+            'password' => 'test-password',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'is_active' => true,
+        ]);
+
+        $profile = DeviceProfile::create([
+            'organization_id' => $organization->id,
+            'name' => 'Test Phone',
+            'vendor' => 'yealink',
+            'mac_address' => 'AA:BB:CC:DD:EE:03',
+            'extension_id' => $extension->id,
+            'is_active' => true,
+        ]);
+
+        $did = $organization->dids()->create([
+            'number' => '+15551234567',
+            'description' => 'Main line',
+            'destination_type' => 'extension',
+            'destination_id' => $extension->id,
+            'is_active' => true,
+        ]);
+        $extension->allowedOutboundDids()->attach($did->id);
+
+        $originalUpdatedAt = $profile->updated_at;
+
+        $this->travel(5)->seconds();
+
+        $extension->update(['default_outbound_did_id' => $did->id]);
+
+        $profile->refresh();
+        $this->assertGreaterThan($originalUpdatedAt, $profile->updated_at);
+    }
 }

@@ -22,7 +22,7 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $query = User::with(['organization', 'directPhoneNumbers']);
+        $query = User::with(['organization', 'primaryExtension:id,user_id', 'extensions:id,user_id']);
         $perPage = max(1, min($request->integer('per_page', 15), 500));
 
         if ($request->filled('organization_id')) {
@@ -40,7 +40,7 @@ class UserController extends Controller
     {
         $this->authorize('view', $user);
 
-        return new UserResource($user->load('organization', 'permissions', 'directPhoneNumbers'));
+        return new UserResource($user->load('organization', 'permissions', 'primaryExtension:id,user_id', 'extensions:id,user_id'));
     }
 
     public function store(Request $request): JsonResponse
@@ -53,24 +53,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'role' => 'sometimes|string|in:superadmin,admin,agent',
             'organization_id' => 'nullable|exists:organizations,id',
-            'direct_phone_number_ids' => 'nullable|array',
-            'direct_phone_number_ids.*' => 'uuid',
-            'default_outbound_did_id' => 'nullable|uuid',
         ]);
-
-        $organization = isset($validated['organization_id']) ? \App\Models\Organization::find($validated['organization_id']) : null;
-        $directPhoneNumberIds = $validated['direct_phone_number_ids'] ?? [];
-        if ($organization) {
-            foreach ($directPhoneNumberIds as $didId) {
-                if (! $organization->dids()->whereKey($didId)->exists()) {
-                    return response()->json(['message' => 'Selected phone number must belong to the user organization.', 'errors' => ['direct_phone_number_ids' => ['Selected phone number must belong to the user organization.']]], 422);
-                }
-            }
-        }
-
-        if (! empty($validated['default_outbound_did_id']) && ! in_array($validated['default_outbound_did_id'], $directPhoneNumberIds, true)) {
-            return response()->json(['message' => 'Default outbound number must be directly granted to the user.', 'errors' => ['default_outbound_did_id' => ['Default outbound number must be directly granted to the user.']]], 422);
-        }
 
         $user = User::create([
             'name' => $validated['name'],
@@ -78,12 +61,9 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'] ?? 'agent',
             'organization_id' => $validated['organization_id'] ?? null,
-            'default_outbound_did_id' => $validated['default_outbound_did_id'] ?? null,
         ]);
 
-        $user->directPhoneNumbers()->sync($directPhoneNumberIds);
-
-        return response()->json(new UserResource($user->load('directPhoneNumbers')), 201);
+        return response()->json(new UserResource($user), 201);
     }
 
     public function update(Request $request, User $user): UserResource
@@ -96,44 +76,15 @@ class UserController extends Controller
             'password' => 'sometimes|string|min:8',
             'role' => 'sometimes|string|in:superadmin,admin,agent',
             'organization_id' => 'nullable|exists:organizations,id',
-            'direct_phone_number_ids' => 'nullable|array',
-            'direct_phone_number_ids.*' => 'uuid',
-            'default_outbound_did_id' => 'nullable|uuid',
         ]);
 
         if (isset($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         }
 
-        $nextOrganizationId = array_key_exists('organization_id', $validated) ? $validated['organization_id'] : $user->organization_id;
-        $organization = $nextOrganizationId ? \App\Models\Organization::find($nextOrganizationId) : null;
-        $directPhoneNumberIds = array_key_exists('direct_phone_number_ids', $validated)
-            ? $validated['direct_phone_number_ids']
-            : $user->directPhoneNumbers()->pluck('dids.id')->all();
+        $user->update($validated);
 
-        if ($organization) {
-            foreach ($directPhoneNumberIds as $didId) {
-                if (! $organization->dids()->whereKey($didId)->exists()) {
-                    response()->json(['message' => 'Selected phone number must belong to the user organization.', 'errors' => ['direct_phone_number_ids' => ['Selected phone number must belong to the user organization.']]], 422)->throwResponse();
-                }
-            }
-        }
-
-        $nextDefaultDidId = array_key_exists('default_outbound_did_id', $validated)
-            ? $validated['default_outbound_did_id']
-            : $user->default_outbound_did_id;
-
-        if ($nextDefaultDidId && ! in_array($nextDefaultDidId, $directPhoneNumberIds, true)) {
-            response()->json(['message' => 'Default outbound number must be directly granted to the user.', 'errors' => ['default_outbound_did_id' => ['Default outbound number must be directly granted to the user.']]], 422)->throwResponse();
-        }
-
-        $user->update(collect($validated)->except(['direct_phone_number_ids'])->all());
-
-        if (array_key_exists('direct_phone_number_ids', $validated)) {
-            $user->directPhoneNumbers()->sync($validated['direct_phone_number_ids'] ?? []);
-        }
-
-        return new UserResource($user->fresh()->load('organization', 'directPhoneNumbers'));
+        return new UserResource($user->fresh()->load('organization'));
     }
 
     public function destroy(User $user): JsonResponse

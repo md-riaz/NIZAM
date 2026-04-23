@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-04-23 12:08:13 UTC]
+
+### Changed
+- **Team Inbound Routing API**: Team API now reads and writes organization-scoped `schedule_id` and `holiday_calendar_id` fields so team routing stays explicitly inbound-only.
+- **Provisioning Caller ID Source**: Device provisioning now derives caller ID numbers from extension outbound DID policy instead of legacy extension caller-ID number fields.
+- **Directory XML Identity Variables**: Directory compilation now stops emitting legacy outbound caller-ID override variables and keeps privacy handling separate from extension outbound DID policy.
+
+### Fixed
+- **Extension Legacy Caller ID Writes**: Extension create and update APIs now reject legacy caller-ID number fields and stop exposing them in extension resources.
+- **Device Reprovision Triggering**: Extension updates now mark attached device profiles for reprovision when the default outbound DID changes.
+- **Backend Policy Coverage**: Added team, provisioning, observer, extension API, and dialplan tests to lock extension-centric outbound behavior.
+
 ## [2026-04-23 09:25:55 UTC]
 
 ### Added

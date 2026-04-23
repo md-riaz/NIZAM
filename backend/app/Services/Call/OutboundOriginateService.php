@@ -27,7 +27,7 @@ class OutboundOriginateService
         $gateway = $resolved['gateway'];
 
         if ($did === null) {
-            throw new InvalidArgumentException('This extension does not have a default outbound DID.');
+            throw new InvalidArgumentException('This extension does not have an allowed outbound DID.');
         }
 
         $callerIdName ??= $extension->effective_caller_id_name ?? $extension->first_name;

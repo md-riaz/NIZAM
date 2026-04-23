@@ -8,11 +8,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class DeviceProfile extends Model
 {
@@ -31,7 +28,6 @@ class DeviceProfile extends Model
         'mac_address',
         'template',
         'extension_id',
-        'default_outbound_did_id',
         'is_active',
     ];
 
@@ -71,38 +67,6 @@ class DeviceProfile extends Model
         return $this->belongsTo(Extension::class);
     }
 
-    public function defaultOutboundDid(): BelongsTo
-    {
-        return $this->belongsTo(Did::class, 'default_outbound_did_id');
-    }
-
-    public function phoneNumbers(): BelongsToMany
-    {
-        return $this->belongsToMany(Did::class, 'phone_number_device_access')->withTimestamps();
-    }
-
-    public function effectivePhoneNumbers(): Collection
-    {
-        return $this->phoneNumbers()->get();
-    }
-
-    public function canUsePhoneNumber(?string $didId): bool
-    {
-        if (! $didId || ! Str::isUuid($didId)) {
-            return false;
-        }
-
-        return $this->effectivePhoneNumbers()->contains(fn (Did $did) => (string) $did->id === $didId);
-    }
-
-    public function resolveOutboundDid(): ?Did
-    {
-        if ($this->default_outbound_did_id && $this->canUsePhoneNumber($this->default_outbound_did_id)) {
-            return $this->effectivePhoneNumbers()->firstWhere('id', $this->default_outbound_did_id);
-        }
-
-        return $this->effectivePhoneNumbers()->first();
-    }
 
     public function ownedExtensions(): HasMany
     {

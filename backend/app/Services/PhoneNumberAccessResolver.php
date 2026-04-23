@@ -17,7 +17,13 @@ class PhoneNumberAccessResolver
         ?string $requestedDidId = null,
         ?string $requestedGatewayId = null,
     ): array {
-        $extension->loadMissing(['organization', 'defaultOutboundDid.gateway', 'defaultOutboundGateway']);
+        $extension->loadMissing([
+            'organization',
+            'defaultOutboundDid.gateway',
+            'defaultOutboundGateway',
+            'allowedOutboundDids.gateway',
+            'allowedOutboundGateways',
+        ]);
 
         $did = $this->resolveDid($extension, $requestedDidId);
         $gateway = $this->resolveGateway($extension, $did, $requestedGatewayId);
@@ -31,7 +37,26 @@ class PhoneNumberAccessResolver
     protected function resolveDid(Extension $extension, ?string $requestedDidId): ?Did
     {
         if ($requestedDidId === null) {
-            return $extension->defaultOutboundDid;
+            $did = $extension->defaultOutboundDid;
+
+            if ($did !== null) {
+                if (! $extension->hasAllowedOutboundDid($did->id)) {
+                    throw new InvalidArgumentException('The default outbound DID is not allowed for this extension.');
+                }
+
+                if ($did->organization_id !== $extension->organization_id || ! $did->is_active) {
+                    throw new InvalidArgumentException('The default outbound DID is invalid for this organization.');
+                }
+
+                return $did->loadMissing('gateway');
+            }
+
+            return $extension->allowedOutboundDids()
+                ->where('dids.organization_id', $extension->organization_id)
+                ->where('dids.is_active', true)
+                ->with('gateway')
+                ->orderBy('dids.number')
+                ->first();
         }
 
         if (! $extension->hasAllowedOutboundDid($requestedDidId)) {
@@ -77,6 +102,16 @@ class PhoneNumberAccessResolver
         }
 
         $defaultGateway = $extension->defaultOutboundGateway;
+
+        if ($defaultGateway !== null) {
+            if (! $extension->hasAllowedOutboundGateway($defaultGateway->id)) {
+                throw new InvalidArgumentException('The default outbound gateway is not allowed for this extension.');
+            }
+
+            if ($defaultGateway->organization_id !== $extension->organization_id || ! $defaultGateway->is_active) {
+                throw new InvalidArgumentException('The default outbound gateway is invalid for this organization.');
+            }
+        }
 
         if ($didGatewayId !== null) {
             if ($defaultGateway !== null && $defaultGateway->id !== $didGatewayId) {

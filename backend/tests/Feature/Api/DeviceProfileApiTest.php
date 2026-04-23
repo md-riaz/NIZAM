@@ -56,12 +56,18 @@ class DeviceProfileApiTest extends TestCase
     public function test_can_show_a_device_profile(): void
     {
         $profile = DeviceProfile::factory()->create(['organization_id' => $this->organization->id]);
+        $ownedExtension = Extension::factory()->create([
+            'organization_id' => $this->organization->id,
+            'device_profile_id' => $profile->id,
+            'extension' => '101',
+        ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->getJson("/api/v1/organizations/{$this->organization->id}/device-profiles/{$profile->id}");
 
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => $profile->name]);
+        $response->assertJsonPath('data.owned_extension_ids.0', $ownedExtension->id);
     }
 
     public function test_can_update_a_device_profile(): void

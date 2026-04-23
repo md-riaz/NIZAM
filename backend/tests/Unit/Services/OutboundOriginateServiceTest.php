@@ -105,4 +105,53 @@ class OutboundOriginateServiceTest extends TestCase
 
         $service->buildCommand($organization, $extension->fresh(), '+15557654321', gatewayId: $blockedGateway->id);
     }
+
+    public function test_builds_internal_dialplan_originate_command_with_first_allowed_did_when_no_default_exists(): void
+    {
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $extension = Extension::factory()->create([
+            'organization_id' => $organization->id,
+            'extension' => '1001',
+            'first_name' => 'John',
+            'effective_caller_id_name' => 'John Doe',
+        ]);
+        $firstDid = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'gateway_id' => null,
+            'number' => '+15551234566',
+            'normalized_number' => '+15551234566',
+        ]);
+        $secondDid = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'gateway_id' => null,
+            'number' => '+15551234567',
+            'normalized_number' => '+15551234567',
+        ]);
+        $extension->allowedOutboundDids()->attach([$secondDid->id, $firstDid->id]);
+
+        $service = app(OutboundOriginateService::class);
+        $command = $service->buildCommand($organization, $extension->fresh(), '2001');
+
+        $this->assertSame(
+            'originate {origination_caller_id_name=John Doe,origination_caller_id_number=+15551234566}user/1001@acme.test 2001 XML acme.test',
+            $command
+        );
+    }
+
+    public function test_rejects_originate_when_extension_has_no_allowed_outbound_did(): void
+    {
+        $organization = Organization::factory()->create(['domain' => 'acme.test']);
+        $extension = Extension::factory()->create([
+            'organization_id' => $organization->id,
+            'extension' => '1001',
+            'first_name' => 'John',
+        ]);
+
+        $service = app(OutboundOriginateService::class);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('This extension does not have an allowed outbound DID.');
+
+        $service->buildCommand($organization, $extension->fresh(), '2001');
+    }
 }

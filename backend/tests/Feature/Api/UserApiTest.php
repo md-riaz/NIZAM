@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Extension;
 use App\Models\Permission;
 use App\Models\Organization;
 use App\Models\User;
@@ -145,5 +146,22 @@ class UserApiTest extends TestCase
             ->getJson("/api/v1/users?organization_id={$this->organization->id}");
 
         $response->assertStatus(200);
+    }
+
+    public function test_admin_can_show_user_with_extension_ownership_fields(): void
+    {
+        $extension = Extension::factory()->create([
+            'organization_id' => $this->organization->id,
+            'user_id' => $this->user->id,
+            'extension' => '101',
+            'is_primary' => true,
+        ]);
+
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->getJson("/api/v1/users/{$this->user->id}");
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.primary_extension_id', $extension->id);
+        $response->assertJsonPath('data.extension_ids.0', $extension->id);
     }
 }

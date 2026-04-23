@@ -636,9 +636,6 @@ class DialplanCompilerExtendedTest extends TestCase
             'first_name' => 'John',
             'last_name' => 'Doe',
             'effective_caller_id_name' => 'John Doe',
-            'effective_caller_id_number' => '1001',
-            'outbound_caller_id_name' => 'Company',
-            'outbound_caller_id_number' => '+15551234567',
             'is_active' => true,
         ]);
 
@@ -648,6 +645,8 @@ class DialplanCompilerExtendedTest extends TestCase
         $this->assertStringContainsString('John Doe', $xml);
         $this->assertStringContainsString('effective_caller_id_number', $xml);
         $this->assertStringContainsString('1001', $xml);
+        $this->assertStringNotContainsString('outbound_caller_id_name', $xml);
+        $this->assertStringNotContainsString('outbound_caller_id_number', $xml);
     }
 
     public function test_inactive_organization_returns_empty_directory(): void

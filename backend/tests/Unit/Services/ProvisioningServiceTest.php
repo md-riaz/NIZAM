@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\DeviceProfile;
+use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Organization;
 use App\Services\ProvisioningService;
@@ -76,6 +77,77 @@ class ProvisioningServiceTest extends TestCase
         $this->assertStringContainsString('1001', $config);
         $this->assertStringContainsString('endpoint_strategy = softphone_first', $config);
         $this->assertStringContainsString('provisioning_mode = optional_hardware', $config);
+    }
+
+    public function test_uses_default_outbound_did_for_provisioning_caller_id_number(): void
+    {
+        $organization = Organization::factory()->create(['domain' => 'test.example.com']);
+        $extension = Extension::factory()->create([
+            'organization_id' => $organization->id,
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'effective_caller_id_number' => '+15550000000',
+        ]);
+        $did = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'number' => '+15551234567',
+            'normalized_number' => '+15551234567',
+            'is_active' => true,
+        ]);
+        $extension->allowedOutboundDids()->attach($did->id);
+        $extension->update(['default_outbound_did_id' => $did->id]);
+
+        $profile = DeviceProfile::factory()->create([
+            'organization_id' => $organization->id,
+            'extension_id' => $extension->id,
+            'vendor' => 'yealink',
+            'template' => 'cid={{CALLER_ID_NUMBER}}',
+        ]);
+
+        $config = $this->service->renderConfig($profile->fresh());
+
+        $this->assertStringContainsString('cid=+15551234567', $config);
+        $this->assertStringNotContainsString('cid=+15550000000', $config);
+    }
+
+    public function test_uses_first_allowed_outbound_did_for_provisioning_when_no_default_exists(): void
+    {
+        $organization = Organization::factory()->create(['domain' => 'test.example.com']);
+        $extension = Extension::factory()->create([
+            'organization_id' => $organization->id,
+            'extension' => '1001',
+            'password' => 'secret1234',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'effective_caller_id_number' => '+15550000000',
+        ]);
+        $secondDid = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'number' => '+15551234568',
+            'normalized_number' => '+15551234568',
+            'is_active' => true,
+        ]);
+        $firstDid = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'number' => '+15551234567',
+            'normalized_number' => '+15551234567',
+            'is_active' => true,
+        ]);
+        $extension->allowedOutboundDids()->attach([$secondDid->id, $firstDid->id]);
+
+        $profile = DeviceProfile::factory()->create([
+            'organization_id' => $organization->id,
+            'extension_id' => $extension->id,
+            'vendor' => 'yealink',
+            'template' => 'cid={{CALLER_ID_NUMBER}}',
+        ]);
+
+        $config = $this->service->renderConfig($profile->fresh());
+
+        $this->assertStringContainsString('cid=+15551234567', $config);
+        $this->assertStringNotContainsString('cid=+15550000000', $config);
     }
 
     public function test_reports_softphone_first_endpoint_strategy(): void

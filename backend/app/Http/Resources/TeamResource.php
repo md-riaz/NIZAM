@@ -12,12 +12,13 @@ class TeamResource extends JsonResource
         return [
             'id' => $this->id,
             'organization_id' => $this->organization_id,
+            'schedule_id' => $this->schedule_id,
+            'holiday_calendar_id' => $this->holiday_calendar_id,
             'name' => $this->name,
             'strategy' => $this->strategy,
             'timeout' => $this->timeout,
             'is_active' => $this->is_active,
             'members' => $this->whenLoaded('members'),
-            'phone_numbers' => DidResource::collection($this->whenLoaded('phoneNumbers')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

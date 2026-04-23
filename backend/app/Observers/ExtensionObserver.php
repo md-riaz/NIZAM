@@ -23,6 +23,7 @@ class ExtensionObserver
             'last_name',
             'effective_caller_id_name',
             'effective_caller_id_number',
+            'default_outbound_did_id',
             'voicemail_enabled',
         ];
 
