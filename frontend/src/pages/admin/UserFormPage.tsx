@@ -31,6 +31,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import type { Organization } from '@/types/models';
 
@@ -49,6 +50,7 @@ export default function UserFormPage() {
     const isEdit = Boolean(id && id !== 'new');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { user: authUser } = useAuth();
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(
@@ -67,7 +69,7 @@ export default function UserFormPage() {
             email: '',
             password: '',
             role: 'agent',
-            organization_id: 'global',
+            organization_id: authUser?.role === 'superadmin' ? 'global' : (authUser?.organization_id ?? ''),
         } satisfies UserFormValues,
     });
 
@@ -86,20 +88,36 @@ export default function UserFormPage() {
             const response = await api.get<{ data: Organization[] }>('organizations');
             return response.data.data;
         },
+        enabled: authUser?.role === 'superadmin',
     });
 
+    const isSuperadmin = authUser?.role === 'superadmin';
+    const allowedRoles = isSuperadmin ? ['superadmin', 'admin', 'agent'] : ['admin', 'agent'];
+    const scopedOrganizationId = authUser?.organization_id ?? '';
 
     useEffect(() => {
         if (user) {
+            const nextRole = isSuperadmin
+                ? (user.role === 'superadmin' || user.role === 'admin' ? user.role : 'agent')
+                : (user.role === 'admin' ? 'admin' : 'agent');
+
             form.reset({
                 name: user.name ?? '',
                 email: user.email ?? '',
                 password: '',
-                role: user.role === 'superadmin' || user.role === 'admin' ? user.role : 'agent',
-                organization_id: user.organization_id ?? 'global',
+                role: nextRole,
+                organization_id: isSuperadmin ? (user.organization_id ?? 'global') : scopedOrganizationId,
             });
+            return;
         }
-    }, [user, form]);
+
+        if (!isSuperadmin && scopedOrganizationId) {
+            form.setValue('organization_id', scopedOrganizationId);
+            if (form.getValues('role') === 'superadmin') {
+                form.setValue('role', 'admin');
+            }
+        }
+    }, [form, isSuperadmin, scopedOrganizationId, user]);
 
     const mutation = useMutation({
         mutationFn: async (values: UserFormValues) => {
@@ -132,7 +150,7 @@ export default function UserFormPage() {
                     <span className="sr-only">Back to users</span>
                 </Button>
                 <div>
-                    <p className="text-sm text-muted-foreground">Platform administration</p>
+                    <p className="text-sm text-muted-foreground">{isSuperadmin ? 'Platform administration' : 'Organization administration'}</p>
                     <h1 className="text-2xl font-bold tracking-tight">
                         {isEdit ? 'Edit User' : 'Create User'}
                     </h1>
@@ -143,7 +161,9 @@ export default function UserFormPage() {
                 <CardHeader>
                     <CardTitle>User profile</CardTitle>
                     <CardDescription>
-                        Create platform or organization-scoped users and assign their role.
+                        {isSuperadmin
+                            ? 'Create platform or organization-scoped users and assign their role.'
+                            : 'Create users for your organization and assign their role.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -211,11 +231,11 @@ export default function UserFormPage() {
                                                 <FormLabel>Role</FormLabel>
                                                 <Select
                                                     onValueChange={(value) => {
-                                                        if (value !== 'superadmin' && value !== 'admin' && value !== 'agent') {
+                                                        if (!allowedRoles.includes(value)) {
                                                             return;
                                                         }
 
-                                                        field.onChange(value);
+                                                        field.onChange(value as UserFormValues['role']);
                                                     }}
                                                     value={field.value}
                                                 >
@@ -225,7 +245,9 @@ export default function UserFormPage() {
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="superadmin">Superadmin</SelectItem>
+                                                        {allowedRoles.includes('superadmin') && (
+                                                            <SelectItem value="superadmin">Superadmin</SelectItem>
+                                                        )}
                                                         <SelectItem value="admin">Admin</SelectItem>
                                                         <SelectItem value="agent">Agent</SelectItem>
                                                     </SelectContent>
@@ -242,33 +264,46 @@ export default function UserFormPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Organization scope</FormLabel>
-                                            <Select
-                                                onValueChange={(value) => {
-                                                    if (value !== 'global' && !organizations.some((organization) => organization.id === value)) {
-                                                        return;
-                                                    }
+                                            {isSuperadmin ? (
+                                                <>
+                                                    <Select
+                                                        onValueChange={(value) => {
+                                                            if (value !== 'global' && !organizations.some((organization) => organization.id === value)) {
+                                                                return;
+                                                            }
 
-                                                    field.onChange(value);
-                                                }}
-                                                value={field.value}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select organization scope" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="global">Global platform user</SelectItem>
-                                                    {organizations.map((organization) => (
-                                                        <SelectItem key={organization.id} value={organization.id}>
-                                                            {organization.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormDescription>
-                                                Global users have no organization assignment. Organization users are scoped to one organization.
-                                            </FormDescription>
+                                                            field.onChange(value);
+                                                        }}
+                                                        value={field.value}
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select organization scope" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="global">Global platform user</SelectItem>
+                                                            {organizations.map((organization) => (
+                                                                <SelectItem key={organization.id} value={organization.id}>
+                                                                    {organization.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormDescription>
+                                                        Global users have no organization assignment. Organization users are scoped to one organization.
+                                                    </FormDescription>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FormControl>
+                                                        <Input value={authUser?.organization?.name ?? 'Current organization'} disabled />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        Organization admins can create users only in their own organization.
+                                                    </FormDescription>
+                                                </>
+                                            )}
                                             <FormMessage />
                                         </FormItem>
                                     )}

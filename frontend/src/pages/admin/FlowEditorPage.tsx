@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Rocket, Save } from 'lucide-react';
-import { ReactFlowProvider, type Connection, type XYPosition } from '@xyflow/react';
+import { type Connection, type XYPosition } from '@xyflow/react';
 
 import { FlowCanvas } from '@/components/flow-builder/FlowCanvas';
 import { FlowInspector } from '@/components/flow-builder/FlowInspector';
@@ -231,9 +231,8 @@ export default function FlowEditorPage() {
     if (!activeOrganization) return null;
 
     return (
-        <ReactFlowProvider>
-            <div className="min-h-screen bg-background p-4 lg:p-6">
-                <section className={cn(studioPanelClass, 'relative overflow-hidden p-3')}>
+        <div className="min-h-screen bg-background p-4 lg:p-6">
+            <section className={cn(studioPanelClass, 'relative overflow-hidden p-3')}>
                 {isLoading ? (
                     <div className="flex h-[82vh] items-center justify-center rounded-2xl bg-background/70 text-sm text-muted-foreground">
                         Loading flow definition...
@@ -336,6 +335,5 @@ export default function FlowEditorPage() {
                 )}
             </section>
         </div>
-        </ReactFlowProvider>
     );
 }

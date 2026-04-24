@@ -22,11 +22,16 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
+        $authUser = $request->user();
         $query = User::with(['organization', 'primaryExtension:id,user_id', 'extensions:id,user_id']);
         $perPage = max(1, min($request->integer('per_page', 15), 500));
 
-        if ($request->filled('organization_id')) {
-            $query->where('organization_id', $request->input('organization_id'));
+        if ($authUser->isSuperadmin()) {
+            if ($request->filled('organization_id')) {
+                $query->where('organization_id', $request->input('organization_id'));
+            }
+        } else {
+            $query->where('organization_id', $authUser->organization_id);
         }
 
         if ($request->filled('role')) {
@@ -47,6 +52,7 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
 
+        $authUser = $request->user();
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users',
@@ -55,12 +61,20 @@ class UserController extends Controller
             'organization_id' => 'nullable|exists:organizations,id',
         ]);
 
+        $role = $validated['role'] ?? 'agent';
+        $organizationId = $validated['organization_id'] ?? null;
+
+        if (! $authUser->isSuperadmin()) {
+            $role = in_array($role, ['admin', 'agent'], true) ? $role : 'agent';
+            $organizationId = $authUser->organization_id;
+        }
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'] ?? 'agent',
-            'organization_id' => $validated['organization_id'] ?? null,
+            'role' => $role,
+            'organization_id' => $organizationId,
         ]);
 
         return response()->json(new UserResource($user), 201);
@@ -70,6 +84,7 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
+        $authUser = $request->user();
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|unique:users,email,'.$user->id,
@@ -77,6 +92,13 @@ class UserController extends Controller
             'role' => 'sometimes|string|in:superadmin,admin,agent',
             'organization_id' => 'nullable|exists:organizations,id',
         ]);
+
+        if (! $authUser->isSuperadmin()) {
+            unset($validated['organization_id']);
+            if (isset($validated['role']) && $validated['role'] === 'superadmin') {
+                $validated['role'] = 'agent';
+            }
+        }
 
         if (isset($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);

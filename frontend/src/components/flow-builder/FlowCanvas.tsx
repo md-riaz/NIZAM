@@ -5,6 +5,7 @@ import {
     Controls,
     MiniMap,
     ReactFlow,
+    ReactFlowProvider,
     applyEdgeChanges,
     applyNodeChanges,
     useReactFlow,
@@ -318,5 +319,9 @@ function FlowCanvasInner({
 }
 
 export function FlowCanvas(props: FlowCanvasProps) {
-    return <FlowCanvasInner {...props} />;
+    return (
+        <ReactFlowProvider>
+            <FlowCanvasInner {...props} />
+        </ReactFlowProvider>
+    );
 }

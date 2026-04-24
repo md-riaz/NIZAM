@@ -20,26 +20,33 @@ class UserPolicy
 
     public function viewAny(User $user): bool
     {
-        return false; // Only admins
+        return $user->role === 'admin' && $user->organization_id !== null;
     }
 
     public function view(User $user, User $model): bool
     {
-        return $user->id === $model->id;
+        return $user->id === $model->id
+            || ($user->role === 'admin'
+                && $user->organization_id !== null
+                && $user->organization_id === $model->organization_id);
     }
 
     public function create(User $user): bool
     {
-        return false; // Only admins
+        return $user->role === 'admin' && $user->organization_id !== null;
     }
 
     public function update(User $user, User $model): bool
     {
-        return false; // Only admins
+        return $user->role === 'admin'
+            && $user->organization_id !== null
+            && $user->organization_id === $model->organization_id;
     }
 
     public function delete(User $user, User $model): bool
     {
-        return false; // Only admins
+        return $user->role === 'admin'
+            && $user->organization_id !== null
+            && $user->organization_id === $model->organization_id;
     }
 }

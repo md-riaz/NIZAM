@@ -3,6 +3,8 @@ import { KeyRound, Shield, SquarePen, Trash2, User as UserIcon, UserPlus } from 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useAuth } from '@/context/AuthContext';
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -36,6 +38,7 @@ import type { User } from '@/types/models';
 export default function UsersPage() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { user: authUser } = useAuth();
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
     const { data: users = [], isLoading } = useQuery({
@@ -56,6 +59,8 @@ export default function UsersPage() {
         },
     });
 
+    const isSuperadmin = authUser?.role === 'superadmin';
+
     const roleBadge = (role: string) => {
         switch (role) {
             case 'admin':
@@ -72,7 +77,9 @@ export default function UsersPage() {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Users</h1>
                     <p className="text-muted-foreground">
-                        Manage platform users and their permissions.
+                        {isSuperadmin
+                            ? 'Manage platform users and their permissions.'
+                            : 'Manage users in your organization and their permissions.'}
                     </p>
                 </div>
                 <Button onClick={() => navigate('/admin/users/create')}>
@@ -85,7 +92,9 @@ export default function UsersPage() {
                 <CardHeader>
                     <CardTitle>All Users</CardTitle>
                     <CardDescription>
-                        Users across the platform with their role assignments.
+                        {isSuperadmin
+                            ? 'Users across the platform with their role assignments.'
+                            : 'Users in your organization with their role assignments.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -123,7 +132,7 @@ export default function UsersPage() {
                                         <TableCell className="text-muted-foreground">{user.email}</TableCell>
                                         <TableCell>{roleBadge(user.role)}</TableCell>
                                         <TableCell className="text-muted-foreground">
-                                            {user.organization?.name ?? 'Global'}
+                                            {user.organization?.name ?? (isSuperadmin ? 'Global' : '—')}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">
                                             {new Date(user.created_at).toLocaleDateString()}

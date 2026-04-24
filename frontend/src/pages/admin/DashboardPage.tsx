@@ -19,6 +19,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -61,6 +62,24 @@ interface AdminDashboardResponse {
         total_dids: number;
         total_recordings_size: number;
         organizations: DashboardOrganizationSummary[];
+    };
+}
+
+interface OrganizationDashboardStatsResponse {
+    data: {
+        extensions_count: number;
+        active_extensions_count: number;
+        dids_count: number;
+        ring_groups_count: number;
+        ivrs_count: number;
+        cdrs_total: number;
+        cdrs_today: number;
+        recordings_count: number;
+        recordings_total_size: number;
+        device_profiles_count: number;
+        webhooks_count: number;
+        call_routing_policies_count: number;
+        flows_count: number;
     };
 }
 
@@ -129,13 +148,48 @@ function StatCard({
 
 export default function DashboardPage() {
     const { user } = useAuth();
+    const { activeOrganization, organizationApiPrefix } = useOrganization();
+    const isSuperadmin = user?.role === 'superadmin';
 
     const { data: dashboard, isLoading: dashboardLoading } = useQuery({
-        queryKey: ['admin-dashboard'],
+        queryKey: ['admin-dashboard', user?.role, activeOrganization?.id],
         queryFn: async () => {
-            const res = await api.get<AdminDashboardResponse>('admin/dashboard');
-            return res.data.data;
+            if (isSuperadmin || !activeOrganization) {
+                const res = await api.get<AdminDashboardResponse>('admin/dashboard');
+                return res.data.data;
+            }
+
+            const res = await api.get<OrganizationDashboardStatsResponse>(`${organizationApiPrefix}/stats`);
+            const stats = res.data.data;
+
+            return {
+                total_organizations: 1,
+                organizations_by_status: {
+                    trial: 0,
+                    active: 1,
+                    suspended: 0,
+                    terminated: 0,
+                },
+                total_extensions: stats.extensions_count,
+                total_active_extensions: stats.active_extensions_count,
+                total_dids: stats.dids_count,
+                total_recordings_size: stats.recordings_total_size,
+                organizations: activeOrganization ? [{
+                    id: Number(activeOrganization.id),
+                    name: activeOrganization.name,
+                    domain: activeOrganization.domain,
+                    status: 'active',
+                    extensions_count: stats.extensions_count,
+                    active_extensions_count: stats.active_extensions_count,
+                    dids_count: stats.dids_count,
+                    ring_groups_count: stats.ring_groups_count,
+                    recordings_total_size: stats.recordings_total_size,
+                    cdrs_today: stats.cdrs_today,
+                    webhooks_count: stats.webhooks_count,
+                }] : [],
+            };
         },
+        enabled: isSuperadmin || !!activeOrganization,
     });
 
     const { data: health } = useQuery({
@@ -145,6 +199,7 @@ export default function DashboardPage() {
             return res.data;
         },
         refetchInterval: 30_000,
+        enabled: isSuperadmin,
     });
 
     const eslStatus = health?.checks?.esl?.status;
@@ -188,11 +243,13 @@ export default function DashboardPage() {
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
                 <p className="text-muted-foreground">
-                    Welcome back, {user?.name}. Here's what is happening across the platform.
+                    {isSuperadmin
+                        ? `Welcome back, ${user?.name}. Here's what is happening across the platform.`
+                        : `Welcome back, ${user?.name}. Here's what is happening in ${activeOrganization?.name ?? 'your organization'}.`}
                 </p>
             </div>
 
-            {sipRuntime?.status && sipRuntime.status !== 'healthy' && (
+            {isSuperadmin && sipRuntime?.status && sipRuntime.status !== 'healthy' && (
                 <Card className={cn(
                     'border-l-4',
                     sipRuntime.status === 'fatal' ? 'border-l-red-600 border-red-500/50' : 'border-l-amber-500 border-amber-300/40',
@@ -228,12 +285,14 @@ export default function DashboardPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
-                    title="Total Organizations"
-                    value={dashboardLoading ? '…' : (dashboard?.total_organizations ?? 0)}
+                    title={isSuperadmin ? 'Total Organizations' : 'Organization'}
+                    value={dashboardLoading ? '…' : (isSuperadmin ? (dashboard?.total_organizations ?? 0) : (activeOrganization?.name ?? '—'))}
                     description={
-                        organizationStatus
-                            ? `${organizationStatus.active} active · ${organizationStatus.suspended} suspended`
-                            : 'Platform organizations'
+                        isSuperadmin
+                            ? (organizationStatus
+                                ? `${organizationStatus.active} active · ${organizationStatus.suspended} suspended`
+                                : 'Platform organizations')
+                            : (activeOrganization?.domain ?? 'Current organization')
                     }
                     icon={Building2}
                 />
@@ -254,11 +313,11 @@ export default function DashboardPage() {
                     icon={PhoneCall}
                 />
                 <StatCard
-                    title="Telephony Health"
-                    value={telephonyCardValue}
-                    description={telephonyCardDescription}
-                    icon={Radio}
-                    className={telephonyCardClassName}
+                    title={isSuperadmin ? 'Telephony Health' : 'Routing Flows'}
+                    value={isSuperadmin ? telephonyCardValue : (dashboardLoading ? '…' : organizations[0]?.ring_groups_count ?? 0)}
+                    description={isSuperadmin ? telephonyCardDescription : 'Ring groups available in this organization'}
+                    icon={isSuperadmin ? Radio : Radio}
+                    className={isSuperadmin ? telephonyCardClassName : ''}
                 />
             </div>
 
@@ -270,30 +329,32 @@ export default function DashboardPage() {
                     icon={HardDrive}
                 />
                 <StatCard
-                    title="Active Organizations"
-                    value={dashboardLoading ? '…' : (organizationStatus?.active ?? 0)}
-                    description="Currently serving traffic"
+                    title={isSuperadmin ? 'Active Organizations' : 'Today\'s Calls'}
+                    value={dashboardLoading ? '…' : (isSuperadmin ? (organizationStatus?.active ?? 0) : (organizations[0]?.cdrs_today ?? 0))}
+                    description={isSuperadmin ? 'Currently serving traffic' : 'Calls started today'}
                     icon={Activity}
                 />
                 <StatCard
-                    title="Trial Organizations"
-                    value={dashboardLoading ? '…' : (organizationStatus?.trial ?? 0)}
-                    description="Evaluation environments"
+                    title={isSuperadmin ? 'Trial Organizations' : 'Webhooks'}
+                    value={dashboardLoading ? '…' : (isSuperadmin ? (organizationStatus?.trial ?? 0) : (organizations[0]?.webhooks_count ?? 0))}
+                    description={isSuperadmin ? 'Evaluation environments' : 'Configured integrations'}
                     icon={TrendingUp}
                 />
                 <StatCard
-                    title="Terminated Organizations"
-                    value={dashboardLoading ? '…' : (organizationStatus?.terminated ?? 0)}
-                    description="Archived subscriptions"
+                    title={isSuperadmin ? 'Terminated Organizations' : 'Active Extensions'}
+                    value={dashboardLoading ? '…' : (isSuperadmin ? (organizationStatus?.terminated ?? 0) : (organizations[0]?.active_extensions_count ?? 0))}
+                    description={isSuperadmin ? 'Archived subscriptions' : 'Registered or enabled extensions'}
                     icon={Building2}
                 />
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Organization Activity Snapshot</CardTitle>
+                    <CardTitle>{isSuperadmin ? 'Organization Activity Snapshot' : 'Organization Activity Snapshot'}</CardTitle>
                     <CardDescription>
-                        Operational summary for recently active organizations.
+                        {isSuperadmin
+                            ? 'Operational summary for recently active organizations.'
+                            : 'Operational summary for your organization.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

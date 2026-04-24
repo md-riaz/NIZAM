@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Hash, Pencil, Trash2, Activity } from 'lucide-react';
 
+import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { useOrganization } from '@/context/OrganizationContext';
 import type { Did } from '@/types/models';
@@ -61,10 +62,12 @@ function getGatewayStatusVariant(status: string): 'success' | 'secondary' | 'des
 }
 
 export default function DidsPage() {
+    const { user } = useAuth();
     const { activeOrganization, organizationApiPrefix } = useOrganization();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [didToDelete, setDidToDelete] = useState<Did | null>(null);
+    const isSuperadmin = user?.role === 'superadmin';
 
     const { data: dids = [], isLoading } = useQuery({
         queryKey: ['dids', activeOrganization?.id],
@@ -84,7 +87,7 @@ export default function DidsPage() {
             return res.data.data;
         },
         refetchInterval: 10000,
-        enabled: !!activeOrganization,
+        enabled: !!activeOrganization && isSuperadmin,
     });
 
     const gatewayStatusByName = useMemo(
