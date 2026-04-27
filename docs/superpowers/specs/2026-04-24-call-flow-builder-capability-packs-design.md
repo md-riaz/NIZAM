@@ -52,6 +52,10 @@ Out of scope for this slice:
    - Node family additions should be independently testable
    - New node types should plug into existing registry/compiler/validator structure
 
+6. **Transfer-only routing core**
+   - Flow entry and routing-only nodes must transfer without answering
+   - Only media-handling destinations such as menu, play-message, or voicemail should answer when runtime requires it
+
 ## Recommended approach
 
 Use **capability packs**.

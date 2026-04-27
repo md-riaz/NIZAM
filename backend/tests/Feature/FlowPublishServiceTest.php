@@ -157,6 +157,7 @@ class FlowPublishServiceTest extends TestCase
         $this->assertNotNull($artifact);
         $this->assertStringContainsString('application="playback" data="recordings/1/welcome.wav"', $artifact->content);
         $this->assertStringContainsString('node_'.$hangupNode->id.' XML '.$this->organization->domain, $artifact->content);
+        $this->assertStringNotContainsString('application="answer"', $artifact->content);
     }
 
     public function test_publish_fails_for_invalid_flow(): void

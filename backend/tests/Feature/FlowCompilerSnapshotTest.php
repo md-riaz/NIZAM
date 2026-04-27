@@ -109,6 +109,7 @@ class FlowCompilerSnapshotTest extends TestCase
         FlowEdge::factory()->create(['flow_version_id' => $flowVersion->id, 'source_node_id' => $startNode->id, 'target_node_id' => $scheduleNode->id, 'condition' => 'next']);
         FlowEdge::factory()->create(['flow_version_id' => $flowVersion->id, 'source_node_id' => $scheduleNode->id, 'target_node_id' => $menuNode->id, 'condition' => 'open']);
         FlowEdge::factory()->create(['flow_version_id' => $flowVersion->id, 'source_node_id' => $scheduleNode->id, 'target_node_id' => $voicemailNode->id, 'condition' => 'closed']);
+        FlowEdge::factory()->create(['flow_version_id' => $flowVersion->id, 'source_node_id' => $scheduleNode->id, 'target_node_id' => $voicemailNode->id, 'condition' => 'holiday']);
         FlowEdge::factory()->create(['flow_version_id' => $flowVersion->id, 'source_node_id' => $menuNode->id, 'target_node_id' => $teamNode->id, 'condition' => 'digit_1']);
         FlowEdge::factory()->create(['flow_version_id' => $flowVersion->id, 'source_node_id' => $menuNode->id, 'target_node_id' => $voicemailNode->id, 'condition' => 'timeout']);
         FlowEdge::factory()->create(['flow_version_id' => $flowVersion->id, 'source_node_id' => $teamNode->id, 'target_node_id' => $voicemailNode->id, 'condition' => 'no_answer']);
@@ -135,7 +136,6 @@ class FlowCompilerSnapshotTest extends TestCase
 
       <extension name="node_10000000-0000-0000-0000-000000000001">
         <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000001$">
-          <action application="answer"/>
           <action application="transfer" data="node_10000000-0000-0000-0000-000000000002 XML snapshot.example.com"/>
         </condition>
       </extension>
@@ -208,6 +208,7 @@ XML;
         
         // Start node check
         $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000002 XML snapshot.example.com"/>', $artifact->content);
+        $this->assertStringNotContainsString('<extension name="node_10000000-0000-0000-0000-000000000001">' . "\n" . '        <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000001$">' . "\n" . '          <action application="answer"/>', $artifact->content);
 
         // Schedule check
         $this->assertStringContainsString('<action application="set" data="nizam_schedule_return_node=node_10000000-0000-0000-0000-000000000002_resume"/>', $artifact->content);

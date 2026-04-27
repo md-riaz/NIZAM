@@ -140,7 +140,6 @@ class FlowArtifactService
         // Generate condition based on instruction type
         switch ($instruction->type) {
             case 'AnswerAndTransfer':
-                $xml .= '          <action application="answer"/>'."\n";
                 $nextNodeLabel = $instruction->transitions['next'] ?? null;
                 if ($nextNodeLabel) {
                     $xml .= '          <action application="transfer" data="'.$nextNodeLabel.' XML '.$context.'"/>'."\n";
