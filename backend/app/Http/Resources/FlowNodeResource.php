@@ -13,7 +13,7 @@ class FlowNodeResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'name' => $this->name,
-            'config' => $this->config,
+            'config' => $this->config_json,
             'position_x' => $this->position_x,
             'position_y' => $this->position_y,
         ];

@@ -107,6 +107,8 @@ class FlowToIrCompilerTest extends TestCase
             'config_json' => [
                 'greeting' => 'main-menu',
                 'short_greeting' => 'press 1',
+                'destination_type' => 'extension',
+                'destination_value' => '1001',
                 'timeout' => 5,
                 'max_failures' => 3,
                 'options' => [
@@ -134,6 +136,8 @@ class FlowToIrCompilerTest extends TestCase
         $this->assertEquals('CollectDigits', $instructions[0]->type);
         $this->assertSame('main-menu', $instructions[0]->params['config']['prompt']);
         $this->assertSame(['1'], $instructions[0]->params['config']['digits']);
+        $this->assertSame('extension', $instructions[0]->params['destination_type']);
+        $this->assertSame('1001', $instructions[0]->params['destination_value']);
         $this->assertSame("node_{$nextNode->id}", $instructions[0]->transitions['digit_1']);
     }
 
@@ -151,6 +155,8 @@ class FlowToIrCompilerTest extends TestCase
             'config_json' => [
                 'prompt' => 'recordings/1/welcome.wav',
                 'media_id' => '1',
+                'destination_type' => 'extension',
+                'destination_value' => '1003',
             ],
         ]);
 

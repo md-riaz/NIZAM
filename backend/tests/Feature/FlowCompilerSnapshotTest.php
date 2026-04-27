@@ -73,6 +73,8 @@ class FlowCompilerSnapshotTest extends TestCase
             'type' => 'menu',
             'config_json' => [
                 'prompt' => 'ivr/welcome.wav',
+                'destination_type' => 'extension',
+                'destination_value' => '1001',
                 'min_digits' => 1,
                 'max_digits' => 1,
                 'timeout' => 5000,
@@ -95,7 +97,11 @@ class FlowCompilerSnapshotTest extends TestCase
             'id' => '10000000-0000-0000-0000-000000000005',
             'flow_version_id' => $flowVersion->id,
             'type' => 'voicemail',
-            'config_json' => ['extension' => '100'],
+            'config_json' => [
+                'mailbox' => '100',
+                'destination_type' => 'extension',
+                'destination_value' => '1002',
+            ],
         ]);
 
         // Hangup
@@ -118,7 +124,7 @@ class FlowCompilerSnapshotTest extends TestCase
 
         // 2. Compile
         $result = $this->artifactService->compileAndStore($flowVersion);
-        $this->assertTrue($result['success']);
+        $this->assertTrue($result['success'], $result['error'] ?? json_encode($result));
 
         $artifact = \App\Models\FlowCompiledArtifact::find($result['artifact_id']);
         
@@ -163,14 +169,9 @@ class FlowCompilerSnapshotTest extends TestCase
 
       <extension name="node_10000000-0000-0000-0000-000000000003">
         <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000003$">
-          <action application="play_and_get_digits" data="1 1 3 5000 # ivr/welcome.wav silence_stream://250 nizam_menu_digits \d+"/>
-          <condition field="${nizam_menu_digits}" expression="^1$">
-            <action application="transfer" data="node_10000000-0000-0000-0000-000000000004 XML snapshot.example.com"/>
-          </condition>
-          <condition field="${nizam_menu_digits}" expression="^$">
-            <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML snapshot.example.com"/>
-          </condition>
-          <action application="transfer" data="node_10000000-0000-0000-0000-000000000005 XML snapshot.example.com"/>
+          <action application="set" data="nizam_destination_type=extension"/>
+          <action application="set" data="nizam_destination_id=1001"/>
+          <action application="transfer" data="call_delivery_entrypoint XML snapshot.example.com"/>
         </condition>
       </extension>
 
@@ -183,8 +184,9 @@ class FlowCompilerSnapshotTest extends TestCase
 
       <extension name="node_10000000-0000-0000-0000-000000000005">
         <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000005$">
-          <action application="voicemail" data="default ${domain_name} 100"/>
-          <action application="transfer" data="node_10000000-0000-0000-0000-000000000006 XML snapshot.example.com"/>
+          <action application="set" data="nizam_destination_type=extension"/>
+          <action application="set" data="nizam_destination_id=1002"/>
+          <action application="transfer" data="call_delivery_entrypoint XML snapshot.example.com"/>
         </condition>
       </extension>
 
@@ -215,15 +217,20 @@ XML;
         $this->assertStringContainsString('<action application="transfer" data="schedule_22222222-2222-2222-2222-222222222222 XML snapshot.example.com"/>', $artifact->content);
 
         // Menu check
-        $this->assertStringContainsString('<action application="play_and_get_digits" data="1 1 3 5000 # ivr/welcome.wav silence_stream://250 nizam_menu_digits \d+"/>', $artifact->content);
-        $this->assertStringContainsString('<condition field="${nizam_menu_digits}" expression="^1$">', $artifact->content);
-        $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000004 XML snapshot.example.com"/>', $artifact->content);
+        $this->assertStringContainsString('<action application="set" data="nizam_destination_type=extension"/>', $artifact->content);
+        $this->assertStringContainsString('<action application="set" data="nizam_destination_id=1001"/>', $artifact->content);
+        $this->assertStringContainsString('<action application="transfer" data="call_delivery_entrypoint XML snapshot.example.com"/>', $artifact->content);
 
         // Team check (empty because no extensions)
         $this->assertStringContainsString('<action application="log" data="WARNING BridgeTeam node_10000000-0000-0000-0000-000000000004 resolved to empty dial string"/>', $artifact->content);
 
         // Voicemail check
-        $this->assertStringContainsString('<action application="voicemail" data="default ${domain_name} 100"/>', $artifact->content);
+        $this->assertStringContainsString('<action application="set" data="nizam_destination_id=1002"/>', $artifact->content);
+
+        $this->assertStringNotContainsString('play_and_get_digits', $artifact->content);
+        $this->assertStringNotContainsString('application="playback"', $artifact->content);
+        $this->assertStringNotContainsString('application="voicemail"', $artifact->content);
+        $this->assertStringNotContainsString('application="answer"', $artifact->content);
 
         // Hangup check
         $this->assertStringContainsString('<action application="hangup"/>', $artifact->content);

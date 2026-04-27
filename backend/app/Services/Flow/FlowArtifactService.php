@@ -193,47 +193,37 @@ class FlowArtifactService
                 break;
 
             case 'CollectDigits':
-                // Menu digit collection
-                $config = $instruction->params['config'] ?? [];
-                $minDigits = $config['min_digits'] ?? 1;
-                $maxDigits = $config['max_digits'] ?? 1;
-                $maxTries = $config['max_tries'] ?? 3;
-                $timeout = $config['timeout'] ?? 5000;
-                $terminators = $config['terminators'] ?? '#';
-                $prompt = $config['prompt'] ?? 'silence_stream://1000';
-                
-                $xml .= '          <action application="play_and_get_digits" data="'.$minDigits.' '.$maxDigits.' '.$maxTries.' '.$timeout.' '.$terminators.' '.$prompt.' silence_stream://250 nizam_menu_digits \d+"/>'."\n";
-                
-                foreach ($instruction->transitions as $result => $targetLabel) {
-                    if (str_starts_with($result, 'digit_')) {
-                        $digit = str_replace('digit_', '', $result);
-                        $xml .= '          <condition field="${nizam_menu_digits}" expression="^'.$digit.'$">'."\n";
-                        $xml .= '            <action application="transfer" data="'.$targetLabel.' XML '.$context.'"/>'."\n";
-                        $xml .= '          </condition>'."\n";
-                    }
+                $destinationType = $instruction->params['destination_type'] ?? null;
+                $destinationValue = $instruction->params['destination_value'] ?? null;
+
+                if (! empty($destinationType) && ! empty($destinationValue)) {
+                    $xml .= '          <action application="set" data="nizam_destination_type='.$destinationType.'"/>'."\n";
+                    $xml .= '          <action application="set" data="nizam_destination_id='.$destinationValue.'"/>'."\n";
+                    $xml .= '          <action application="transfer" data="call_delivery_entrypoint XML '.$context.'"/>'."\n";
+                    break;
                 }
-                
+
                 $timeoutTarget = $instruction->transitions['timeout'] ?? null;
-                if ($timeoutTarget) {
-                    $xml .= '          <condition field="${nizam_menu_digits}" expression="^$">'."\n";
-                    $xml .= '            <action application="transfer" data="'.$timeoutTarget.' XML '.$context.'"/>'."\n";
-                    $xml .= '          </condition>'."\n";
-                }
-                
                 $invalidTarget = $instruction->transitions['invalid'] ?? null;
-                if ($invalidTarget) {
-                    $xml .= '          <action application="transfer" data="'.$invalidTarget.' XML '.$context.'"/>'."\n";
-                } elseif ($timeoutTarget) {
-                    $xml .= '          <action application="transfer" data="'.$timeoutTarget.' XML '.$context.'"/>'."\n";
+                $fallbackTarget = $invalidTarget ?? $timeoutTarget;
+
+                if ($fallbackTarget) {
+                    $xml .= '          <action application="transfer" data="'.$fallbackTarget.' XML '.$context.'"/>'."\n";
                 } else {
                     $xml .= '          <action application="hangup"/>'."\n";
                 }
                 break;
 
             case 'PlayMessage':
-                $config = $instruction->params['config'] ?? [];
-                $prompt = $config['prompt'] ?? $config['message'] ?? 'silence_stream://250';
-                $xml .= '          <action application="playback" data="'.$prompt.'"/>'."\n";
+                $destinationType = $instruction->params['destination_type'] ?? null;
+                $destinationValue = $instruction->params['destination_value'] ?? null;
+
+                if (! empty($destinationType) && ! empty($destinationValue)) {
+                    $xml .= '          <action application="set" data="nizam_destination_type='.$destinationType.'"/>'."\n";
+                    $xml .= '          <action application="set" data="nizam_destination_id='.$destinationValue.'"/>'."\n";
+                    $xml .= '          <action application="transfer" data="call_delivery_entrypoint XML '.$context.'"/>'."\n";
+                    break;
+                }
 
                 $nextTarget = $instruction->transitions['next'] ?? null;
                 if ($nextTarget) {
@@ -242,6 +232,7 @@ class FlowArtifactService
                     $xml .= '          <action application="hangup"/>'."\n";
                 }
                 break;
+
 
             case 'BridgeTeam':
                 // Team routing with Lua helper
@@ -275,11 +266,16 @@ class FlowArtifactService
                 break;
 
             case 'Voicemail':
-                // Voicemail handling
-                $config = $instruction->params['config'] ?? [];
-                $extension = $config['extension'] ?? '${destination_number}';
-                $xml .= '          <action application="voicemail" data="default ${domain_name} '.$extension.'"/>'."\n";
-                
+                $destinationType = $instruction->params['destination_type'] ?? null;
+                $destinationValue = $instruction->params['destination_value'] ?? null;
+
+                if (! empty($destinationType) && ! empty($destinationValue)) {
+                    $xml .= '          <action application="set" data="nizam_destination_type='.$destinationType.'"/>'."\n";
+                    $xml .= '          <action application="set" data="nizam_destination_id='.$destinationValue.'"/>'."\n";
+                    $xml .= '          <action application="transfer" data="call_delivery_entrypoint XML '.$context.'"/>'."\n";
+                    break;
+                }
+
                 $completedTarget = $instruction->transitions['completed'] ?? null;
                 if ($completedTarget) {
                     $xml .= '          <action application="transfer" data="'.$completedTarget.' XML '.$context.'"/>'."\n";

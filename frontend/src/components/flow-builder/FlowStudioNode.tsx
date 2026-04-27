@@ -25,7 +25,7 @@ export const FlowStudioNode = memo(({ data, selected }: NodeProps<{ flowNode: Fl
             <Handle
                 type="target"
                 position={Position.Left}
-                className="!-left-3 !h-5 !w-5 !border-[3px] !border-background !bg-primary shadow-sm transition-transform hover:scale-110"
+                className="!-left-3 !z-20 !h-5 !w-5 !border-[3px] !border-background !bg-primary shadow-sm transition-transform hover:scale-110"
             />
 
             <div className="mb-3 flex items-start justify-between gap-3">
@@ -49,7 +49,7 @@ export const FlowStudioNode = memo(({ data, selected }: NodeProps<{ flowNode: Fl
             <Handle
                 type="source"
                 position={Position.Right}
-                className="!-right-3 !h-5 !w-5 !border-[3px] !border-background !bg-primary shadow-sm transition-transform hover:scale-110"
+                className="!-right-3 !z-20 !h-5 !w-5 !border-[3px] !border-background !bg-primary shadow-sm transition-transform hover:scale-110"
             />
         </div>
     );

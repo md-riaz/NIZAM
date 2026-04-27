@@ -127,7 +127,11 @@ class FlowPublishServiceTest extends TestCase
         $playMessageNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'type' => 'play_message',
-            'config_json' => ['prompt' => 'recordings/1/welcome.wav'],
+            'config_json' => [
+                'prompt' => 'recordings/1/welcome.wav',
+                'destination_type' => 'extension',
+                'destination_value' => '1003',
+            ],
         ]);
 
         $hangupNode = FlowNode::factory()->create([
@@ -155,9 +159,10 @@ class FlowPublishServiceTest extends TestCase
 
         $artifact = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion->id)->first();
         $this->assertNotNull($artifact);
-        $this->assertStringContainsString('application="playback" data="recordings/1/welcome.wav"', $artifact->content);
-        $this->assertStringContainsString('node_'.$hangupNode->id.' XML '.$this->organization->domain, $artifact->content);
-        $this->assertStringNotContainsString('application="answer"', $artifact->content);
+        $this->assertStringContainsString('application="set" data="nizam_destination_type=extension"', $artifact->content);
+        $this->assertStringContainsString('application="set" data="nizam_destination_id=1003"', $artifact->content);
+        $this->assertStringContainsString('application="transfer" data="call_delivery_entrypoint XML '.$this->organization->domain, $artifact->content);
+        $this->assertStringNotContainsString('application="playback"', $artifact->content);
     }
 
     public function test_publish_fails_for_invalid_flow(): void

@@ -34,6 +34,8 @@ class MenuNodeCompiler implements NodeCompiler
             'node_id' => $node->id,
             'node_type' => 'menu',
             'config' => $config,
+            'destination_type' => $config['destination_type'] ?? null,
+            'destination_value' => $config['destination_value'] ?? null,
             'transitions' => $transitions,
         ]);
 

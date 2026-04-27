@@ -12,6 +12,13 @@ class VoicemailNodeValidator extends AbstractNodeValidator
             $errors[] = $error;
         }
 
+        $destinationType = data_get($node, 'config.destination_type');
+        $destinationValue = data_get($node, 'config.destination_value');
+
+        if (($destinationType === null || $destinationType === '') !== ($destinationValue === null || $destinationValue === '')) {
+            $errors[] = 'Voicemail node destination_type and destination_value must be provided together.';
+        }
+
         return $errors;
     }
 }

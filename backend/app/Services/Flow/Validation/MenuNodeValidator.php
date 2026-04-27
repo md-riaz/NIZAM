@@ -9,8 +9,9 @@ class MenuNodeValidator extends AbstractNodeValidator
         $errors = [];
 
         $prompt = data_get($node, 'config.prompt') ?? data_get($node, 'config.greeting');
+        $promptMediaId = data_get($node, 'config.media_id') ?? data_get($node, 'config.prompt_media_id');
 
-        if ($prompt === null || $prompt === '') {
+        if (($prompt === null || $prompt === '') && ($promptMediaId === null || $promptMediaId === '')) {
             $errors[] = 'Menu node requires a prompt.';
         }
 
@@ -28,8 +29,11 @@ class MenuNodeValidator extends AbstractNodeValidator
             $errors[] = 'Menu node requires at least one allowed digit.';
         }
 
-        if ($error = $this->validateTimeout($node)) {
-            $errors[] = $error;
+        $destinationType = data_get($node, 'config.destination_type');
+        $destinationValue = data_get($node, 'config.destination_value');
+
+        if (($destinationType === null || $destinationType === '') !== ($destinationValue === null || $destinationValue === '')) {
+            $errors[] = 'Menu node destination_type and destination_value must be provided together.';
         }
 
         return $errors;
