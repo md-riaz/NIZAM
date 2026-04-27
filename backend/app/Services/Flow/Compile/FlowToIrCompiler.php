@@ -27,7 +27,10 @@ class FlowToIrCompiler
         $this->registerCompilers([
             new StartNodeCompiler(),
             new ScheduleCheckNodeCompiler(),
+            new CallerMatchNodeCompiler(),
+            new NumberMatchNodeCompiler(),
             new MenuNodeCompiler(),
+            new PlayMessageNodeCompiler(),
             new RingTeamNodeCompiler(),
             new VoicemailNodeCompiler(),
             new HangupNodeCompiler(),
@@ -66,12 +69,10 @@ class FlowToIrCompiler
             // Convert to array of FlowEdge models
             $nodeEdgesArray = $nodeEdges->all();
 
-            $compiler = $this->nodeCompilers[$node->type] ?? null;
+            $canonicalType = $this->nodeSpecRegistry->canonicalType($node->type) ?? $node->type;
+            $compiler = $this->nodeCompilers[$canonicalType] ?? null;
 
             if (!$compiler) {
-                // Fallback or just throw if we want strictly modular
-                // throw new RuntimeException("No NodeCompiler registered for type: {$node->type}");
-                // For now, let's throw to enforce modular compilation
                 throw new RuntimeException("No NodeCompiler registered for type: {$node->type}");
             }
 
@@ -91,10 +92,13 @@ class FlowToIrCompiler
     public function canCompile(FlowVersion $flowVersion): bool
     {
         foreach ($flowVersion->nodes as $node) {
-            if (!$this->nodeSpecRegistry->has($node->type)) {
+            if (! $this->nodeSpecRegistry->has($node->type)) {
                 return false;
             }
-            if (!isset($this->nodeCompilers[$node->type])) {
+
+            $canonicalType = $this->nodeSpecRegistry->canonicalType($node->type) ?? $node->type;
+
+            if (! isset($this->nodeCompilers[$canonicalType])) {
                 return false;
             }
         }

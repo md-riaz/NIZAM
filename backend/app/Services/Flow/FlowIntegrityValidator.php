@@ -2,10 +2,15 @@
 
 namespace App\Services\Flow;
 
+use App\Domain\Flow\Compile\NodeSpecRegistry;
 use App\Models\FlowVersion;
 
 class FlowIntegrityValidator
 {
+    public function __construct(
+        protected NodeSpecRegistry $nodeSpecRegistry,
+    ) {}
+
     public function validate(FlowVersion $flowVersion): array
     {
         $flowVersion->loadMissing(['nodes', 'edges']);
@@ -35,17 +40,37 @@ class FlowIntegrityValidator
         }
 
         foreach ($nodes as $node) {
-            if ($node->type === 'start') {
-                continue;
+            $canonicalType = $this->nodeSpecRegistry->canonicalType($node->type) ?? $node->type;
+            $outgoingEdges = $edges->where('source_node_id', $node->id)->values();
+
+            if ($canonicalType !== 'start') {
+                $incomingCount = $edges->where('target_node_id', $node->id)->count();
+
+                if ($incomingCount === 0) {
+                    $errors[] = "Node {$node->id} [{$node->type}] is unreachable.";
+                }
             }
 
-            $incomingCount = $edges->where('target_node_id', $node->id)->count();
+            if (in_array($canonicalType, ['hangup'], true) && $outgoingEdges->isNotEmpty()) {
+                $errors[] = "Node {$node->id} [{$node->type}] cannot have outgoing edges.";
+            }
 
-            if ($incomingCount === 0) {
-                $errors[] = "Node {$node->id} [{$node->type}] is unreachable.";
+            foreach ($this->requiredBranchesFor($canonicalType) as $requiredBranch) {
+                if (! $outgoingEdges->firstWhere('condition', $requiredBranch)) {
+                    $errors[] = "Node {$node->id} [{$node->type}] is missing required [{$requiredBranch}] branch.";
+                }
             }
         }
 
         return array_values(array_unique($errors));
+    }
+
+    protected function requiredBranchesFor(string $type): array
+    {
+        return match ($type) {
+            'schedule_check' => ['open', 'closed', 'holiday'],
+            'caller_match', 'number_match' => ['match', 'no_match'],
+            default => [],
+        };
     }
 }

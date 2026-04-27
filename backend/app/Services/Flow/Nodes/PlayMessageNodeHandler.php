@@ -7,7 +7,7 @@ use App\Domain\Flow\Contracts\NodeHandler;
 use App\Domain\Flow\NodeResult;
 use App\Services\Media\MediaControlService;
 
-class HangupNodeHandler implements NodeHandler
+class PlayMessageNodeHandler implements NodeHandler
 {
     public function __construct(
         protected MediaControlService $mediaControlService,
@@ -15,12 +15,15 @@ class HangupNodeHandler implements NodeHandler
 
     public function execute(array $node, CallContext $context): NodeResult
     {
-        $cause = (string) data_get($node, 'config.hangup_cause', data_get($node, 'config.cause', 'NORMAL_CLEARING'));
-        $this->mediaControlService->hangup($context->callSession, $cause);
+        $config = (array) ($node['config'] ?? []);
+        $prompt = $config['prompt'] ?? $config['message'] ?? null;
 
-        return NodeResult::complete([
-            'message' => 'Flow completed at hangup node.',
-            'cause' => $cause,
+        if (is_string($prompt) && $prompt !== '') {
+            $this->mediaControlService->playback($context->callSession, $prompt);
+        }
+
+        return NodeResult::transition('next', [
+            'prompt' => $prompt,
         ]);
     }
 }

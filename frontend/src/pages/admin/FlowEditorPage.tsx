@@ -7,13 +7,28 @@ import { type Connection, type XYPosition } from '@xyflow/react';
 import { FlowCanvas } from '@/components/flow-builder/FlowCanvas';
 import { FlowInspector } from '@/components/flow-builder/FlowInspector';
 import { FlowNodePalette, type BuilderNodeType } from '@/components/flow-builder/FlowNodePalette';
-import { createBuilderNode, getBuilderNodeDefinition } from '@/components/flow-builder/nodeRegistry';
+import {
+    createBuilderNode,
+    getBuilderNodeDefinition,
+    getDefaultOutgoingCondition,
+    getEdgeConditionOptions,
+    normalizeBuilderNodeType,
+    serializeBuilderNodeType,
+} from '@/components/flow-builder/nodeRegistry';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { getErrorMessage } from '@/lib/api-hooks';
 import { cn } from '@/lib/utils';
-import type { Flow, FlowEdge, FlowNode, RingGroup } from '@/types/models';
+import type { Flow, FlowEdge, FlowNode, RingGroup, SystemMedia } from '@/types/models';
 
 const studioPanelClass = 'rounded-3xl border border-border/70 bg-card/90 p-4 shadow-[var(--communications-shadow-ambient)]';
 const panelClass = 'rounded-2xl border border-border/70 bg-background/95 p-4 shadow-[var(--communications-shadow-ambient)] backdrop-blur';
@@ -22,24 +37,6 @@ const overlayPanelClass = 'absolute inset-y-20 right-4 z-10 w-[340px] rounded-2x
 const overlayEmptyClass = 'absolute bottom-4 left-4 z-10 rounded-xl border border-border/70 bg-background/90 px-3 py-2 text-sm text-muted-foreground shadow-sm';
 const libraryPanelClass = 'absolute left-4 top-20 z-10 w-[280px]';
 
-const legacyTypeMap: Record<string, string> = {
-    ivr: 'menu',
-    ring_group: 'ring_team',
-    terminal: 'hangup',
-};
-
-const productTypeMap: Record<string, BuilderNodeType> = {
-    start: 'start',
-    menu: 'ivr',
-    ivr: 'ivr',
-    ring_team: 'ring_group',
-    ring_group: 'ring_group',
-    queue: 'queue',
-    transfer: 'transfer',
-    hangup: 'terminal',
-    terminal: 'terminal',
-};
-
 function createNode(type: BuilderNodeType, index: number): FlowNode {
     return createBuilderNode(type, index);
 }
@@ -47,12 +44,12 @@ function createNode(type: BuilderNodeType, index: number): FlowNode {
 function serializeNodeForApi(node: FlowNode): FlowNode {
     return {
         ...node,
-        type: legacyTypeMap[node.type] ?? node.type,
+        type: serializeBuilderNodeType(node.type),
     };
 }
 
 function normalizeNodeFromApi(node: FlowNode): FlowNode {
-    const normalizedType = productTypeMap[node.type] ?? 'terminal';
+    const normalizedType = normalizeBuilderNodeType(node.type);
     const definition = getBuilderNodeDefinition(normalizedType);
 
     return {
@@ -99,6 +96,7 @@ export default function FlowEditorPage() {
     const [nodes, setNodes] = useState<FlowNode[]>([createNode('start', 0)]);
     const [edges, setEdges] = useState<FlowEdge[]>([]);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+    const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
     const [draggedNodeType, setDraggedNodeType] = useState<BuilderNodeType | null>(null);
     const [initializedFromServer, setInitializedFromServer] = useState(false);
 
@@ -117,6 +115,15 @@ export default function FlowEditorPage() {
         queryFn: async () => {
             const response = await api.get<{ data: RingGroup[] }>(`${organizationApiPrefix}/ring-groups`);
             return response.data.data.map((team) => ({ id: team.id, name: team.name }));
+        },
+        enabled: !!activeOrganization,
+    });
+
+    const { data: mediaOptions = [] } = useQuery<SystemMedia[]>({
+        queryKey: ['system-media', activeOrganization?.id],
+        queryFn: async () => {
+            const response = await api.get<{ data: SystemMedia[] }>(`${organizationApiPrefix}/system-media`);
+            return response.data.data;
         },
         enabled: !!activeOrganization,
     });
@@ -206,10 +213,32 @@ export default function FlowEditorPage() {
         }
     }, [nodes, selectedNodeId]);
 
+    useEffect(() => {
+        if (!selectedEdgeId) return;
+        if (edges.some((edge) => String(edge.id) === String(selectedEdgeId))) return;
+        setSelectedEdgeId(null);
+    }, [edges, selectedEdgeId]);
+
     const selectedNode = useMemo(
         () => nodes.find((node) => String(node.id) === String(selectedNodeId)) ?? null,
         [nodes, selectedNodeId],
     );
+
+    const selectedEdge = useMemo(
+        () => edges.find((edge) => String(edge.id) === String(selectedEdgeId)) ?? null,
+        [edges, selectedEdgeId],
+    );
+
+    const selectedEdgeSourceNode = useMemo(
+        () => nodes.find((node) => String(node.id) === String(selectedEdge?.source_node_id)) ?? null,
+        [nodes, selectedEdge],
+    );
+
+    const selectedEdgeConditionOptions = useMemo(() => {
+        if (!selectedEdge || !selectedEdgeSourceNode) return [];
+
+        return getEdgeConditionOptions(selectedEdgeSourceNode, edges, selectedEdge.id);
+    }, [selectedEdge, selectedEdgeSourceNode, edges]);
 
     const selectedDefinition = selectedNode ? getBuilderNodeDefinition(selectedNode.type) : null;
 
@@ -225,7 +254,58 @@ export default function FlowEditorPage() {
 
         setNodes((current) => [...current, positionedNode]);
         setSelectedNodeId(String(positionedNode.id));
+        setSelectedEdgeId(null);
         setDraggedNodeType(null);
+    }
+
+    function handleConnect(connection: Connection) {
+        if (!connection.source || !connection.target) return;
+
+        const sourceNode = nodes.find((node) => String(node.id) === String(connection.source));
+        const nextCondition = sourceNode ? getDefaultOutgoingCondition(sourceNode, edges) : null;
+
+        if (sourceNode && getBuilderNodeDefinition(sourceNode.type)?.transitionOptions?.length && !nextCondition) {
+            window.alert('All available transitions for this node are already used. Remove or change an existing edge first.');
+            return;
+        }
+
+        setSelectedNodeId(null);
+        setEdges((current) => {
+            const nextEdge: FlowEdge = {
+                id: `edge-${Date.now()}-${current.length}`,
+                source_node_id: String(connection.source),
+                target_node_id: String(connection.target),
+                condition: nextCondition,
+            };
+
+            setSelectedEdgeId(String(nextEdge.id));
+
+            return [...current, nextEdge];
+        });
+    }
+
+    function handleEdgeConditionChange(edgeId: string, condition: string) {
+        setEdges((current) => current.map((edge) => (
+            String(edge.id) === String(edgeId)
+                ? { ...edge, condition }
+                : edge
+        )));
+    }
+
+    function handleSelectNode(nodeId: string | null) {
+        setSelectedNodeId(nodeId);
+        if (nodeId) setSelectedEdgeId(null);
+    }
+
+    function handleSelectEdge(edgeId: string | null) {
+        setSelectedEdgeId(edgeId);
+        if (edgeId) setSelectedNodeId(null);
+    }
+
+    function handleRemoveSelectedEdge() {
+        if (!selectedEdgeId) return;
+        setEdges((current) => current.filter((edge) => String(edge.id) !== String(selectedEdgeId)));
+        setSelectedEdgeId(null);
     }
 
     if (!activeOrganization) return null;
@@ -280,23 +360,15 @@ export default function FlowEditorPage() {
                             nodes={nodes}
                             edges={edges}
                             selectedNodeId={selectedNodeId}
+                            selectedEdgeId={selectedEdgeId}
                             onNodesChange={setNodes}
                             onEdgesChange={setEdges}
-                            onConnect={(connection: Connection) => {
-                                if (!connection.source || !connection.target) return;
-                                setEdges((current) => [
-                                    ...current,
-                                    {
-                                        id: `edge-${Date.now()}-${current.length}`,
-                                        source_node_id: String(connection.source),
-                                        target_node_id: String(connection.target),
-                                        condition: null,
-                                    },
-                                ]);
-                            }}
+                            onConnect={handleConnect}
                             draggedNodeType={draggedNodeType}
                             onDropNode={addNode}
-                            onSelectNode={setSelectedNodeId}
+                            onSelectNode={handleSelectNode}
+                            onSelectEdge={handleSelectEdge}
+                            onRemoveSelectedEdge={handleRemoveSelectedEdge}
                         />
 
                         {selectedNode ? (
@@ -321,15 +393,64 @@ export default function FlowEditorPage() {
                                 <FlowInspector
                                     selectedNode={selectedNode}
                                     teamOptions={teamOptions}
-                                    onChange={(updatedNode) => {
+                                    mediaOptions={mediaOptions}
+                                    onNodeChange={(updatedNode) => {
                                         setNodes((current) => current.map((node) => (
                                             String(node.id) === String(updatedNode.id) ? updatedNode : node
                                         )));
                                     }}
                                 />
                             </div>
+                        ) : selectedEdge && selectedEdgeSourceNode ? (
+                            <div className={overlayPanelClass}>
+                                <div className="mb-4 space-y-3">
+                                    <div>
+                                        <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                                            Edge Properties
+                                        </p>
+                                        <div className="mt-2 space-y-1">
+                                            <p className="text-sm font-medium text-foreground">
+                                                {selectedEdgeSourceNode.name ?? 'Connection'}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {selectedEdge.source_node_id} → {selectedEdge.target_node_id}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label>Transition</Label>
+                                        <Select
+                                            value={selectedEdge.condition ?? ''}
+                                            onValueChange={(value) => handleEdgeConditionChange(selectedEdge.id, value)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select transition" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {selectedEdgeConditionOptions.map((option) => (
+                                                    <SelectItem key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ))}
+                                                {selectedEdge.condition && !selectedEdgeConditionOptions.some((option) => option.value === selectedEdge.condition) && (
+                                                    <SelectItem value={selectedEdge.condition}>{selectedEdge.condition}</SelectItem>
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            {selectedEdgeConditionOptions.find((option) => option.value === selectedEdge.condition)?.description
+                                                ?? 'Choose how this node should branch on this connection.'}
+                                        </p>
+                                    </div>
+                                    <Button type="button" variant="outline" onClick={handleRemoveSelectedEdge}>
+                                        Remove edge
+                                    </Button>
+                                </div>
+                            </div>
                         ) : (
-                            <div className={overlayEmptyClass}>Select node to edit properties</div>
+                            <div className={overlayEmptyClass}>Select node or edge to edit properties</div>
                         )}
                     </>
                 )}

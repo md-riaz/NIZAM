@@ -77,6 +77,7 @@ const NAV_SECTIONS: NavSection[] = [
             { label: 'Extensions', icon: Phone, href: '/admin/extensions', organizationRequired: true },
             { label: 'Devices', icon: Laptop, href: '/admin/device-profiles', organizationRequired: true },
             { label: 'Call Flows', icon: Route, href: '/admin/flows', organizationRequired: true },
+            { label: 'Media Library', icon: FileText, href: '/admin/system-media', organizationRequired: true },
             { label: 'Ring Groups', icon: GitBranch, href: '/admin/ring-groups', organizationRequired: true },
             { label: 'Numbers', icon: Hash, href: '/admin/numbers', adminOnly: true, organizationRequired: true },
         ],

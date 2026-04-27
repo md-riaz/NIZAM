@@ -3,7 +3,9 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import type { SystemMedia } from '@/types/models';
+
+import { PromptMediaInput } from './PromptMediaInput';
 
 interface IvrOption {
     digit: string;
@@ -11,7 +13,10 @@ interface IvrOption {
 }
 
 interface IvrConfig {
+    prompt?: string;
     greeting?: string;
+    media_id?: string;
+    prompt_media_id?: string;
     short_greeting?: string;
     timeout?: number;
     max_failures?: number;
@@ -21,11 +26,13 @@ interface IvrConfig {
 export function IvrNodeEditor({
     name,
     config,
+    mediaOptions,
     onNameChange,
     onConfigChange,
 }: {
     name: string;
     config: IvrConfig;
+    mediaOptions: SystemMedia[];
     onNameChange: (value: string) => void;
     onConfigChange: (config: IvrConfig) => void;
 }) {
@@ -38,15 +45,26 @@ export function IvrNodeEditor({
                 <Input id="ivr-name" value={name} onChange={(event) => onNameChange(event.target.value)} />
             </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="ivr-greeting">Greeting</Label>
-                <Textarea
-                    id="ivr-greeting"
-                    value={config.greeting ?? ''}
-                    onChange={(event) => onConfigChange({ ...config, greeting: event.target.value })}
-                    placeholder="Thank you for calling. Press 1 for sales, 2 for support."
-                />
-            </div>
+            <PromptMediaInput
+                promptId="ivr-greeting"
+                mediaId="ivr-media-id"
+                promptValue={config.prompt ?? config.greeting ?? ''}
+                selectedMediaId={config.media_id ?? config.prompt_media_id ?? ''}
+                mediaOptions={mediaOptions}
+                promptPlaceholder="recordings/123/welcome.wav or greeting text"
+                onPromptChange={(value) => onConfigChange({
+                    ...config,
+                    prompt: value,
+                    greeting: value,
+                })}
+                onMediaChange={(mediaId, resolvedPrompt) => onConfigChange({
+                    ...config,
+                    media_id: mediaId,
+                    prompt_media_id: mediaId,
+                    prompt: resolvedPrompt,
+                    greeting: resolvedPrompt,
+                })}
+            />
 
             <div className="space-y-2">
                 <Label htmlFor="ivr-short-greeting">Short Greeting</Label>
@@ -88,10 +106,12 @@ export function IvrNodeEditor({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => onConfigChange({
-                            ...config,
-                            options: [...options, { digit: '', label: '' }],
-                        })}
+                        onClick={() =>
+                            onConfigChange({
+                                ...config,
+                                options: [...options, { digit: '', label: '' }],
+                            })
+                        }
                     >
                         <Plus className="mr-2 size-4" />
                         Add Option
@@ -110,7 +130,7 @@ export function IvrNodeEditor({
                                     placeholder="1"
                                     onChange={(event) => {
                                         const nextOptions = [...options];
-                                        nextOptions[index] = { ...option, digit: event.target.value };
+                                        nextOptions[index] = { ...option, digit: event.target.value.replace(/\D/g, '').slice(0, 1) };
                                         onConfigChange({ ...config, options: nextOptions });
                                     }}
                                 />

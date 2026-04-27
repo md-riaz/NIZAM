@@ -7,6 +7,7 @@ use App\Models\Flow;
 use App\Models\FlowVersion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class FlowGraphService
 {
@@ -79,7 +80,7 @@ class FlowGraphService
                 'id' => Str::isUuid($node['id'] ?? '') ? $node['id'] : (string) Str::uuid(),
                 'type' => $node['type'],
                 'name' => $node['name'] ?? $node['type'],
-                'config_json' => $node['config'] ?? [],
+                'config_json' => $this->resolveNodeConfig($flow, $node),
                 'position_x' => $node['position_x'] ?? null,
                 'position_y' => $node['position_y'] ?? null,
             ]);
@@ -102,5 +103,40 @@ class FlowGraphService
         }
 
         return $version->fresh(['nodes', 'edges']);
+    }
+
+    protected function resolveNodeConfig(Flow $flow, array $node): array
+    {
+        $config = $node['config'] ?? [];
+
+        if (! is_array($config)) {
+            return [];
+        }
+
+        return match ($node['type'] ?? null) {
+            'menu', 'ivr' => $this->resolveMenuConfig($flow, $config),
+            default => $config,
+        };
+    }
+
+    protected function resolveMenuConfig(Flow $flow, array $config): array
+    {
+        $mediaId = $config['media_id'] ?? $config['prompt_media_id'] ?? null;
+
+        if (! $mediaId) {
+            return $config;
+        }
+
+        $media = $flow->organization->media()->find($mediaId);
+
+        if (! $media instanceof Media) {
+            return $config;
+        }
+
+        $config['media_id'] = (string) $media->id;
+        $config['prompt_media_id'] = (string) $media->id;
+        $config['prompt'] = 'recordings/'.$media->id.'/'.$media->file_name;
+
+        return $config;
     }
 }

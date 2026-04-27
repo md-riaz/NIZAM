@@ -104,7 +104,15 @@ class FlowToIrCompilerTest extends TestCase
         $menuNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'type' => 'menu',
-            'config_json' => ['prompt' => 'main-menu'],
+            'config_json' => [
+                'greeting' => 'main-menu',
+                'short_greeting' => 'press 1',
+                'timeout' => 5,
+                'max_failures' => 3,
+                'options' => [
+                    ['digit' => '1', 'label' => 'Sales'],
+                ],
+            ],
         ]);
 
         $nextNode = FlowNode::factory()->create([
@@ -117,13 +125,56 @@ class FlowToIrCompilerTest extends TestCase
             'flow_version_id' => $flowVersion->id,
             'source_node_id' => $menuNode->id,
             'target_node_id' => $nextNode->id,
-            'condition' => 'default',
+            'condition' => 'digit_1',
         ]);
 
         $instructions = $this->compiler->compile($flowVersion);
 
         $this->assertNotEmpty($instructions);
         $this->assertEquals('CollectDigits', $instructions[0]->type);
+        $this->assertSame('main-menu', $instructions[0]->params['config']['prompt']);
+        $this->assertSame(['1'], $instructions[0]->params['config']['digits']);
+        $this->assertSame("node_{$nextNode->id}", $instructions[0]->transitions['digit_1']);
+    }
+
+    public function test_can_compile_play_message_node(): void
+    {
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
+        $flowVersion = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'definition_json' => [],
+        ]);
+
+        $playMessageNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'play_message',
+            'config_json' => [
+                'prompt' => 'recordings/1/welcome.wav',
+                'media_id' => '1',
+            ],
+        ]);
+
+        $hangupNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'hangup',
+            'config_json' => [],
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $playMessageNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'next',
+        ]);
+
+        $instructions = $this->compiler->compile($flowVersion);
+
+        $instruction = collect($instructions)->first(fn ($item) => $item->type === 'PlayMessage');
+
+        $this->assertNotNull($instruction);
+        $this->assertSame('recordings/1/welcome.wav', $instruction->params['config']['prompt']);
+        $this->assertSame('1', $instruction->params['config']['media_id']);
+        $this->assertSame("node_{$hangupNode->id}", $instruction->transitions['next']);
     }
 
     public function test_can_compile_voicemail_node(): void
@@ -195,6 +246,137 @@ class FlowToIrCompilerTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $this->compiler->compile($flowVersion);
+    }
+
+    public function test_can_compile_caller_match_node(): void
+    {
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
+        $flowVersion = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'definition_json' => [],
+        ]);
+
+        $startNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'start',
+            'config_json' => [],
+        ]);
+
+        $callerMatchNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'caller_match',
+            'config_json' => [
+                'mode' => 'exact',
+                'numbers' => ['+15551234567'],
+            ],
+        ]);
+
+        $ringTeamNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'ring_team',
+            'config_json' => [
+                'team_id' => 'vip-team',
+                'timeout' => 25,
+                'strategy' => 'simultaneous',
+                'members_text' => "1001,20,0\n1002,20,5",
+            ],
+        ]);
+
+        $hangupNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'hangup',
+            'config_json' => ['hangup_cause' => 'NORMAL_CLEARING'],
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $startNode->id,
+            'target_node_id' => $callerMatchNode->id,
+            'condition' => 'next',
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $callerMatchNode->id,
+            'target_node_id' => $ringTeamNode->id,
+            'condition' => 'match',
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $callerMatchNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'no_match',
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $ringTeamNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'failed',
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $ringTeamNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'no_answer',
+        ]);
+
+        $instructions = $this->compiler->compile($flowVersion);
+
+        $this->assertContains('MatchCaller', array_map(fn ($instruction) => $instruction->type, $instructions));
+
+        $ringInstruction = collect($instructions)->first(fn ($instruction) => $instruction->type === 'BridgeTeam');
+
+        $this->assertNotNull($ringInstruction);
+        $this->assertSame('vip-team', $ringInstruction->params['team_id']);
+        $this->assertSame(25, $ringInstruction->params['timeout']);
+        $this->assertSame('simultaneous', $ringInstruction->params['config']['strategy']);
+        $this->assertArrayHasKey('failed', $ringInstruction->transitions);
+        $this->assertArrayHasKey('no_answer', $ringInstruction->transitions);
+    }
+
+    public function test_can_compile_number_match_node(): void
+    {
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
+        $flowVersion = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'definition_json' => [],
+        ]);
+
+        $numberMatchNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'number_match',
+            'config_json' => [
+                'mode' => 'did',
+                'numbers' => ['+15550001111'],
+            ],
+        ]);
+
+        $hangupNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'hangup',
+            'config_json' => [],
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $numberMatchNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'match',
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $numberMatchNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'no_match',
+        ]);
+
+        $instructions = $this->compiler->compile($flowVersion);
+
+        $this->assertContains('MatchNumber', array_map(fn ($instruction) => $instruction->type, $instructions));
     }
 
     public function test_can_validate_flow_before_compilation(): void

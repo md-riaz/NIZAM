@@ -15,20 +15,10 @@ function handlePaletteDragStart(event: DragEvent<HTMLButtonElement>, type: Build
     event.dataTransfer.effectAllowed = 'move';
 }
 
-const paletteGroups = [
-    {
-        label: 'Entry',
-        items: builderNodeDefinitions.filter((item) => item.type === 'start'),
-    },
-    {
-        label: 'Routing',
-        items: builderNodeDefinitions.filter((item) => ['ivr', 'ring_group', 'queue', 'transfer'].includes(item.type)),
-    },
-    {
-        label: 'End',
-        items: builderNodeDefinitions.filter((item) => item.type === 'terminal'),
-    },
-];
+const paletteGroups = ['Entry', 'Conditions', 'Routing', 'Actions', 'End'].map((label) => ({
+    label,
+    items: builderNodeDefinitions.filter((item) => item.category === label),
+}));
 
 export type { BuilderNodeType };
 

@@ -31,7 +31,8 @@ class FlowPublishServiceTest extends TestCase
         $compiler = new FlowToIrCompiler($registry);
         $artifactService = new FlowArtifactService($compiler, app(\App\Services\Routing\RoutingGraphCompiler::class));
         $manifestBuilder = new OrganizationManifestBuilder(app(\App\Services\DialplanCompiler::class));
-        $this->publishService = new FlowPublishService($artifactService, $manifestBuilder);
+        $integrityValidator = app(\App\Services\Flow\FlowIntegrityValidator::class);
+        $this->publishService = new FlowPublishService($artifactService, $manifestBuilder, $integrityValidator);
     }
 
     public function test_can_publish_flow_version(): void
@@ -52,7 +53,7 @@ class FlowPublishServiceTest extends TestCase
         $scheduleCheckNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'type' => 'schedule_check',
-            'config_json' => ['schedule_id' => 1],
+            'config_json' => ['schedule_id' => 1, 'schedule_mode' => 'custom'],
         ]);
         $hangupNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
@@ -78,6 +79,12 @@ class FlowPublishServiceTest extends TestCase
             'target_node_id' => $hangupNode->id,
             'condition' => 'closed',
         ]);
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $scheduleCheckNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'holiday',
+        ]);
 
         $result = $this->publishService->publish($flowVersion);
 
@@ -99,6 +106,57 @@ class FlowPublishServiceTest extends TestCase
         // Verify flow version status was updated
         $flowVersion->refresh();
         $this->assertEquals('published', $flowVersion->status);
+        $this->assertTrue($flowVersion->is_published);
+    }
+
+    public function test_can_publish_play_message_flow_version(): void
+    {
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
+        $flowVersion = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'status' => 'draft',
+            'definition_json' => [],
+        ]);
+
+        $startNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'start',
+            'config_json' => [],
+        ]);
+
+        $playMessageNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'play_message',
+            'config_json' => ['prompt' => 'recordings/1/welcome.wav'],
+        ]);
+
+        $hangupNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'hangup',
+            'config_json' => [],
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $startNode->id,
+            'target_node_id' => $playMessageNode->id,
+            'condition' => 'next',
+        ]);
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $playMessageNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'next',
+        ]);
+
+        $result = $this->publishService->publish($flowVersion);
+
+        $this->assertTrue($result['success']);
+
+        $artifact = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion->id)->first();
+        $this->assertNotNull($artifact);
+        $this->assertStringContainsString('application="playback" data="recordings/1/welcome.wav"', $artifact->content);
+        $this->assertStringContainsString('node_'.$hangupNode->id.' XML '.$this->organization->domain, $artifact->content);
     }
 
     public function test_publish_fails_for_invalid_flow(): void
@@ -120,7 +178,8 @@ class FlowPublishServiceTest extends TestCase
         $result = $this->publishService->publish($flowVersion);
 
         $this->assertFalse($result['success']);
-        $this->assertStringContainsString('compiler', $result['error']);
+        $this->assertStringContainsString('exactly one start node', $result['error']);
+        $this->assertStringContainsString('unreachable', $result['error']);
 
         // Verify no artifact was created
         $artifact = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion->id)->first();
@@ -145,7 +204,7 @@ class FlowPublishServiceTest extends TestCase
         $scheduleCheckNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
             'type' => 'schedule_check',
-            'config_json' => ['schedule_id' => 1],
+            'config_json' => ['schedule_id' => 1, 'schedule_mode' => 'custom'],
         ]);
         $hangupNode = FlowNode::factory()->create([
             'flow_version_id' => $flowVersion->id,
@@ -221,11 +280,9 @@ class FlowPublishServiceTest extends TestCase
             'condition' => 'next',
         ]);
 
-        // Publish first version
         $result1 = $this->publishService->publish($flowVersion1);
         $this->assertTrue($result1['success']);
 
-        // Create second version
         $flowVersion2 = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'version_number' => 2,
@@ -252,16 +309,66 @@ class FlowPublishServiceTest extends TestCase
             'condition' => 'next',
         ]);
 
-        // Publish second version
         $result2 = $this->publishService->publish($flowVersion2);
         $this->assertTrue($result2['success']);
 
-        // Verify both artifacts exist
         $artifact1 = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion1->id)->first();
         $artifact2 = \App\Models\FlowCompiledArtifact::where('flow_version_id', $flowVersion2->id)->first();
 
         $this->assertNotNull($artifact1);
         $this->assertNotNull($artifact2);
         $this->assertNotEquals($artifact1->checksum, $artifact2->checksum);
+    }
+
+    public function test_publish_fails_when_business_hours_missing_holiday_branch(): void
+    {
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
+        $flowVersion = FlowVersion::factory()->create([
+            'flow_id' => $flow->id,
+            'status' => 'draft',
+            'definition_json' => [],
+        ]);
+
+        $startNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'start',
+            'config_json' => [],
+        ]);
+
+        $hoursNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'business_hours',
+            'config_json' => ['schedule_mode' => 'organization_default'],
+        ]);
+
+        $hangupNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'end_call',
+            'config_json' => ['hangup_cause' => 'NORMAL_CLEARING'],
+        ]);
+
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $startNode->id,
+            'target_node_id' => $hoursNode->id,
+            'condition' => 'next',
+        ]);
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $hoursNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'open',
+        ]);
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $hoursNode->id,
+            'target_node_id' => $hangupNode->id,
+            'condition' => 'closed',
+        ]);
+
+        $result = $this->publishService->publish($flowVersion);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('holiday', $result['error']);
     }
 }

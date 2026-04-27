@@ -118,29 +118,34 @@ type FlowCanvasProps = {
     nodes: FlowNode[];
     edges: FlowEdge[];
     selectedNodeId: string | null;
+    selectedEdgeId: string | null;
     draggedNodeType: BuilderNodeType | null;
     onNodesChange: (nodes: FlowNode[]) => void;
     onEdgesChange: (edges: FlowEdge[]) => void;
     onConnect: (connection: Connection) => void;
     onDropNode: (type: BuilderNodeType, position: XYPosition) => void;
     onSelectNode: (nodeId: string | null) => void;
+    onSelectEdge: (edgeId: string | null) => void;
+    onRemoveSelectedEdge: () => void;
 };
 
 function FlowCanvasInner({
     nodes,
     edges,
     selectedNodeId,
+    selectedEdgeId,
     draggedNodeType,
     onNodesChange,
     onEdgesChange,
     onConnect,
     onDropNode,
     onSelectNode,
+    onSelectEdge,
+    onRemoveSelectedEdge,
 }: FlowCanvasProps) {
     const { screenToFlowPosition } = useReactFlow();
     const [flowNodes, setFlowNodes] = useState<Node[]>(() => toReactFlowNodes(nodes, selectedNodeId));
-    const [flowEdges, setFlowEdges] = useState<Edge[]>(() => toReactFlowEdges(edges, null));
-    const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+    const [flowEdges, setFlowEdges] = useState<Edge[]>(() => toReactFlowEdges(edges, selectedEdgeId));
 
     const summary = useMemo(() => selectionSummary(selectedNodeId, nodes, edges), [selectedNodeId, nodes, edges]);
     const selectedEdge = selectedEdgeId
@@ -164,12 +169,6 @@ function FlowCanvasInner({
             });
         });
     }, [nodes, selectedNodeId]);
-
-    useEffect(() => {
-        setSelectedEdgeId((current) => (
-            edges.some((edge) => String(edge.id) === String(current)) ? current : null
-        ));
-    }, [edges]);
 
     useEffect(() => {
         setFlowEdges(toReactFlowEdges(edges, selectedEdgeId));
@@ -203,37 +202,28 @@ function FlowCanvasInner({
 
         if (changes.some((change) => change.type === 'select')) {
             const selected = nextVisualEdges.find((edge) => edge.selected);
-            setSelectedEdgeId(selected?.id ?? null);
+            onSelectEdge(selected?.id ?? null);
         }
     }
 
     function handleConnect(connection: Connection) {
-        setSelectedEdgeId(null);
+        onSelectEdge(null);
         onConnect(connection);
     }
 
     function handleNodeClick(_: MouseEvent, node: Node) {
-        setSelectedEdgeId(null);
+        onSelectEdge(null);
         onSelectNode(node.id);
     }
 
     function handleEdgeClick(_: MouseEvent, edge: Edge) {
-        setSelectedEdgeId(edge.id);
+        onSelectEdge(edge.id);
         onSelectNode(null);
     }
 
     function handlePaneClick() {
-        setSelectedEdgeId(null);
+        onSelectEdge(null);
         onSelectNode(null);
-    }
-
-    function removeSelectedEdge() {
-        if (!selectedEdgeId) return;
-
-        const nextVisualEdges = flowEdges.filter((edge) => edge.id !== selectedEdgeId);
-        setFlowEdges(nextVisualEdges);
-        setSelectedEdgeId(null);
-        onEdgesChange(projectEdges(nextVisualEdges));
     }
 
     function handleDragOver(event: DragEvent<HTMLDivElement>) {
@@ -296,7 +286,7 @@ function FlowCanvasInner({
                         <p className="font-semibold text-foreground">{typeof selectedEdge.label === 'string' && selectedEdge.label ? selectedEdge.label : 'Connection selected'}</p>
                         <p>{selectedEdge.source} → {selectedEdge.target}</p>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={removeSelectedEdge}>
+                    <Button type="button" variant="outline" size="sm" onClick={onRemoveSelectedEdge}>
                         <Trash2 className="mr-2 size-4" />
                         Remove edge
                     </Button>

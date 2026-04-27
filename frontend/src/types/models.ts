@@ -143,6 +143,21 @@ export const TeamSchema = z.object({
 });
 export type Team = z.infer<typeof TeamSchema>;
 
+export const SystemMediaSchema = z.object({
+    id: idSchema,
+    uuid: z.string().nullable().optional(),
+    name: z.string(),
+    file_name: z.string(),
+    mime_type: z.string().nullable().optional(),
+    size: z.number().nullable().optional(),
+    custom_properties: z.record(z.string(), z.unknown()).default({}),
+    collection_name: z.string().nullable().optional(),
+    created_at: z.string().nullable().optional(),
+    url: z.string().nullable().optional(),
+    path: z.string().nullable().optional(),
+});
+export type SystemMedia = z.infer<typeof SystemMediaSchema>;
+
 export const GatewaySchema = z.object({
     id: idSchema,
     organization_id: idSchema,

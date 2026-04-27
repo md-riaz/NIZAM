@@ -81,7 +81,9 @@ class FlowController extends Controller
         $result = $this->flowApplicationService->publishLatest($flow);
 
         if (! $result['success']) {
-            return response()->json(['message' => $result['message']], $result['status']);
+            return response()->json([
+                'message' => $result['message'] ?? $result['error'] ?? 'Unable to publish flow.',
+            ], $result['status'] ?? 422);
         }
 
         return new FlowResource($flow->fresh(['activeVersion.nodes', 'activeVersion.edges', 'versions']));

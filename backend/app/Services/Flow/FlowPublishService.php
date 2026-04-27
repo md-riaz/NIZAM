@@ -5,12 +5,14 @@ namespace App\Services\Flow;
 use App\Models\FlowVersion;
 use App\Services\OrganizationManifestBuilder;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class FlowPublishService
 {
     public function __construct(
         protected FlowArtifactService $artifactService,
         protected OrganizationManifestBuilder $manifestBuilder,
+        protected FlowIntegrityValidator $flowIntegrityValidator,
     ) {}
 
     /**
@@ -51,15 +53,22 @@ class FlowPublishService
             ];
         }
 
-        // Validate all node types have compilers registered
-        if (!$this->artifactService->getFlowToIrCompiler()->canCompile($flowVersion)) {
+        $integrityErrors = $this->flowIntegrityValidator->validate($flowVersion);
+
+        if ($integrityErrors !== []) {
+            return [
+                'success' => false,
+                'error' => implode(' ', $integrityErrors),
+            ];
+        }
+
+        if (! $this->artifactService->getFlowToIrCompiler()->canCompile($flowVersion)) {
             return [
                 'success' => false,
                 'error' => 'Flow contains node types without registered compilers',
             ];
         }
 
-        // Start transaction to ensure atomicity
         return DB::transaction(function () use ($flowVersion) {
             // Step 1: Compile and store the flow artifact
             $artifactResult = $this->artifactService->compileAndStore($flowVersion);
@@ -69,7 +78,10 @@ class FlowPublishService
             }
 
             // Update flow version status so the builder picks it up
-            $flowVersion->update(['status' => 'published']);
+            $flowVersion->update([
+                'status' => 'published',
+                'is_published' => true,
+            ]);
             
             // Also need to ensure this is the active version for the flow
             $flowVersion->flow->update(['active_version_id' => $flowVersion->id]);
@@ -92,7 +104,10 @@ class FlowPublishService
     {
         return DB::transaction(function () use ($flowVersion) {
             // Revert flow version status
-            $flowVersion->update(['status' => 'draft']);
+            $flowVersion->update([
+                'status' => 'draft',
+                'is_published' => false,
+            ]);
             
             // Clear active version if it was this one
             if ($flowVersion->flow->active_version_id === $flowVersion->id) {

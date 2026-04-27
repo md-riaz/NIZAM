@@ -32,6 +32,7 @@ const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
 const RingGroupFormPage = lazy(() => import('@/pages/admin/RingGroupFormPage'));
 const FlowsPage = lazy(() => import('@/pages/admin/FlowsPage'));
 const FlowEditorPage = lazy(() => import('@/pages/admin/FlowEditorPage'));
+const SystemMediaPage = lazy(() => import('@/pages/admin/SystemMediaPage'));
 const CallHistoryPage = lazy(() => import('@/pages/admin/CallHistoryPage'));
 const InteractionDetailPage = lazy(() => import('@/pages/admin/InteractionDetailPage'));
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
@@ -169,6 +170,7 @@ const router = createBrowserRouter(
                 <Route path="flows" element={<FlowsPage />} />
                 <Route path="flows/create" element={<FlowEditorPage />} />
                 <Route path="flows/:id/edit" element={<FlowEditorPage />} />
+                <Route path="system-media" element={<SystemMediaPage />} />
 
                 {/* Contact Center (organization-scoped) */}
                 <Route path="teams" element={<TeamsPage />} />

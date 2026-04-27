@@ -6,6 +6,8 @@ use App\Models\Flow;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FlowApiTest extends TestCase
@@ -197,5 +199,240 @@ class FlowApiTest extends TestCase
             ->getJson("/api/v1/organizations/{$this->organization->id}/flows/{$flow->id}");
 
         $response->assertStatus(404);
+    }
+
+    public function test_can_create_flow_with_business_hours_and_end_call_nodes(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/flows", [
+                'name' => 'After Hours Flow',
+                'description' => 'Routes by business state',
+                'version' => [
+                    'definition' => [
+                        'nodes' => [
+                            [
+                                'id' => 'start',
+                                'type' => 'start',
+                                'config' => [],
+                            ],
+                            [
+                                'id' => 'hours',
+                                'type' => 'business_hours',
+                                'config' => [
+                                    'schedule_mode' => 'organization_default',
+                                ],
+                            ],
+                            [
+                                'id' => 'closed',
+                                'type' => 'end_call',
+                                'config' => [
+                                    'hangup_cause' => 'NORMAL_CLEARING',
+                                ],
+                            ],
+                        ],
+                        'edges' => [
+                            [
+                                'id' => 'e1',
+                                'source_node_id' => 'start',
+                                'target_node_id' => 'hours',
+                                'condition' => 'next',
+                            ],
+                            [
+                                'id' => 'e2',
+                                'source_node_id' => 'hours',
+                                'target_node_id' => 'closed',
+                                'condition' => 'closed',
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
+
+        $response->assertCreated();
+    }
+
+    public function test_existing_terminal_node_type_still_round_trips(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/flows", [
+                'name' => 'Legacy Flow',
+                'version' => [
+                    'definition' => [
+                        'nodes' => [
+                            [
+                                'id' => 'start',
+                                'type' => 'start',
+                                'config' => [],
+                            ],
+                            [
+                                'id' => 'end',
+                                'type' => 'terminal',
+                                'config' => [],
+                            ],
+                        ],
+                        'edges' => [
+                            [
+                                'id' => 'e1',
+                                'source_node_id' => 'start',
+                                'target_node_id' => 'end',
+                                'condition' => 'next',
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
+
+        $response->assertCreated();
+    }
+
+    public function test_publish_returns_validation_error_for_unreachable_flow(): void
+    {
+        $flow = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/flows", [
+                'name' => 'Invalid Publish Flow',
+                'version' => [
+                    'definition' => [
+                        'nodes' => [
+                            [
+                                'id' => 'start',
+                                'type' => 'start',
+                                'config' => [],
+                            ],
+                            [
+                                'id' => 'play-message',
+                                'type' => 'play_message',
+                                'config' => [
+                                    'prompt' => 'recordings/1/welcome.wav',
+                                ],
+                            ],
+                        ],
+                        'edges' => [],
+                    ],
+                ],
+            ])
+            ->assertCreated()
+            ->json('data');
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/flows/{$flow['id']}/publish");
+
+        $response->assertStatus(422);
+        $this->assertStringContainsString('[play_message] is unreachable.', (string) $response->json('message'));
+    }
+
+    public function test_can_publish_saved_play_message_flow(): void
+    {
+        Storage::fake('public');
+
+        $media = $this->organization
+            ->addMedia(UploadedFile::fake()->createWithContent('welcome.wav', "RIFF\x24\x00\x00\x00WAVEfmt "))
+            ->usingName('Welcome Greeting')
+            ->toMediaCollection('prompts');
+
+        $flow = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/flows", [
+                'name' => 'Publish Play Message Flow',
+                'version' => [
+                    'definition' => [
+                        'nodes' => [
+                            [
+                                'id' => 'start',
+                                'type' => 'start',
+                                'config' => [],
+                            ],
+                            [
+                                'id' => 'play-message',
+                                'type' => 'play_message',
+                                'config' => [
+                                    'media_id' => (string) $media->id,
+                                ],
+                            ],
+                            [
+                                'id' => 'end',
+                                'type' => 'end_call',
+                                'config' => [
+                                    'hangup_cause' => 'NORMAL_CLEARING',
+                                ],
+                            ],
+                        ],
+                        'edges' => [
+                            [
+                                'id' => 'edge-1',
+                                'source_node_id' => 'start',
+                                'target_node_id' => 'play-message',
+                                'condition' => 'next',
+                            ],
+                            [
+                                'id' => 'edge-2',
+                                'source_node_id' => 'play-message',
+                                'target_node_id' => 'end',
+                                'condition' => 'next',
+                            ],
+                        ],
+                    ],
+                ],
+            ])
+            ->assertCreated()
+            ->json('data');
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/flows/{$flow['id']}/publish");
+
+        $response->assertOk()
+            ->assertJsonPath('data.active_version.status', 'published')
+            ->assertJsonPath('data.active_version.is_published', true);
+    }
+
+    public function test_flow_create_hydrates_menu_prompt_from_media_id(): void
+    {
+        Storage::fake('public');
+
+        $media = $this->organization
+            ->addMedia(UploadedFile::fake()->createWithContent('welcome.wav', "RIFF\x24\x00\x00\x00WAVEfmt "))
+            ->usingName('Welcome Greeting')
+            ->toMediaCollection('prompts');
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/flows", [
+                'name' => 'Media Prompt Flow',
+                'version' => [
+                    'definition' => [
+                        'nodes' => [
+                            [
+                                'id' => 'start',
+                                'type' => 'start',
+                                'config' => [],
+                            ],
+                            [
+                                'id' => 'menu',
+                                'type' => 'menu',
+                                'config' => [
+                                    'media_id' => (string) $media->id,
+                                    'digits' => ['1' => 'next'],
+                                    'timeout' => 30,
+                                ],
+                            ],
+                        ],
+                        'edges' => [
+                            [
+                                'id' => 'edge-1',
+                                'source_node_id' => 'start',
+                                'target_node_id' => 'menu',
+                                'condition' => 'next',
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
+
+        $response->assertCreated();
+
+        $menuNode = collect($response->json('data.latest_version.nodes'))
+            ->firstWhere('type', 'menu');
+
+        $this->assertNotNull($menuNode);
+        $this->assertSame((string) $media->id, data_get($menuNode, 'config.media_id'));
+        $this->assertSame((string) $media->id, data_get($menuNode, 'config.prompt_media_id'));
+        $this->assertSame('recordings/'.$media->id.'/'.$media->file_name, data_get($menuNode, 'config.prompt'));
     }
 }

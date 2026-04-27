@@ -12,7 +12,18 @@ class MenuNodeCompiler implements NodeCompiler
     public function compile(FlowNode $node, array $outgoingEdges): array
     {
         $config = $node->config_json ?? [];
-        
+
+        if (! isset($config['prompt']) && isset($config['greeting'])) {
+            $config['prompt'] = $config['greeting'];
+        }
+
+        if (! isset($config['digits']) && isset($config['options']) && is_array($config['options'])) {
+            $config['digits'] = array_values(array_filter(array_map(
+                static fn ($option) => isset($option['digit']) ? trim((string) $option['digit']) : null,
+                $config['options'],
+            )));
+        }
+
         $transitions = [];
         foreach ($outgoingEdges as $edge) {
             $result = $edge->condition ?? 'timeout';

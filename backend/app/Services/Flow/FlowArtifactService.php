@@ -231,6 +231,19 @@ class FlowArtifactService
                 }
                 break;
 
+            case 'PlayMessage':
+                $config = $instruction->params['config'] ?? [];
+                $prompt = $config['prompt'] ?? $config['message'] ?? 'silence_stream://250';
+                $xml .= '          <action application="playback" data="'.$prompt.'"/>'."\n";
+
+                $nextTarget = $instruction->transitions['next'] ?? null;
+                if ($nextTarget) {
+                    $xml .= '          <action application="transfer" data="'.$nextTarget.' XML '.$context.'"/>'."\n";
+                } else {
+                    $xml .= '          <action application="hangup"/>'."\n";
+                }
+                break;
+
             case 'BridgeTeam':
                 // Team routing with Lua helper
                 $teamId = $instruction->params['team_id'] ?? null;

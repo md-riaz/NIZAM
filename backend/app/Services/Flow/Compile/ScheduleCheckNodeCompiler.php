@@ -22,12 +22,25 @@ class ScheduleCheckNodeCompiler implements NodeCompiler
         $config = $node->config_json ?? [];
         $scheduleId = $config['schedule_id'] ?? null;
 
-        // Build transition map from edges
         $transitions = [];
         foreach ($outgoingEdges as $edge) {
-            $result = $edge->condition ?? 'open';
+            $result = $edge->condition ?? 'closed';
             $transitions[$result] = "node_{$edge->target_node_id}";
         }
+
+        if (! isset($transitions['holiday']) && isset($transitions['closed'])) {
+            $transitions['holiday'] = $transitions['closed'];
+        }
+
+        if (! isset($transitions['closed']) && isset($transitions['holiday'])) {
+            $transitions['closed'] = $transitions['holiday'];
+        }
+
+        if (! isset($transitions['open'])) {
+            $transitions['open'] = $transitions['closed'] ?? $transitions['holiday'] ?? null;
+        }
+
+        $transitions = array_filter($transitions);
 
         $instruction = IrInstruction::make('CheckSchedule', [
             'node_id' => $node->id,

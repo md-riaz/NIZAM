@@ -8,6 +8,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
+use function storage_path;
+
 /**
  * API controller for managing system media (audio prompts, MOH) via Spatie Media Library.
  */
@@ -20,17 +22,11 @@ class SystemMediaController extends Controller
     {
         $collection = $request->query('collection', 'prompts');
 
-        $media = $organization->getMedia($collection)->map(fn (Media $item) => [
-            'id' => $item->id,
-            'uuid' => $item->uuid,
-            'name' => $item->name,
-            'file_name' => $item->file_name,
-            'mime_type' => $item->mime_type,
-            'size' => $item->size,
-            'custom_properties' => $item->custom_properties,
-            'created_at' => $item->created_at,
-            'url' => $item->getUrl(),
-        ]);
+        $media = $organization->media()
+            ->where('collection_name', $collection)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Media $item) => $this->serializeMedia($item));
 
         return response()->json(['data' => $media]);
     }
@@ -55,16 +51,7 @@ class SystemMediaController extends Controller
             ->toMediaCollection($collection);
 
         return response()->json([
-            'data' => [
-                'id' => $media->id,
-                'uuid' => $media->uuid,
-                'name' => $media->name,
-                'file_name' => $media->file_name,
-                'mime_type' => $media->mime_type,
-                'size' => $media->size,
-                'url' => $media->getUrl(),
-                'created_at' => $media->created_at,
-            ],
+            'data' => $this->serializeMedia($media),
         ], 201);
     }
 
@@ -76,18 +63,7 @@ class SystemMediaController extends Controller
         $media = $organization->media()->findOrFail($mediaId);
 
         return response()->json([
-            'data' => [
-                'id' => $media->id,
-                'uuid' => $media->uuid,
-                'name' => $media->name,
-                'file_name' => $media->file_name,
-                'mime_type' => $media->mime_type,
-                'size' => $media->size,
-                'custom_properties' => $media->custom_properties,
-                'collection_name' => $media->collection_name,
-                'url' => $media->getUrl(),
-                'created_at' => $media->created_at,
-            ],
+            'data' => $this->serializeMedia($media),
         ]);
     }
 
@@ -117,12 +93,7 @@ class SystemMediaController extends Controller
         $media->save();
 
         return response()->json([
-            'data' => [
-                'id' => $media->id,
-                'uuid' => $media->uuid,
-                'name' => $media->name,
-                'custom_properties' => $media->custom_properties,
-            ],
+            'data' => $this->serializeMedia($media->fresh()),
         ]);
     }
 
@@ -135,5 +106,22 @@ class SystemMediaController extends Controller
         $media->delete();
 
         return response()->json(null, 204);
+    }
+
+    protected function serializeMedia(Media $media): array
+    {
+        return [
+            'id' => $media->id,
+            'uuid' => $media->uuid,
+            'name' => $media->name,
+            'file_name' => $media->file_name,
+            'mime_type' => $media->mime_type,
+            'size' => $media->size,
+            'custom_properties' => $media->custom_properties,
+            'collection_name' => $media->collection_name,
+            'created_at' => $media->created_at,
+            'url' => $media->getUrl(),
+            'path' => storage_path('app/public/'.$media->id.'/'.$media->file_name),
+        ];
     }
 }

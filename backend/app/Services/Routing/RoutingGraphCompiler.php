@@ -122,7 +122,7 @@ class RoutingGraphCompiler
                 }
             }
 
-            if ($nodeType === 'hangup' && $branches !== []) {
+            if (in_array($nodeType, ['hangup', 'terminal', 'end_call'], true) && $branches !== []) {
                 $validation['warnings'][] = [
                     'code' => 'hangup_has_outgoing_edges',
                     'message' => 'Hangup node has outgoing transitions that will never execute.',
@@ -209,11 +209,12 @@ class RoutingGraphCompiler
     {
         return match ($nodeType) {
             'start' => ['next'],
-            'schedule_check', 'business_hours' => ['open', 'closed'],
+            'schedule_check', 'business_hours' => ['open', 'closed', 'holiday'],
+            'caller_match', 'number_match' => ['match', 'no_match'],
             'menu' => [],
-            'ring_team' => [],
+            'ring_team', 'ring_group' => [],
             'voicemail' => [],
-            'hangup' => [],
+            'hangup', 'terminal', 'end_call' => [],
             default => [],
         };
     }

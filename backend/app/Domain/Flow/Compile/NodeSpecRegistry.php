@@ -2,7 +2,11 @@
 
 namespace App\Domain\Flow\Compile;
 
+use App\Services\Flow\Validation\CallerMatchNodeValidator;
+use App\Services\Flow\Validation\EndCallNodeValidator;
 use App\Services\Flow\Validation\MenuNodeValidator;
+use App\Services\Flow\Validation\NumberMatchNodeValidator;
+use App\Services\Flow\Validation\PlayMessageNodeValidator;
 use App\Services\Flow\Validation\RingTeamNodeValidator;
 use App\Services\Flow\Validation\ScheduleCheckNodeValidator;
 use App\Services\Flow\Validation\VoicemailNodeValidator;
@@ -40,11 +44,29 @@ class NodeSpecRegistry
         $this->register('schedule_check', new NodeSpec(
             type: 'schedule_check',
             irType: 'CheckSchedule',
-            transitions: ['open', 'closed', 'break'],
+            transitions: ['open', 'closed', 'holiday', 'break'],
             terminal: false,
             requiresLua: false,
             aliases: ['business_hours'],
             validator: ScheduleCheckNodeValidator::class,
+        ));
+
+        $this->register('caller_match', new NodeSpec(
+            type: 'caller_match',
+            irType: 'MatchCaller',
+            transitions: ['match', 'no_match'],
+            terminal: false,
+            requiresLua: false,
+            validator: CallerMatchNodeValidator::class,
+        ));
+
+        $this->register('number_match', new NodeSpec(
+            type: 'number_match',
+            irType: 'MatchNumber',
+            transitions: ['match', 'no_match'],
+            terminal: false,
+            requiresLua: false,
+            validator: NumberMatchNodeValidator::class,
         ));
 
         $this->register('menu', new NodeSpec(
@@ -56,12 +78,22 @@ class NodeSpecRegistry
             validator: MenuNodeValidator::class,
         ));
 
+        $this->register('play_message', new NodeSpec(
+            type: 'play_message',
+            irType: 'PlayMessage',
+            transitions: ['next'],
+            terminal: false,
+            requiresLua: false,
+            validator: PlayMessageNodeValidator::class,
+        ));
+
         $this->register('ring_team', new NodeSpec(
             type: 'ring_team',
             irType: 'BridgeTeam',
-            transitions: ['answered', 'timeout', 'no_answer'],
+            transitions: ['answered', 'timeout', 'failed', 'no_answer'],
             terminal: false,
             requiresLua: true,
+            aliases: ['ring_group'],
             validator: RingTeamNodeValidator::class,
         ));
 
@@ -80,7 +112,8 @@ class NodeSpecRegistry
             transitions: [],
             terminal: true,
             requiresLua: false,
-            aliases: ['end'],
+            aliases: ['end', 'terminal', 'end_call'],
+            validator: EndCallNodeValidator::class,
         ));
     }
 

@@ -8,11 +8,21 @@ class MenuNodeValidator extends AbstractNodeValidator
     {
         $errors = [];
 
-        if ($error = $this->requireConfig($node, 'prompt', 'Menu node requires a prompt.')) {
-            $errors[] = $error;
+        $prompt = data_get($node, 'config.prompt') ?? data_get($node, 'config.greeting');
+
+        if ($prompt === null || $prompt === '') {
+            $errors[] = 'Menu node requires a prompt.';
         }
 
         $digits = data_get($node, 'config.digits');
+        $options = data_get($node, 'config.options');
+
+        if (is_array($options) && $options !== []) {
+            $digits = array_values(array_filter(array_map(
+                static fn ($option) => isset($option['digit']) ? trim((string) $option['digit']) : null,
+                $options,
+            )));
+        }
 
         if (! is_array($digits) || $digits === []) {
             $errors[] = 'Menu node requires at least one allowed digit.';

@@ -89,6 +89,10 @@ export function RingGroupNodeEditor({
                 </div>
             </div>
 
+            <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+                Use edge labels <span className="font-medium text-foreground">answered</span>, <span className="font-medium text-foreground">timeout</span>, <span className="font-medium text-foreground">failed</span>, and <span className="font-medium text-foreground">no_answer</span> to model failover paths.
+            </div>
+
             <div className="space-y-2">
                 <Label htmlFor="ring-group-members">Members Snapshot</Label>
                 <Textarea

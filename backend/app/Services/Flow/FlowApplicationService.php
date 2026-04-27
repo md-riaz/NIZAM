@@ -34,6 +34,12 @@ class FlowApplicationService
             ];
         }
 
-        return $this->flowPublishService->publish($version) + ['status' => 200];
+        $result = $this->flowPublishService->publish($version);
+
+        if (! ($result['success'] ?? false)) {
+            return $result + ['status' => ($result['status'] ?? 422)];
+        }
+
+        return $result + ['status' => 200];
     }
 }
