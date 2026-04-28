@@ -1,43 +1,68 @@
-1. Plan Mode Default
-Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
-If something goes sideways, STOP and re-plan immediately — don’t keep pushing
-Use plan mode for verification steps, not just building
-Write detailed specs upfront to reduce ambiguity
-2. Subagent Strategy
-Use subagents liberally to keep main context window clean
-Offload research, exploration, and parallel analysis to subagents
-For complex problems, throw more compute at it via subagents
-One task per subagent for focused execution
-3. Self-Improvement Loop
-After ANY correction from the user: update tasks/lessons.md with the pattern
-Write rules for yourself that prevent the same mistake
-Ruthlessly iterate on these lessons until mistake rate drops
-Review lessons at session start for relevant project
-4. Verification Before Done
-Never mark a task complete without proving it works
-Diff behavior between main and your changes when relevant
-Ask yourself: “Would a staff engineer approve this?”
-Run tests, check logs, demonstrate correctness
-5. Demand Elegance (Balanced)
-For non-trivial changes: pause and ask “is there a more elegant way?”
-If a fix feels hacky: “Know everything I know now, implement the elegant solution”
-Skip this for simple, obvious fixes — don’t over-engineer
-Challenge your own work before presenting it
-6. Autonomous Bug Fixing
-When given a bug report: just fix it. Don’t ask for hand-holding
-Point at logs, errors, failing tests — then resolve them
-Zero context switching required from the user
-Go fix failing CI tests without being told how
-Task Management
-Plan First: Write plan to tasks/todo.md with checkable items
-Verify Plan: Check in before starting implementation
-Track Progress: Mark items complete as you go
-Explain Changes: High-level summary at each step
-Document Results: Add review section to tasks/todo.md
-Capture Lessons: Update tasks/lessons.md after corrections
-Core Principles
-Simplicity First: Make every change as simple as possible. Impact minimal code.
+# AGENTS
 
-Project Research References
-For this project, there are two reference sources under /reference.
-When you need to research implementation details, prior patterns, or external project behavior, check those references first.
+Purpose: fast map for repository knowledge base. Keep this file short (~100 lines).
+System of record lives in `docs/` and root architecture doc.
+
+## Read order
+1. `ARCHITECTURE.md` — system architecture, boundaries, domain model.
+2. `docs/PRODUCT_SENSE.md` — product intent, outcomes, scope boundaries.
+3. `docs/PLANS.md` — planning policy + links to execution plans.
+4. `docs/SECURITY.md` and `docs/RELIABILITY.md` — non-functional constraints.
+5. Domain detail in `docs/design-docs/*` and `docs/product-specs/*`.
+
+## Source of truth map
+- Architecture: `ARCHITECTURE.md`
+- Design overview: `docs/DESIGN.md`
+- Frontend conventions: `docs/FRONTEND.md`
+- Product framing: `docs/PRODUCT_SENSE.md`
+- Quality model: `docs/QUALITY_SCORE.md`
+- Reliability model: `docs/RELIABILITY.md`
+- Security model: `docs/SECURITY.md`
+
+### Design docs
+- Index: `docs/design-docs/index.md`
+- Core beliefs: `docs/design-docs/core-beliefs.md`
+- Additional design docs: add in `docs/design-docs/` and link from index.
+
+### Product specs
+- Index: `docs/product-specs/index.md`
+- Example spec: `docs/product-specs/new-user-onboarding.md`
+- Additional specs: add in `docs/product-specs/` and link from index.
+
+### Execution plans
+- Active plans: `docs/exec-plans/active/`
+- Completed plans: `docs/exec-plans/completed/`
+- Cross-cutting debt: `docs/exec-plans/tech-debt-tracker.md`
+
+### Generated artifacts
+- Generated docs: `docs/generated/`
+- Current schema snapshot: `docs/generated/db-schema.md`
+- Rule: generated files updated by automation/scripts when possible.
+
+### References
+- External references and links: `docs/references/`
+
+## Operating rules
+- Keep canonical detail out of `AGENTS.md`; link outward.
+- Any new deep doc must be linked from relevant index.
+- Prefer updating existing doc over creating overlapping docs.
+- When docs conflict, trust newest explicit decision in execution plans.
+- Keep headings stable to preserve deep links.
+
+## Documentation update checklist
+- Architecture change -> update `ARCHITECTURE.md` first.
+- UX/system behavior change -> update design doc + product spec.
+- Delivery plan change -> move/update files in `docs/exec-plans/`.
+- Security/reliability posture change -> update corresponding root docs.
+- Schema change -> refresh `docs/generated/db-schema.md`.
+
+## Ownership suggestion
+- Architecture/platform: maintain `ARCHITECTURE.md`, `docs/RELIABILITY.md`, `docs/SECURITY.md`.
+- Product/design: maintain `docs/product-specs/*`, `docs/design-docs/*`, `docs/PRODUCT_SENSE.md`.
+- Delivery lead: maintain `docs/PLANS.md`, `docs/exec-plans/*`.
+
+## Quick pointers for agents
+- Need high-level context: start `ARCHITECTURE.md` -> `docs/PRODUCT_SENSE.md`.
+- Need implementation intent: open relevant file from `docs/design-docs/index.md`.
+- Need rollout status: check `docs/exec-plans/active/` then `completed/`.
+- Need risk posture: read `docs/SECURITY.md` and `docs/RELIABILITY.md`.
