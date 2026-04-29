@@ -97,6 +97,6 @@ class ExtensionFeatureServiceTest extends TestCase
 
         $this->assertTrue($updated->dnd_enabled);
         $this->assertFalse($updated->follow_me_enabled);
-        $this->assertNull($updated->follow_me_destination);
+        $this->assertSame('+8801712345678', $updated->follow_me_destination);
     }
 }

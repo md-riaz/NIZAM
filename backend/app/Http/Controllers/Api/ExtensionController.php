@@ -10,9 +10,11 @@ use App\Http\Resources\ExtensionResource;
 use App\Models\Extension;
 use App\Models\Organization;
 use App\Models\DeviceProfile;
+use App\Services\ExtensionFeatureService;
 use App\Services\WebRtcConfigService;
 use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
+use InvalidArgumentException;
 
 /**
  * API controller for managing extensions scoped to a organization.
@@ -22,6 +24,7 @@ class ExtensionController extends Controller
     public function __construct(
         protected WebhookDispatcher $webhookDispatcher,
         protected WebRtcConfigService $webRtcConfigService,
+        protected ExtensionFeatureService $extensionFeatureService,
     ) {}
 
     /**
@@ -53,11 +56,23 @@ class ExtensionController extends Controller
         }
 
         $attributes = ExtensionData::fromArray($request->validated())->attributes;
+        $featureAttributes = $this->extractFeatureAttributes($attributes);
         $allowedOutboundDidIds = $attributes['allowed_outbound_did_ids'] ?? [];
         $allowedOutboundGatewayIds = $attributes['allowed_outbound_gateway_ids'] ?? [];
         unset($attributes['allowed_outbound_did_ids'], $attributes['allowed_outbound_gateway_ids']);
 
         $extension = $organization->extensions()->create($attributes);
+
+        try {
+            if ($featureAttributes !== []) {
+                $extension = $this->extensionFeatureService->updateFeatures($extension, $featureAttributes);
+            }
+        } catch (InvalidArgumentException $exception) {
+            $extension->delete();
+
+            return $this->featureValidationResponse($exception);
+        }
+
         $this->syncOutboundPolicy($extension, $allowedOutboundDidIds, $allowedOutboundGatewayIds);
         $this->syncOwnedDevice($extension, $attributes['device_profile_id'] ?? null);
 
@@ -95,11 +110,21 @@ class ExtensionController extends Controller
         $this->authorize('update', $extension);
 
         $attributes = ExtensionData::fromArray($request->validated())->attributes;
+        $featureAttributes = $this->extractFeatureAttributes($attributes);
         $allowedOutboundDidIds = $attributes['allowed_outbound_did_ids'] ?? [];
         $allowedOutboundGatewayIds = $attributes['allowed_outbound_gateway_ids'] ?? [];
         unset($attributes['allowed_outbound_did_ids'], $attributes['allowed_outbound_gateway_ids']);
 
-        $extension->update($attributes);
+        try {
+            $extension->update($attributes);
+
+            if ($featureAttributes !== []) {
+                $extension = $this->extensionFeatureService->updateFeatures($extension, $featureAttributes);
+            }
+        } catch (InvalidArgumentException $exception) {
+            return $this->featureValidationResponse($exception);
+        }
+
         $this->syncOutboundPolicy($extension, $allowedOutboundDidIds, $allowedOutboundGatewayIds);
         $this->syncOwnedDevice($extension, $attributes['device_profile_id'] ?? null);
 
@@ -157,6 +182,30 @@ class ExtensionController extends Controller
     {
         $extension->allowedOutboundDids()->sync($allowedOutboundDidIds);
         $extension->allowedOutboundGateways()->sync($allowedOutboundGatewayIds);
+    }
+
+    protected function extractFeatureAttributes(array &$attributes): array
+    {
+        $featureAttributes = [];
+
+        foreach (['follow_me_enabled', 'follow_me_destination', 'dnd_enabled'] as $key) {
+            if (array_key_exists($key, $attributes)) {
+                $featureAttributes[$key] = $attributes[$key];
+                unset($attributes[$key]);
+            }
+        }
+
+        return $featureAttributes;
+    }
+
+    protected function featureValidationResponse(InvalidArgumentException $exception): JsonResponse
+    {
+        return response()->json([
+            'message' => 'The given data was invalid.',
+            'errors' => [
+                'follow_me_destination' => [$exception->getMessage()],
+            ],
+        ], 422);
     }
 
     protected function syncOwnedDevice(Extension $extension, ?string $deviceProfileId): void

@@ -51,6 +51,9 @@ const extensionSchema = z.object({
     default_outbound_did_id: z.string().optional(),
     allowed_outbound_gateway_ids: z.array(z.string()).default([]),
     default_outbound_gateway_id: z.string().optional(),
+    follow_me_enabled: z.boolean(),
+    follow_me_destination: z.string().optional(),
+    dnd_enabled: z.boolean(),
     voicemail_enabled: z.boolean(),
     voicemail_pin: z.string().optional(),
     is_active: z.boolean(),
@@ -84,6 +87,14 @@ const extensionSchema = z.object({
             code: z.ZodIssueCode.custom,
             path: ['default_outbound_gateway_id'],
             message: 'Default outbound gateway must be included in allowed outbound gateways.',
+        });
+    }
+
+    if (values.follow_me_enabled && !(values.follow_me_destination ?? '').trim()) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['follow_me_destination'],
+            message: 'Forward destination is required when call forwarding is enabled.',
         });
     }
 });
@@ -153,7 +164,7 @@ const applyServerErrors = (
             return;
         }
 
-        if (key === 'user_id' || key === 'device_profile_id' || key === 'extension' || key === 'password' || key === 'first_name' || key === 'last_name' || key === 'voicemail_pin' || key === 'default_outbound_did_id' || key === 'default_outbound_gateway_id') {
+        if (key === 'user_id' || key === 'device_profile_id' || key === 'extension' || key === 'password' || key === 'first_name' || key === 'last_name' || key === 'voicemail_pin' || key === 'default_outbound_did_id' || key === 'default_outbound_gateway_id' || key === 'follow_me_destination') {
             setError(key, { type: 'server', message });
         }
     });
@@ -210,6 +221,9 @@ export default function ExtensionFormPage() {
             default_outbound_did_id: 'none',
             allowed_outbound_gateway_ids: [],
             default_outbound_gateway_id: 'none',
+            follow_me_enabled: false,
+            follow_me_destination: '',
+            dnd_enabled: false,
             voicemail_enabled: true,
             voicemail_pin: '',
             is_active: true,
@@ -284,6 +298,9 @@ export default function ExtensionFormPage() {
                 default_outbound_did_id: extension.default_outbound_did_id ?? 'none',
                 allowed_outbound_gateway_ids: extension.allowed_outbound_gateway_ids ?? [],
                 default_outbound_gateway_id: extension.default_outbound_gateway_id ?? 'none',
+                follow_me_enabled: extension.follow_me_enabled ?? false,
+                follow_me_destination: extension.follow_me_destination ?? '',
+                dnd_enabled: extension.dnd_enabled ?? false,
                 voicemail_enabled: extension.voicemail_enabled ?? true,
                 voicemail_pin: extension.voicemail_pin ?? '',
                 is_active: extension.is_active ?? true,
@@ -324,6 +341,8 @@ export default function ExtensionFormPage() {
 
     const ownerType = form.watch('owner_type');
     const selectedUserId = form.watch('user_id');
+    const followMeEnabled = form.watch('follow_me_enabled');
+    const dndEnabled = form.watch('dnd_enabled');
     const isLoadingOwnerOptions = isLoadingUsers || isLoadingDeviceProfiles;
 
     useEffect(() => {
@@ -360,6 +379,24 @@ export default function ExtensionFormPage() {
             form.setValue('last_name', last_name, { shouldDirty: true });
         }
     }, [form, ownerType, selectedUserId, users]);
+
+    useEffect(() => {
+        if (!dndEnabled) {
+            return;
+        }
+
+        if (followMeEnabled) {
+            form.setValue('follow_me_enabled', false, { shouldDirty: true, shouldValidate: true });
+        }
+    }, [dndEnabled, followMeEnabled, form]);
+
+    useEffect(() => {
+        if (!followMeEnabled || !dndEnabled) {
+            return;
+        }
+
+        form.setValue('dnd_enabled', false, { shouldDirty: true, shouldValidate: true });
+    }, [dndEnabled, followMeEnabled, form]);
 
     const allowedOutboundDids = dids.filter((did) => did.is_active ?? true);
     const allowedOutboundGateways = gateways.filter((gateway) => gateway.is_active ?? gateway.enabled ?? true);
@@ -758,6 +795,22 @@ export default function ExtensionFormPage() {
                                 <div className="grid gap-6 md:grid-cols-2">
                                     <FormField
                                         control={form.control}
+                                        name="follow_me_destination"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Call forward destination</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="+15551234567" {...field} />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Stored destination used by admin updates and *74 restore.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
                                         name="voicemail_pin"
                                         render={({ field }) => (
                                             <FormItem>
@@ -771,7 +824,43 @@ export default function ExtensionFormPage() {
                                     />
                                 </div>
 
-                                <div className="grid gap-4 md:grid-cols-2">
+                                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="follow_me_enabled"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value}
+                                                        onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                                                    />
+                                                </FormControl>
+                                                <div className="space-y-1 leading-none">
+                                                    <FormLabel>Enable call forwarding</FormLabel>
+                                                    <FormDescription>Routes calls to stored destination until disabled or DND turns on.</FormDescription>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="dnd_enabled"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value}
+                                                        onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                                                    />
+                                                </FormControl>
+                                                <div className="space-y-1 leading-none">
+                                                    <FormLabel>Enable DND</FormLabel>
+                                                    <FormDescription>DND wins over call forwarding and keeps stored destination for later restore.</FormDescription>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
                                     <FormField
                                         control={form.control}
                                         name="voicemail_enabled"

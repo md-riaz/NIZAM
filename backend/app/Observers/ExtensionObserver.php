@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 
 class ExtensionObserver
 {
+    use RebuildsOrganizationManifest;
+
     /**
      * Handle the Extension "updated" event.
      *
@@ -26,8 +28,17 @@ class ExtensionObserver
             'default_outbound_did_id',
             'voicemail_enabled',
         ];
+        $routingFields = [
+            'follow_me_enabled',
+            'follow_me_destination',
+            'dnd_enabled',
+        ];
 
         $changed = array_keys($extension->getChanges());
+
+        if (! empty(array_intersect($changed, $routingFields))) {
+            $this->rebuildOrganizationManifestForModel($extension);
+        }
 
         if (empty(array_intersect($changed, $provisioningFields))) {
             return;
@@ -39,7 +50,6 @@ class ExtensionObserver
             return;
         }
 
-        // Touch updated_at on associated device profiles to signal reprovisioning needed
         $extension->deviceProfiles()->where('is_active', true)->update([
             'updated_at' => now(),
         ]);

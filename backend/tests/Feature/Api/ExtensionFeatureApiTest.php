@@ -98,7 +98,7 @@ class ExtensionFeatureApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.follow_me_enabled', false)
-            ->assertJsonPath('data.follow_me_destination', null)
+            ->assertJsonPath('data.follow_me_destination', '+8801712345678')
             ->assertJsonPath('data.dnd_enabled', true);
     }
 
@@ -120,6 +120,29 @@ class ExtensionFeatureApiTest extends TestCase
             ->assertJsonPath('data.follow_me_enabled', false)
             ->assertJsonPath('data.follow_me_destination', null)
             ->assertJsonPath('data.dnd_enabled', true);
+    }
+
+    public function test_it_restores_follow_me_when_destination_is_already_stored(): void
+    {
+        $organization = Organization::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
+        $extension = Extension::factory()->create([
+            'organization_id' => $organization->id,
+            'follow_me_enabled' => false,
+            'follow_me_destination' => '+8801712345678',
+            'dnd_enabled' => true,
+        ]);
+
+        $response = $this->actingAs($admin, 'sanctum')
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}/features", [
+                'follow_me_enabled' => true,
+                'dnd_enabled' => false,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.follow_me_enabled', true)
+            ->assertJsonPath('data.follow_me_destination', '+8801712345678')
+            ->assertJsonPath('data.dnd_enabled', false);
     }
 
 }

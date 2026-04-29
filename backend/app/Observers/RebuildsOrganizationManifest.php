@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
+use App\Models\Extension;
 use App\Models\Holiday;
 use App\Models\HolidayCalendar;
 use App\Models\Ivr;
@@ -36,6 +37,7 @@ trait RebuildsOrganizationManifest
             $model instanceof Schedule => $model->organization,
             $model instanceof HolidayCalendar => $model->organization,
             $model instanceof Did => $model->organization,
+            $model instanceof Extension => $model->organization,
             $model instanceof RingGroup => $model->organization,
             $model instanceof Ivr => $model->organization,
             $model instanceof TimeCondition => $model->organization,

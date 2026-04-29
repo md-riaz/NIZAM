@@ -464,6 +464,13 @@ class DialplanCompilerExtendedTest extends TestCase
         $this->assertStringContainsString('nizam_dnd_enabled=true', $xml);
         $this->assertStringContainsString('destination_number" expression="^\*79$"', $xml);
         $this->assertStringContainsString('nizam_dnd_enabled=false', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*72$"', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*72(.+)$"', $xml);
+        $this->assertStringContainsString('/usr/local/freeswitch/scripts/custom/_call_forward.lua activate', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*73$"', $xml);
+        $this->assertStringContainsString('/usr/local/freeswitch/scripts/custom/_call_forward.lua disable', $xml);
+        $this->assertStringContainsString('destination_number" expression="^\*74$"', $xml);
+        $this->assertStringContainsString('/usr/local/freeswitch/scripts/custom/_call_forward.lua restore', $xml);
         $this->assertStringContainsString('destination_number" expression="^\*69$"', $xml);
         $this->assertStringContainsString('Call return starter route requested', $xml);
         $this->assertStringContainsString('destination_number" expression="^0$"', $xml);

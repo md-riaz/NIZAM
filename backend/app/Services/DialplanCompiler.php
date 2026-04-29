@@ -721,7 +721,7 @@ class DialplanCompiler
                 return true;
             }
 
-            if (in_array($action, ['pickup_direct', 'intercom_prefix', 'paging_prefix'], true)
+            if (in_array($action, ['pickup_direct', 'intercom_prefix', 'paging_prefix', 'call_forward_activate'], true)
                 && str_starts_with($destinationNumber, $code)
                 && strlen($destinationNumber) > strlen($code)) {
                 return true;
@@ -770,6 +770,21 @@ class DialplanCompiler
             'dnd_off' => [
                 'name' => 'dnd-off',
                 'action' => 'dnd_off',
+                'target_extension' => null,
+            ],
+            'call_forward_activate' => [
+                'name' => 'call-forward-activate',
+                'action' => 'call_forward_activate',
+                'target_extension' => null,
+            ],
+            'call_forward_disable' => [
+                'name' => 'call-forward-disable',
+                'action' => 'call_forward_disable',
+                'target_extension' => null,
+            ],
+            'call_forward_restore' => [
+                'name' => 'call-forward-restore',
+                'action' => 'call_forward_restore',
                 'target_extension' => null,
             ],
             'call_return' => [
@@ -851,6 +866,10 @@ class DialplanCompiler
             return $this->compileValetParkingExtension($organization, $name, $code);
         }
 
+        if ($action === 'call_forward_activate') {
+            return $this->compileCallForwardActivateExtension($organization, $name, $code);
+        }
+
         $xml = '        <extension name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($code, '/').'$">'."\n";
         $xml .= '            <action application="answer"/>'."\n";
@@ -877,6 +896,14 @@ class DialplanCompiler
                 $xml .= '            <action application="log" data="INFO DND clear starter route requested by ${caller_id_number}; persistent DND is not configured yet"/>'."\n";
                 $xml .= '            <action application="playback" data="ivr/ivr-that_was_an_invalid_entry.wav"/>'."\n";
                 $xml .= '            <action application="respond" data="404"/>'."\n";
+                break;
+            case 'call_forward_disable':
+                $xml .= '            <action application="set" data="nizam_call_forward_action=disable"/>'."\n";
+                $xml .= '            <action application="lua" data="/usr/local/freeswitch/scripts/custom/_call_forward.lua disable"/>'."\n";
+                break;
+            case 'call_forward_restore':
+                $xml .= '            <action application="set" data="nizam_call_forward_action=restore"/>'."\n";
+                $xml .= '            <action application="lua" data="/usr/local/freeswitch/scripts/custom/_call_forward.lua restore"/>'."\n";
                 break;
             case 'call_return':
                 $xml .= '            <action application="log" data="INFO Call return starter route requested by ${caller_id_number}; call return is not configured yet"/>'."\n";
@@ -920,6 +947,29 @@ class DialplanCompiler
         $xml .= '            <action application="set" data="call_direction=inbound"/>'."\n";
         $xml .= '            <action application="answer"/>'."\n";
         $xml .= '            <action application="lua" data="/usr/local/freeswitch/scripts/custom/_directed_pickup.lua $1"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+
+        return $xml;
+    }
+
+    protected function compileCallForwardActivateExtension(Organization $organization, string $name, string $code): string
+    {
+        $xml = '        <extension name="'.htmlspecialchars($name, ENT_QUOTES | ENT_XML1).'">'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($code, '/').'$">'."\n";
+        $xml .= '            <action application="answer"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_route=call_forward_activate"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_code='.htmlspecialchars($code, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_call_forward_action=activate"/>'."\n";
+        $xml .= '            <action application="lua" data="/usr/local/freeswitch/scripts/custom/_call_forward.lua activate"/>'."\n";
+        $xml .= '          </condition>'."\n";
+        $xml .= '          <condition field="destination_number" expression="^'.preg_quote($code, '/').'(.+)$">'."\n";
+        $xml .= '            <action application="answer"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_route=call_forward_activate"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_convenience_code='.htmlspecialchars($code, ENT_QUOTES | ENT_XML1).'"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_call_forward_action=activate"/>'."\n";
+        $xml .= '            <action application="set" data="nizam_call_forward_destination=$1"/>'."\n";
+        $xml .= '            <action application="lua" data="/usr/local/freeswitch/scripts/custom/_call_forward.lua activate $1"/>'."\n";
         $xml .= '          </condition>'."\n";
         $xml .= '        </extension>'."\n";
 

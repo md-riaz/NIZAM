@@ -40,28 +40,35 @@ class ExtensionFeatureService
             }
 
             $payload['follow_me_enabled'] = $effectiveFollowMeEnabled;
-            $payload['follow_me_destination'] = $effectiveFollowMeEnabled ? $destination : null;
+
+            if ($destinationProvided) {
+                $payload['follow_me_destination'] = blank($destination) ? null : $destination;
+            }
         }
 
         if ($dndProvided) {
             $payload['dnd_enabled'] = $effectiveDndEnabled;
         }
 
-        // Persisted precedence rule: DND disables follow-me to avoid contradictory state.
         if (($payload['dnd_enabled'] ?? $extension->dnd_enabled) === true) {
             $payload['follow_me_enabled'] = false;
-            $payload['follow_me_destination'] = null;
         }
 
         if ($payload !== []) {
             $extension->forceFill($payload)->save();
         }
 
-        $this->followMeEndpointBindingService->sync($extension->fresh(), [
-            'follow_me_enabled' => $payload['follow_me_enabled'] ?? $extension->follow_me_enabled,
-            'follow_me_destination' => $payload['follow_me_destination'] ?? $extension->follow_me_destination,
+        $freshExtension = $extension->fresh();
+        $storedDestination = $payload['follow_me_destination'] ?? $freshExtension->follow_me_destination;
+        $runtimeFollowMeEnabled = (($payload['dnd_enabled'] ?? $freshExtension->dnd_enabled) === true)
+            ? false
+            : ($payload['follow_me_enabled'] ?? $freshExtension->follow_me_enabled);
+
+        $this->followMeEndpointBindingService->sync($freshExtension, [
+            'follow_me_enabled' => $runtimeFollowMeEnabled,
+            'follow_me_destination' => $runtimeFollowMeEnabled ? $storedDestination : null,
         ]);
 
-        return $extension->fresh();
+        return $freshExtension;
     }
 }

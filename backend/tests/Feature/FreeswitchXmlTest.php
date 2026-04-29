@@ -316,7 +316,7 @@ class FreeswitchXmlTest extends TestCase
         $compiledXml = file_get_contents(storage_path('app/freeswitch/sip_profiles/external.xml'));
 
         $this->assertIsString($compiledXml);
-        $this->assertStringContainsString('<X-PRE-PROCESS cmd="include" data="external/*.xml"/>', $compiledXml);
+        $this->assertStringContainsString('<X-PRE-PROCESS cmd="include" data="/usr/local/freeswitch/db/sip_profiles/external/*.xml"/>', $compiledXml);
     }
 
     public function test_internal_profile_seeder_enables_aggressive_nat_detection(): void
@@ -439,6 +439,11 @@ class FreeswitchXmlTest extends TestCase
         $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
         $this->assertStringContainsString('extension name="voicemail-main"', $response->getContent());
         $this->assertStringContainsString('voicemail" data="check default xml-convenience.example.com 3000"', $response->getContent());
+        $this->assertStringContainsString('destination_number" expression="^\*72$"', $response->getContent());
+        $this->assertStringContainsString('destination_number" expression="^\*72(.+)$"', $response->getContent());
+        $this->assertStringContainsString('/usr/local/freeswitch/scripts/custom/_call_forward.lua activate', $response->getContent());
+        $this->assertStringContainsString('destination_number" expression="^\*73$"', $response->getContent());
+        $this->assertStringContainsString('destination_number" expression="^\*74$"', $response->getContent());
         $this->assertStringContainsString('destination_number" expression="^\*69$"', $response->getContent());
         $this->assertStringContainsString('transfer" data="2000 XML xml-convenience.example.com"', $response->getContent());
     }
@@ -509,9 +514,21 @@ class FreeswitchXmlTest extends TestCase
 
         $this->assertNotNull($manifest);
         $this->assertStringContainsString('extension name="voicemail-main"', $manifest->content);
+        $this->assertStringContainsString('destination_number" expression="^\*72$"', $manifest->content);
+        $this->assertStringContainsString('destination_number" expression="^\*72(.+)$"', $manifest->content);
+        $this->assertStringContainsString('/usr/local/freeswitch/scripts/custom/_call_forward.lua activate', $manifest->content);
         $this->assertStringContainsString('destination_number" expression="^\*78$"', $manifest->content);
         $this->assertStringContainsString('destination_number" expression="^\*79$"', $manifest->content);
+        $this->assertStringContainsString('destination_number" expression="^\*73$"', $manifest->content);
+        $this->assertStringContainsString('/usr/local/freeswitch/scripts/custom/_call_forward.lua disable', $manifest->content);
+        $this->assertStringContainsString('destination_number" expression="^\*74$"', $manifest->content);
+        $this->assertStringContainsString('/usr/local/freeswitch/scripts/custom/_call_forward.lua restore', $manifest->content);
         $this->assertStringContainsString('transfer" data="6100 XML manifest-convenience.example.com"', $manifest->content);
+    }
+
+    public function test_call_forward_runtime_helper_script_exists(): void
+    {
+        $this->assertFileExists(base_path('docker/freeswitch/scripts/custom/_call_forward.lua'));
     }
 
     public function test_returns_not_found_for_unknown_section(): void

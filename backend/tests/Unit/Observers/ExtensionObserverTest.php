@@ -4,6 +4,7 @@ namespace Tests\Unit\Observers;
 
 use App\Models\DeviceProfile;
 use App\Models\Organization;
+use App\Services\OrganizationManifestBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -137,5 +138,53 @@ class ExtensionObserverTest extends TestCase
 
         $profile->refresh();
         $this->assertGreaterThan($originalUpdatedAt, $profile->updated_at);
+    }
+
+    public function test_updating_follow_me_destination_triggers_manifest_rebuild(): void
+    {
+        $organization = Organization::factory()->create();
+        $extension = $organization->extensions()->create([
+            'extension' => '1001',
+            'password' => 'test-password',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'is_active' => true,
+        ]);
+
+        $builder = $this->mock(OrganizationManifestBuilder::class);
+        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($organization));
+
+        $extension->update([
+            'follow_me_destination' => '+15551234567',
+        ]);
+
+        $this->assertDatabaseHas('extensions', [
+            'id' => $extension->id,
+            'follow_me_destination' => '+15551234567',
+        ]);
+    }
+
+    public function test_updating_follow_me_state_without_profiles_still_triggers_manifest_rebuild(): void
+    {
+        $organization = Organization::factory()->create();
+        $extension = $organization->extensions()->create([
+            'extension' => '1001',
+            'password' => 'test-password',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'is_active' => true,
+        ]);
+
+        $builder = $this->mock(OrganizationManifestBuilder::class);
+        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($organization));
+
+        $extension->update([
+            'follow_me_enabled' => true,
+        ]);
+
+        $this->assertDatabaseHas('extensions', [
+            'id' => $extension->id,
+            'follow_me_enabled' => true,
+        ]);
     }
 }

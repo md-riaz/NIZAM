@@ -49,13 +49,20 @@ class ExtensionApiTest extends TestCase
                 'password' => 'secret1234',
                 'first_name' => 'Jane',
                 'last_name' => 'Doe',
+                'follow_me_enabled' => true,
+                'follow_me_destination' => '+15551234567',
                 'voicemail_enabled' => false,
             ]);
 
-        $response->assertStatus(201);
+        $response->assertStatus(201)
+            ->assertJsonPath('data.follow_me_enabled', true)
+            ->assertJsonPath('data.follow_me_destination', '+15551234567');
+
         $this->assertDatabaseHas('extensions', [
             'extension' => '102',
             'organization_id' => $this->organization->id,
+            'follow_me_enabled' => true,
+            'follow_me_destination' => '+15551234567',
         ]);
     }
 
@@ -90,12 +97,19 @@ class ExtensionApiTest extends TestCase
                 'password' => 'updated1234',
                 'first_name' => 'Johnny',
                 'last_name' => 'Doe',
+                'follow_me_enabled' => true,
+                'follow_me_destination' => '+15557654321',
             ]);
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertJsonPath('data.follow_me_enabled', true)
+            ->assertJsonPath('data.follow_me_destination', '+15557654321');
+
         $this->assertDatabaseHas('extensions', [
             'id' => $extension->id,
             'first_name' => 'Johnny',
+            'follow_me_enabled' => true,
+            'follow_me_destination' => '+15557654321',
         ]);
     }
 
@@ -160,5 +174,54 @@ class ExtensionApiTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['effective_caller_id_number']);
+    }
+
+    public function test_returns_validation_error_when_creating_forwarding_without_destination(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/extensions", [
+                'extension' => '102',
+                'password' => 'secret1234',
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
+                'follow_me_enabled' => true,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['follow_me_destination']);
+    }
+
+    public function test_dnd_update_retains_stored_follow_me_destination(): void
+    {
+        $extension = $this->organization->extensions()->create([
+            'extension' => '101',
+            'password' => 'secret1234',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'follow_me_enabled' => true,
+            'follow_me_destination' => '+15551234567',
+            'dnd_enabled' => false,
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->putJson("/api/v1/organizations/{$this->organization->id}/extensions/{$extension->id}", [
+                'extension' => '101',
+                'password' => 'secret1234',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'dnd_enabled' => true,
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.follow_me_enabled', false)
+            ->assertJsonPath('data.follow_me_destination', '+15551234567')
+            ->assertJsonPath('data.dnd_enabled', true);
+
+        $this->assertDatabaseHas('extensions', [
+            'id' => $extension->id,
+            'follow_me_enabled' => false,
+            'follow_me_destination' => '+15551234567',
+            'dnd_enabled' => true,
+        ]);
     }
 }
