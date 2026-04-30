@@ -67,6 +67,20 @@ local function channel_variable(api, uuid, name)
     return response
 end
 
+local function database_dsn()
+    local host = trim(os.getenv('DB_HOST') or 'postgres')
+    local port = trim(os.getenv('DB_PORT') or '5432')
+    local database = trim(os.getenv('DB_DATABASE') or '')
+    local username = trim(os.getenv('DB_USERNAME') or '')
+    local password = os.getenv('DB_PASSWORD') or ''
+
+    if database == '' or username == '' or password == '' then
+        return nil
+    end
+
+    return string.format('pgsql://host=%s port=%s dbname=%s user=%s password=%s', host, port, database, username, password)
+end
+
 local api = freeswitch.API()
 
 if not session:ready() then
@@ -75,7 +89,7 @@ end
 
 session:answer()
 
-local domain_name = session:getVariable('domain_name') or session:getVariable('context') or 'default'
+local domain_name = session:getVariable('context') or session:getVariable('domain_name') or 'default'
 local caller_id_number = session:getVariable('caller_id_number') or ''
 local caller_extension = session:getVariable('sip_from_user') or caller_id_number
 local hostname = trim(api:executeString('hostname'))
@@ -118,9 +132,15 @@ if caller_extension == '' then
     return
 end
 
-local dbh = freeswitch.Dbh('odbc://nizam')
+local db_dsn = database_dsn()
+if not db_dsn then
+    freeswitch.consoleLog('ERR', '[_group_pickup] missing database settings for runtime helper\n')
+    return
+end
+
+local dbh = freeswitch.Dbh(db_dsn)
 if not dbh or not dbh:connected() then
-    freeswitch.consoleLog('ERR', '[_group_pickup] unable to connect to database via ODBC DSN organization_runtime\n')
+    freeswitch.consoleLog('ERR', '[_group_pickup] unable to connect to database via pgsql runtime DSN\n')
     return
 end
 

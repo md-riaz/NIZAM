@@ -70,7 +70,7 @@ local function prompt_destination()
         3,
         5000,
         '#',
-        'phrase:enter_destination',
+        '',
         '',
         '[0-9+]+',
         3000
@@ -81,9 +81,20 @@ end
 
 local function respond_and_log(level, message, phrase)
     freeswitch.consoleLog(level, string.format('[_call_forward] %s\n', message))
-    if phrase and session:ready() then
-        session:streamFile(phrase)
+end
+
+local function database_dsn()
+    local host = trim(os.getenv('DB_HOST') or 'postgres')
+    local port = trim(os.getenv('DB_PORT') or '5432')
+    local database = trim(os.getenv('DB_DATABASE') or '')
+    local username = trim(os.getenv('DB_USERNAME') or '')
+    local password = os.getenv('DB_PASSWORD') or ''
+
+    if database == '' or username == '' or password == '' then
+        return nil
     end
+
+    return string.format('pgsql://host=%s port=%s dbname=%s user=%s password=%s', host, port, database, username, password)
 end
 
 if not session:ready() then
@@ -92,7 +103,7 @@ end
 
 session:answer()
 
-local domain_name = session:getVariable('domain_name') or session:getVariable('context') or 'default'
+local domain_name = session:getVariable('context') or session:getVariable('domain_name') or 'default'
 local caller_id_number = trim(session:getVariable('caller_id_number') or '')
 local caller_extension = trim(session:getVariable('sip_from_user') or caller_id_number)
 
@@ -101,9 +112,15 @@ if caller_extension == '' then
     return
 end
 
-local dbh = freeswitch.Dbh('odbc://nizam')
+local db_dsn = database_dsn()
+if not db_dsn then
+    respond_and_log('ERR', 'missing database settings for call forward runtime helper', 'phrase:feature_not_available')
+    return
+end
+
+local dbh = freeswitch.Dbh(db_dsn)
 if not dbh or not dbh:connected() then
-    respond_and_log('ERR', 'unable to connect to database via ODBC DSN nizam', 'phrase:feature_not_available')
+    respond_and_log('ERR', 'unable to connect to database via pgsql runtime DSN', 'phrase:feature_not_available')
     return
 end
 

@@ -963,6 +963,9 @@ class DialplanCompiler
         $xml .= '            <action application="set" data="nizam_call_forward_action=activate"/>'."\n";
         $xml .= '            <action application="lua" data="/usr/local/freeswitch/scripts/custom/_call_forward.lua activate"/>'."\n";
         $xml .= '          </condition>'."\n";
+        $xml .= '        </extension>'."\n";
+
+        $xml .= '        <extension name="'.htmlspecialchars($name.'-direct', ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($code, '/').'(.+)$">'."\n";
         $xml .= '            <action application="answer"/>'."\n";
         $xml .= '            <action application="set" data="nizam_convenience_route=call_forward_activate"/>'."\n";

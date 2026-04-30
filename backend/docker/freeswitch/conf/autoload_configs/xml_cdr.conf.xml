@@ -1,8 +1,8 @@
 <configuration name="xml_cdr.conf" description="XML CDR Logger">
   <settings>
-    <param name="url" value="${FREESWITCH_XML_CDR_LOG_DIR}"/>
-    <param name="log-dir" value="${FREESWITCH_XML_CDR_LOG_DIR}"/>
-    <param name="err-log-dir" value="${FREESWITCH_XML_CDR_LOG_DIR}/errors"/>
+    <param name="url" value="/var/log/freeswitch/xml_cdr"/>
+    <param name="log-dir" value="/var/log/freeswitch/xml_cdr"/>
+    <param name="err-log-dir" value="/var/log/freeswitch/xml_cdr/errors"/>
     <param name="encode" value="true"/>
   </settings>
 </configuration>
