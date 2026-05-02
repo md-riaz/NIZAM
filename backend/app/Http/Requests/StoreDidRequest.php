@@ -34,17 +34,8 @@ class StoreDidRequest extends FormRequest
                     }
                 },
             ],
-            'gateway_id' => [
-                'nullable',
-                'uuid',
-                function ($attribute, $value, $fail) use ($organization) {
-                    if ($value && ! $organization->gateways()->where('id', $value)->where('is_active', true)->exists()) {
-                        $fail('The selected gateway is invalid for this organization.');
-                    }
-                },
-            ],
             'description' => 'nullable|string',
-            'destination_type' => 'required|in:extension,ring_group,ivr,voicemail,time_condition,call_routing_policy,flow,bridge',
+            'destination_type' => 'required|in:extension,flow',
             'destination_id' => 'required|uuid',
             'is_active' => 'boolean',
         ];

@@ -12,7 +12,6 @@ use App\Models\FlowEdge;
 use App\Models\FlowNode;
 use App\Models\FlowVersion;
 use App\Models\Queue;
-use App\Models\RingGroup;
 use App\Models\Schedule;
 use App\Models\ScheduleRule;
 use App\Models\Team;
@@ -60,30 +59,54 @@ class DeliveryTargetResolverTest extends TestCase
         $this->assertSame('extension', $resolved->metadata['final_target_type']);
     }
 
-    public function test_resolves_ring_group_members_into_extension_targets(): void
+    public function test_resolves_team_members_into_targets(): void
     {
         $organization = Organization::factory()->create();
         $first = Extension::factory()->create(['organization_id' => $organization->id, 'is_active' => true]);
-        $second = Extension::factory()->create(['organization_id' => $organization->id, 'is_active' => true]);
-        $ringGroup = RingGroup::factory()->create([
+        $secondExtension = Extension::factory()->create(['organization_id' => $organization->id, 'is_active' => true]);
+        $secondAgent = Agent::factory()->available()->create([
             'organization_id' => $organization->id,
-            'members' => [$first->id, $second->id],
+            'extension_id' => $secondExtension->id,
+            'is_active' => true,
+        ]);
+        $team = Team::create([
+            'organization_id' => $organization->id,
+            'name' => 'Resolver Team',
+            'strategy' => 'simultaneous',
+            'timeout' => 20,
+            'is_active' => true,
+        ]);
+        TeamMember::create([
+            'team_id' => $team->id,
+            'endpoint_type' => 'extension',
+            'endpoint_id' => $first->id,
+            'priority' => 1,
+            'is_active' => true,
+        ]);
+        TeamMember::create([
+            'team_id' => $team->id,
+            'endpoint_type' => 'agent',
+            'endpoint_id' => $secondAgent->id,
+            'priority' => 2,
             'is_active' => true,
         ]);
         $callSession = CallSession::factory()->create([
             'organization_id' => $organization->id,
             'variables' => [
-                'nizam_delivery_target_type' => 'ring_group',
-                'nizam_delivery_target_id' => $ringGroup->id,
+                'nizam_delivery_target_type' => 'team',
+                'nizam_delivery_target_id' => $team->id,
             ],
         ]);
 
         $resolved = app(DeliveryTargetResolver::class)->resolve($callSession);
 
         $this->assertCount(2, $resolved->targets);
-        $this->assertSame([$first->id, $second->id], array_map(fn ($target) => $target->id, $resolved->targets));
-        $this->assertSame('ring_group', $resolved->metadata['resolved_from']);
-        $this->assertSame('ring_group', $resolved->targets[0]->sourcePath[1]['type']);
+        $this->assertSame(['extension', 'agent'], array_map(fn ($target) => $target->type, $resolved->targets));
+        $this->assertSame([$first->id, $secondAgent->id], array_map(fn ($target) => $target->id, $resolved->targets));
+        $this->assertSame('team', $resolved->metadata['resolved_from']);
+        $this->assertSame('team', $resolved->targets[0]->sourcePath[1]['type']);
+        $this->assertSame('extension', $resolved->targets[0]->sourcePath[1]['member_endpoint_type']);
+        $this->assertSame('agent', $resolved->targets[1]->sourcePath[1]['member_endpoint_type']);
     }
 
     public function test_resolves_queue_ring_all_strategy_into_eligible_agents(): void
@@ -290,39 +313,40 @@ class DeliveryTargetResolverTest extends TestCase
         $this->assertSame($extension->id, $resolved->targets[0]->sourcePath[3]['member_endpoint_id']);
     }
 
-    public function test_ring_group_falls_back_to_human_target_when_no_active_members_exist(): void
+    public function test_team_without_active_members_returns_empty_set(): void
     {
         $organization = Organization::factory()->create();
-        $fallbackExtension = Extension::factory()->create([
-            'organization_id' => $organization->id,
-            'is_active' => true,
-        ]);
         $inactiveMember = Extension::factory()->create([
             'organization_id' => $organization->id,
             'is_active' => false,
         ]);
-        $ringGroup = RingGroup::factory()->create([
+        $team = Team::create([
             'organization_id' => $organization->id,
-            'members' => [$inactiveMember->id],
-            'fallback_destination_type' => 'extension',
-            'fallback_destination_id' => $fallbackExtension->id,
+            'name' => 'Empty Team',
+            'strategy' => 'simultaneous',
+            'timeout' => 20,
+            'is_active' => true,
+        ]);
+        TeamMember::create([
+            'team_id' => $team->id,
+            'endpoint_type' => 'extension',
+            'endpoint_id' => $inactiveMember->id,
+            'priority' => 1,
             'is_active' => true,
         ]);
         $callSession = CallSession::factory()->create([
             'organization_id' => $organization->id,
             'variables' => [
-                'nizam_delivery_target_type' => 'ring_group',
-                'nizam_delivery_target_id' => $ringGroup->id,
+                'nizam_delivery_target_type' => 'team',
+                'nizam_delivery_target_id' => $team->id,
             ],
         ]);
 
         $resolved = app(DeliveryTargetResolver::class)->resolve($callSession);
 
-        $this->assertCount(1, $resolved->targets);
-        $this->assertSame($fallbackExtension->id, $resolved->targets[0]->id);
-        $this->assertSame('ring_group', $resolved->targets[0]->sourcePath[1]['type']);
-        $this->assertSame('fallback', $resolved->targets[0]->sourcePath[1]['branch']);
-        $this->assertSame('extension', $resolved->metadata['final_target_type']);
+        $this->assertTrue($resolved->isEmpty());
+        $this->assertSame('team_without_human_members', $resolved->metadata['bypass_reason']);
+        $this->assertSame($team->id, $resolved->metadata['team_id']);
     }
 
     public function test_extension_resolution_keeps_follow_me_as_extension_target_for_orchestration(): void

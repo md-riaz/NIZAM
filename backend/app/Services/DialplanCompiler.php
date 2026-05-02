@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Agent;
-use App\Models\BlockedDestination;
 use App\Models\Bridge;
 use App\Models\CallRoutingPolicy;
 use App\Models\Did;
@@ -12,7 +11,6 @@ use App\Models\Flow;
 use App\Models\FlowCompiledArtifact;
 use App\Models\Ivr;
 use App\Models\Queue;
-use App\Models\RingGroup;
 use App\Models\Schedule;
 use App\Models\Organization;
 use App\Models\TimeCondition;
@@ -348,30 +346,6 @@ class DialplanCompiler
     }
 
     /**
-     * Check for blocked destinations and apply security restrictions.
-     */
-    protected function compileSecurityChecks(Organization $organization, string $destinationNumber): string
-    {
-        // Check for blocked destinations (Global or Organization-specific)
-        $isBlocked = BlockedDestination::where(function($query) use ($organization) {
-                $query->where('organization_id', $organization->id)
-                      ->orWhereNull('organization_id');
-            })
-            ->get()
-            ->contains(function($block) use ($destinationNumber) {
-                return preg_match('/'.$block->pattern.'/', $destinationNumber);
-            });
-
-        if ($isBlocked) {
-            return '            <action application="log" data="WARNING Call to blocked destination: '.htmlspecialchars($destinationNumber, ENT_QUOTES | ENT_XML1).'"/>'."\n"
-                 .'            <action application="respond" data="403"/>'."\n"
-                 .'            <action application="hangup" data="CALL_REJECTED"/>'."\n";
-        }
-
-        return '';
-    }
-
-    /**
      * Generate the per-organization recording storage path.
      */
     protected function organizationRecordingPath(Organization $organization): string
@@ -385,7 +359,6 @@ class DialplanCompiler
     {
         $xml = '        <extension name="did-'.htmlspecialchars($did->number, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($did->number, '/').'$">'."\n";
-        $xml .= $this->compileSecurityChecks($organization, $did->number);
         $xml .= $this->compileConcurrentCallLimit($organization);
 
         switch ($did->destination_type) {
@@ -405,12 +378,6 @@ class DialplanCompiler
                 $ivr = $organization->ivrs()->find($did->destination_id);
                 if ($ivr) {
                     $xml .= '            <action application="ivr" data="'.htmlspecialchars($ivr->name, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-                }
-                break;
-            case 'ring_group':
-                $rg = $organization->ringGroups()->find($did->destination_id);
-                if ($rg) {
-                    $xml .= $this->compileRingGroupActions($organization, $rg);
                 }
                 break;
             case 'queue':
@@ -510,7 +477,6 @@ class DialplanCompiler
             'extension' => fn () => $organization->extensions()->find($did->destination_id),
             'agent' => fn () => $organization->agents()->find($did->destination_id),
             'ivr' => fn () => $organization->ivrs()->find($did->destination_id),
-            'ring_group' => fn () => $organization->ringGroups()->find($did->destination_id),
             'queue' => fn () => $organization->queues()->find($did->destination_id),
             'voicemail' => fn () => $organization->extensions()->find($did->destination_id),
             'time_condition' => fn () => $organization->timeConditions()->find($did->destination_id),
@@ -1127,7 +1093,6 @@ class DialplanCompiler
     {
         $xml = '        <extension name="local-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
-        $xml .= $this->compileSecurityChecks($organization, $extension->extension);
         $xml .= $this->compileConcurrentCallLimit($organization);
         $xml .= $this->compileExtensionRoutingActions($organization, $extension);
         $xml .= '          </condition>'."\n";
@@ -1221,32 +1186,6 @@ class DialplanCompiler
         $xml = $this->dialplanHeader($organization->domain);
         $xml .= $this->compileLocalExtension($organization, $extension);
         $xml .= $this->dialplanFooter();
-
-        return $xml;
-    }
-
-    protected function compileRingGroupActions(Organization $organization, RingGroup $ringGroup): string
-    {
-        $memberIds = $ringGroup->members ?? [];
-        $extensions = $organization->extensions()->whereIn('id', $memberIds)->where('is_active', true)->get();
-        $fallback = null;
-
-        if ($ringGroup->fallback_destination_type && $ringGroup->fallback_destination_id) {
-            $fallback = $this->compileDestinationAction($organization, $ringGroup->fallback_destination_type, $ringGroup->fallback_destination_id);
-        }
-
-        if ($extensions->isEmpty()) {
-            return $fallback ?? '';
-        }
-
-        $xml = '            <action application="set" data="call_timeout='.(int) $ringGroup->ring_timeout.'"/>'."\n";
-        $xml .= $this->compileHumanTargetHandoffAction($organization, 'ring_group', (string) $ringGroup->id);
-
-        if ($fallback) {
-            $xml .= '            <condition field="${originate_disposition}" expression="^(USER_BUSY|NO_ANSWER|NO_USER_RESPONSE|ALLOTTED_TIMEOUT|NO_ROUTE_DESTINATION|UNALLOCATED_NUMBER|SUBSCRIBER_ABSENT)$">'."\n";
-            $xml .= $fallback;
-            $xml .= '            </condition>'."\n";
-        }
 
         return $xml;
     }
@@ -1372,12 +1311,6 @@ class DialplanCompiler
                     return '            <anti-action application="voicemail" data="default '.htmlspecialchars($organization->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
                 }
                 break;
-            case 'ring_group':
-                $rg = $organization->ringGroups()->find($id);
-                if ($rg) {
-                    return $this->compileHumanTargetHandoffAction($organization, 'ring_group', (string) $rg->id, true);
-                }
-                break;
             case 'queue':
                 $queue = $organization->queues()->find($id);
                 if ($queue) {
@@ -1426,12 +1359,6 @@ class DialplanCompiler
                 $ext = $organization->extensions()->find($id);
                 if ($ext) {
                     return '            <action application="voicemail" data="default '.htmlspecialchars($organization->domain, ENT_QUOTES | ENT_XML1).' '.htmlspecialchars($ext->extension, ENT_QUOTES | ENT_XML1).'"/>'."\n";
-                }
-                break;
-            case 'ring_group':
-                $rg = $organization->ringGroups()->find($id);
-                if ($rg) {
-                    return $this->compileHumanTargetHandoffAction($organization, 'ring_group', (string) $rg->id);
                 }
                 break;
             case 'queue':

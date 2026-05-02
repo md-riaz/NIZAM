@@ -21,7 +21,6 @@ class DeliveryTargetResolver
 {
     public const HUMAN_TARGET_TYPES = [
         'extension',
-        'ring_group',
         'queue',
         'agent',
         'did',
@@ -75,7 +74,6 @@ class DeliveryTargetResolver
     ): DeliveryTargetSet {
         return match ($targetType) {
             'extension' => $this->resolveExtension($organization, $targetId, $sourcePath),
-            'ring_group' => $this->resolveRingGroup($organization, $targetId, $sourcePath, $evaluatedAt),
             'queue' => $this->resolveQueue($organization, $targetId, $sourcePath),
             'agent' => $this->resolveAgent($organization, $targetId, $sourcePath),
             'did' => $this->resolveDid($organization, $targetId, $sourcePath, $evaluatedAt),
@@ -123,76 +121,7 @@ class DeliveryTargetResolver
         );
     }
 
-    /**
-     * @param  list<array<string, mixed>>  $sourcePath
-     */
-    protected function resolveRingGroup(Organization $organization, string $ringGroupId, array $sourcePath, ?DateTimeInterface $evaluatedAt = null): DeliveryTargetSet
-    {
-        $ringGroup = $organization->ringGroups()
-            ->whereKey($ringGroupId)
-            ->where('is_active', true)
-            ->first();
 
-        if (! $ringGroup) {
-            return $this->emptySet($sourcePath, ['bypass_reason' => 'ring_group_not_found']);
-        }
-
-        $memberIds = collect($ringGroup->members ?? [])->filter()->values()->all();
-        $extensions = $organization->extensions()
-            ->whereIn('id', $memberIds)
-            ->where('is_active', true)
-            ->get();
-
-        if ($extensions->isEmpty()) {
-            if ($this->isHumanTargetType($ringGroup->fallback_destination_type) && filled($ringGroup->fallback_destination_id)) {
-                return $this->resolveTarget(
-                    organization: $organization,
-                    targetType: (string) $ringGroup->fallback_destination_type,
-                    targetId: (string) $ringGroup->fallback_destination_id,
-                    sourcePath: $this->appendSourcePath($sourcePath, [
-                        'type' => 'ring_group',
-                        'id' => $ringGroup->id,
-                        'strategy' => $ringGroup->strategy,
-                        'ring_timeout' => $ringGroup->ring_timeout,
-                        'branch' => 'fallback',
-                    ]),
-                    evaluatedAt: $evaluatedAt,
-                );
-            }
-
-            return $this->emptySet($sourcePath, [
-                'bypass_reason' => 'ring_group_without_human_members',
-                'ring_group_id' => $ringGroup->id,
-            ]);
-        }
-
-        $targets = $extensions->map(fn (Extension $extension) => new DeliveryTarget(
-            type: 'extension',
-            id: $extension->id,
-            sourcePath: $this->appendSourcePath($sourcePath, [
-                'type' => 'ring_group',
-                'id' => $ringGroup->id,
-                'strategy' => $ringGroup->strategy,
-                'ring_timeout' => $ringGroup->ring_timeout,
-                'member_extension_id' => $extension->id,
-            ]),
-            metadata: [
-                'extension' => $extension->extension,
-                'ring_group_id' => $ringGroup->id,
-                'ring_strategy' => $ringGroup->strategy,
-            ],
-        ))->all();
-
-        return new DeliveryTargetSet(
-            targets: $targets,
-            sourcePath: $sourcePath,
-            metadata: [
-                'resolved_from' => 'ring_group',
-                'ring_group_id' => $ringGroup->id,
-                'strategy' => $ringGroup->strategy,
-            ],
-        );
-    }
 
     /**
      * @param  list<array<string, mixed>>  $sourcePath
@@ -541,6 +470,28 @@ class DeliveryTargetResolver
 
         if (! $targetType) {
             return null;
+        }
+
+        if ($targetType === 'extension') {
+            $extension = $team->organization->extensions()
+                ->whereKey($member->endpoint_id)
+                ->where('is_active', true)
+                ->first();
+
+            if (! $extension) {
+                return null;
+            }
+        }
+
+        if ($targetType === 'agent') {
+            $agent = $team->organization->agents()
+                ->whereKey($member->endpoint_id)
+                ->where('is_active', true)
+                ->first();
+
+            if (! $agent || ! $agent->extension?->is_active) {
+                return null;
+            }
         }
 
         return new DeliveryTarget(

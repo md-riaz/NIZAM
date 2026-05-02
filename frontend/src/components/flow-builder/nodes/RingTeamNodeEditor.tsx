@@ -1,6 +1,7 @@
+import { normalizeTeamStrategy } from '../nodeRegistry';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Select,
     SelectContent,
@@ -8,6 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 interface RingTeamConfig {
     team_id?: string;
@@ -21,7 +23,14 @@ interface TeamOption {
     name: string;
 }
 
-export function RingGroupNodeEditor({
+const teamStrategyOptions = [
+    { value: 'simultaneous', label: 'Simultaneous' },
+    { value: 'sequential', label: 'Sequential' },
+    { value: 'round_robin', label: 'Round Robin' },
+    { value: 'priority', label: 'Priority' },
+] as const;
+
+export function RingTeamNodeEditor({
     name,
     config,
     teamOptions,
@@ -34,11 +43,13 @@ export function RingGroupNodeEditor({
     onNameChange: (value: string) => void;
     onConfigChange: (config: RingTeamConfig) => void;
 }) {
+    const strategy = normalizeTeamStrategy(config.strategy);
+
     return (
         <div className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="ring-group-name">Node Name</Label>
-                <Input id="ring-group-name" value={name} onChange={(event) => onNameChange(event.target.value)} />
+                <Label htmlFor="ring-team-name">Node Name</Label>
+                <Input id="ring-team-name" value={name} onChange={(event) => onNameChange(event.target.value)} />
             </div>
 
             <div className="space-y-2">
@@ -62,9 +73,9 @@ export function RingGroupNodeEditor({
 
             <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
-                    <Label htmlFor="ring-group-timeout">Ring Timeout</Label>
+                    <Label htmlFor="ring-team-timeout">Ring Timeout</Label>
                     <Input
-                        id="ring-group-timeout"
+                        id="ring-team-timeout"
                         type="number"
                         min="1"
                         value={config.timeout ?? 30}
@@ -74,16 +85,18 @@ export function RingGroupNodeEditor({
                 <div className="space-y-2">
                     <Label>Strategy</Label>
                     <Select
-                        value={config.strategy ?? 'simultaneous'}
+                        value={strategy}
                         onValueChange={(value) => onConfigChange({ ...config, strategy: value })}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Select strategy" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="simultaneous">Simultaneous</SelectItem>
-                            <SelectItem value="sequence">Sequence</SelectItem>
-                            <SelectItem value="enterprise">Enterprise</SelectItem>
+                            {teamStrategyOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>
@@ -94,9 +107,9 @@ export function RingGroupNodeEditor({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="ring-group-members">Members Snapshot</Label>
+                <Label htmlFor="ring-team-members">Members Snapshot</Label>
                 <Textarea
-                    id="ring-group-members"
+                    id="ring-team-members"
                     value={config.members_text ?? ''}
                     onChange={(event) => onConfigChange({ ...config, members_text: event.target.value })}
                     placeholder="1001,20,0&#10;1002,20,5"

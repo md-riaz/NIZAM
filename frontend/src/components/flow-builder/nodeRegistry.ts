@@ -14,13 +14,21 @@ import {
 
 import type { FlowNode } from '@/types/models';
 
+export function normalizeTeamStrategy(strategy: unknown): string {
+    return strategy === 'sequence'
+        ? 'sequential'
+        : strategy === 'enterprise'
+            ? 'round_robin'
+            : String(strategy ?? 'simultaneous');
+}
+
 export type BuilderNodeType =
     | 'start'
     | 'business_hours'
     | 'caller_match'
     | 'number_match'
     | 'ivr'
-    | 'ring_group'
+    | 'ring_team'
     | 'hunt_group'
     | 'queue'
     | 'play_message'
@@ -135,7 +143,7 @@ export const builderNodeDefinitions: BuilderNodeDefinition[] = [
         ],
     },
     {
-        type: 'ring_group',
+        type: 'ring_team',
         category: 'Routing',
         label: 'Ring Team',
         title: 'Ring Team Node',
@@ -244,8 +252,7 @@ const productTypeMap: Record<string, BuilderNodeType> = {
     number_match: 'number_match',
     menu: 'ivr',
     ivr: 'ivr',
-    ring_team: 'ring_group',
-    ring_group: 'ring_group',
+    ring_team: 'ring_team',
     hunt_group: 'hunt_group',
     queue: 'queue',
     play_message: 'play_message',
@@ -259,7 +266,6 @@ const productTypeMap: Record<string, BuilderNodeType> = {
 export const legacyTypeMap: Record<string, string> = {
     business_hours: 'schedule_check',
     ivr: 'menu',
-    ring_group: 'ring_team',
     terminal: 'hangup',
 };
 
@@ -343,11 +349,11 @@ export function builderSubtitleForNode(node: FlowNode): string {
             return `${String(config.mode || 'did')} • ${Array.isArray(config.numbers) ? config.numbers.filter(Boolean).length : 0} target(s)`;
         case 'ivr':
             return String(config.prompt || config.greeting || 'No greeting set');
-        case 'ring_group':
+        case 'ring_team':
         case 'hunt_group': {
             const teamId = String(config.team_id || 'unassigned');
             const timeout = String(config.timeout || 30);
-            const strategy = String(config.strategy || 'simultaneous');
+            const strategy = normalizeTeamStrategy(config.strategy);
             return `${teamId} • ${strategy} • ${timeout}s`;
         }
         case 'queue': {

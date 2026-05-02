@@ -52,7 +52,7 @@ export const OrganizationSchema = z.object({
     max_extensions: z.number().nullable().optional(),
     max_concurrent_calls: z.number().nullable().optional(),
     max_dids: z.number().nullable().optional(),
-    max_ring_groups: z.number().nullable().optional(),
+    max_teams: z.number().nullable().optional(),
     is_active: z.boolean().optional(),
     created_at: z.string(),
     updated_at: z.string(),
@@ -87,31 +87,6 @@ export const ExtensionSchema = z.object({
     updated_at: z.string(),
 });
 export type Extension = z.infer<typeof ExtensionSchema>;
-
-// ─── Ring Group ──────────────────────────────────────────────
-
-export const RingGroupMemberSchema = z.object({
-    extension: z.string(),
-    timeout: z.number().optional(),
-    delay: z.number().optional(),
-    active: z.boolean().optional(),
-});
-export type RingGroupMember = z.infer<typeof RingGroupMemberSchema>;
-
-export const RingGroupSchema = z.object({
-    id: idSchema,
-    organization_id: idSchema,
-    name: z.string(),
-    strategy: z.string(),
-    ring_timeout: z.number().optional(),
-    members: z.array(RingGroupMemberSchema).default([]),
-    fallback_destination_type: z.string().nullable().optional(),
-    fallback_destination_id: z.string().nullable().optional(),
-    is_active: z.boolean().optional(),
-    created_at: z.string(),
-    updated_at: z.string(),
-});
-export type RingGroup = z.infer<typeof RingGroupSchema>;
 
 // ─── Gateway ─────────────────────────────────────────────────
 
@@ -189,7 +164,7 @@ export const DidSchema = z.object({
     number: z.string(),
     normalized_number: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
-    destination_type: z.string().nullable().optional(),
+    destination_type: z.enum(['extension', 'flow']).nullable().optional(),
     destination_id: z.string().nullable().optional(),
     enabled: z.boolean().optional(),
     is_active: z.boolean().optional(),
@@ -198,6 +173,19 @@ export const DidSchema = z.object({
     updated_at: z.string(),
 });
 export type Did = z.infer<typeof DidSchema>;
+
+export const CallBlockSchema = z.object({
+    id: idSchema,
+    organization_id: idSchema,
+    name: z.string(),
+    description: z.string().nullable().optional(),
+    number: z.string(),
+    action: z.literal('reject'),
+    is_active: z.boolean(),
+    created_at: z.string(),
+    updated_at: z.string(),
+});
+export type CallBlock = z.infer<typeof CallBlockSchema>;
 
 // ─── Flow Builder ────────────────────────────────────────────
 

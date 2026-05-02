@@ -38,7 +38,7 @@ class StoreOrganizationRequest extends FormRequest
             'max_extensions' => 'integer|min:0',
             'max_concurrent_calls' => 'integer|min:0',
             'max_dids' => 'integer|min:0',
-            'max_ring_groups' => 'integer|min:0',
+            'max_teams' => 'integer|min:0',
             'is_active' => 'boolean',
             'status' => ['string', Rule::in(Organization::VALID_STATUSES)],
         ];
@@ -47,6 +47,7 @@ class StoreOrganizationRequest extends FormRequest
     public function validated($key = null, $default = null): array
     {
         $validated = parent::validated();
+
         unset($validated['domain_prefix']);
 
         return $validated;

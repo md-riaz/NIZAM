@@ -17,7 +17,7 @@ class OrganizationStatsQuotaTest extends TestCase
             'max_extensions' => 50,
             'max_concurrent_calls' => 20,
             'max_dids' => 10,
-            'max_ring_groups' => 5,
+            'max_teams' => 5,
         ]);
         $user = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
 
@@ -39,18 +39,18 @@ class OrganizationStatsQuotaTest extends TestCase
                 'extensions_count',
                 'active_extensions_count',
                 'dids_count',
-                'ring_groups_count',
+                'teams_count',
                 'quotas' => [
                     'max_extensions',
                     'max_concurrent_calls',
                     'max_dids',
-                    'max_ring_groups',
+                    'max_teams',
                 ],
             ],
         ]);
         $response->assertJsonPath('data.quotas.max_extensions', 50);
         $response->assertJsonPath('data.quotas.max_concurrent_calls', 20);
         $response->assertJsonPath('data.quotas.max_dids', 10);
-        $response->assertJsonPath('data.quotas.max_ring_groups', 5);
+        $response->assertJsonPath('data.quotas.max_teams', 5);
     }
 }

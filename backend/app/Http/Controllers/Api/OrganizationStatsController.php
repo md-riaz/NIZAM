@@ -24,7 +24,7 @@ class OrganizationStatsController extends Controller
                 'extensions_count' => $organization->extensions()->count(),
                 'active_extensions_count' => $organization->extensions()->where('is_active', true)->count(),
                 'dids_count' => $organization->dids()->count(),
-                'ring_groups_count' => $organization->ringGroups()->count(),
+                'teams_count' => $organization->teams()->count(),
                 'ivrs_count' => $organization->ivrs()->count(),
                 'cdrs_total' => $organization->cdrs()->count(),
                 'cdrs_today' => $organization->cdrs()->whereDate('start_stamp', Carbon::today())->count(),
@@ -38,7 +38,7 @@ class OrganizationStatsController extends Controller
                     'max_extensions' => $organization->max_extensions,
                     'max_concurrent_calls' => $organization->max_concurrent_calls,
                     'max_dids' => $organization->max_dids,
-                    'max_ring_groups' => $organization->max_ring_groups,
+                    'max_teams' => $organization->max_teams,
                 ],
             ],
         ]);

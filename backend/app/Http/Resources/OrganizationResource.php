@@ -31,7 +31,7 @@ class OrganizationResource extends JsonResource
             'max_extensions' => $this->max_extensions,
             'max_concurrent_calls' => $this->max_concurrent_calls,
             'max_dids' => $this->max_dids,
-            'max_ring_groups' => $this->max_ring_groups,
+            'max_teams' => $this->max_teams,
             'is_active' => $this->is_active,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

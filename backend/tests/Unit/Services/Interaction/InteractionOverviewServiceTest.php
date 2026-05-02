@@ -58,7 +58,7 @@ class InteractionOverviewServiceTest extends TestCase
             'call_session_id' => $session->id,
             'call_uuid' => $session->call_uuid,
             'node_id' => 'node-1',
-            'node_type' => 'ring_group',
+            'node_type' => 'ring_team',
             'action' => 'flow.node.executing',
             'payload' => ['node_label' => 'Support queue'],
             'occurred_at' => Carbon::parse('2026-04-12 10:00:05'),
@@ -68,7 +68,7 @@ class InteractionOverviewServiceTest extends TestCase
             'call_session_id' => $session->id,
             'call_uuid' => $session->call_uuid,
             'node_id' => 'node-1',
-            'node_type' => 'ring_group',
+            'node_type' => 'ring_team',
             'action' => 'flow.node.executed',
             'payload' => ['result' => 'connected'],
             'occurred_at' => Carbon::parse('2026-04-12 10:00:30'),
@@ -117,7 +117,7 @@ class InteractionOverviewServiceTest extends TestCase
         $this->assertSame(4, count($overview['timeline']));
         $this->assertSame('call.created', $overview['timeline'][0]['type']);
         $this->assertSame('flow.node.executing', $overview['timeline'][1]['type']);
-        $this->assertSame('Call entered ring group', $overview['timeline'][1]['details']['label']);
+        $this->assertSame('Call entered ring team', $overview['timeline'][1]['details']['label']);
         $this->assertSame('push.sent', $overview['timeline'][2]['type']);
         $this->assertSame('delivery.push.won', $overview['timeline'][3]['type']);
         $this->assertSame('Answered via push to ios mobile app', $overview['timeline'][3]['details']['label']);

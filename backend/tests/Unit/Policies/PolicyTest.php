@@ -9,7 +9,6 @@ use App\Policies\DeviceProfilePolicy;
 use App\Policies\DidPolicy;
 use App\Policies\ExtensionPolicy;
 use App\Policies\IvrPolicy;
-use App\Policies\RingGroupPolicy;
 use App\Policies\OrganizationPolicy;
 use App\Policies\TimeConditionPolicy;
 use App\Policies\WebhookPolicy;
@@ -131,30 +130,6 @@ class PolicyTest extends TestCase
 
         $policy = new DidPolicy;
         $this->assertFalse($policy->view($user, $did));
-    }
-
-    public function test_admin_bypasses_ring_group_policy(): void
-    {
-        $admin = User::factory()->create(['role' => 'superadmin', 'organization_id' => null]);
-        $policy = new RingGroupPolicy;
-        $this->assertTrue($policy->before($admin, 'view'));
-    }
-
-    public function test_user_can_create_ring_group_with_organization(): void
-    {
-        $organization = Organization::factory()->create();
-        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
-
-        $policy = new RingGroupPolicy;
-        $this->assertTrue($policy->create($user));
-    }
-
-    public function test_user_without_organization_cannot_create_ring_group(): void
-    {
-        $user = User::factory()->create(['organization_id' => null, 'role' => 'agent']);
-
-        $policy = new RingGroupPolicy;
-        $this->assertFalse($policy->create($user));
     }
 
     public function test_admin_bypasses_ivr_policy(): void

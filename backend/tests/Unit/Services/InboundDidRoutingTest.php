@@ -243,39 +243,4 @@ class InboundDidRoutingTest extends TestCase
         $this->assertStringContainsString('flow_'.$flow->id.' XML flow-entry.example.com', $entryDialplan);
     }
 
-    public function test_did_morph_map_resolves_ring_group_and_time_condition_destinations(): void
-    {
-        $organization = Organization::factory()->create();
-        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
-        $ringGroup = $organization->ringGroups()->create([
-            'name' => 'Sales',
-            'strategy' => 'simultaneous',
-            'ring_timeout' => 20,
-            'members' => [$extension->id],
-            'is_active' => true,
-        ]);
-        $timeCondition = $organization->timeConditions()->create([
-            'name' => 'Business Hours',
-            'conditions' => [],
-            'match_destination_type' => 'extension',
-            'match_destination_id' => $extension->id,
-            'no_match_destination_type' => 'voicemail',
-            'no_match_destination_id' => $extension->id,
-            'is_active' => true,
-        ]);
-
-        $ringDid = Did::factory()->create([
-            'organization_id' => $organization->id,
-            'destination_type' => 'ring_group',
-            'destination_id' => $ringGroup->id,
-        ]);
-        $timeDid = Did::factory()->create([
-            'organization_id' => $organization->id,
-            'destination_type' => 'time_condition',
-            'destination_id' => $timeCondition->id,
-        ]);
-
-        $this->assertInstanceOf(\App\Models\RingGroup::class, $ringDid->destination);
-        $this->assertInstanceOf(\App\Models\TimeCondition::class, $timeDid->destination);
-    }
 }

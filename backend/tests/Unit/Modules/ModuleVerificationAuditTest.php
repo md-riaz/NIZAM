@@ -32,7 +32,7 @@ class ModuleVerificationAuditTest extends TestCase
         $coreControllers = [
             'AgentController', 'QueueController', 'QueueMetricsController',
             'WebhookController', 'DeviceProfileController', 'DidController',
-            'RingGroupController', 'IvrController', 'TimeConditionController',
+            'IvrController', 'TimeConditionController',
             'RecordingController', 'CallEventController', 'CallEventStreamController',
         ];
 

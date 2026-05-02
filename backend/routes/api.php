@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BridgeController;
+use App\Http\Controllers\Api\CallBlockController;
 use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Api\CallDetailRecordController;
 use App\Http\Controllers\Api\CallEventController;
@@ -35,7 +36,6 @@ use App\Http\Controllers\Api\QueueController;
 use App\Http\Controllers\Api\QueueMetricsController;
 use App\Http\Controllers\Api\RecordingController;
 use App\Http\Controllers\Api\RegistrationStatusController;
-use App\Http\Controllers\Api\RingGroupController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SystemMediaController;
 use App\Http\Controllers\Api\SupervisorReportController;
@@ -101,7 +101,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // FreeSWITCH Security & Configuration (Superadmin)
     Route::apiResource('admin/gateways', \App\Http\Controllers\Api\Admin\AdminGatewayController::class);
     Route::apiResource('admin/sip-profiles', \App\Http\Controllers\Api\SipProfileController::class);
-    Route::apiResource('admin/blocked-destinations', \App\Http\Controllers\Api\BlockedDestinationController::class);
 
     // Platform Admin Log Viewer
     Route::prefix('admin/logs')->name('admin.logs.')->group(function () {
@@ -156,7 +155,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('dids/{did}/provider', [NumberProviderController::class, 'store'])->name('dids.provider.store');
         Route::put('dids/{did}/provider', [NumberProviderController::class, 'update'])->name('dids.provider.update');
         Route::delete('dids/{did}/provider', [NumberProviderController::class, 'destroy'])->name('dids.provider.destroy');
-        Route::apiResource('ring-groups', RingGroupController::class);
         Route::apiResource('ivrs', IvrController::class);
         Route::apiResource('time-conditions', TimeConditionController::class);
         Route::apiResource('webhooks', WebhookController::class);
@@ -225,6 +223,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::apiResource('call-routing-policies', CallRoutingPolicyController::class);
         Route::post('call-routing-policies/{call_routing_policy}/evaluate', [CallRoutingPolicyController::class, 'evaluate'])
             ->name('call-routing-policies.evaluate');
+        Route::apiResource('call-blocks', CallBlockController::class)
+            ->parameters(['call-blocks' => 'callBlock']);
 
         // Audit logs (read-only)
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');

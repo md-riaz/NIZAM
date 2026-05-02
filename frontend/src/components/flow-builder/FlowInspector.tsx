@@ -11,7 +11,7 @@ import type { FlowNode, SystemMedia } from '@/types/models';
 import { getBuilderNodeDefinition, normalizeBuilderNodeType } from './nodeRegistry';
 import { IvrNodeEditor } from './nodes/IvrNodeEditor';
 import { PromptMediaInput } from './nodes/PromptMediaInput';
-import { RingGroupNodeEditor } from './nodes/RingGroupNodeEditor';
+import { RingTeamNodeEditor } from './nodes/RingTeamNodeEditor';
 
 interface TeamOption {
     id: string;
@@ -604,8 +604,8 @@ export function FlowInspector({
                 />
             )}
 
-            {(normalizedType === 'ring_group' || normalizedType === 'hunt_group') && (
-                <RingGroupNodeEditor
+            {(normalizedType === 'ring_team' || normalizedType === 'hunt_group') && (
+                <RingTeamNodeEditor
                     name={selectedNode.name ?? ''}
                     config={config}
                     teamOptions={teamOptions}

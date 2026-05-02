@@ -20,7 +20,7 @@ class UpdateIvrRequest extends FormRequest
             'timeout' => 'integer|min:1|max:60',
             'max_failures' => 'integer|min:1|max:10',
             'options' => 'required|array',
-            'timeout_destination_type' => 'nullable|string|in:extension,ring_group,ivr,voicemail,flow,bridge|required_with:timeout_destination_id',
+            'timeout_destination_type' => 'nullable|string|in:extension,ivr,voicemail,flow,bridge|required_with:timeout_destination_id',
             'timeout_destination_id' => 'nullable|uuid|required_with:timeout_destination_type',
             'is_active' => 'boolean',
         ];

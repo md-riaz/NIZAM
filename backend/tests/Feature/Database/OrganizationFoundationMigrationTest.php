@@ -13,7 +13,7 @@ class OrganizationFoundationMigrationTest extends TestCase
 
     public function test_organization_foundation_schema_exists_after_current_migrations(): void
     {
-        $this->assertTrue(Schema::hasTable('organizations'));
+        $this->assertTrue(Schema::hasColumn('organizations', 'max_teams'));
         $this->assertTrue(Schema::hasColumn('users', 'organization_id'));
         $this->assertTrue(Schema::hasColumn('extensions', 'organization_id'));
         $this->assertTrue(Schema::hasColumn('device_profiles', 'organization_id'));
@@ -35,7 +35,7 @@ class OrganizationFoundationMigrationTest extends TestCase
             'max_extensions' => 10,
             'max_concurrent_calls' => 0,
             'max_dids' => 0,
-            'max_ring_groups' => 0,
+            'max_teams' => 0,
             'is_active' => true,
             'status' => 'active',
             'created_at' => now(),

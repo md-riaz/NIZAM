@@ -13,7 +13,7 @@ class PbxRoutingModule extends BaseModule
 
     public function description(): string
     {
-        return 'PBX routing: DIDs, ring groups, IVR, time conditions';
+        return 'PBX routing: DIDs, IVR, time conditions';
     }
 
     public function version(): string
@@ -35,8 +35,6 @@ class PbxRoutingModule extends BaseModule
         return [
             'dids.view',
             'dids.manage',
-            'ring-groups.view',
-            'ring-groups.manage',
             'ivrs.view',
             'ivrs.manage',
             'time-conditions.view',

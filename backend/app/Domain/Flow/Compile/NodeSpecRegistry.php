@@ -93,7 +93,6 @@ class NodeSpecRegistry
             transitions: ['answered', 'timeout', 'failed', 'no_answer'],
             terminal: false,
             requiresLua: true,
-            aliases: ['ring_group'],
             validator: RingTeamNodeValidator::class,
         ));
 

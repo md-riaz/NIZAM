@@ -23,7 +23,7 @@ class OrganizationFactory extends Factory
             'max_extensions' => fake()->numberBetween(1, 100),
             'max_concurrent_calls' => 0,
             'max_dids' => 0,
-            'max_ring_groups' => 0,
+            'max_teams' => 0,
             'is_active' => true,
             'status' => Organization::STATUS_ACTIVE,
         ];

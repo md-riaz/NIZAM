@@ -36,7 +36,7 @@ class AdminDashboardController extends Controller
                 'extensions_count' => $organization->extensions()->count(),
                 'active_extensions_count' => $organization->extensions()->where('is_active', true)->count(),
                 'dids_count' => $organization->dids()->count(),
-                'ring_groups_count' => $organization->ringGroups()->count(),
+                'teams_count' => $organization->teams()->count(),
                 'recordings_total_size' => (int) $organization->recordings()->sum('file_size'),
                 'cdrs_today' => $organization->cdrs()->whereDate('start_stamp', Carbon::today())->count(),
                 'webhooks_count' => $organization->webhooks()->count(),

@@ -149,4 +149,69 @@ class CallRoutingPolicyApiTest extends TestCase
 
         $response->assertStatus(404);
     }
+
+    public function test_can_create_a_call_block_without_routing_destinations(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/call-blocks", [
+                'name' => 'Spam caller',
+                'number' => '+1 (555) 123-4567',
+                'description' => 'Inbound spam',
+                'is_active' => true,
+            ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('data.name', 'Spam caller');
+        $response->assertJsonPath('data.number', '15551234567');
+        $response->assertJsonPath('data.action', 'reject');
+
+        $this->assertDatabaseHas('call_routing_policies', [
+            'organization_id' => $this->organization->id,
+            'name' => 'Spam caller',
+            'match_destination_type' => null,
+            'match_destination_id' => null,
+            'no_match_destination_type' => null,
+            'no_match_destination_id' => null,
+        ]);
+
+        $policy = CallRoutingPolicy::where('organization_id', $this->organization->id)
+            ->where('name', 'Spam caller')
+            ->firstOrFail();
+
+        $this->assertSame([
+            [
+                'type' => 'blacklist',
+                'params' => ['numbers' => ['15551234567']],
+            ],
+        ], $policy->conditions);
+    }
+
+    public function test_can_list_call_blocks_from_blacklist_policies_only(): void
+    {
+        CallRoutingPolicy::factory()->create([
+            'organization_id' => $this->organization->id,
+            'name' => 'Blocked caller',
+            'conditions' => [
+                ['type' => 'blacklist', 'params' => ['numbers' => ['15550000001']]],
+            ],
+            'match_destination_type' => null,
+            'match_destination_id' => null,
+            'no_match_destination_type' => null,
+            'no_match_destination_id' => null,
+        ]);
+
+        CallRoutingPolicy::factory()->create([
+            'organization_id' => $this->organization->id,
+            'name' => 'Business hours',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/call-blocks");
+
+        $response->assertStatus(200);
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.name', 'Blocked caller');
+        $response->assertJsonPath('data.0.number', '15550000001');
+        $response->assertJsonMissingPath('data.1');
+    }
 }

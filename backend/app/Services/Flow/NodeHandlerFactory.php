@@ -23,7 +23,7 @@ class NodeHandlerFactory
             'schedule_check', 'business_hours' => app(ScheduleCheckNodeHandler::class),
             'menu', 'ivr' => app(MenuNodeHandler::class),
             'play_message' => app(PlayMessageNodeHandler::class),
-            'ring_team', 'ring_group' => app(RingTeamNodeHandler::class),
+            'ring_team' => app(RingTeamNodeHandler::class),
             'voicemail' => app(VoicemailNodeHandler::class),
             'hangup', 'end', 'terminal', 'end_call' => app(HangupNodeHandler::class),
             'caller_match' => app(CallerMatchNodeHandler::class),

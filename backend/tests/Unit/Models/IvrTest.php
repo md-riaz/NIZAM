@@ -35,7 +35,7 @@ class IvrTest extends TestCase
     {
         $options = [
             ['digit' => '1', 'destination_type' => 'extension', 'destination_id' => 'uuid-1'],
-            ['digit' => '2', 'destination_type' => 'ring_group', 'destination_id' => 'uuid-2'],
+            ['digit' => '2', 'destination_type' => 'flow', 'destination_id' => 'uuid-2'],
         ];
         $ivr = Ivr::factory()->create(['options' => $options]);
 

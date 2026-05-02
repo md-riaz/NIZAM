@@ -44,7 +44,7 @@ class IvrApiTest extends TestCase
                 'max_failures' => 3,
                 'options' => [
                     ['digit' => '1', 'destination_type' => 'extension', 'destination_id' => Str::uuid()->toString()],
-                    ['digit' => '2', 'destination_type' => 'ring_group', 'destination_id' => Str::uuid()->toString()],
+                    ['digit' => '2', 'destination_type' => 'flow', 'destination_id' => Str::uuid()->toString()],
                 ],
             ]);
 

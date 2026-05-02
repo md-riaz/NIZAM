@@ -46,7 +46,7 @@ const organizationSchema = z.object({
     max_extensions: z.coerce.number().min(0),
     max_concurrent_calls: z.coerce.number().min(0),
     max_dids: z.coerce.number().min(0),
-    max_ring_groups: z.coerce.number().min(0),
+    max_teams: z.coerce.number().min(0),
     is_active: z.boolean(),
 });
 
@@ -76,7 +76,7 @@ const serializeOrganizationPayload = (values: OrganizationFormValues) => ({
     max_extensions: values.max_extensions,
     max_concurrent_calls: values.max_concurrent_calls,
     max_dids: values.max_dids,
-    max_ring_groups: values.max_ring_groups,
+    max_teams: values.max_teams,
     is_active: values.is_active,
 });
 
@@ -133,7 +133,7 @@ export default function OrganizationFormPage() {
             max_extensions: 0,
             max_concurrent_calls: 0,
             max_dids: 0,
-            max_ring_groups: 0,
+            max_teams: 0,
             is_active: true,
         },
     });
@@ -166,7 +166,7 @@ export default function OrganizationFormPage() {
                 max_extensions: 0,
                 max_concurrent_calls: 0,
                 max_dids: 0,
-                max_ring_groups: 0,
+                max_teams: 0,
                 is_active: true,
             });
             setPrefixTouched(false);
@@ -181,7 +181,7 @@ export default function OrganizationFormPage() {
                 max_extensions: organization.max_extensions ?? 0,
                 max_concurrent_calls: organization.max_concurrent_calls ?? 0,
                 max_dids: organization.max_dids ?? 0,
-                max_ring_groups: organization.max_ring_groups ?? 0,
+                max_teams: organization.max_teams ?? 0,
                 is_active: organization.is_active ?? true,
             });
             setPrefixTouched(true);
@@ -211,7 +211,7 @@ export default function OrganizationFormPage() {
                     return;
                 }
 
-                if (field === 'domain_prefix' || field === 'name' || field === 'status' || field === 'max_extensions' || field === 'max_concurrent_calls' || field === 'max_dids' || field === 'max_ring_groups' || field === 'is_active') {
+                if (field === 'domain_prefix' || field === 'name' || field === 'status' || field === 'max_extensions' || field === 'max_concurrent_calls' || field === 'max_dids' || field === 'max_teams' || field === 'is_active') {
                     form.setError(field, { type: 'server', message: messages[0] });
                 }
             });
@@ -459,10 +459,10 @@ export default function OrganizationFormPage() {
 
                                     <FormField
                                         control={form.control}
-                                        name="max_ring_groups"
+                                        name="max_teams"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Max ring groups</FormLabel>
+                                                <FormLabel>Max teams</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" min="0" {...field} />
                                                 </FormControl>

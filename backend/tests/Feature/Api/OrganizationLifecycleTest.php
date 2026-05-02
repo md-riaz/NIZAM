@@ -84,7 +84,7 @@ class OrganizationLifecycleTest extends TestCase
             'status' => 'active',
             'max_concurrent_calls' => 10,
             'max_dids' => 20,
-            'max_ring_groups' => 5,
+            'max_teams' => 5,
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -95,7 +95,7 @@ class OrganizationLifecycleTest extends TestCase
             'status' => 'active',
             'max_concurrent_calls' => 10,
             'max_dids' => 20,
-            'max_ring_groups' => 5,
+            'max_teams' => 5,
         ]);
     }
 

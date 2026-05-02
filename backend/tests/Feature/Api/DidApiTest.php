@@ -83,11 +83,11 @@ class DidApiTest extends TestCase
             ->assertJsonPath('data.gateway.organization_id', $gateway->organization_id);
     }
 
-    public function test_show_preserves_canonical_destination_type(): void
+    public function test_show_preserves_flow_destination_type(): void
     {
         $did = Did::factory()->create([
             'organization_id' => $this->organization->id,
-            'destination_type' => 'ivr',
+            'destination_type' => 'flow',
             'destination_id' => Str::uuid()->toString(),
         ]);
 
@@ -95,7 +95,7 @@ class DidApiTest extends TestCase
             ->getJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}");
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.destination_type', 'ivr');
+            ->assertJsonPath('data.destination_type', 'flow');
     }
 
     public function test_can_update_a_did(): void
@@ -105,7 +105,7 @@ class DidApiTest extends TestCase
         $response = $this->actingAs($this->user, 'sanctum')
             ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}", [
                 'number' => '+15559999999',
-                'destination_type' => 'voicemail',
+                'destination_type' => 'flow',
                 'destination_id' => Str::uuid()->toString(),
             ]);
 

@@ -34,10 +34,11 @@ class RingTeamNodeHandler implements NodeHandler
         }
 
         $timeout = (int) data_get($node, 'config.timeout', 20);
+        $strategy = data_get($node, 'config.strategy');
         $team = $teamId
             ? Team::query()->where('organization_id', $context->organizationId())->whereKey($teamId)->where('is_active', true)->first()
             : null;
-        $members = $team ? $this->teamRoutingService->resolveMembers($team) : [];
+        $members = $team ? $this->teamRoutingService->resolveMembers($team, is_string($strategy) ? $strategy : null) : [];
 
         if ($team) {
             $this->mediaControlService->ringTeam($context->callSession, (string) $teamId, $timeout, $members);

@@ -213,7 +213,7 @@ class AuthApiTest extends TestCase
             'max_extensions' => 10,
             'max_concurrent_calls' => 0,
             'max_dids' => 0,
-            'max_ring_groups' => 0,
+            'max_teams' => 0,
             'is_active' => true,
             'status' => 'active',
         ]);
@@ -247,7 +247,7 @@ class AuthApiTest extends TestCase
             'max_extensions' => 10,
             'max_concurrent_calls' => 0,
             'max_dids' => 0,
-            'max_ring_groups' => 0,
+            'max_teams' => 0,
             'is_active' => true,
             'status' => 'active',
         ]);
@@ -274,7 +274,7 @@ class AuthApiTest extends TestCase
             'max_extensions' => $organization->max_extensions,
             'max_concurrent_calls' => $organization->max_concurrent_calls,
             'max_dids' => $organization->max_dids,
-            'max_ring_groups' => $organization->max_ring_groups,
+            'max_teams' => $organization->max_teams,
             'is_active' => $organization->is_active,
             'status' => $organization->status,
         ]);
@@ -446,7 +446,7 @@ class AuthApiTest extends TestCase
                         'max_extensions',
                         'max_concurrent_calls',
                         'max_dids',
-                        'max_ring_groups',
+                        'max_teams',
                         'is_active',
                         'created_at',
                         'updated_at',

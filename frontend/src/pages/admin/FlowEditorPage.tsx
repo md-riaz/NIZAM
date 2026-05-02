@@ -13,6 +13,7 @@ import {
     getDefaultOutgoingCondition,
     getEdgeConditionOptions,
     normalizeBuilderNodeType,
+    normalizeTeamStrategy,
     serializeBuilderNodeType,
 } from '@/components/flow-builder/nodeRegistry';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { getErrorMessage } from '@/lib/api-hooks';
 import { cn } from '@/lib/utils';
-import type { Flow, FlowEdge, FlowNode, RingGroup, SystemMedia } from '@/types/models';
+import type { Flow, FlowEdge, FlowNode, SystemMedia, Team } from '@/types/models';
 
 const studioPanelClass = 'rounded-3xl border border-border/70 bg-card/90 p-4 shadow-[var(--communications-shadow-ambient)]';
 const panelClass = 'rounded-2xl border border-border/70 bg-background/95 p-4 shadow-[var(--communications-shadow-ambient)] backdrop-blur';
@@ -51,10 +52,16 @@ function serializeNodeForApi(node: FlowNode): FlowNode {
 function normalizeNodeFromApi(node: FlowNode): FlowNode {
     const normalizedType = normalizeBuilderNodeType(node.type);
     const definition = getBuilderNodeDefinition(normalizedType);
+    const normalizedConfig = { ...((node.config as Record<string, unknown>) ?? {}) };
+
+    if (normalizedType === 'ring_team' || normalizedType === 'hunt_group') {
+        normalizedConfig.strategy = normalizeTeamStrategy(normalizedConfig.strategy);
+    }
 
     return {
         ...node,
         type: normalizedType,
+        config: normalizedConfig,
         name: node.name ?? definition?.defaultName ?? 'Unnamed node',
     };
 }
@@ -111,9 +118,9 @@ export default function FlowEditorPage() {
     });
 
     const { data: teamOptions = [] } = useQuery<Array<{ id: string; name: string }>>({
-        queryKey: ['ring-groups', activeOrganization?.id],
+        queryKey: ['teams', activeOrganization?.id],
         queryFn: async () => {
-            const response = await api.get<{ data: RingGroup[] }>(`${organizationApiPrefix}/ring-groups`);
+            const response = await api.get<{ data: Team[] }>(`${organizationApiPrefix}/teams`);
             return response.data.data.map((team) => ({ id: team.id, name: team.name }));
         },
         enabled: !!activeOrganization,

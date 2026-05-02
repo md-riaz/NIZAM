@@ -62,7 +62,7 @@ class InteractionApiTest extends TestCase
             'call_session_id' => $callSession->id,
             'call_uuid' => $callSession->call_uuid,
             'node_id' => 'node-1',
-            'node_type' => 'ring_group',
+            'node_type' => 'ring_team',
             'action' => 'flow.node.executing',
             'payload' => ['node_label' => 'Support queue'],
             'occurred_at' => Carbon::parse('2026-04-12 10:00:05'),

@@ -9,9 +9,9 @@ use App\Models\DeviceProfile;
 use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Ivr;
-use App\Models\Recording;
-use App\Models\RingGroup;
 use App\Models\Organization;
+use App\Models\Recording;
+use App\Models\Team;
 use App\Models\User;
 use App\Models\Webhook;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,7 +40,13 @@ class OrganizationStatsTest extends TestCase
         Extension::factory()->count(3)->create(['organization_id' => $this->organization->id, 'is_active' => true]);
         Extension::factory()->create(['organization_id' => $this->organization->id, 'is_active' => false]);
         Did::factory()->count(2)->create(['organization_id' => $this->organization->id]);
-        RingGroup::factory()->create(['organization_id' => $this->organization->id]);
+        Team::create([
+            'organization_id' => $this->organization->id,
+            'name' => 'Stats Team',
+            'strategy' => 'simultaneous',
+            'timeout' => 30,
+            'is_active' => true,
+        ]);
         Ivr::factory()->create(['organization_id' => $this->organization->id]);
         CallDetailRecord::factory()->count(5)->create(['organization_id' => $this->organization->id]);
         CallDetailRecord::factory()->create([
@@ -64,7 +70,7 @@ class OrganizationStatsTest extends TestCase
             'extensions_count' => 4,
             'active_extensions_count' => 3,
             'dids_count' => 2,
-            'ring_groups_count' => 1,
+            'teams_count' => 1,
             'ivrs_count' => 1,
             'recordings_count' => 2,
             'recordings_total_size' => 2000,

@@ -50,7 +50,7 @@ class OrganizationTest extends TestCase
             'max_extensions',
             'max_concurrent_calls',
             'max_dids',
-            'max_ring_groups',
+            'max_teams',
             'recording_retention_days',
             'max_calls_per_minute',
             'is_active',

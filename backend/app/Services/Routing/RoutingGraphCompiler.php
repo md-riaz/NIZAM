@@ -212,7 +212,7 @@ class RoutingGraphCompiler
             'schedule_check', 'business_hours' => ['open', 'closed', 'holiday'],
             'caller_match', 'number_match' => ['match', 'no_match'],
             'menu' => [],
-            'ring_team', 'ring_group' => [],
+            'ring_team' => [],
             'voicemail' => [],
             'hangup', 'terminal', 'end_call' => [],
             default => [],

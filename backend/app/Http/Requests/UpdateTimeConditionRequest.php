@@ -16,9 +16,9 @@ class UpdateTimeConditionRequest extends FormRequest
         return [
             'name' => 'required|string',
             'conditions' => 'required|array',
-            'match_destination_type' => 'nullable|string|in:extension,ring_group,ivr,voicemail,flow,bridge|required_with:match_destination_id',
+            'match_destination_type' => 'nullable|string|in:extension,ivr,voicemail,flow,bridge|required_with:match_destination_id',
             'match_destination_id' => 'nullable|uuid|required_with:match_destination_type',
-            'no_match_destination_type' => 'nullable|string|in:extension,ring_group,ivr,voicemail,flow,bridge|required_with:no_match_destination_id',
+            'no_match_destination_type' => 'nullable|string|in:extension,ivr,voicemail,flow,bridge|required_with:no_match_destination_id',
             'no_match_destination_id' => 'nullable|uuid|required_with:no_match_destination_type',
             'is_active' => 'boolean',
         ];

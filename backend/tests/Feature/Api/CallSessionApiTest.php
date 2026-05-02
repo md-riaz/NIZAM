@@ -76,7 +76,7 @@ class CallSessionApiTest extends TestCase
             'call_session_id' => $callSession->id,
             'call_uuid' => $callSession->call_uuid,
             'node_id' => 'node-1',
-            'node_type' => 'ring_group',
+            'node_type' => 'ring_team',
             'action' => 'delivery.plan.created',
             'payload' => ['attempt_count' => 2],
             'occurred_at' => now(),

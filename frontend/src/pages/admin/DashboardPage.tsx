@@ -42,7 +42,7 @@ interface DashboardOrganizationSummary {
     extensions_count: number;
     active_extensions_count: number;
     dids_count: number;
-    ring_groups_count: number;
+    teams_count: number;
     recordings_total_size: number;
     cdrs_today: number;
     webhooks_count: number;
@@ -70,7 +70,7 @@ interface OrganizationDashboardStatsResponse {
         extensions_count: number;
         active_extensions_count: number;
         dids_count: number;
-        ring_groups_count: number;
+        teams_count: number;
         ivrs_count: number;
         cdrs_total: number;
         cdrs_today: number;
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                     extensions_count: stats.extensions_count,
                     active_extensions_count: stats.active_extensions_count,
                     dids_count: stats.dids_count,
-                    ring_groups_count: stats.ring_groups_count,
+                    teams_count: stats.teams_count,
                     recordings_total_size: stats.recordings_total_size,
                     cdrs_today: stats.cdrs_today,
                     webhooks_count: stats.webhooks_count,
@@ -313,9 +313,9 @@ export default function DashboardPage() {
                     icon={PhoneCall}
                 />
                 <StatCard
-                    title={isSuperadmin ? 'Telephony Health' : 'Routing Flows'}
-                    value={isSuperadmin ? telephonyCardValue : (dashboardLoading ? '…' : organizations[0]?.ring_groups_count ?? 0)}
-                    description={isSuperadmin ? telephonyCardDescription : 'Ring groups available in this organization'}
+                    title={isSuperadmin ? 'Telephony Health' : 'Teams'}
+                    value={isSuperadmin ? telephonyCardValue : (dashboardLoading ? '…' : organizations[0]?.teams_count ?? 0)}
+                    description={isSuperadmin ? telephonyCardDescription : 'Teams available in this organization'}
                     icon={isSuperadmin ? Radio : Radio}
                     className={isSuperadmin ? telephonyCardClassName : ''}
                 />
@@ -383,7 +383,7 @@ export default function DashboardPage() {
                                         Numbers: <span className="font-semibold text-foreground">{organization.dids_count}</span>
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Ring: <span className="font-semibold text-foreground">{organization.ring_groups_count}</span>
+                                        Teams: <span className="font-semibold text-foreground">{organization.teams_count}</span>
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         Today CDR: <span className="font-semibold text-foreground">{organization.cdrs_today}</span>

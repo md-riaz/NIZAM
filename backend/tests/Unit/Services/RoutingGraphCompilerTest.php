@@ -35,6 +35,10 @@ class RoutingGraphCompilerTest extends TestCase
             'flow_version_id' => $flowVersion->id,
             'type' => 'hangup',
         ]);
+        $holidayNode = FlowNode::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'type' => 'hangup',
+        ]);
 
         FlowEdge::factory()->create([
             'flow_version_id' => $flowVersion->id,
@@ -53,6 +57,12 @@ class RoutingGraphCompilerTest extends TestCase
             'source_node_id' => $openNode->id,
             'target_node_id' => $closedNode->id,
             'condition' => 'open',
+        ]);
+        FlowEdge::factory()->create([
+            'flow_version_id' => $flowVersion->id,
+            'source_node_id' => $openNode->id,
+            'target_node_id' => $holidayNode->id,
+            'condition' => 'holiday',
         ]);
 
         $compiler = app(RoutingGraphCompiler::class);

@@ -50,7 +50,7 @@ class Organization extends Model implements HasMedia
         'max_extensions',
         'max_concurrent_calls',
         'max_dids',
-        'max_ring_groups',
+        'max_teams',
         'recording_retention_days',
         'max_calls_per_minute',
         'is_active',
@@ -61,7 +61,7 @@ class Organization extends Model implements HasMedia
         'status' => self::STATUS_ACTIVE,
         'max_concurrent_calls' => 0,
         'max_dids' => 0,
-        'max_ring_groups' => 0,
+        'max_teams' => 0,
     ];
 
     /**
@@ -77,7 +77,7 @@ class Organization extends Model implements HasMedia
             'max_extensions' => 'integer',
             'max_concurrent_calls' => 'integer',
             'max_dids' => 'integer',
-            'max_ring_groups' => 'integer',
+            'max_teams' => 'integer',
             'recording_retention_days' => 'integer',
             'max_calls_per_minute' => 'integer',
             'is_active' => 'boolean',

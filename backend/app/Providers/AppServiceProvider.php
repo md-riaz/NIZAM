@@ -105,7 +105,6 @@ class AppServiceProvider extends ServiceProvider
 
         Gateway::observe(GatewayObserver::class);
         \App\Models\Did::observe(\App\Observers\DidObserver::class);
-        \App\Models\RingGroup::observe(\App\Observers\RingGroupObserver::class);
         \App\Models\Ivr::observe(\App\Observers\IvrObserver::class);
         \App\Models\TimeCondition::observe(\App\Observers\TimeConditionObserver::class);
         \App\Models\CallRoutingPolicy::observe(\App\Observers\CallRoutingPolicyObserver::class);
@@ -148,7 +147,6 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\UsageRecord::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\Alert::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\AlertPolicy::observe(\App\Observers\ScheduleChildObserver::class);
-        \App\Models\BlockedDestination::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\CdrEnrichment::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\CallTraceEvent::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\Permission::observe(\App\Observers\ScheduleChildObserver::class);

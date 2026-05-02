@@ -5,7 +5,6 @@ import {
     ChevronRight,
     ChevronsUpDown,
     FileText,
-    GitBranch,
     Globe,
     Hash,
     KeyRound,
@@ -20,7 +19,6 @@ import {
     Route,
     ScrollText,
     Shield,
-    ShieldAlert,
     ShieldCheck,
     Sparkles,
     Sun,
@@ -78,7 +76,6 @@ const NAV_SECTIONS: NavSection[] = [
             { label: 'Devices', icon: Laptop, href: '/admin/device-profiles', organizationRequired: true },
             { label: 'Call Flows', icon: Route, href: '/admin/flows', organizationRequired: true },
             { label: 'Media Library', icon: FileText, href: '/admin/system-media', organizationRequired: true },
-            { label: 'Ring Groups', icon: GitBranch, href: '/admin/ring-groups', organizationRequired: true },
             { label: 'Numbers', icon: Hash, href: '/admin/numbers', adminOnly: true, organizationRequired: true },
         ],
     },
@@ -100,8 +97,8 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Security',
         items: [
             { label: 'Auth Tokens', icon: KeyRound, href: '/admin/auth-tokens', adminOnly: true, organizationRequired: true },
+            { label: 'Call Block', icon: Shield, href: '/admin/call-blocks', adminOnly: true, organizationRequired: true },
             { label: 'SIP Profiles', icon: Radio, href: '/admin/sip-profiles', superadminOnly: true },
-            { label: 'Blocked Destinations', icon: ShieldAlert, href: '/admin/blocked-destinations', superadminOnly: true },
         ],
     },
     {

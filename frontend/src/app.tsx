@@ -28,8 +28,6 @@ const DeviceProfilesPage = lazy(() => import('@/pages/admin/DeviceProfilesPage')
 const DeviceProfileFormPage = lazy(() => import('@/pages/admin/DeviceProfileFormPage'));
 const DidsPage = lazy(() => import('@/pages/admin/DidsPage'));
 const DidFormPage = lazy(() => import('@/pages/admin/DidFormPage'));
-const RingGroupsPage = lazy(() => import('@/pages/admin/RingGroupsPage'));
-const RingGroupFormPage = lazy(() => import('@/pages/admin/RingGroupFormPage'));
 const FlowsPage = lazy(() => import('@/pages/admin/FlowsPage'));
 const FlowEditorPage = lazy(() => import('@/pages/admin/FlowEditorPage'));
 const SystemMediaPage = lazy(() => import('@/pages/admin/SystemMediaPage'));
@@ -40,9 +38,9 @@ const LogViewerPage = lazy(() => import('@/pages/admin/LogViewerPage'));
 const SipStatusPage = lazy(() => import('@/pages/admin/SipStatusPage'));
 const FreeSwitchModulesPage = lazy(() => import('@/pages/admin/FreeSwitchModulesPage'));
 const AuthTokensPage = lazy(() => import('@/pages/admin/AuthTokensPage'));
+const CallBlocksPage = lazy(() => import('@/pages/admin/CallBlocksPage'));
 const SipProfilesPage = lazy(() => import('@/pages/admin/SipProfilesPage'));
 const SipProfileFormPage = lazy(() => import('@/pages/admin/SipProfileFormPage'));
-const BlockedDestinationsPage = lazy(() => import('@/pages/admin/BlockedDestinationsPage'));
 const CapabilitiesPage = lazy(() => import('@/pages/admin/CapabilitiesPage'));
 const SystemSettingsPage = lazy(() => import('@/pages/admin/SystemSettingsPage'));
 
@@ -161,9 +159,6 @@ const router = createBrowserRouter(
                 <Route path="device-profiles" element={<DeviceProfilesPage />} />
                 <Route path="device-profiles/create" element={<DeviceProfileFormPage />} />
                 <Route path="device-profiles/:id/edit" element={<DeviceProfileFormPage />} />
-                <Route path="ring-groups" element={<RingGroupsPage />} />
-                <Route path="ring-groups/create" element={<RingGroupFormPage />} />
-                <Route path="ring-groups/:id/edit" element={<RingGroupFormPage />} />
                 <Route path="numbers" element={<DidsPage />} />
                 <Route path="numbers/create" element={<DidFormPage />} />
                 <Route path="numbers/:id/edit" element={<DidFormPage />} />
@@ -186,6 +181,7 @@ const router = createBrowserRouter(
 
                 {/* Call History (organization-scoped) */}
                 <Route path="call-history" element={<CallHistoryPage />} />
+                <Route path="call-blocks" element={<CallBlocksPage />} />
                 <Route path="interactions/:id" element={<InteractionDetailPage />} />
 
                 {/* System */}
@@ -199,7 +195,6 @@ const router = createBrowserRouter(
                 <Route path="sip-profiles" element={<SipProfilesPage />} />
                 <Route path="sip-profiles/create" element={<SipProfileFormPage />} />
                 <Route path="sip-profiles/:id/edit" element={<SipProfileFormPage />} />
-                <Route path="blocked-destinations" element={<BlockedDestinationsPage />} />
             </Route>
 
             {/* Catch-all */}

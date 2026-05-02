@@ -101,4 +101,24 @@ class PolicyEvaluationApiTest extends TestCase
 
         $response->assertStatus(404);
     }
+
+    public function test_blacklist_evaluation_normalizes_caller_id_digits_only(): void
+    {
+        $policy = CallRoutingPolicy::factory()->create([
+            'organization_id' => $this->organization->id,
+            'conditions' => [
+                ['type' => 'blacklist', 'params' => ['numbers' => ['15551234567']]],
+            ],
+            'match_destination_type' => null,
+            'match_destination_id' => null,
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/call-routing-policies/{$policy->id}/evaluate", [
+                'caller_id' => '+1 (555) 123-4567',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('decision.decision', PolicyEvaluator::DECISION_REJECT);
+    }
 }

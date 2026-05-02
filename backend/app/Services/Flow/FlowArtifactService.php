@@ -5,8 +5,10 @@ namespace App\Services\Flow;
 use App\Models\FlowCompiledArtifact;
 use App\Models\FlowVersion;
 use App\Models\OrganizationDialplanManifest;
+use App\Models\Team;
 use App\Services\Flow\Compile\FlowToIrCompiler;
 use App\Services\Routing\RoutingGraphCompiler;
+use App\Services\Team\TeamRoutingService;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -15,6 +17,7 @@ class FlowArtifactService
     public function __construct(
         protected FlowToIrCompiler $flowToIrCompiler,
         protected RoutingGraphCompiler $routingGraphCompiler,
+        protected TeamRoutingService $teamRoutingService,
     ) {}
 
     public function getRoutingGraphCompiler(): RoutingGraphCompiler
@@ -235,28 +238,24 @@ class FlowArtifactService
 
 
             case 'BridgeTeam':
-                // Team routing with Lua helper
                 $teamId = $instruction->params['team_id'] ?? null;
                 $timeout = $instruction->params['timeout'] ?? 30;
-                
+                $strategy = $instruction->params['config']['strategy'] ?? null;
+
                 $answeredTarget = $instruction->transitions['answered'] ?? 'null';
                 $noAnswerTarget = $instruction->transitions['no_answer'] ?? 'null';
                 $timeoutTarget = $instruction->transitions['timeout'] ?? $noAnswerTarget;
-                
+
                 $organization = $flowVersion->flow->organization;
-                $ringGroup = $organization->ringGroups()->find($teamId);
-                
-                $dialString = '';
-                if ($ringGroup) {
-                    $memberIds = $ringGroup->members ?? [];
-                    $extensions = $organization->extensions()->whereIn('id', $memberIds)->where('is_active', true)->get();
-                    if ($extensions->isNotEmpty()) {
-                        $strings = $extensions->map(fn ($ext) => 'user/'.$ext->extension.'@'.$organization->domain);
-                        $dialString = $strings->implode($ringGroup->strategy === 'simultaneous' ? ',' : '|');
-                    }
-                }
-                
-                if (empty($dialString)) {
+                $team = $teamId
+                    ? $organization->teams()->whereKey($teamId)->where('is_active', true)->first()
+                    : null;
+
+                $dialString = $team instanceof Team
+                    ? $this->teamRoutingService->buildDialString($team, $organization->domain, is_string($strategy) ? $strategy : null)
+                    : '';
+
+                if ($dialString === '') {
                     $xml .= '          <action application="log" data="WARNING BridgeTeam node_'.$nodeId.' resolved to empty dial string"/>'."\n";
                     $xml .= '          <action application="transfer" data="'.$noAnswerTarget.' XML '.$context.'"/>'."\n";
                 } else {

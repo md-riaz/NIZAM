@@ -47,13 +47,7 @@ class Did extends Model
     {
         Relation::morphMap([
             'extension' => Extension::class,
-            'ring_group' => RingGroup::class,
-            'ivr' => Ivr::class,
-            'voicemail' => Extension::class,
-            'time_condition' => TimeCondition::class,
-            'call_routing_policy' => CallRoutingPolicy::class,
             'flow' => Flow::class,
-            'bridge' => Bridge::class,
         ]);
 
         static::saving(function (Did $did): void {

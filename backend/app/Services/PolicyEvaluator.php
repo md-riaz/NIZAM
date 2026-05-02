@@ -38,9 +38,9 @@ class PolicyEvaluator
         // Evaluate blacklist first
         foreach ($policy->conditions ?? [] as $condition) {
             if (($condition['type'] ?? '') === 'blacklist') {
-                $callerId = $context['caller_id'] ?? '';
-                $numbers = $condition['params']['numbers'] ?? [];
-                if (in_array($callerId, $numbers)) {
+                $callerId = $this->normalizeNumber($context['caller_id'] ?? '');
+                $numbers = array_map(fn ($number) => $this->normalizeNumber((string) $number), $condition['params']['numbers'] ?? []);
+                if ($callerId !== '' && in_array($callerId, $numbers, true)) {
                     return [
                         'decision' => self::DECISION_REJECT,
                         'reason' => 'Caller is blacklisted.',
@@ -166,11 +166,14 @@ class PolicyEvaluator
      */
     protected function evaluateBlacklist(array $params, array $context): bool
     {
-        $callerId = $context['caller_id'] ?? '';
-        $numbers = $params['numbers'] ?? [];
+        $callerId = $this->normalizeNumber($context['caller_id'] ?? '');
+        $numbers = array_map(fn ($number) => $this->normalizeNumber((string) $number), $params['numbers'] ?? []);
 
-        // Blacklist condition passes when caller is NOT in the list
-        return ! in_array($callerId, $numbers);
+        if ($callerId === '') {
+            return true;
+        }
+
+        return ! in_array($callerId, $numbers, true);
     }
 
     /**
@@ -192,5 +195,10 @@ class PolicyEvaluator
         }
 
         return false;
+    }
+
+    protected function normalizeNumber(?string $number): string
+    {
+        return preg_replace('/\D+/', '', (string) $number) ?? '';
     }
 }
