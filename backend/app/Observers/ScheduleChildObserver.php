@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Models\Team;
+use App\Models\TeamMember;
 use App\Services\OrganizationManifestBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -15,8 +17,14 @@ class ScheduleChildObserver
     protected function rebuildManifest(Model $model): void
     {
         try {
-            if ($model->schedule && $model->schedule->organization) {
-                $this->manifestBuilder->buildAndActivate($model->schedule->organization);
+            $organization = match (true) {
+                $model instanceof Team => $model->organization,
+                $model instanceof TeamMember => $model->team?->organization,
+                default => $model->schedule?->organization,
+            };
+
+            if ($organization) {
+                $this->manifestBuilder->buildAndActivate($organization);
             }
         } catch (\Exception $e) {
             Log::error('Failed to rebuild manifest on schedule child change', [

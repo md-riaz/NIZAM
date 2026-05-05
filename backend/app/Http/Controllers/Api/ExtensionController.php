@@ -11,6 +11,7 @@ use App\Models\Extension;
 use App\Models\Organization;
 use App\Models\DeviceProfile;
 use App\Services\ExtensionFeatureService;
+use App\Services\OrganizationManifestBuilder;
 use App\Services\WebRtcConfigService;
 use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,7 @@ class ExtensionController extends Controller
         protected WebhookDispatcher $webhookDispatcher,
         protected WebRtcConfigService $webRtcConfigService,
         protected ExtensionFeatureService $extensionFeatureService,
+        protected OrganizationManifestBuilder $manifestBuilder,
     ) {}
 
     /**
@@ -180,8 +182,20 @@ class ExtensionController extends Controller
 
     protected function syncOutboundPolicy(Extension $extension, array $allowedOutboundDidIds, array $allowedOutboundGatewayIds): void
     {
-        $extension->allowedOutboundDids()->sync($allowedOutboundDidIds);
-        $extension->allowedOutboundGateways()->sync($allowedOutboundGatewayIds);
+        $didChanges = $extension->allowedOutboundDids()->sync($allowedOutboundDidIds);
+        $gatewayChanges = $extension->allowedOutboundGateways()->sync($allowedOutboundGatewayIds);
+
+        $policyChanged = $didChanges !== ['attached' => [], 'detached' => [], 'updated' => []]
+            || $gatewayChanges !== ['attached' => [], 'detached' => [], 'updated' => []];
+
+        if (! $policyChanged) {
+            return;
+        }
+
+        $this->manifestBuilder->buildAndActivate($extension->organization);
+        $extension->deviceProfiles()->where('is_active', true)->update([
+            'updated_at' => now(),
+        ]);
     }
 
     protected function extractFeatureAttributes(array &$attributes): array
