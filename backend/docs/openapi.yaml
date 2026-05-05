@@ -704,6 +704,71 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /organizations/{organizationId}/extensions/{extensionId}/features:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ExtensionId'
+    put:
+      tags: [Extensions]
+      summary: Update extension convenience features
+      description: Update extension-level follow-me and do-not-disturb convenience settings.
+      operationId: updateExtensionFeatures
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtensionFeatures'
+      responses:
+        '200':
+          description: Updated extension convenience settings
+
+  /organizations/{organizationId}/directory:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      tags: [Extensions]
+      summary: Search organization directory
+      description: Search active extensions by first name, last name, or extension number.
+      operationId: searchDirectory
+      responses:
+        '200':
+          description: Directory search results
+
+  /organizations/{organizationId}/office-features:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      tags: [Organizations]
+      summary: Get office feature settings
+      description: Return organization-wide convenience feature toggles.
+      operationId: getOfficeFeatures
+      responses:
+        '200':
+          description: Office feature settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfficeFeatures'
+    put:
+      tags: [Organizations]
+      summary: Update office feature settings
+      description: Update organization-wide convenience feature toggles.
+      operationId: updateOfficeFeatures
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfficeFeatures'
+      responses:
+        '200':
+          description: Updated office feature settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfficeFeatures'
+
   /organizations/{organizationId}/holiday-calendars:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
@@ -2428,6 +2493,22 @@ components:
         is_active: { type: boolean }
         created_at: { type: string, format: date-time, nullable: true }
         updated_at: { type: string, format: date-time, nullable: true }
+
+    ExtensionFeatures:
+      type: object
+      properties:
+        follow_me_enabled: { type: boolean }
+        follow_me_destination: { type: string, nullable: true }
+        dnd_enabled: { type: boolean }
+
+    OfficeFeatures:
+      type: object
+      properties:
+        parking_enabled: { type: boolean }
+        pickup_enabled: { type: boolean }
+        paging_enabled: { type: boolean }
+        intercom_enabled: { type: boolean }
+        directory_enabled: { type: boolean }
 
     FreeSwitchModule:
       type: object

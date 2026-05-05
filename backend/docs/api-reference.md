@@ -529,6 +529,70 @@ Authorization: Bearer YOUR_TOKEN
 }
 ```
 
+### Extension Convenience Features
+
+Update follow-me and do-not-disturb settings for one extension.
+
+```http
+PUT /api/v1/organizations/{organization}/extensions/{extension}/features
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "follow_me_enabled": true,
+  "follow_me_destination": "+15551234567",
+  "dnd_enabled": false
+}
+```
+
+---
+
+## Organization Directory
+
+Search active extensions by name or extension number.
+
+```http
+GET /api/v1/organizations/{organization}/directory?search=John
+Authorization: Bearer YOUR_TOKEN
+```
+
+**Response** `200`:
+```json
+{
+  "data": [
+    {
+      "id": "019d9e70-20e6-71f6-a6a9-d74572449a00",
+      "extension": "1001",
+      "first_name": "John",
+      "last_name": "Smith"
+    }
+  ]
+}
+```
+
+## Office Features
+
+Get or update organization-wide convenience feature toggles.
+
+```http
+GET /api/v1/organizations/{organization}/office-features
+Authorization: Bearer YOUR_TOKEN
+```
+
+```http
+PUT /api/v1/organizations/{organization}/office-features
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "parking_enabled": true,
+  "pickup_enabled": false,
+  "paging_enabled": true,
+  "intercom_enabled": false,
+  "directory_enabled": true
+}
+```
+
 ---
 
 ## DIDs (Inbound Numbers)

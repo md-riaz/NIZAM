@@ -1,4 +1,5 @@
 import {
+    BookUser,
     Building2,
     Check,
     ChevronLeft,
@@ -20,6 +21,7 @@ import {
     ScrollText,
     Shield,
     ShieldCheck,
+    SlidersHorizontal,
     Sparkles,
     Sun,
     Users,
@@ -74,6 +76,8 @@ const NAV_SECTIONS: NavSection[] = [
         items: [
             { label: 'Extensions', icon: Phone, href: '/admin/extensions', organizationRequired: true },
             { label: 'Devices', icon: Laptop, href: '/admin/device-profiles', organizationRequired: true },
+            { label: 'Directory', icon: BookUser, href: '/admin/directory', organizationRequired: true },
+            { label: 'Office Features', icon: SlidersHorizontal, href: '/admin/office-features', organizationRequired: true },
             { label: 'Call Flows', icon: Route, href: '/admin/flows', organizationRequired: true },
             { label: 'Media Library', icon: FileText, href: '/admin/system-media', organizationRequired: true },
             { label: 'Numbers', icon: Hash, href: '/admin/numbers', adminOnly: true, organizationRequired: true },
