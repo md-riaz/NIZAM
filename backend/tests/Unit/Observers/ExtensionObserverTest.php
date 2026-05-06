@@ -140,7 +140,7 @@ class ExtensionObserverTest extends TestCase
         $this->assertGreaterThan($originalUpdatedAt, $profile->updated_at);
     }
 
-    public function test_updating_follow_me_destination_triggers_manifest_rebuild(): void
+    public function test_updating_follow_me_destination_does_not_rebuild_manifest_in_observer(): void
     {
         $organization = Organization::factory()->create();
         $extension = $organization->extensions()->create([
@@ -152,7 +152,7 @@ class ExtensionObserverTest extends TestCase
         ]);
 
         $builder = $this->mock(OrganizationManifestBuilder::class);
-        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($organization));
+        $builder->shouldNotReceive('buildAndActivate');
 
         $extension->update([
             'follow_me_destination' => '+15551234567',
@@ -164,7 +164,7 @@ class ExtensionObserverTest extends TestCase
         ]);
     }
 
-    public function test_updating_follow_me_state_without_profiles_still_triggers_manifest_rebuild(): void
+    public function test_updating_follow_me_state_without_profiles_does_not_rebuild_manifest_in_observer(): void
     {
         $organization = Organization::factory()->create();
         $extension = $organization->extensions()->create([
@@ -176,7 +176,7 @@ class ExtensionObserverTest extends TestCase
         ]);
 
         $builder = $this->mock(OrganizationManifestBuilder::class);
-        $builder->shouldReceive('buildAndActivate')->once()->withArgs(fn ($arg) => $arg->is($organization));
+        $builder->shouldNotReceive('buildAndActivate');
 
         $extension->update([
             'follow_me_enabled' => true,

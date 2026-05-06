@@ -48,6 +48,11 @@ class ScheduleChildObserver
                 return;
             }
 
+            if ($model instanceof EndpointBinding
+                && data_get($model->metadata, 'managed_by') === \App\Services\FollowMeEndpointBindingService::class) {
+                return;
+            }
+
             $this->manifestBuilder->buildAndActivate($organization);
         } catch (\Exception $e) {
             Log::error('Failed to rebuild manifest on schedule child change', [

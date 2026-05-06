@@ -29,17 +29,7 @@ class ExtensionObserver
             'default_outbound_did_id',
             'voicemail_enabled',
         ];
-        $routingFields = [
-            'follow_me_enabled',
-            'follow_me_destination',
-            'dnd_enabled',
-        ];
-
         $changed = array_keys($extension->getChanges());
-
-        if (! empty(array_intersect($changed, $routingFields))) {
-            $this->rebuildOrganizationManifestForModel($extension);
-        }
 
         if (in_array('extension', $changed, true) || in_array('is_active', $changed, true)) {
             app(FlowArtifactService::class)->refreshTeamRoutingArtifactsForExtension($extension);

@@ -78,4 +78,31 @@ class EndpointBindingObserverTest extends TestCase
 
         $binding->delete();
     }
+
+    public function test_follow_me_managed_endpoint_binding_does_not_rebuild_manifest(): void
+    {
+        $organization = Organization::factory()->create();
+
+        $builder = $this->mock(OrganizationManifestBuilder::class);
+        $builder->shouldNotReceive('buildAndActivate');
+
+        $binding = EndpointBinding::query()->create([
+            'organization_id' => $organization->id,
+            'type' => EndpointBinding::TYPE_PSTN_FORWARD,
+            'device_uuid' => 'follow-me-test',
+            'platform' => EndpointBinding::PLATFORM_UNKNOWN,
+            'is_push_capable' => false,
+            'is_enabled' => true,
+            'rings_immediately_when_online' => false,
+            'allow_late_join_after_push' => false,
+            'forward_number' => '+8801712345678',
+            'forward_requires_confirm' => true,
+            'metadata' => [
+                'source' => 'follow_me',
+                'managed_by' => 'App\\Services\\FollowMeEndpointBindingService',
+            ],
+        ]);
+
+        $this->assertDatabaseHas('endpoint_bindings', ['id' => $binding->id]);
+    }
 }
