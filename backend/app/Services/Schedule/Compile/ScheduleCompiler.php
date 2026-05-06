@@ -67,9 +67,9 @@ class ScheduleCompiler
      */
     protected function compileHolidayCheck(Schedule $schedule): ?string
     {
-        $holidays = $schedule->holidayCalendar?->holidays->toArray() ?? [];
+        $holidays = $schedule->holidayCalendar?->holidays;
 
-        if (empty($holidays)) {
+        if ($holidays === null || $holidays->isEmpty()) {
             return null;
         }
 
@@ -77,7 +77,10 @@ class ScheduleCompiler
         $xml[] = '    <condition field="destination_number" expression=".*">';
 
         // Build date regex for holidays (YYYY-MM-DD format)
-        $holidayDates = array_map(fn($h) => date('Y-m-d', strtotime($h->date)), $holidays);
+        $holidayDates = $holidays
+            ->pluck('holiday_date')
+            ->map(fn ($date) => date('Y-m-d', strtotime((string) $date)))
+            ->all();
         $dateRegex = '^('.implode('|', $holidayDates).')$';
 
         $xml[] = '        <condition field="strftime(%Y-%m-%d)" expression="'.$dateRegex.'">';

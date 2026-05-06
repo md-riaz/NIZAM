@@ -117,6 +117,8 @@ class ExtensionController extends Controller
         $allowedOutboundGatewayIds = $attributes['allowed_outbound_gateway_ids'] ?? [];
         unset($attributes['allowed_outbound_did_ids'], $attributes['allowed_outbound_gateway_ids']);
 
+        $oldExtensionNumber = $extension->extension;
+
         try {
             $extension->update($attributes);
 
@@ -129,6 +131,11 @@ class ExtensionController extends Controller
 
         $this->syncOutboundPolicy($extension, $allowedOutboundDidIds, $allowedOutboundGatewayIds);
         $this->syncOwnedDevice($extension, $attributes['device_profile_id'] ?? null);
+
+        if ((($attributes['extension'] ?? null) !== null && $oldExtensionNumber !== $extension->extension)
+            || array_key_exists('is_active', $attributes)) {
+            app(\App\Services\Flow\FlowArtifactService::class)->refreshTeamRoutingArtifactsForExtension($extension);
+        }
 
         $this->webhookDispatcher->dispatch($organization->id, 'extension.updated', [
             'extension_id' => $extension->id,

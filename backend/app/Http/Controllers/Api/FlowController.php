@@ -69,6 +69,8 @@ class FlowController extends Controller
 
         $flow->delete();
 
+        app(\App\Services\OrganizationManifestBuilder::class)->buildAndActivate($organization);
+
         return response()->json(null, 204);
     }
 

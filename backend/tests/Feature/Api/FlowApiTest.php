@@ -3,8 +3,14 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Flow;
+use App\Models\FlowEdge;
+use App\Models\FlowNode;
+use App\Models\FlowVersion;
 use App\Models\Organization;
+use App\Models\OrganizationDialplanManifest;
 use App\Models\User;
+use App\Services\Flow\FlowPublishService;
+use App\Services\OrganizationManifestBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -381,6 +387,88 @@ class FlowApiTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.active_version.status', 'published')
             ->assertJsonPath('data.active_version.is_published', true);
+    }
+
+    public function test_deleting_published_flow_rebuilds_manifest_without_stale_flow_entrypoint(): void
+    {
+        Storage::fake('public');
+
+        $media = $this->organization
+            ->addMedia(UploadedFile::fake()->createWithContent('goodbye.wav', "RIFF\x24\x00\x00\x00WAVEfmt "))
+            ->usingName('Goodbye Greeting')
+            ->toMediaCollection('prompts');
+
+        $flow = $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/flows", [
+                'name' => 'Delete Me Flow',
+                'version' => [
+                    'definition' => [
+                        'nodes' => [
+                            [
+                                'id' => 'start',
+                                'type' => 'start',
+                                'config' => [],
+                            ],
+                            [
+                                'id' => 'play-message',
+                                'type' => 'play_message',
+                                'config' => [
+                                    'media_id' => (string) $media->id,
+                                ],
+                            ],
+                            [
+                                'id' => 'end',
+                                'type' => 'end_call',
+                                'config' => [
+                                    'hangup_cause' => 'NORMAL_CLEARING',
+                                ],
+                            ],
+                        ],
+                        'edges' => [
+                            [
+                                'id' => 'edge-1',
+                                'source_node_id' => 'start',
+                                'target_node_id' => 'play-message',
+                                'condition' => 'next',
+                            ],
+                            [
+                                'id' => 'edge-2',
+                                'source_node_id' => 'play-message',
+                                'target_node_id' => 'end',
+                                'condition' => 'next',
+                            ],
+                        ],
+                    ],
+                ],
+            ])
+            ->assertCreated()
+            ->json('data');
+
+        $this->actingAs($this->user, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/flows/{$flow['id']}/publish")
+            ->assertOk();
+
+        $beforeManifest = OrganizationDialplanManifest::query()
+            ->where('organization_id', $this->organization->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
+
+        $this->assertNotNull($beforeManifest);
+        $this->assertStringContainsString('flow_'.$flow['id'], $beforeManifest->content);
+
+        $this->actingAs($this->user, 'sanctum')
+            ->deleteJson("/api/v1/organizations/{$this->organization->id}/flows/{$flow['id']}")
+            ->assertNoContent();
+
+        $afterManifest = OrganizationDialplanManifest::query()
+            ->where('organization_id', $this->organization->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
+
+        $this->assertNotNull($afterManifest);
+        $this->assertStringNotContainsString('flow_'.$flow['id'], $afterManifest->content);
     }
 
     public function test_flow_create_hydrates_menu_prompt_from_media_id(): void

@@ -55,6 +55,10 @@ class TeamController extends Controller
             }
         }
 
+        if ($request->hasAny(['members', 'strategy', 'timeout', 'is_active', 'name'])) {
+            app(\App\Services\Flow\FlowArtifactService::class)->refreshTeamRoutingArtifactsForTeam($team);
+        }
+
         return new TeamResource($team->load(['members', 'schedule:id', 'holidayCalendar:id']));
     }
 

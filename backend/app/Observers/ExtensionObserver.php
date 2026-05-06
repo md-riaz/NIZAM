@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Extension;
+use App\Services\Flow\FlowArtifactService;
 use App\Services\WallboardProjectionService;
 use Illuminate\Support\Facades\Log;
 
@@ -40,6 +41,10 @@ class ExtensionObserver
             $this->rebuildOrganizationManifestForModel($extension);
         }
 
+        if (in_array('extension', $changed, true) || in_array('is_active', $changed, true)) {
+            app(FlowArtifactService::class)->refreshTeamRoutingArtifactsForExtension($extension);
+        }
+
         if (empty(array_intersect($changed, $provisioningFields))) {
             return;
         }
@@ -62,5 +67,10 @@ class ExtensionObserver
             'changed_fields' => array_intersect($changed, $provisioningFields),
             'profile_count' => $profiles->count(),
         ]);
+    }
+
+    public function deleted(Extension $extension): void
+    {
+        app(FlowArtifactService::class)->refreshTeamRoutingArtifactsForExtension($extension);
     }
 }

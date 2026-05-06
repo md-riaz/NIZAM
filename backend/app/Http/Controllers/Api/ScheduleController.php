@@ -46,6 +46,10 @@ class ScheduleController extends Controller
         $schedule->update($request->safe()->except(['rules', 'breaks', 'exceptions']));
         $this->syncScheduleRelations($schedule, $request->validated(), replaceExisting: true);
 
+        if ($request->hasAny(['rules', 'breaks', 'exceptions'])) {
+            app(\App\Services\OrganizationManifestBuilder::class)->buildAndActivate($schedule->organization);
+        }
+
         return new ScheduleResource($schedule->load(['rules', 'breaks', 'exceptions']));
     }
 
