@@ -108,6 +108,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Ivr::observe(\App\Observers\IvrObserver::class);
         \App\Models\TimeCondition::observe(\App\Observers\TimeConditionObserver::class);
         \App\Models\CallRoutingPolicy::observe(\App\Observers\CallRoutingPolicyObserver::class);
+        \App\Models\RingGroup::observe(\App\Observers\RingGroupObserver::class);
         \App\Models\Team::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\User::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\Schedule::observe(\App\Observers\ScheduleObserver::class);
@@ -121,7 +122,6 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\QueueEntry::observe(\App\Observers\QueueEntryObserver::class);
         \App\Models\Agent::observe(\App\Observers\AgentObserver::class);
         \App\Models\TeamMember::observe(\App\Observers\ScheduleChildObserver::class);
-        \App\Models\QueueMember::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\Recording::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\Flow::observe(\App\Observers\ScheduleChildObserver::class);
         \App\Models\FlowVersion::observe(\App\Observers\ScheduleChildObserver::class);

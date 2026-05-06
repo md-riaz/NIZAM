@@ -58,8 +58,13 @@ class AgentController extends Controller
             return response()->json(['message' => 'Agent not found.'], 404);
         }
 
-        $agent->update($request->validated());
+        $validated = $request->validated();
+        $agent->update($validated);
         $agent->load('extension');
+
+        if (array_key_exists('is_active', $validated)) {
+            app(\App\Services\Flow\FlowArtifactService::class)->refreshTeamRoutingArtifactsForAgent($agent);
+        }
 
         return new AgentResource($agent);
     }

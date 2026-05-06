@@ -2,11 +2,15 @@
 
 namespace App\Services\Flow;
 
+use App\Models\Agent;
+use App\Models\Extension;
 use App\Models\FlowCompiledArtifact;
 use App\Models\FlowVersion;
+use App\Models\Organization;
 use App\Models\OrganizationDialplanManifest;
 use App\Models\Team;
 use App\Services\Flow\Compile\FlowToIrCompiler;
+use App\Services\OrganizationManifestBuilder;
 use App\Services\Routing\RoutingGraphCompiler;
 use App\Services\Team\TeamRoutingService;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +22,7 @@ class FlowArtifactService
         protected FlowToIrCompiler $flowToIrCompiler,
         protected RoutingGraphCompiler $routingGraphCompiler,
         protected TeamRoutingService $teamRoutingService,
+        protected OrganizationManifestBuilder $manifestBuilder,
     ) {}
 
     public function getRoutingGraphCompiler(): RoutingGraphCompiler
@@ -292,6 +297,91 @@ class FlowArtifactService
         $xml .= '      </extension>'."\n\n";
 
         return $xml;
+    }
+
+    public function refreshTeamRoutingArtifactsForOrganization(Organization $organization, callable $matchesNode): void
+    {
+        $organization->flows()
+            ->whereNotNull('active_version_id')
+            ->with(['activeVersion.nodes', 'activeVersion.edges'])
+            ->get()
+            ->filter(function ($flow) use ($matchesNode) {
+                return $flow->activeVersion?->nodes->contains(function ($node) use ($matchesNode) {
+                    return $node->type === 'ring_team' && $matchesNode($node);
+                });
+            })
+            ->each(function ($flow) {
+                if ($flow->activeVersion) {
+                    $this->compileAndStore($flow->activeVersion);
+                }
+            });
+
+        $this->manifestBuilder->buildAndActivate($organization);
+    }
+
+    public function refreshTeamRoutingArtifactsForTeam(Team $team): void
+    {
+        $organization = $team->organization;
+
+        if (! $organization) {
+            return;
+        }
+
+        $this->refreshTeamRoutingArtifactsForOrganization($organization, function ($node) use ($team) {
+            return (string) data_get($node->config_json, 'team_id') === (string) $team->id;
+        });
+    }
+
+    public function refreshTeamRoutingArtifactsForExtension(Extension $extension): void
+    {
+        $organization = $extension->organization;
+
+        if (! $organization) {
+            return;
+        }
+
+        $teamIds = $organization->teams()
+            ->whereHas('members', function ($query) use ($extension) {
+                $query->where('endpoint_type', 'extension')
+                    ->where('endpoint_id', $extension->id)
+                    ->where('is_active', true);
+            })
+            ->pluck('id')
+            ->all();
+
+        if ($teamIds === []) {
+            return;
+        }
+
+        $this->refreshTeamRoutingArtifactsForOrganization($organization, function ($node) use ($teamIds) {
+            return in_array((string) data_get($node->config_json, 'team_id'), $teamIds, true);
+        });
+    }
+
+    public function refreshTeamRoutingArtifactsForAgent(Agent $agent): void
+    {
+        $organization = $agent->organization;
+
+        if (! $organization) {
+            return;
+        }
+
+        $teamIds = $organization->teams()
+            ->whereHas('members', function ($query) use ($agent) {
+                $query->where('endpoint_type', 'agent')
+                    ->where('endpoint_id', $agent->id)
+                    ->where('is_active', true);
+            })
+            ->pluck('id')
+            ->all();
+
+        if ($teamIds === []) {
+            return;
+        }
+
+        $this->refreshTeamRoutingArtifactsForOrganization($organization, function ($node) use ($teamIds) {
+            return in_array((string) data_get($node->config_json, 'team_id'), $teamIds, true);
+        });
     }
 
     /**

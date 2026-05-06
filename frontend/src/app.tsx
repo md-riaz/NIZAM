@@ -26,6 +26,8 @@ const ExtensionFormPage = lazy(() => import('@/pages/admin/ExtensionFormPage'));
 const ExtensionDetailPage = lazy(() => import('@/pages/admin/ExtensionDetailPage'));
 const DeviceProfilesPage = lazy(() => import('@/pages/admin/DeviceProfilesPage'));
 const DeviceProfileFormPage = lazy(() => import('@/pages/admin/DeviceProfileFormPage'));
+const DirectoryPage = lazy(() => import('@/pages/admin/DirectoryPage'));
+const OfficeFeaturesPage = lazy(() => import('@/pages/admin/OfficeFeaturesPage'));
 const DidsPage = lazy(() => import('@/pages/admin/DidsPage'));
 const DidFormPage = lazy(() => import('@/pages/admin/DidFormPage'));
 const FlowsPage = lazy(() => import('@/pages/admin/FlowsPage'));
@@ -159,6 +161,8 @@ const router = createBrowserRouter(
                 <Route path="device-profiles" element={<DeviceProfilesPage />} />
                 <Route path="device-profiles/create" element={<DeviceProfileFormPage />} />
                 <Route path="device-profiles/:id/edit" element={<DeviceProfileFormPage />} />
+                <Route path="directory" element={<DirectoryPage />} />
+                <Route path="office-features" element={<OfficeFeaturesPage />} />
                 <Route path="numbers" element={<DidsPage />} />
                 <Route path="numbers/create" element={<DidFormPage />} />
                 <Route path="numbers/:id/edit" element={<DidFormPage />} />

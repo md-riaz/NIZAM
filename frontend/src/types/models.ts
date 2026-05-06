@@ -88,6 +88,20 @@ export const ExtensionSchema = z.object({
 });
 export type Extension = z.infer<typeof ExtensionSchema>;
 
+export interface ExtensionFeatures {
+    follow_me_enabled: boolean;
+    follow_me_destination?: string | null;
+    dnd_enabled: boolean;
+}
+
+export interface OfficeFeatures {
+    parking_enabled: boolean;
+    pickup_enabled: boolean;
+    paging_enabled: boolean;
+    intercom_enabled: boolean;
+    directory_enabled: boolean;
+}
+
 // ─── Gateway ─────────────────────────────────────────────────
 
 export const DeviceProfileSchema = z.object({

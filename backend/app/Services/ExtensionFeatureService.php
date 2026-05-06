@@ -9,6 +9,7 @@ class ExtensionFeatureService
 {
     public function __construct(
         protected FollowMeEndpointBindingService $followMeEndpointBindingService,
+        protected OrganizationManifestBuilder $manifestBuilder,
     ) {}
 
     public function updateFeatures(Extension $extension, array $attributes): Extension
@@ -68,6 +69,10 @@ class ExtensionFeatureService
             'follow_me_enabled' => $runtimeFollowMeEnabled,
             'follow_me_destination' => $runtimeFollowMeEnabled ? $storedDestination : null,
         ]);
+
+        if ($payload !== []) {
+            $this->manifestBuilder->buildAndActivate($freshExtension->organization);
+        }
 
         return $freshExtension;
     }

@@ -53,6 +53,8 @@ class HolidayCalendarController extends Controller
             foreach ($request->validated()['holidays'] ?? [] as $holiday) {
                 $holidayCalendar->holidays()->create($holiday);
             }
+
+            app(\App\Services\OrganizationManifestBuilder::class)->buildAndActivate($holidayCalendar->organization);
         }
 
         return new HolidayCalendarResource($holidayCalendar->load('holidays'));

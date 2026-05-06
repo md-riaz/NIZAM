@@ -103,6 +103,25 @@ export default function ExtensionDetailPage() {
                                 <p className="text-sm text-muted-foreground">Caller ID name</p>
                                 <p className="mt-1 text-sm font-medium">{extension.effective_caller_id_name ?? '—'}</p>
                             </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">Follow me</p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <Badge variant={extension.follow_me_enabled ? 'success' : 'secondary'}>
+                                        {extension.follow_me_enabled ? 'Enabled' : 'Disabled'}
+                                    </Badge>
+                                    <span className="text-sm font-medium text-foreground">
+                                        {extension.follow_me_destination ?? '—'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">Do not disturb</p>
+                                <div className="mt-1">
+                                    <Badge variant={extension.dnd_enabled ? 'warning' : 'secondary'}>
+                                        {extension.dnd_enabled ? 'Enabled' : 'Disabled'}
+                                    </Badge>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
 

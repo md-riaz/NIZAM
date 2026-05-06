@@ -4,7 +4,9 @@ namespace Tests\Feature\Api;
 
 use App\Models\Extension;
 use App\Models\Organization;
+use App\Models\OrganizationDialplanManifest;
 use App\Models\User;
+use App\Services\OrganizationManifestBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -145,4 +147,98 @@ class ExtensionFeatureApiTest extends TestCase
             ->assertJsonPath('data.dnd_enabled', false);
     }
 
+    public function test_updating_follow_me_features_rebuilds_manifest_with_pstn_forward_route(): void
+    {
+        $organization = Organization::factory()->create([
+            'domain' => 'follow-me-manifest.example.com',
+        ]);
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
+        $extension = Extension::factory()->create([
+            'organization_id' => $organization->id,
+            'extension' => '1001',
+            'follow_me_enabled' => false,
+            'follow_me_destination' => null,
+            'dnd_enabled' => false,
+        ]);
+
+        app(OrganizationManifestBuilder::class)->buildAndActivate($organization->fresh());
+
+        $beforeManifest = OrganizationDialplanManifest::query()
+            ->where('organization_id', $organization->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
+
+        $this->assertNotNull($beforeManifest);
+        $this->assertStringNotContainsString('delivery_pstn_delay_seconds=25', $beforeManifest->content);
+
+        $response = $this->actingAs($admin, 'sanctum')
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}/features", [
+                'follow_me_enabled' => true,
+                'follow_me_destination' => '+8801712345678',
+                'dnd_enabled' => false,
+            ]);
+
+        $response->assertOk();
+
+        $afterManifest = OrganizationDialplanManifest::query()
+            ->where('organization_id', $organization->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
+
+        $this->assertNotNull($afterManifest);
+        $this->assertStringContainsString('delivery_pstn_delay_seconds=25', $afterManifest->content);
+        $this->assertStringContainsString('call_timeout=25', $afterManifest->content);
+    }
+
+    public function test_disabling_follow_me_features_rebuilds_manifest_without_pstn_forward_route(): void
+    {
+        $organization = Organization::factory()->create([
+            'domain' => 'follow-me-manifest.example.com',
+        ]);
+        $admin = User::factory()->create(['role' => 'admin', 'organization_id' => $organization->id]);
+        $extension = Extension::factory()->create([
+            'organization_id' => $organization->id,
+            'extension' => '1001',
+            'follow_me_enabled' => true,
+            'follow_me_destination' => '+8801712345678',
+            'dnd_enabled' => false,
+        ]);
+
+        app(\App\Services\FollowMeEndpointBindingService::class)->sync($extension->fresh(), [
+            'follow_me_enabled' => true,
+            'follow_me_destination' => '+8801712345678',
+        ]);
+        app(OrganizationManifestBuilder::class)->buildAndActivate($organization->fresh());
+
+        $beforeManifest = OrganizationDialplanManifest::query()
+            ->where('organization_id', $organization->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
+
+        $this->assertNotNull($beforeManifest);
+        $this->assertStringContainsString('delivery_pstn_delay_seconds=25', $beforeManifest->content);
+
+        $response = $this->actingAs($admin, 'sanctum')
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}/features", [
+                'follow_me_enabled' => false,
+                'dnd_enabled' => false,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.follow_me_enabled', false)
+            ->assertJsonPath('data.follow_me_destination', '+8801712345678');
+
+        $afterManifest = OrganizationDialplanManifest::query()
+            ->where('organization_id', $organization->id)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true)
+            ->first();
+
+        $this->assertNotNull($afterManifest);
+        $this->assertStringNotContainsString('delivery_pstn_delay_seconds=25', $afterManifest->content);
+        $this->assertStringNotContainsString('call_timeout=25', $afterManifest->content);
+    }
 }

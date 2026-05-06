@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\Agent;
-use App\Models\Queue;
 use App\Models\Organization;
+use App\Models\Queue;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -12,6 +12,7 @@ class QueueMembershipService
 {
     public function __construct(
         protected WallboardProjectionService $wallboardProjectionService,
+        protected OrganizationManifestBuilder $manifestBuilder,
     ) {}
     public function addMember(Organization $organization, Queue $queue, string $agentId, int $priority = 0): ?Agent
     {
@@ -26,6 +27,7 @@ class QueueMembershipService
             'priority' => $priority,
         ]);
 
+        $this->manifestBuilder->buildAndActivate($organization);
         $this->wallboardProjectionService->refreshAgentProjection($agent);
         $this->wallboardProjectionService->refreshQueueProjection($queue);
 
@@ -36,6 +38,7 @@ class QueueMembershipService
     {
         $queue->members()->detach($agent->id);
 
+        $this->manifestBuilder->buildAndActivate($queue->organization);
         $this->wallboardProjectionService->refreshQueueProjection($queue);
     }
 
