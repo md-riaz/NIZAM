@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -232,6 +233,13 @@ class Organization extends Model implements HasMedia
     public function flows(): HasMany
     {
         return $this->hasMany(Flow::class);
+    }
+
+    public function activeInboundRoutingManifest(): HasOne
+    {
+        return $this->hasOne(OrganizationDialplanManifest::class)
+            ->where('manifest_type', 'inbound_routing')
+            ->where('is_active', true);
     }
 
     /**

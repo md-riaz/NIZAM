@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\SystemSetting;
+use App\Services\Organization\OrganizationProvisioningHealthService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -26,6 +27,7 @@ class OrganizationResource extends JsonResource
             'domain_matches_configured_suffix' => $matchesConfiguredSuffix,
             'default_schedule_id' => $this->default_schedule_id,
             'default_holiday_calendar_id' => $this->default_holiday_calendar_id,
+            'provisioning_health' => $this->provisioningHealth(),
             'settings' => $this->settings,
             'status' => $this->status,
             'max_extensions' => $this->max_extensions,
@@ -36,6 +38,21 @@ class OrganizationResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
+    }
+
+    /**
+     * @return array{
+     *   status:string,
+     *   summary:string,
+     *   warning_count:int,
+     *   blocker_count:int,
+     *   checks:list<array{key:string,status:string,message:string}>,
+     *   next_actions:list<string>
+     * }
+     */
+    private function provisioningHealth(): array
+    {
+        return app(OrganizationProvisioningHealthService::class)->evaluate($this->resource);
     }
 
     private function configuredSuffix(): string

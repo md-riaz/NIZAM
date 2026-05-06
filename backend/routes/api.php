@@ -42,6 +42,7 @@ use App\Http\Controllers\Api\SupervisorReportController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\OrganizationDomainSuggestionController;
+use App\Http\Controllers\Api\OrganizationProvisioningHealthController;
 use App\Http\Controllers\Api\OrganizationStatsController;
 use App\Http\Controllers\Api\PlatformSettingController;
 use App\Http\Controllers\Api\TimeConditionController;
@@ -124,6 +125,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     Route::prefix('organizations/{organization}')->middleware('organization.access')->group(function () {
         Route::get('stats', OrganizationStatsController::class)->name('organizations.stats');
+        Route::get('provisioning-health', OrganizationProvisioningHealthController::class)->name('organizations.provisioning-health');
         Route::get('directory', [DirectoryController::class, 'index'])->name('directory.index');
 
         // Usage metering

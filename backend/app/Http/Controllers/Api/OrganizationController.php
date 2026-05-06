@@ -31,13 +31,24 @@ class OrganizationController extends Controller
         $this->authorize('viewAny', Organization::class);
 
         $user = request()->user();
+        $query = Organization::query()
+            ->with([
+                'defaultSchedule',
+                'defaultHolidayCalendar',
+                'dids',
+                'teams',
+                'flows.activeVersion',
+                'extensions',
+                'activeInboundRoutingManifest',
+            ])
+            ->orderByDesc('id');
 
         if ($user->isSuperadmin()) {
-            return OrganizationResource::collection(Organization::orderByDesc('id')->paginate(15));
+            return OrganizationResource::collection($query->paginate(15));
         }
 
         return OrganizationResource::collection(
-            Organization::where('id', $user->organization_id)->orderByDesc('id')->paginate(15)
+            $query->where('id', $user->organization_id)->paginate(15)
         );
     }
 
@@ -56,7 +67,15 @@ class OrganizationController extends Controller
             return $organization->fresh();
         });
 
-        return (new OrganizationResource($organization))->response()->setStatusCode(201);
+        return (new OrganizationResource($organization->loadMissing([
+            'defaultSchedule',
+            'defaultHolidayCalendar',
+            'dids',
+            'teams',
+            'flows.activeVersion',
+            'extensions',
+            'activeInboundRoutingManifest',
+        ])))->response()->setStatusCode(201);
     }
 
     /**
@@ -66,7 +85,15 @@ class OrganizationController extends Controller
     {
         $this->authorize('view', $organization);
 
-        return new OrganizationResource($organization);
+        return new OrganizationResource($organization->loadMissing([
+            'defaultSchedule',
+            'defaultHolidayCalendar',
+            'dids',
+            'teams',
+            'flows.activeVersion',
+            'extensions',
+            'activeInboundRoutingManifest',
+        ]));
     }
 
     /**
@@ -78,7 +105,15 @@ class OrganizationController extends Controller
 
         $organization->update($request->validated());
 
-        return new OrganizationResource($organization);
+        return new OrganizationResource($organization->loadMissing([
+            'defaultSchedule',
+            'defaultHolidayCalendar',
+            'dids',
+            'teams',
+            'flows.activeVersion',
+            'extensions',
+            'activeInboundRoutingManifest',
+        ]));
     }
 
     /**
