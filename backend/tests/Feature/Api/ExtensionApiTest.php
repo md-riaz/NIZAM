@@ -123,6 +123,33 @@ class ExtensionApiTest extends TestCase
         ]);
     }
 
+    public function test_can_update_an_extension_recording_policy(): void
+    {
+        $extension = $this->organization->extensions()->create([
+            'extension' => '101',
+            'password' => 'secret1234',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->putJson("/api/v1/organizations/{$this->organization->id}/extensions/{$extension->id}", [
+                'extension' => '101',
+                'password' => 'secret1234',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'recording_policy' => 'all',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.recording_policy', 'all');
+
+        $this->assertDatabaseHas('extensions', [
+            'id' => $extension->id,
+            'recording_policy' => 'all',
+        ]);
+    }
+
     public function test_can_delete_an_extension(): void
     {
         $extension = $this->organization->extensions()->create([
@@ -162,6 +189,28 @@ class ExtensionApiTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['effective_caller_id_number', 'outbound_caller_id_number']);
+    }
+
+    public function test_extension_recording_policy_rejects_unknown_values(): void
+    {
+        $extension = $this->organization->extensions()->create([
+            'extension' => '101',
+            'password' => 'secret1234',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->putJson("/api/v1/organizations/{$this->organization->id}/extensions/{$extension->id}", [
+                'extension' => '101',
+                'password' => 'secret1234',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+                'recording_policy' => 'always',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['recording_policy']);
     }
 
     public function test_rejects_legacy_caller_id_number_fields_on_update(): void

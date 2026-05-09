@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Services\ExtensionNumberingService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreExtensionRequest extends FormRequest
 {
@@ -117,6 +118,7 @@ class StoreExtensionRequest extends FormRequest
             'owner_id' => 'nullable|uuid',
             'owner_name' => 'nullable|string',
             'effective_caller_id_name' => 'nullable|string',
+            'recording_policy' => ['string', Rule::in(['inherit', 'off', 'all', 'incoming', 'outgoing'])],
             'follow_me_enabled' => 'boolean',
             'follow_me_destination' => 'nullable|string',
             'dnd_enabled' => 'boolean',

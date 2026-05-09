@@ -24,6 +24,7 @@ class ExtensionResource extends JsonResource
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'effective_caller_id_name' => $this->effective_caller_id_name,
+            'recording_policy' => $this->recording_policy,
             'follow_me_enabled' => $this->follow_me_enabled,
             'follow_me_destination' => $this->follow_me_destination,
             'dnd_enabled' => $this->dnd_enabled,

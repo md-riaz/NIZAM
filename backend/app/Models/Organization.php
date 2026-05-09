@@ -56,10 +56,12 @@ class Organization extends Model implements HasMedia
         'max_calls_per_minute',
         'is_active',
         'status',
+        'recording_policy',
     ];
 
     protected $attributes = [
         'status' => self::STATUS_ACTIVE,
+        'recording_policy' => 'off',
         'max_concurrent_calls' => 0,
         'max_dids' => 0,
         'max_teams' => 0,

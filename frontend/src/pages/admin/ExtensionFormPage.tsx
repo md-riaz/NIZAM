@@ -37,6 +37,13 @@ import api from '@/lib/api';
 import type { DeviceProfile, Did, Gateway, User } from '@/types/models';
 
 const ownerTypes = ['unassigned', 'user', 'device'] as const;
+const recordingPolicyOptions = [
+    { value: 'inherit', label: 'Inherit' },
+    { value: 'off', label: 'Off' },
+    { value: 'all', label: 'All calls' },
+    { value: 'incoming', label: 'Incoming only' },
+    { value: 'outgoing', label: 'Outgoing only' },
+] as const;
 
 const extensionSchema = z.object({
     extension: z.string().min(1, 'Extension number is required'),
@@ -47,6 +54,7 @@ const extensionSchema = z.object({
     user_id: z.string().optional(),
     device_profile_id: z.string().optional(),
     effective_caller_id_name: z.string().optional(),
+    recording_policy: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']),
     allowed_outbound_did_ids: z.array(z.string()).default([]),
     default_outbound_did_id: z.string().optional(),
     allowed_outbound_gateway_ids: z.array(z.string()).default([]),
@@ -164,7 +172,7 @@ const applyServerErrors = (
             return;
         }
 
-        if (key === 'user_id' || key === 'device_profile_id' || key === 'extension' || key === 'password' || key === 'first_name' || key === 'last_name' || key === 'voicemail_pin' || key === 'default_outbound_did_id' || key === 'default_outbound_gateway_id' || key === 'follow_me_destination') {
+        if (key === 'user_id' || key === 'device_profile_id' || key === 'extension' || key === 'password' || key === 'first_name' || key === 'last_name' || key === 'recording_policy' || key === 'voicemail_pin' || key === 'default_outbound_did_id' || key === 'default_outbound_gateway_id' || key === 'follow_me_destination') {
             setError(key, { type: 'server', message });
         }
     });
@@ -217,6 +225,7 @@ export default function ExtensionFormPage() {
             user_id: '',
             device_profile_id: '',
             effective_caller_id_name: '',
+            recording_policy: 'inherit',
             allowed_outbound_did_ids: [],
             default_outbound_did_id: 'none',
             allowed_outbound_gateway_ids: [],
@@ -294,6 +303,7 @@ export default function ExtensionFormPage() {
                 user_id: getAssignedUserId(extension),
                 device_profile_id: getAssignedDeviceId(extension),
                 effective_caller_id_name: extension.effective_caller_id_name ?? '',
+                recording_policy: extension.recording_policy ?? 'inherit',
                 allowed_outbound_did_ids: extension.allowed_outbound_did_ids ?? [],
                 default_outbound_did_id: extension.default_outbound_did_id ?? 'none',
                 allowed_outbound_gateway_ids: extension.allowed_outbound_gateway_ids ?? [],
@@ -628,6 +638,31 @@ export default function ExtensionFormPage() {
                                                 <FormControl>
                                                     <Input placeholder="Jane Doe" {...field} />
                                                 </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="recording_policy"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Recording policy</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select recording policy" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {recordingPolicyOptions.map((option) => (
+                                                            <SelectItem key={option.value} value={option.value}>
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription>Override automatic recording for calls answered by this extension.</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

@@ -26,6 +26,7 @@ class Did extends Model
         'number',
         'normalized_number',
         'description',
+        'recording_policy',
         'destination_type',
         'destination_id',
         'is_active',

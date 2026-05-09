@@ -43,6 +43,7 @@ class UpdateOrganizationRequest extends FormRequest
             'max_teams' => 'integer|min:0',
             'is_active' => 'boolean',
             'status' => ['string', Rule::in(Organization::VALID_STATUSES)],
+            'recording_policy' => ['string', Rule::in(['inherit', 'off', 'all', 'incoming', 'outgoing'])],
         ];
     }
 

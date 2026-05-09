@@ -39,9 +39,18 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Did, Extension, Flow, Gateway } from '@/types/models';
 
+const recordingPolicyOptions = [
+    { value: 'inherit', label: 'Inherit' },
+    { value: 'off', label: 'Off' },
+    { value: 'all', label: 'All calls' },
+    { value: 'incoming', label: 'Incoming only' },
+    { value: 'outgoing', label: 'Outgoing only' },
+] as const;
+
 const didSchema = z.object({
     number: z.string().min(1, 'Number is required'),
     description: z.string().optional(),
+    recording_policy: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']),
     destination_type: z.enum(['extension', 'flow'], {
         errorMap: () => ({ message: 'Destination type is required' }),
     }),
@@ -121,6 +130,7 @@ function toDidFormValues(did?: DidResponse | null): DidFormValues {
     return {
         number: did?.number || '',
         description: did?.description || '',
+        recording_policy: did?.recording_policy ?? 'inherit',
         destination_type: destinationType === 'flow' ? destinationType : 'extension',
         destination_id: isUuid(did?.destination_id) ? did.destination_id : '00000000-0000-0000-0000-000000000000',
         is_active: did?.is_active ?? true,
@@ -254,6 +264,7 @@ export default function DidFormPage() {
         defaultValues: {
             number: '',
             description: '',
+            recording_policy: 'inherit',
             destination_type: 'extension',
             destination_id: '00000000-0000-0000-0000-000000000000',
             is_active: true,
@@ -393,7 +404,7 @@ export default function DidFormPage() {
                 const errors = data && typeof data === 'object' ? Reflect.get(data, 'errors') : null;
 
                 if (errors && typeof errors === 'object') {
-                    for (const fieldName of ['number', 'description', 'destination_type', 'destination_id'] as const) {
+                    for (const fieldName of ['number', 'description', 'recording_policy', 'destination_type', 'destination_id'] as const) {
                         const fieldErrors = Reflect.get(errors, fieldName);
                         const fieldMessage = Array.isArray(fieldErrors)
                             ? fieldErrors.find((value) => typeof value === 'string')
@@ -587,6 +598,32 @@ export default function DidFormPage() {
                                                     <FormControl>
                                                         <Input placeholder="e.g. Main Support Line" {...field} />
                                                     </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={numberForm.control}
+                                            name="recording_policy"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Recording policy</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select recording policy" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {recordingPolicyOptions.map((option) => (
+                                                                <SelectItem key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormDescription>Override inbound automatic recording for calls answered from this number.</FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}

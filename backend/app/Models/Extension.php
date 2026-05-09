@@ -33,6 +33,7 @@ class Extension extends Model
         'first_name',
         'last_name',
         'effective_caller_id_name',
+        'recording_policy',
         'effective_caller_id_number',
         'outbound_caller_id_name',
         'outbound_caller_id_number',

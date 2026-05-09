@@ -100,6 +100,27 @@ class OrganizationApiTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_create_a_organization_with_recording_policy(): void
+    {
+        $user = $this->adminUser();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/organizations', [
+                'name' => 'Recording Org',
+                'domain_prefix' => 'recording-org',
+                'status' => 'active',
+                'recording_policy' => 'off',
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.recording_policy', 'off');
+
+        $this->assertDatabaseHas('organizations', [
+            'name' => 'Recording Org',
+            'recording_policy' => 'off',
+        ]);
+    }
+
     public function test_non_admin_cannot_create_a_organization(): void
     {
         $organization = Organization::create([
@@ -177,6 +198,21 @@ class OrganizationApiTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['name', 'domain_prefix']);
+    }
+
+    public function test_organization_recording_policy_rejects_unknown_values(): void
+    {
+        $user = $this->adminUser();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/organizations', [
+                'name' => 'Invalid Recording Org',
+                'domain_prefix' => 'invalid-recording-org',
+                'recording_policy' => 'always',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['recording_policy']);
     }
 
     public function test_organization_creation_provisions_default_business_phone_entrypoint(): void

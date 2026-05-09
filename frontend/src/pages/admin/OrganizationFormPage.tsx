@@ -38,11 +38,19 @@ import api from '@/lib/api';
 import type { Organization } from '@/types/models';
 
 const organizationStatuses = ['trial', 'active', 'suspended', 'terminated'] as const;
+const recordingPolicyOptions = [
+    { value: 'inherit', label: 'Inherit' },
+    { value: 'off', label: 'Off' },
+    { value: 'all', label: 'All calls' },
+    { value: 'incoming', label: 'Incoming only' },
+    { value: 'outgoing', label: 'Outgoing only' },
+] as const;
 
 const organizationSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     domain_prefix: z.string().min(1, 'Domain prefix is required'),
     status: z.string().min(1, 'Status is required'),
+    recording_policy: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']),
     max_extensions: z.coerce.number().min(0),
     max_concurrent_calls: z.coerce.number().min(0),
     max_dids: z.coerce.number().min(0),
@@ -73,6 +81,7 @@ const serializeOrganizationPayload = (values: OrganizationFormValues) => ({
     name: values.name,
     domain_prefix: normalizeDomainPrefix(values.domain_prefix),
     status: values.status,
+    recording_policy: values.recording_policy,
     max_extensions: values.max_extensions,
     max_concurrent_calls: values.max_concurrent_calls,
     max_dids: values.max_dids,
@@ -130,6 +139,7 @@ export default function OrganizationFormPage() {
             name: '',
             domain_prefix: '',
             status: 'active',
+            recording_policy: 'off',
             max_extensions: 0,
             max_concurrent_calls: 0,
             max_dids: 0,
@@ -163,6 +173,7 @@ export default function OrganizationFormPage() {
                 name: '',
                 domain_prefix: '',
                 status: 'active',
+                recording_policy: 'off',
                 max_extensions: 0,
                 max_concurrent_calls: 0,
                 max_dids: 0,
@@ -178,6 +189,7 @@ export default function OrganizationFormPage() {
                 name: organization.name ?? '',
                 domain_prefix: organization.domain_prefix ?? organization.domain ?? '',
                 status: normalizeOrganizationStatus(organization.status),
+                recording_policy: organization.recording_policy ?? 'off',
                 max_extensions: organization.max_extensions ?? 0,
                 max_concurrent_calls: organization.max_concurrent_calls ?? 0,
                 max_dids: organization.max_dids ?? 0,
@@ -211,7 +223,7 @@ export default function OrganizationFormPage() {
                     return;
                 }
 
-                if (field === 'domain_prefix' || field === 'name' || field === 'status' || field === 'max_extensions' || field === 'max_concurrent_calls' || field === 'max_dids' || field === 'max_teams' || field === 'is_active') {
+                if (field === 'domain_prefix' || field === 'name' || field === 'status' || field === 'recording_policy' || field === 'max_extensions' || field === 'max_concurrent_calls' || field === 'max_dids' || field === 'max_teams' || field === 'is_active') {
                     form.setError(field, { type: 'server', message: messages[0] });
                 }
             });
@@ -407,6 +419,32 @@ export default function OrganizationFormPage() {
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="recording_policy"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Recording policy</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select recording policy" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {recordingPolicyOptions.map((option) => (
+                                                            <SelectItem key={option.value} value={option.value}>
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription>Organization default for automatic call recording.</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

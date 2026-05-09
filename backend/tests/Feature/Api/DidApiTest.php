@@ -116,6 +116,29 @@ class DidApiTest extends TestCase
         ]);
     }
 
+    public function test_can_update_a_did_recording_policy(): void
+    {
+        $did = Did::factory()->create(['organization_id' => $this->organization->id]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}", [
+                'number' => '+12025550123',
+                'destination_type' => $did->destination_type,
+                'destination_id' => (string) $did->destination_id,
+                'recording_policy' => 'incoming',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.recording_policy', 'incoming');
+
+        $this->assertDatabaseHas('dids', [
+            'id' => $did->id,
+            'number' => '+12025550123',
+            'recording_policy' => 'incoming',
+        ]);
+    }
+
+
     public function test_can_delete_a_did(): void
     {
         $did = Did::factory()->create(['organization_id' => $this->organization->id]);
@@ -125,5 +148,21 @@ class DidApiTest extends TestCase
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('dids', ['id' => $did->id]);
+    }
+
+    public function test_did_recording_policy_rejects_unknown_values(): void
+    {
+        $did = Did::factory()->create(['organization_id' => $this->organization->id]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}", [
+                'number' => $did->number,
+                'destination_type' => $did->destination_type,
+                'destination_id' => (string) $did->destination_id,
+                'recording_policy' => 'always',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['recording_policy']);
     }
 }

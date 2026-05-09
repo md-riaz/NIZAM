@@ -30,6 +30,7 @@ class OrganizationResource extends JsonResource
             'provisioning_health' => $this->provisioningHealth(),
             'settings' => $this->settings,
             'status' => $this->status,
+            'recording_policy' => $this->recording_policy,
             'max_extensions' => $this->max_extensions,
             'max_concurrent_calls' => $this->max_concurrent_calls,
             'max_dids' => $this->max_dids,

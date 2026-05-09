@@ -16,6 +16,7 @@ class DidResource extends JsonResource
             'number' => $this->number,
             'normalized_number' => $this->normalized_number,
             'description' => $this->description,
+            'recording_policy' => $this->recording_policy,
             'destination_type' => $this->destination_type,
             'destination_id' => $this->destination_id,
             'is_active' => $this->is_active,

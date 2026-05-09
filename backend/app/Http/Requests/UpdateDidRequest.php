@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateDidRequest extends FormRequest
 {
@@ -41,6 +42,7 @@ class UpdateDidRequest extends FormRequest
                 },
             ],
             'description' => 'nullable|string',
+            'recording_policy' => ['string', Rule::in(['inherit', 'off', 'all', 'incoming', 'outgoing'])],
             'destination_type' => 'required|in:extension,flow',
             'destination_id' => 'required|uuid',
             'is_active' => 'boolean',
