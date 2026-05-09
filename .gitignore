@@ -8,3 +8,7 @@
 /.claude/worktrees/
 /.playwright-mcp/
 /graphify-out/
+/tmp-*
+/docs/superpowers/plans/2026-05-07-answered-call-recording-policy.md
+/docs/superpowers/plans/2026-05-08-omniroute-nginx-large-data-exchange.md
+/docs/superpowers/specs/2026-05-07-answered-call-recording-policy-design.md
