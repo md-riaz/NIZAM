@@ -128,6 +128,7 @@ class CallDeliveryEntrypointService
             'variables' => [
                 ...($session->variables ?? []),
                 ...$this->sessionVariables($context),
+                'recording_context' => $this->recordingContext($session, $context),
                 'delivery_entrypoint_invocations' => $invocations,
                 'delivery_entrypoint_last_invoked_at' => now()->toIso8601String(),
                 'delivery_entrypoint_last_context' => array_filter([
@@ -137,5 +138,22 @@ class CallDeliveryEntrypointService
                 ], static fn ($value) => $value !== null && $value !== ''),
             ],
         ])->save();
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     * @return array<string, mixed>
+     */
+    protected function recordingContext(CallSession $session, array $context): array
+    {
+        return [
+            'direction' => 'inbound',
+            'organization_id' => $session->organization_id,
+            'organization_policy' => $session->organization?->recording_policy,
+            'did_id' => data_get($context, 'did_id', $session->did_id),
+            'did_policy' => data_get($context, 'did_policy'),
+            'owner_extension_id' => null,
+            'answered_target_type' => null,
+        ];
     }
 }

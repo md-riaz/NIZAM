@@ -6,13 +6,18 @@ use App\Events\CallEvent;
 use App\Models\CallDeliveryAttempt;
 use App\Models\CallEventLog;
 use App\Models\CallSession;
+use App\Models\Did;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
 use App\Models\Organization;
 use App\Services\Call\CallOfferExecutor;
 use App\Services\Call\CallWinnerService;
 use App\Services\Call\ReachabilityCache;
+use App\Services\Call\TraceWriter;
 use App\Services\EventProcessor;
+use App\Services\Media\FreeSwitchCommandService;
+use App\Services\Recording\AnsweredRecordingStarter;
+use App\Services\Recording\RecordingPolicyResolver;
 use App\Services\WebhookDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -290,6 +295,380 @@ class EventProcessorEventLogTest extends TestCase
         $this->assertSame($session->id, $logged->call_session_id);
         $this->assertSame($attempt->id, $logged->payload['metadata']['delivery_attempt_id']);
         $this->assertSame('caller-leg-uuid', $logged->payload['metadata']['caller_leg_uuid']);
+    }
+
+    public function test_channel_answer_for_winner_starts_recording_and_persists_resolution_trace(): void
+    {
+        [$organization, $extension] = $this->createOrganizationWithExtension();
+        $organization->forceFill(['recording_policy' => 'off'])->save();
+        $extension->forceFill(['recording_policy' => 'inherit'])->save();
+        $did = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'recording_policy' => 'all',
+        ]);
+        $session = CallSession::factory()->create([
+            'organization_id' => $organization->id,
+            'did_id' => $did->id,
+            'call_uuid' => 'caller-leg-recording',
+            'state' => 'parked',
+            'variables' => [
+                'recording_context' => [
+                    'direction' => 'inbound',
+                    'organization_id' => $organization->id,
+                    'organization_policy' => 'off',
+                    'did_id' => $did->id,
+                    'did_policy' => 'all',
+                    'owner_extension_id' => null,
+                    'answered_target_type' => null,
+                ],
+            ],
+        ]);
+        $binding = EndpointBinding::factory()->forExtension($extension)->create();
+        $attempt = CallDeliveryAttempt::factory()->create([
+            'call_session_id' => $session->id,
+            'endpoint_binding_id' => $binding->id,
+            'attempt_type' => CallDeliveryAttempt::TYPE_SIP,
+            'status' => CallDeliveryAttempt::STATUS_RINGING,
+            'freeswitch_leg_uuid' => 'winner-answer-b-leg',
+        ]);
+
+        $winnerService = $this->createMock(CallWinnerService::class);
+        $winnerService->expects($this->once())
+            ->method('electWinner')
+            ->willReturnCallback(function (CallSession $candidateSession, CallDeliveryAttempt $candidateAttempt) use ($attempt): array {
+                $candidateSession->forceFill([
+                    'variables' => [
+                        ...($candidateSession->variables ?? []),
+                        'winner_attempt_id' => $candidateAttempt->id,
+                        'winner_leg_uuid' => $candidateAttempt->freeswitch_leg_uuid,
+                    ],
+                ])->save();
+
+                $candidateAttempt->forceFill([
+                    'status' => CallDeliveryAttempt::STATUS_WON,
+                ])->save();
+
+                return [
+                    'status' => 'winner_committed',
+                    'winner_attempt_id' => $attempt->id,
+                    'attempt_id' => $attempt->id,
+                    'call_session_id' => $candidateSession->id,
+                ];
+            });
+
+        $freeSwitch = $this->createMock(FreeSwitchCommandService::class);
+        $freeSwitch->expects($this->once())
+            ->method('execute')
+            ->with(
+                'uuid_record',
+                $this->callback(function (array $arguments): bool {
+                    return $arguments[0] === 'caller-leg-recording'
+                        && $arguments[1] === 'start'
+                        && str_ends_with($arguments[2], '/caller-leg-recording.wav');
+                }),
+                false
+            )
+            ->willReturn(['executed' => true]);
+
+        $processor = new EventProcessor(
+            $this->createMock(WebhookDispatcher::class),
+            null,
+            null,
+            $winnerService,
+            null,
+            null,
+            null,
+            null,
+            new RecordingPolicyResolver,
+            new AnsweredRecordingStarter($freeSwitch),
+            new TraceWriter,
+        );
+
+        Event::fake([CallEvent::class]);
+
+        $event = [
+            'Event-Name' => 'CHANNEL_ANSWER',
+            'variable_domain_name' => 'test.example.com',
+            'Unique-ID' => 'winner-answer-b-leg',
+            'variable_nizam_call_uuid' => 'caller-leg-recording',
+            'variable_sip_h_X-Nizam-Call-Session-Id' => $session->id,
+            'Caller-Caller-ID-Name' => 'John',
+            'Caller-Caller-ID-Number' => '1001',
+            'Caller-Destination-Number' => '1002',
+            'Call-Direction' => 'inbound',
+        ];
+
+        $processor->process($event);
+
+        $session->refresh();
+        $attempt->refresh();
+
+        $this->assertSame(CallDeliveryAttempt::STATUS_WON, $attempt->status);
+        $this->assertTrue((bool) data_get($session->variables, 'recording_started'));
+        $this->assertTrue((bool) data_get($session->variables, 'recording_attempted'));
+        $this->assertSame('extension', data_get($session->variables, 'recording_context.answered_target_type'));
+        $this->assertSame($extension->id, data_get($session->variables, 'recording_context.owner_extension_id'));
+        $this->assertSame('all', data_get($session->variables, 'recording_policy_resolution.resolved_mode'));
+        $this->assertTrue((bool) data_get($session->variables, 'recording_policy_resolution.should_record'));
+        $this->assertSame('did', data_get($session->variables, 'recording_policy_resolution.winning_scope'));
+        $this->assertNotNull(data_get($session->variables, 'recording_path'));
+
+        $traceActions = $session->traceEvents()->orderBy('created_at')->pluck('action')->all();
+        $this->assertSame([
+            'recording.policy.resolved',
+            'recording.start.requested',
+            'recording.start.succeeded',
+        ], $traceActions);
+    }
+
+    public function test_duplicate_channel_answer_for_winner_does_not_repeat_recording_flow(): void
+    {
+        [$organization, $extension] = $this->createOrganizationWithExtension();
+        $organization->forceFill(['recording_policy' => 'all'])->save();
+        $session = CallSession::factory()->create([
+            'organization_id' => $organization->id,
+            'call_uuid' => 'caller-leg-duplicate-answer',
+            'state' => 'bridged',
+            'variables' => [
+                'winner_attempt_id' => 'placeholder',
+                'recording_started' => true,
+                'recording_attempted' => true,
+                'recording_path' => storage_path('app/recordings/'.$organization->id.'/caller-leg-duplicate-answer.wav'),
+                'recording_context' => [
+                    'direction' => 'inbound',
+                    'organization_id' => $organization->id,
+                    'organization_policy' => 'all',
+                    'answered_target_type' => 'extension',
+                ],
+                'recording_policy_resolution' => [
+                    'resolved_mode' => 'all',
+                    'should_record' => true,
+                    'winning_scope' => 'organization',
+                    'resolution_chain' => ['organization:all'],
+                    'reason' => 'organization policy enables inbound recording',
+                ],
+            ],
+        ]);
+        $binding = EndpointBinding::factory()->forExtension($extension)->create();
+        $attempt = CallDeliveryAttempt::factory()->create([
+            'call_session_id' => $session->id,
+            'endpoint_binding_id' => $binding->id,
+            'attempt_type' => CallDeliveryAttempt::TYPE_SIP,
+            'status' => CallDeliveryAttempt::STATUS_WON,
+            'freeswitch_leg_uuid' => 'duplicate-answer-b-leg',
+        ]);
+
+        $session->forceFill([
+            'variables' => [
+                ...($session->variables ?? []),
+                'winner_attempt_id' => $attempt->id,
+            ],
+        ])->save();
+
+        $freeSwitch = $this->createMock(FreeSwitchCommandService::class);
+        $freeSwitch->expects($this->never())->method('execute');
+
+        $winnerService = $this->createMock(CallWinnerService::class);
+        $winnerService->expects($this->never())->method('electWinner');
+
+        $processor = new EventProcessor(
+            $this->createMock(WebhookDispatcher::class),
+            null,
+            null,
+            $winnerService,
+            null,
+            null,
+            null,
+            null,
+            new RecordingPolicyResolver,
+            new AnsweredRecordingStarter($freeSwitch),
+            new TraceWriter,
+        );
+
+        Event::fake([CallEvent::class]);
+
+        $event = [
+            'Event-Name' => 'CHANNEL_ANSWER',
+            'variable_domain_name' => 'test.example.com',
+            'Unique-ID' => 'duplicate-answer-b-leg',
+            'variable_nizam_call_uuid' => 'caller-leg-duplicate-answer',
+            'variable_sip_h_X-Nizam-Call-Session-Id' => $session->id,
+            'Caller-Caller-ID-Name' => 'John',
+            'Caller-Caller-ID-Number' => '1001',
+            'Caller-Destination-Number' => '1002',
+            'Call-Direction' => 'inbound',
+        ];
+
+        $processor->process($event);
+
+        $session->refresh();
+        $attempt->refresh();
+
+        $this->assertSame(CallDeliveryAttempt::STATUS_WON, $attempt->status);
+        $this->assertTrue((bool) data_get($session->variables, 'recording_started'));
+        $this->assertSame(storage_path('app/recordings/'.$organization->id.'/caller-leg-duplicate-answer.wav'), data_get($session->variables, 'recording_path'));
+        $this->assertCount(0, $session->traceEvents()->get());
+    }
+
+    public function test_duplicate_channel_answer_with_existing_disabled_resolution_does_not_repeat_trace_flow(): void
+    {
+        [$organization, $extension] = $this->createOrganizationWithExtension();
+        $organization->forceFill(['recording_policy' => 'off'])->save();
+        $session = CallSession::factory()->create([
+            'organization_id' => $organization->id,
+            'call_uuid' => 'caller-leg-duplicate-disabled-answer',
+            'state' => 'bridged',
+            'variables' => [
+                'winner_attempt_id' => 'placeholder',
+                'recording_context' => [
+                    'direction' => 'inbound',
+                    'organization_id' => $organization->id,
+                    'organization_policy' => 'off',
+                    'did_id' => null,
+                    'did_policy' => null,
+                    'owner_extension_id' => $extension->id,
+                    'extension_policy' => $extension->recording_policy,
+                    'answered_target_type' => 'extension',
+                ],
+                'recording_policy_resolution' => [
+                    'resolved_mode' => 'off',
+                    'should_record' => false,
+                    'winning_scope' => 'organization',
+                    'resolution_chain' => ['organization:off'],
+                    'reason' => 'organization policy disables recording',
+                ],
+            ],
+        ]);
+        $binding = EndpointBinding::factory()->forExtension($extension)->create();
+        $attempt = CallDeliveryAttempt::factory()->create([
+            'call_session_id' => $session->id,
+            'endpoint_binding_id' => $binding->id,
+            'attempt_type' => CallDeliveryAttempt::TYPE_SIP,
+            'status' => CallDeliveryAttempt::STATUS_WON,
+            'freeswitch_leg_uuid' => 'duplicate-disabled-answer-b-leg',
+        ]);
+
+        $session->forceFill([
+            'variables' => [
+                ...($session->variables ?? []),
+                'winner_attempt_id' => $attempt->id,
+            ],
+        ])->save();
+
+        $freeSwitch = $this->createMock(FreeSwitchCommandService::class);
+        $freeSwitch->expects($this->never())->method('execute');
+
+        $winnerService = $this->createMock(CallWinnerService::class);
+        $winnerService->expects($this->never())->method('electWinner');
+
+        $processor = new EventProcessor(
+            $this->createMock(WebhookDispatcher::class),
+            null,
+            null,
+            $winnerService,
+            null,
+            null,
+            null,
+            null,
+            new RecordingPolicyResolver,
+            new AnsweredRecordingStarter($freeSwitch),
+            new TraceWriter,
+        );
+
+        Event::fake([CallEvent::class]);
+
+        $event = [
+            'Event-Name' => 'CHANNEL_ANSWER',
+            'variable_domain_name' => 'test.example.com',
+            'Unique-ID' => 'duplicate-disabled-answer-b-leg',
+            'variable_nizam_call_uuid' => 'caller-leg-duplicate-disabled-answer',
+            'variable_sip_h_X-Nizam-Call-Session-Id' => $session->id,
+            'Caller-Caller-ID-Name' => 'John',
+            'Caller-Caller-ID-Number' => '1001',
+            'Caller-Destination-Number' => '1002',
+            'Call-Direction' => 'inbound',
+        ];
+
+        $processor->process($event);
+
+        $session->refresh();
+        $attempt->refresh();
+
+        $this->assertSame(CallDeliveryAttempt::STATUS_WON, $attempt->status);
+        $this->assertFalse((bool) data_get($session->variables, 'recording_policy_resolution.should_record'));
+        $this->assertCount(0, $session->traceEvents()->get());
+    }
+
+    public function test_channel_answer_for_non_winner_does_not_start_recording(): void
+    {
+        [$organization, $extension] = $this->createOrganizationWithExtension();
+        $organization->forceFill(['recording_policy' => 'all'])->save();
+        $session = CallSession::factory()->create([
+            'organization_id' => $organization->id,
+            'call_uuid' => 'caller-leg-non-winner-recording',
+            'state' => 'parked',
+            'variables' => [
+                'winner_attempt_id' => 'other-attempt-id',
+                'recording_context' => [
+                    'direction' => 'inbound',
+                    'organization_id' => $organization->id,
+                    'organization_policy' => 'all',
+                    'answered_target_type' => null,
+                ],
+            ],
+        ]);
+        $binding = EndpointBinding::factory()->forExtension($extension)->create();
+        $attempt = CallDeliveryAttempt::factory()->create([
+            'call_session_id' => $session->id,
+            'endpoint_binding_id' => $binding->id,
+            'attempt_type' => CallDeliveryAttempt::TYPE_SIP,
+            'status' => CallDeliveryAttempt::STATUS_RINGING,
+            'freeswitch_leg_uuid' => 'loser-answer-b-leg',
+        ]);
+
+        $freeSwitch = $this->createMock(FreeSwitchCommandService::class);
+        $freeSwitch->expects($this->never())->method('execute');
+
+        $winnerService = $this->createMock(CallWinnerService::class);
+        $winnerService->expects($this->never())->method('electWinner');
+
+        $processor = new EventProcessor(
+            $this->createMock(WebhookDispatcher::class),
+            null,
+            null,
+            $winnerService,
+            null,
+            null,
+            null,
+            null,
+            new RecordingPolicyResolver,
+            new AnsweredRecordingStarter($freeSwitch),
+            new TraceWriter,
+        );
+
+        Event::fake([CallEvent::class]);
+
+        $event = [
+            'Event-Name' => 'CHANNEL_ANSWER',
+            'variable_domain_name' => 'test.example.com',
+            'Unique-ID' => 'loser-answer-b-leg',
+            'variable_nizam_call_uuid' => 'caller-leg-non-winner-recording',
+            'variable_sip_h_X-Nizam-Call-Session-Id' => $session->id,
+            'Caller-Caller-ID-Name' => 'John',
+            'Caller-Caller-ID-Number' => '1001',
+            'Caller-Destination-Number' => '1002',
+            'Call-Direction' => 'inbound',
+        ];
+
+        $processor->process($event);
+
+        $session->refresh();
+        $attempt->refresh();
+
+        $this->assertSame(CallDeliveryAttempt::STATUS_ANSWERED, $attempt->status);
+        $this->assertNull(data_get($session->variables, 'recording_started'));
+        $this->assertNull(data_get($session->variables, 'recording_policy_resolution'));
+        $this->assertCount(0, $session->traceEvents()->get());
     }
 
     public function test_channel_bridge_persists_orchestrated_bridge_metadata(): void

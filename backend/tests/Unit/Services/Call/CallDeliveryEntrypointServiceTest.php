@@ -82,6 +82,13 @@ class CallDeliveryEntrypointServiceTest extends TestCase
         $this->assertSame('extension', data_get($session->variables, 'nizam_delivery_target_type'));
         $this->assertSame($extension->id, data_get($session->variables, 'nizam_delivery_target_id'));
         $this->assertSame(1, data_get($session->variables, 'delivery_entrypoint_invocations'));
+        $this->assertSame('inbound', data_get($session->variables, 'recording_context.direction'));
+        $this->assertSame($organization->id, data_get($session->variables, 'recording_context.organization_id'));
+        $this->assertNull(data_get($session->variables, 'recording_context.did_id'));
+        $this->assertSame($organization->recording_policy, data_get($session->variables, 'recording_context.organization_policy'));
+        $this->assertNull(data_get($session->variables, 'recording_context.did_policy'));
+        $this->assertNull(data_get($session->variables, 'recording_context.owner_extension_id'));
+        $this->assertNull(data_get($session->variables, 'recording_context.answered_target_type'));
         $this->assertSame(1, CallSession::query()->where('call_uuid', 'call-uuid-1')->count());
         $this->assertSame(1, $session->deliveryAttempts()->count());
 

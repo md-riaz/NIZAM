@@ -650,4 +650,52 @@ class FreeswitchXmlTest extends TestCase
         $this->assertNotNull($session, 'CallSession should be created');
         $this->assertSame('sip', $session->variables['endpoint_type'] ?? null);
     }
+
+    public function test_call_delivery_entrypoint_persists_inbound_did_recording_context(): void
+    {
+        $organization = Organization::create([
+            'name' => 'Entrypoint Organization',
+            'domain' => 'entrypoint.example.com',
+            'is_active' => true,
+            'recording_policy' => 'incoming',
+        ]);
+
+        $did = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'number' => '+15559990003',
+            'recording_policy' => 'all',
+            'destination_type' => 'extension',
+            'destination_id' => $organization->extensions()->create([
+                'extension' => '2003',
+                'password' => 'pass1234',
+                'first_name' => 'Entry',
+                'last_name' => 'Target',
+                'is_active' => true,
+            ])->id,
+            'is_active' => true,
+        ]);
+
+        $callUuid = 'test-uuid-entrypoint-'.uniqid();
+
+        $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'entrypoint.example.com',
+            'Caller-Destination-Number' => '+15559990003',
+            'Unique-ID' => $callUuid,
+        ]);
+
+        $this->post('/freeswitch/xml-curl', [
+            'section' => 'dialplan',
+            'domain' => 'entrypoint.example.com',
+            'Caller-Destination-Number' => 'call_delivery_entrypoint',
+            'Unique-ID' => $callUuid,
+            'variable_nizam_delivery_target_type' => 'extension',
+            'variable_nizam_delivery_target_id' => (string) $did->destination_id,
+        ]);
+
+        $session = CallSession::where('call_uuid', $callUuid)->first();
+        $this->assertNotNull($session, 'CallSession should be created');
+        $this->assertSame($did->id, data_get($session->variables, 'recording_context.did_id'));
+        $this->assertSame('all', data_get($session->variables, 'recording_context.did_policy'));
+    }
 }

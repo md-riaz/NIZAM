@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CallSession;
 use App\Models\Organization;
 use App\Models\OrganizationDialplanManifest;
 use App\Services\Call\CallDeliveryEntrypointService;
@@ -77,6 +78,12 @@ class FreeswitchXmlController extends Controller
             $callUuid = (string) ($requestPayload['Unique-ID'] ?? $requestPayload['Channel-Call-UUID'] ?? $requestPayload['variable_uuid'] ?? '');
 
             if ($callUuid !== '') {
+                $existingSession = CallSession::query()
+                    ->with('did')
+                    ->where('organization_id', $organization->id)
+                    ->where('call_uuid', $callUuid)
+                    ->first();
+
                 $this->callDeliveryEntrypointService->enter($organization, $callUuid, [
                     'target_type' => (string) ($requestPayload['variable_nizam_delivery_target_type'] ?? $requestPayload['nizam_delivery_target_type'] ?? ''),
                     'target_id' => (string) ($requestPayload['variable_nizam_delivery_target_id'] ?? $requestPayload['nizam_delivery_target_id'] ?? ''),
@@ -85,6 +92,8 @@ class FreeswitchXmlController extends Controller
                     'caller_id_number' => (string) ($requestPayload['Caller-Caller-ID-Number'] ?? $requestPayload['variable_effective_caller_id_number'] ?? $callerIdNumber ?? ''),
                     'destination_number' => (string) ($requestPayload['Caller-Destination-Number'] ?? $destinationNumber),
                     'domain' => $domain,
+                    'did_id' => $existingSession?->did_id,
+                    'did_policy' => $existingSession?->did?->recording_policy,
                     'auto_answer_enabled' => filter_var($requestPayload['variable_nizam_auto_answer_enabled'] ?? $requestPayload['nizam_auto_answer_enabled'] ?? false, FILTER_VALIDATE_BOOL),
                     'auto_answer_call_info' => (string) ($requestPayload['variable_nizam_auto_answer_call_info'] ?? $requestPayload['nizam_auto_answer_call_info'] ?? ''),
                     'auto_answer_alert_info' => (string) ($requestPayload['variable_nizam_auto_answer_alert_info'] ?? $requestPayload['nizam_auto_answer_alert_info'] ?? ''),

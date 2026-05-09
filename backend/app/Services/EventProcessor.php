@@ -21,6 +21,9 @@ use App\Services\Call\DeliveryPlanItem;
 use App\Services\Call\EndpointCandidate;
 use App\Services\Call\ReachabilityCache;
 use App\Services\Call\ReachabilityDecision;
+use App\Services\Call\TraceWriter;
+use App\Services\Recording\AnsweredRecordingStarter;
+use App\Services\Recording\RecordingPolicyResolver;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -35,6 +38,9 @@ class EventProcessor
         protected ?CallOfferExecutor $callOfferExecutor = null,
         protected ?VoicemailEventService $voicemailEventService = null,
         protected ?ModuleRegistry $moduleRegistry = null,
+        protected ?RecordingPolicyResolver $recordingPolicyResolver = null,
+        protected ?AnsweredRecordingStarter $answeredRecordingStarter = null,
+        protected ?TraceWriter $traceWriter = null,
     ) {}
 
     /**
@@ -87,6 +93,7 @@ class EventProcessor
         $context = $this->resolveOrchestrationContext($organizationId, $event);
         $this->markAttemptAnswered($context['attempt']);
         $this->electWinnerForAnsweredAttempt($context['call_session'], $context['attempt']);
+        $this->maybeStartAnsweredRecording($context['call_session'], $context['attempt'], $event);
 
         $data = $this->buildEventPayload(
             $organizationId,
@@ -558,6 +565,100 @@ class EventProcessor
         $this->winnerService()->electWinner($callSession, $attempt);
     }
 
+    protected function maybeStartAnsweredRecording(?CallSession $callSession, ?CallDeliveryAttempt $attempt, array $event): void
+    {
+        if (! $callSession instanceof CallSession || ! $attempt instanceof CallDeliveryAttempt) {
+            return;
+        }
+
+        if ((string) data_get($callSession->variables, 'winner_attempt_id') !== (string) $attempt->id) {
+            return;
+        }
+
+        if ($attempt->status === CallDeliveryAttempt::STATUS_WON
+            && (filled(data_get($callSession->variables, 'recording_policy_resolution'))
+                || ($callSession->variables['recording_started'] ?? false) === true)) {
+            return;
+        }
+
+        $recordingContext = $this->recordingContextForAnswer($callSession, $attempt, $event);
+        $decision = $this->recordingPolicyResolver()->resolve($recordingContext);
+
+        $callSession->forceFill([
+            'variables' => [
+                ...($callSession->variables ?? []),
+                'recording_context' => $recordingContext,
+                'recording_policy_resolution' => $decision,
+            ],
+        ])->save();
+
+        $this->traceWriter()->write($callSession, 'recording.policy.resolved', [
+            'recording_context' => $recordingContext,
+            'decision' => $decision,
+        ]);
+
+        if (! ($decision['should_record'] ?? false)) {
+            $this->traceWriter()->write($callSession, 'recording.start.skipped', [
+                'reason' => $decision['reason'] ?? 'policy_disabled',
+                'decision' => $decision,
+            ]);
+
+            return;
+        }
+
+        $this->traceWriter()->write($callSession, 'recording.start.requested', [
+            'decision' => $decision,
+        ]);
+
+        $result = $this->answeredRecordingStarter()->start($callSession, $decision);
+
+        $action = match ($result['status'] ?? null) {
+            'started' => 'recording.start.succeeded',
+            'failed' => 'recording.start.failed',
+            default => 'recording.start.skipped',
+        };
+
+        $this->traceWriter()->write($callSession, $action, [
+            'decision' => $decision,
+            'result' => $result,
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function recordingContextForAnswer(CallSession $callSession, CallDeliveryAttempt $attempt, array $event): array
+    {
+        $current = $callSession->variables['recording_context'] ?? [];
+        $extension = $attempt->endpointBinding?->extension;
+        $answeredTargetType = $this->answeredTargetType($callSession, $attempt, $event);
+
+        return [
+            ...$current,
+            'direction' => data_get($current, 'direction', ($event['Call-Direction'] ?? 'inbound') === 'outbound' ? 'outbound' : 'inbound'),
+            'organization_id' => $callSession->organization_id,
+            'organization_policy' => data_get($current, 'organization_policy', $callSession->organization?->recording_policy),
+            'did_id' => data_get($current, 'did_id', $callSession->did_id),
+            'did_policy' => data_get($current, 'did_policy', $callSession->did?->recording_policy),
+            'owner_extension_id' => $extension?->id,
+            'extension_policy' => $extension?->recording_policy,
+            'answered_target_type' => $answeredTargetType,
+        ];
+    }
+
+    protected function answeredTargetType(CallSession $callSession, CallDeliveryAttempt $attempt, array $event): string
+    {
+        if (($event['variable_current_application'] ?? null) === 'voicemail') {
+            return 'voicemail';
+        }
+
+        if ($attempt->endpointBinding?->extension_id) {
+            return 'extension';
+        }
+
+        return (string) data_get($callSession->variables, 'recording_context.answered_target_type', 'unknown');
+    }
+
     protected function finalizeWinningBridge(
         ?CallSession $callSession,
         ?CallDeliveryAttempt $attempt,
@@ -941,6 +1042,21 @@ class EventProcessor
     protected function voicemailEventService(): VoicemailEventService
     {
         return $this->voicemailEventService ??= app(VoicemailEventService::class);
+    }
+
+    protected function recordingPolicyResolver(): RecordingPolicyResolver
+    {
+        return $this->recordingPolicyResolver ??= app(RecordingPolicyResolver::class);
+    }
+
+    protected function answeredRecordingStarter(): AnsweredRecordingStarter
+    {
+        return $this->answeredRecordingStarter ??= app(AnsweredRecordingStarter::class);
+    }
+
+    protected function traceWriter(): TraceWriter
+    {
+        return $this->traceWriter ??= app(TraceWriter::class);
     }
 
     protected function moduleRegistry(): ModuleRegistry

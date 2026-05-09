@@ -51,7 +51,10 @@ class EventProcessorVoicemailTest extends TestCase
                 'voicemail.received',
                 Mockery::on(function (array $payload) use ($organization): bool {
                     return ($payload['organization_id'] ?? null) === $organization->id
-                        && ($payload['metadata']['user'] ?? null) === '1001';
+                        && ($payload['metadata']['user'] ?? null) === '1001'
+                        && ($payload['metadata']['answered_target_type'] ?? null) === 'voicemail'
+                        && ($payload['metadata']['voicemail_box'] ?? null) === '1001'
+                        && ($payload['metadata']['voicemail_owner'] ?? null) === '1001';
                 })
             );
 

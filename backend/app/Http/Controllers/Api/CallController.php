@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use App\Services\Call\OutboundOriginateService;
 use App\Services\EslConnectionManager;
+use App\Services\Recording\AnsweredRecordingStarter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +19,7 @@ class CallController extends Controller
 {
     public function __construct(
         protected OutboundOriginateService $outboundOriginateService,
+        protected AnsweredRecordingStarter $answeredRecordingStarter,
     ) {}
 
     /**
@@ -188,22 +190,9 @@ class CallController extends Controller
             'action' => 'required|string|in:start,stop',
         ]);
 
-        $esl = app(EslConnectionManager::class);
-
-        if (! $esl->connect()) {
-            return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
-        }
-
-        $basePath = config('filesystems.disks.recordings.root', storage_path('app/recordings'));
-        $recordingPath = "{$basePath}/{$organization->id}/{$validated['uuid']}.wav";
-
-        if ($validated['action'] === 'start') {
-            $response = $esl->api("uuid_record {$validated['uuid']} start {$recordingPath}");
-        } else {
-            $response = $esl->api("uuid_record {$validated['uuid']} stop {$recordingPath}");
-        }
-
-        $esl->disconnect();
+        $response = $validated['action'] === 'start'
+            ? $this->answeredRecordingStarter->startForCall($organization->id, $validated['uuid'])
+            : $this->answeredRecordingStarter->stopForCall($organization->id, $validated['uuid']);
 
         return response()->json([
             'message' => "Recording {$validated['action']} command sent.",
