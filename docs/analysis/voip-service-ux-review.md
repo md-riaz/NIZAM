@@ -283,7 +283,7 @@ advertises up to 5 simultaneous devices per extension
 
 **Recommendation.** Make the hierarchy explicit and one-directional:
 
-```
+```text
 User (person)
   └── Extension (their line — or a shared/common-area line with no user)
         └── EndpointBinding[]  (desk phone, web phone, mobile app, PSTN forward)
@@ -565,20 +565,28 @@ an optional caller-ID override per endpoint binding for the per-device case.
 provisioning payload it would consume (`WebRtcConfigService`) and the originate
 contract it would call.
 
-One security-relevant detail to fix before that client ships:
-`caller_id_name` is accepted as `nullable|string` with no allow-list check
-(`CallController.php:34`) and passed straight into
+One security-relevant detail is live **today**, independent of whether the web
+phone ever ships: `caller_id_name` is accepted as `nullable|string` with no
+allow-list check (`CallController.php:34`) and passed straight into
 `origination_caller_id_name` (`OutboundOriginateService.php:36,49`). Any user
-with `originate` can present an arbitrary display name — "IRS", a colleague's
-name, anything. `did_id` is properly validated; the name is not.
+who passes the `originate` gate — which, per §8.1, includes any agent with zero
+explicit permission grants — can present an arbitrary display name on an
+outbound PSTN call: "IRS", a colleague's name, anything. `did_id` is properly
+validated against the extension's allow-list; the name is not validated at all.
 
-**Recommendation.** When the web phone is built, make the caller-ID picker a
-first-class control in the dialer (default from `default_outbound_did_id`,
-options from the allow-list, showing `+1 555 0100 — Sales main` using the DID
-`description` from `DidResource.php:18`), remember the last choice per device,
-and show the active number persistently while on a call. Server-side, derive
-`caller_id_name` from the DID or extension configuration and reject arbitrary
-client-supplied names.
+**Recommendation — server-side, and not gated on the web phone.** Derive
+`caller_id_name` from the resolved DID or the extension's configured
+`effective_caller_id_name`, and reject client-supplied names outright. Treat this
+as a blocking fix alongside the other authorization items in Wave 0; the display
+name is the half of caller ID a recipient actually reads, so leaving it
+spoofable while the number is locked down defeats the point of the allow-list.
+
+**Recommendation — client-side, when the web phone is built.** Make the caller-ID
+picker a first-class control in the dialer (default from
+`default_outbound_did_id`, options from the allow-list, showing
+`+1 555 0100 — Sales main` using the DID `description` from
+`DidResource.php:18`), remember the last choice per device, and show the active
+number persistently while on a call.
 
 ### 4.5 Dead caller-ID fields and a hidden privacy setting
 
@@ -1249,57 +1257,61 @@ Ordered by value per unit of work and by what unblocks what.
    (§8.1); add authorization to `CallSessionController`, `TeamController`,
    `AgentController` (§8.2)
 3. Guard the five unwrapped superadmin routes in the router (§8.7)
+4. Derive `caller_id_name` server-side and reject client-supplied display names
+   on `calls/originate` (§4.4) — exploitable today, and not dependent on the web
+   phone existing
 
 **Wave 1 — make existing behavior visible (days, not weeks; frontend-only)**
 
-4. Recordings page + inline playback in call history and interaction detail
+5. Recordings page + inline playback in call history and interaction detail
    (§1.7)
-5. Repoint Call History at CDRs and bind the existing filters, paginator, and
+6. Repoint Call History at CDRs and bind the existing filters, paginator, and
    CSV export; fix the KPI tiles that cap at 15 (§5.1, §5.2)
-6. Render `provisioning_health.next_actions` as a setup checklist using the card
+7. Render `provisioning_health.next_actions` as a setup checklist using the card
    pattern that already exists on the dashboard (§7.1)
-7. Effective-recording-policy display on all three forms (§1.2); surface
+8. Effective-recording-policy display on all three forms (§1.2); surface
    `recording_retention_days` (§1.9); remove org-scope `Inherit` (§1.3)
-8. Reports section over the shipped analytics, supervisor-report, and usage
+9. Reports section over the shipped analytics, supervisor-report, and usage
    endpoints (§5.6)
-9. Cheap correctness fixes: extension number instead of raw UUID (§2.5), the
-   capacity tile (§9.6), the "Hidden" password clipboard bug (§9.5), and
-   `onError` on the nine mutations missing it (§7.4)
+10. Cheap correctness fixes: extension number instead of raw UUID (§2.5), the
+    capacity tile (§9.6), the "Hidden" password clipboard bug (§9.5), and
+    `onError` on the nine mutations missing it (§7.4)
 
 **Wave 2 — fix the model and the missing call path**
 
-10. Outbound route compilation with DID-based caller ID, privacy mode, and an
+11. Outbound route compilation with DID-based caller ID, privacy mode, and an
     emergency override (§4.2) — nothing else in caller ID matters until this
     exists
-11. Recording scopes for queue/team/agent (§1.4) and the enforcement lock (§1.5)
-12. Collapse the duplicate extension↔device link (§2.3); person-first
+12. Recording scopes for queue/team/agent (§1.4) and the enforcement lock (§1.5)
+13. Collapse the duplicate extension↔device link (§2.3); person-first
     user↔extension UI (§2.4)
-13. Debounce SIP profile restarts and stop swallowing ESL failures (§3.3)
-14. Trunk pages, reusable trunk selection on DIDs, org-visible registration
+14. Debounce SIP profile restarts and stop swallowing ESL failures (§3.3)
+15. Trunk pages, reusable trunk selection on DIDs, org-visible registration
     status, and a test-call button (§7.3)
-15. Active Calls page with hangup/transfer/hold/record (§5.3)
+16. Active Calls page with hangup/transfer/hold/record (§5.3)
 
 **Wave 3 — the requested control surfaces**
 
-16. Per-organization `webrtc_enabled` tri-state + superadmin rollout screen
+17. Per-organization `webrtc_enabled` tri-state + superadmin rollout screen
     (§3.2) and WebRTC readiness checks (§3.4)
-17. Endpoint-binding UI: devices & apps per extension (§2.6)
-18. Typed organization settings from a published schema (§9.1)
-19. Web phone with a caller-ID picker, plus server-side caller-ID-name
-    validation (§4.4) and desk-phone prefix codes (§4.3)
-20. Troubleshooting panel: hangup cause, ring/talk split, registration state at
+18. Endpoint-binding UI: devices & apps per extension (§2.6)
+19. Typed organization settings from a published schema (§9.1)
+20. Web phone with an in-dialer caller-ID picker (§4.4) and desk-phone prefix
+    codes (§4.3) — the server-side name validation this depends on is Wave 0
+    item 4
+21. Troubleshooting panel: hangup cause, ring/talk split, registration state at
     call time, per-attempt reachability verdict (§5.4)
 
 **Wave 4 — hierarchy, self-service, and operations**
 
-21. Scoped visibility (`own`/`team`/`org`) across recordings, CDRs, and call
+22. Scoped visibility (`own`/`team`/`org`) across recordings, CDRs, and call
     sessions, with a real supervisor role and `team_supervisors` pivot
     (§1.8, §8.2, §8.3)
-22. Audit sensitive reads and permission changes (§8.6); rebuild the permission
+23. Audit sensitive reads and permission changes (§8.6); rebuild the permission
     editor around presets (§8.5)
-23. `/me` self-service area, voicemail message store and inbox, agent state
+24. `/me` self-service area, voicemail message store and inbox, agent state
     control (§6.2, §6.3, §6.4)
-24. Tenant vs platform console split (§9.3); CDR ingestion health check and
+25. Tenant vs platform console split (§9.3); CDR ingestion health check and
     scheduled anomaly detection (§5.5)
 
 ---
