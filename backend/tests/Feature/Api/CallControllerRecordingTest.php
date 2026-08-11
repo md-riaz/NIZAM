@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\CallSession;
 use App\Models\Organization;
 use App\Models\User;
 use App\Services\Recording\AnsweredRecordingStarter;
@@ -23,6 +24,12 @@ class CallControllerRecordingTest extends TestCase
     {
         $organization = Organization::factory()->create(['domain' => 'acme.test']);
         $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
+        // Call control verifies the channel belongs to this organization, so the
+        // session has to exist for the command to be dispatched at all.
+        CallSession::factory()->create([
+            'organization_id' => $organization->id,
+            'call_uuid' => 'call-uuid',
+        ]);
 
         $starter = Mockery::mock(AnsweredRecordingStarter::class);
         $starter->shouldReceive('startForCall')
@@ -50,6 +57,12 @@ class CallControllerRecordingTest extends TestCase
     {
         $organization = Organization::factory()->create(['domain' => 'acme.test']);
         $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'admin']);
+        // Call control verifies the channel belongs to this organization, so the
+        // session has to exist for the command to be dispatched at all.
+        CallSession::factory()->create([
+            'organization_id' => $organization->id,
+            'call_uuid' => 'call-uuid',
+        ]);
 
         $starter = Mockery::mock(AnsweredRecordingStarter::class);
         $starter->shouldReceive('stopForCall')

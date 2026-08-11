@@ -19,8 +19,8 @@ class CallSessionController extends Controller
      */
     public function index(Organization $organization)
     {
-        // Assuming Gate::authorize('viewAny', CallSession::class) logic can be wired later
-        // Currently keeping it simple and organization scoped
+        $this->authorize('viewAny', CallSession::class);
+
         return CallSessionResource::collection(
             $organization->callSessions()
                 ->with([
@@ -36,6 +36,8 @@ class CallSessionController extends Controller
      */
     public function show(Organization $organization, CallSession $callSession): JsonResponse|CallSessionResource
     {
+        $this->authorize('view', $callSession);
+
         if ($callSession->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call session not found.'], 404);
         }
@@ -65,6 +67,8 @@ class CallSessionController extends Controller
      */
     public function analyze(Organization $organization, CallSession $callSession, CallTraceAnalyzer $analyzer): JsonResponse
     {
+        $this->authorize('view', $callSession);
+
         if ($callSession->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call session not found.'], 404);
         }
@@ -84,7 +88,7 @@ class CallSessionController extends Controller
         ]);
 
         return response()->json([
-            'data' => $analyzer->analyze($callSession)
+            'data' => $analyzer->analyze($callSession),
         ]);
     }
 }

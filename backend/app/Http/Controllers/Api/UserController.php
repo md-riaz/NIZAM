@@ -77,6 +77,10 @@ class UserController extends Controller
             'organization_id' => $organizationId,
         ]);
 
+        // Permissions are deny-by-default, so a new non-admin user needs its
+        // role baseline or it lands with no access at all.
+        $user->grantRoleBaselinePermissions();
+
         return response()->json(new UserResource($user), 201);
     }
 

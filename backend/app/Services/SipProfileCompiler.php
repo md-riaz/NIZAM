@@ -17,25 +17,25 @@ class SipProfileCompiler
             $query->where('is_enabled', true);
         }])->where('is_active', true)->get();
 
-        $storagePath = storage_path('app/freeswitch/sip_profiles');
-        
-        if (!File::exists($storagePath)) {
+        $storagePath = (string) config('telephony.sip_profile_provisioning.directory', storage_path('app/freeswitch/sip_profiles'));
+
+        if (! File::exists($storagePath)) {
             File::makeDirectory($storagePath, 0755, true);
         }
 
         // Clean out existing .xml files
-        $existingFiles = File::glob($storagePath . '/*.xml');
+        $existingFiles = File::glob($storagePath.'/*.xml');
         foreach ($existingFiles as $file) {
             File::delete($file);
         }
 
         foreach ($profiles as $profile) {
             $xml = $this->compileProfileXml($profile);
-            File::put($storagePath . '/' . $profile->name . '.xml', $xml);
+            File::put($storagePath.'/'.$profile->name.'.xml', $xml);
         }
 
-        $externalGatewayPath = $storagePath . '/external';
-        if (!File::exists($externalGatewayPath)) {
+        $externalGatewayPath = $storagePath.'/external';
+        if (! File::exists($externalGatewayPath)) {
             File::makeDirectory($externalGatewayPath, 0755, true);
         }
     }
@@ -47,7 +47,7 @@ class SipProfileCompiler
     {
         $safeName = htmlspecialchars($profile->name, ENT_QUOTES | ENT_XML1);
         $xml = '<profile name="'.$safeName.'">'."\n";
-        
+
         $xml .= '  <aliases>'."\n";
         $xml .= '  </aliases>'."\n";
 
