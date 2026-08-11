@@ -272,6 +272,24 @@ export const FlowDefinitionSchema = z.object({
 });
 export type FlowDefinition = z.infer<typeof FlowDefinitionSchema>;
 
+// ─── Recordings ──────────────────────────────────────────────
+
+export const RecordingSchema = z.object({
+    id: idSchema,
+    organization_id: idSchema,
+    call_uuid: z.string().nullable().optional(),
+    file_name: z.string().nullable().optional(),
+    file_size: z.number().nullable().optional(),
+    format: z.string().nullable().optional(),
+    duration: z.number().nullable().optional(),
+    direction: z.string().nullable().optional(),
+    caller_id_number: z.string().nullable().optional(),
+    destination_number: z.string().nullable().optional(),
+    created_at: z.string(),
+    updated_at: z.string(),
+});
+export type Recording = z.infer<typeof RecordingSchema>;
+
 // ─── CDR ─────────────────────────────────────────────────────
 
 export const CdrSchema = z.object({
@@ -283,16 +301,44 @@ export const CdrSchema = z.object({
     caller_id_number: z.string().nullable().optional(),
     destination_number: z.string().nullable().optional(),
     direction: z.string().nullable().optional(),
+    call_type: z.string().nullable().optional(),
     duration: z.number().nullable().optional(),
     billsec: z.number().nullable().optional(),
     hangup_cause: z.string().nullable().optional(),
     start_stamp: z.string().nullable().optional(),
     answer_stamp: z.string().nullable().optional(),
     end_stamp: z.string().nullable().optional(),
+    recording_path: z.string().nullable().optional(),
+    has_recording: z.boolean().optional(),
+    recordings: z.array(RecordingSchema).default([]),
+    /** Present only when the call was traced through the delivery pipeline. */
+    call_session_id: idSchema.nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
 });
 export type Cdr = z.infer<typeof CdrSchema>;
+
+/** Shape of `GET .../cdrs/analytics/summary`. */
+export interface CdrSummary {
+    total_calls: number;
+    answered_calls: number;
+    missed_calls: number;
+    failed_calls: number;
+    total_duration_seconds: number;
+    average_duration_seconds: number;
+    asr: number;
+    acd_seconds: number;
+}
+
+/** Laravel paginator metadata, as returned alongside `data`. */
+export interface PaginationMeta {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+}
 
 // ─── Interaction Overview ────────────────────────────────────
 

@@ -91,4 +91,17 @@ class CallDetailRecord extends Model
     {
         return $this->hasMany(Recording::class, 'call_uuid', 'uuid');
     }
+
+    /**
+     * The interaction journey for this call, if one was traced.
+     *
+     * CDRs are written by FreeSWITCH and call sessions by the delivery pipeline,
+     * so the two are joined on the channel UUID rather than a foreign key. Not
+     * every CDR has a session — inbound calls that never entered the delivery
+     * path will not.
+     */
+    public function callSession(): HasOne
+    {
+        return $this->hasOne(CallSession::class, 'call_uuid', 'uuid');
+    }
 }

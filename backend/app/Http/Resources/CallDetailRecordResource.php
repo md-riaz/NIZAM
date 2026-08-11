@@ -44,9 +44,31 @@ class CallDetailRecordResource extends JsonResource
                 'number_type' => $this->enrichment->number_type,
                 'enriched_at' => $this->enrichment->enriched_at,
             ]),
-            'recordings' => $this->whenLoaded('recordings'),
+            // Shaped through RecordingResource rather than dumped raw, so the
+            // client gets a stable contract and no internal file paths.
+            'recordings' => RecordingResource::collection($this->whenLoaded('recordings')),
+            'has_recording' => $this->resolveHasRecording(),
+            // Present only when the call was traced through the delivery
+            // pipeline; lets call history link to the interaction journey.
+            'call_session_id' => $this->whenLoaded('callSession', fn () => $this->callSession?->id),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
+    }
+
+    /**
+     * Whether audio exists for this call.
+     *
+     * Prefers loaded Recording rows, falling back to the recording_path column
+     * FreeSWITCH writes — a call can have a path before the file is ingested as
+     * a Recording row, and the UI should still indicate audio is expected.
+     */
+    private function resolveHasRecording(): bool
+    {
+        if ($this->relationLoaded('recordings')) {
+            return $this->recordings->isNotEmpty() || filled($this->recording_path);
+        }
+
+        return filled($this->recording_path);
     }
 }

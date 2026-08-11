@@ -14,8 +14,11 @@ class CdrSearchService
      */
     public function search(Organization $organization, Request $request, int $perPage = 25): LengthAwarePaginator
     {
+        // recordings and callSession are eager-loaded so a call-history row can
+        // offer playback and a link to the interaction journey without an
+        // N+1 lookup per row.
         $query = CallDetailRecord::where('organization_id', $organization->id)
-            ->with('enrichment');
+            ->with(['enrichment', 'recordings', 'callSession:id,call_uuid']);
 
         // Full-text search across caller/destination numbers
         if ($request->filled('search')) {

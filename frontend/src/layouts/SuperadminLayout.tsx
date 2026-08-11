@@ -5,6 +5,7 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronsUpDown,
+    FileAudio,
     FileText,
     Globe,
     Hash,
@@ -95,6 +96,7 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Calls',
         items: [
             { label: 'Call History', icon: PhoneCall, href: '/admin/call-history', organizationRequired: true },
+            { label: 'Recordings', icon: FileAudio, href: '/admin/recordings', organizationRequired: true },
         ],
     },
     {

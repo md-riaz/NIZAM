@@ -18,11 +18,27 @@ import {
 import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { useApiMutation } from '@/lib/api-hooks';
-import type { DeviceProfile } from '@/types/models';
+import type { DeviceProfile, Extension } from '@/types/models';
 
 export default function DeviceProfilesPage() {
     const { activeOrganization } = useOrganization();
     const [deviceProfileToDelete, setDeviceProfileToDelete] = useState<DeviceProfile | null>(null);
+
+    // The device list stores only extension_id, so extensions are fetched to
+    // render a human-readable number instead of a UUID.
+    const { data: extensions = [] } = useQuery<Extension[]>({
+        queryKey: ['extensions', activeOrganization?.id],
+        queryFn: async () => {
+            if (!activeOrganization) return [];
+            const response = await api.get(`organizations/${activeOrganization.id}/extensions`, {
+                params: { per_page: 500 },
+            });
+            return response.data.data;
+        },
+        enabled: !!activeOrganization,
+    });
+
+    const extensionsById = new Map(extensions.map((extension) => [extension.id, extension]));
 
     const { data: deviceProfiles = [], isLoading } = useQuery<DeviceProfile[]>({
         queryKey: ['device-profiles', activeOrganization?.id],
@@ -87,7 +103,30 @@ export default function DeviceProfilesPage() {
                                     <TableCell className="font-medium">{deviceProfile.name}</TableCell>
                                     <TableCell>{deviceProfile.vendor || '-'}</TableCell>
                                     <TableCell>{deviceProfile.mac_address || '-'}</TableCell>
-                                    <TableCell>{deviceProfile.extension_id || '-'}</TableCell>
+                                    <TableCell>
+                                        {(() => {
+                                            if (!deviceProfile.extension_id) return '-';
+                                            const extension = extensionsById.get(deviceProfile.extension_id);
+                                            if (!extension) {
+                                                return (
+                                                    <span className="text-muted-foreground">Unknown extension</span>
+                                                );
+                                            }
+                                            return (
+                                                <Link
+                                                    to={`/admin/extensions/${extension.id}`}
+                                                    className="font-medium text-primary hover:underline"
+                                                >
+                                                    {extension.extension}
+                                                    {extension.owner_label ? (
+                                                        <span className="ml-1.5 font-normal text-muted-foreground">
+                                                            {extension.owner_label}
+                                                        </span>
+                                                    ) : null}
+                                                </Link>
+                                            );
+                                        })()}
+                                    </TableCell>
                                     <TableCell>
                                         <Badge variant={deviceProfile.is_active ? 'default' : 'secondary'}>
                                             {deviceProfile.is_active ? 'Active' : 'Inactive'}
