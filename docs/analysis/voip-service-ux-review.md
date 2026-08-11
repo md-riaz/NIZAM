@@ -39,7 +39,7 @@ sense.
 | --- | --- | --- |
 | Recording hierarchy | Solid resolver, invisible behavior | Effective policy is never shown anywhere; queues, teams, and agents have no policy of their own |
 | Recording consumption | Complete API, **zero UI** | No recordings page, no playback in call history |
-| Extension/user/device | Model fights reality | Extension is owned by a user **XOR** a device; multi-device reality lives in an `EndpointBinding` table with no UI |
+| Extension/user/device | Model fights reality | User **XOR** device, and the device-side workaround is silently destroyed on any later extension save; multi-device reality lives in an `EndpointBinding` table with no UI |
 | WSS enablement | Global-only | No per-organization gate; cannot pilot WebRTC for one client; a single save can restart the shared profile ~11 times |
 | Outbound caller ID | Works on one path only | Registered SIP phones have **no outbound route at all**; caller ID selection exists only via the API originate path |
 | Org configuration | Raw JSON textarea | Real behavior keys (e.g. caller-ID privacy) are edited as freeform JSON |
@@ -269,21 +269,39 @@ extension 1001; she uses a desk phone at her desk, the web phone on her laptop,
 and the mobile app; her calls should show the Sales main number." Devices are
 attributes of a person's line — not alternatives to it.
 
-### 2.2 The model forces user XOR device, which contradicts that
+### 2.2 The supported model is user XOR device, and the one workaround self-destructs
 
-An extension is owned by a user **or** a device profile, never both:
+`Extension.user_id` and `Extension.device_profile_id` are mutually exclusive by
+validation — *"Extension cannot belong to both a user and a device"*
+(`StoreExtensionRequest.php:137-138`, `UpdateExtensionRequest.php:140-142`) — and
+the form enforces it, clearing the other field on switch
+(`frontend/src/pages/admin/ExtensionFormPage.tsx:69-83,356-371`). `owner_type` is
+not a column but an accessor derived from those two
+(`backend/app/Models/Extension.php:157-161`), so it cannot be set directly.
 
-- `owner_type` is `user | device | unassigned`
-  (`backend/app/Http/Resources/ExtensionResource.php:21`,
-  `StoreExtensionRequest.php:117`)
-- Setting both is rejected outright: *"Extension cannot belong to both a user
-  and a device"* (`StoreExtensionRequest.php:137-138`)
-- The form enforces the XOR with conditional required-ness and clears the other
-  field on switch (`frontend/src/pages/admin/ExtensionFormPage.tsx:69-83,356-371`)
+There **is** a second path the first revision of this document missed: the Devices
+page has its own "Assigned Extension" selector writing `DeviceProfile.extension_id`
+(`frontend/src/pages/admin/DeviceProfileFormPage.tsx:204-239`,
+`StoreDeviceProfileRequest.php:21`), and provisioning genuinely consumes it —
+`ProvisioningService` reads `$profile->extension` for `{{EXTENSION}}` and
+`{{PASSWORD}}` (`backend/app/Services/ProvisioningService.php:17,37-45`). So you
+can give Ayesha's user-owned extension a desk phone from the device side.
 
-So the moment an admin gives Ayesha a desk phone, the UI pushes them to
-`owner_type = device` and drops the person link — or to create a second
-extension for the same human. Neither matches the real world.
+**But that link is silently destroyed by any later extension save**, which is a
+worse problem than the XOR itself. `ExtensionController::syncOwnedDevice()` nulls
+`extension_id` on every device pointing at the extension whenever
+`device_profile_id` is absent from the payload
+(`backend/app/Http/Controllers/Api/ExtensionController.php:232-250`), and it runs
+on both store and update (`:79,:133`). The admin form always sends `null` for a
+user-owned extension (`ExtensionFormPage.tsx:126-130`).
+
+So: assign the desk phone from the Devices page, then edit that extension for any
+unrelated reason — voicemail PIN, caller-ID allow-list, toggling `is_active` — and
+the phone quietly stops provisioning, with no warning and nothing in the UI
+indicating a link ever existed. Treat this as a data-loss bug, not just a
+modeling awkwardness.
+
+Meanwhile the correct multi-device model already exists and is well built:
 
 Meanwhile the correct multi-device model already exists and is well built:
 `EndpointBinding` supports `desk_phone`, `mobile_app`, `softphone`,
@@ -306,7 +324,7 @@ Keep `owner_type` only to distinguish **person-owned** from **shared/common-area
 extensions (break room phone, lobby phone) — that is a real and useful
 distinction. Devices stop being owners and become bindings.
 
-### 2.3 Two competing extension↔device links with nothing keeping them in sync
+### 2.3 Two competing extension↔device links, reconciled destructively in one direction
 
 Both directions exist:
 
@@ -317,14 +335,18 @@ Both directions exist:
   `device_profile_id` (`DeviceProfile.php:71-74`)
 
 Both are independently writable (`StoreDeviceProfileRequest.php:21`,
-`StoreExtensionRequest.php:41-56`) and no observer reconciles them
-(`backend/app/Observers/ExtensionObserver.php` touches `extension_id` only for
-an unrelated projection at line 55). Two screens can therefore disagree about
-which phone belongs to which extension.
+`StoreExtensionRequest.php:41-56`). Reconciliation does exist — an earlier
+revision of this document said it did not — but it runs only extension → device
+and it **clears** the reverse link rather than preserving it
+(`ExtensionController::syncOwnedDevice()`, `:232-250`, see §2.2). The device side
+never reconciles back. So the two can disagree until an extension save resolves
+the disagreement by discarding the device's claim.
 
 **Recommendation.** Pick device → extension as the single source of truth (a
-physical phone is provisioned *for* a line), make the reverse accessor derived
-and read-only, and add a migration that reconciles existing rows.
+physical phone is provisioned *for* a line), make the reverse accessor derived and
+read-only, and add a migration that reconciles existing rows. In the interim, the
+narrow fix is to make `syncOwnedDevice()` distinguish "field omitted" from
+"explicitly cleared" so an unrelated extension edit stops unlinking hardware.
 
 ### 2.4 The Users page knows nothing about telephony
 
@@ -427,9 +449,35 @@ control:
 1. **Transport layer (platform)** — the existing global WSS binding. Keep it
    superadmin-only; it is genuinely infrastructure.
 2. **Entitlement layer (per tenant)** — a first-class
-   `webrtc_enabled` tri-state (`inherit | on | off`) on the organization,
-   checked in `WebRtcConfigService::forExtension()` before reporting
-   `enabled: true`.
+   `webrtc_enabled` tri-state (`inherit | on | off`) on the organization.
+
+**The enforcement point matters, and it is not `WebRtcConfigService`.** An earlier
+revision of this document recommended checking the flag in
+`WebRtcConfigService::forExtension()`. That would gate *metadata only*: its sole
+consumer is a read-only `sipConfig` endpoint
+(`backend/app/Http/Controllers/Api/ExtensionController.php:177-188`), so
+returning `enabled: false` changes nothing on the wire. Credentials still go to
+FreeSWITCH for every active extension of any operational organization, with no
+transport awareness (`DialplanCompiler.php:45-48,82`), and WSS shares the single
+`internal` profile and directory with port 5060
+(`backend/docker/freeswitch/conf/sip_profiles/wss.xml:1,11-12`). A user in a
+non-entitled tenant who knows their SIP password could point a WebRTC client at
+the global WSS URL and authenticate normally.
+
+Real enforcement needs one of:
+
+- **Transport-aware directory auth** — consult the org flag in the XML-CURL
+  directory path and refuse `sip_auth` when the registering transport is
+  `ws`/`wss` and the tenant is not entitled. Note this needs new plumbing: the
+  handler currently discards everything except domain and user
+  (`backend/app/Http/Controllers/FreeswitchXmlController.php:60-67`), even though
+  transport is available elsewhere in the payload (`DialplanCompiler.php:124`).
+- **Or a separate WSS profile plus ACL**, entitling tenants at the profile
+  boundary instead of per registration — likely the simpler option, and it also
+  removes the shared-profile restart blast radius in §3.3.
+
+`WebRtcConfigService` should still report the same flag, but only so the UI agrees
+with the server — not as the control.
 
 Then give superadmins a rollout screen: *Web phone enabled for:
 `All organizations` / `Selected organizations` (+ picker)*, and put a "Web phone"
@@ -550,11 +598,29 @@ everything else in this section:
   `effective_caller_id_number` from the resolved DID rather than the extension.
 - Apply the organization privacy mode in the same place
   (`DialplanCompiler.php:100-110`).
-- Add an emergency-number override that ignores selection and privacy and
-  always presents the location-registered number. This is a compliance
-  requirement, not a nicety.
+- **Explicitly match and reject emergency patterns** — do not route them. Match
+  `config('telephony.emergency')` and answer with a spoken "emergency calling is
+  not available on this service."
 - Fail loudly and legibly when an extension has no allowed DID — a spoken
   "no outbound number is assigned" beats a 404.
+
+On that third point, an earlier revision of this document recommended the
+opposite: an emergency override presenting "the location-registered number."
+**That was unsafe advice and is withdrawn.** NIZAM documents emergency calling as
+unsupported — *"NIZAM does not support emergency calling in v1.0"*
+(`backend/config/telephony.php:71-73`) and *"No location (PIDF-LO) or PSAP routing
+is provided,"* with the stated remedy being a dedicated E911 provider outside
+NIZAM (`backend/docs/KNOWN_LIMITATIONS.md:122-138`). No location registry exists
+in the schema, and `grep -rn emergency backend/app` returns nothing, so the
+configured patterns are never read by any code today.
+
+A caller-ID override would have produced the *appearance* of E911 support with no
+routing behind it — the specific failure mode the limitations doc warns about
+("prevent accidental reliance on an untested path"). Blocking is the correct
+behavior, and wiring it is a **blocking requirement of adding egress at all**:
+today there is no outbound route, so emergency numbers fail closed by accident.
+The moment §4.2 is implemented, they would start reaching a carrier without
+location data unless rejection is built in the same change.
 
 ### 4.3 No way for a SIP-credential user to pick a number per call
 
@@ -824,16 +890,32 @@ endpoint-binding sync). **No frontend file calls it.** DND and follow-me reach
 the UI only as two fields buried in the 900-line admin extension form
 (`ExtensionFormPage.tsx:833,865`), gated behind `extensions.update`.
 
-Everything else per-user is star-code-only: call forwarding
-`*72`/`*73`/`*74`, call return `*69`, send-to-voicemail `*99`
-(`backend/app/Services/DialplanCompiler.php:723-757`). Forwarding in particular
-is dialplan-only with no persisted state, so a user who forwards their line has
-no way to see or clear it from a screen — and neither does their admin.
+Everything else per-user is reachable only by dialling a star code: call
+forwarding `*72`/`*73`/`*74`, call return `*69`, send-to-voicemail `*99`
+(`backend/app/Services/DialplanCompiler.php:723-757`).
+
+An earlier revision said forwarding was "dialplan-only with no persisted state."
+**That was wrong.** `_call_forward.lua` writes straight to the database — setting
+`extensions.follow_me_enabled`, `follow_me_destination`, and clearing
+`dnd_enabled` (`backend/docker/freeswitch/scripts/custom/_call_forward.lua:191-203`)
+— then rebuilds the `pstn_forward` endpoint binding and invalidates the manifest
+(`:214-287`). Those are the same fields the features endpoint already reads and
+writes (`ExtensionFeatureController.php:48-49`) and that `ExtensionResource`
+already serializes (`:28-29`).
+
+So the gap is purely presentational, which makes it cheaper to close than the
+original framing implied: the state is there, correct, and API-addressable — no
+screen ever shows it. A user who forwards their line by star code has no way to
+see or cancel it, and neither does their admin.
+
+One real inconsistency to resolve before displaying it: the Lua stores the
+**raw** dialled destination on the extension (`:202`) but the **normalized E.164**
+form on the binding (`:272`), so the two rows can disagree in format and any
+"Forwarding to X" UI must pick one deliberately.
 
 **Recommendation.** Build a "My phone" page whose only writes go to the existing
-`features` endpoint (DND toggle, follow-me destination). Persist forwarding state
-on the extension and add it to that endpoint so the UI can show
-"Forwarding to X — cancel".
+`features` endpoint — DND toggle, follow-me destination, and a "Forwarding to X —
+cancel" row. No new persistence is needed.
 
 ### 6.3 Voicemail has no message store and no mailbox UI
 
@@ -1345,9 +1427,10 @@ backend additions noted per item)**
 
 **Wave 2 — fix the model and the missing call path**
 
-12. Outbound route compilation with DID-based caller ID, privacy mode, and an
-    emergency override (§4.2) — nothing else in caller ID matters until this
-    exists
+12. Outbound route compilation with DID-based caller ID, privacy mode, and
+    explicit emergency-pattern rejection (§4.2) — nothing else in caller ID
+    matters until this exists, and the emergency rejection must land in the same
+    change, not after it
 13. Recording scopes for queue/team/agent (§1.4) and the enforcement lock (§1.5)
 14. Collapse the duplicate extension↔device link (§2.3); person-first
     user↔extension UI (§2.4)
@@ -1393,21 +1476,40 @@ code path rather than observations.
 
 Line numbers are accurate as of this commit and will drift.
 
-**Corrections made during review.** Three findings in the first revision were
-wrong, and all three failed the same way — reading a component without reading
-its caller or its full registration path:
+**Corrections made during review.** Six findings in the first revision were wrong
+or materially imprecise, and they failed in two clusters:
+
+*Read a component without reading its caller:*
 
 - §1.4 claimed extension recording policy is ignored on queue-answered calls. The
   resolver does gate on `answered_target_type`, but `EventProcessor` sets that to
   `extension` from the winning endpoint binding, so precedence does apply. The
   real gap is narrower: no policy exists on Queue/Team/Agent.
-- §5.3 called an Active Calls page "frontend-only work". The live-call endpoints
-  are unscoped across tenants, so that advice would have shipped a cross-tenant
-  exposure. It is now a Wave 0 backend item.
 - §8.4 listed `gateways.*` and `calls.control` as ungrantable. They are
   contributed by enabled modules via `ModuleRegistry::collectPermissions()`.
+- §6.2 called star-code forwarding "dialplan-only with no persisted state." The
+  Lua writes the extension row and the endpoint binding directly. The gap is
+  presentational only.
+- §2.2 said assigning a desk phone drops the person link outright. A device-side
+  path exists — but `syncOwnedDevice()` destroys it on any later extension save,
+  which is a worse bug than the one originally described.
+
+*Recommended a fix at the wrong layer:*
+
+- §5.3 called an Active Calls page "frontend-only work." The live-call endpoints
+  are unscoped across tenants, so that advice would have shipped a cross-tenant
+  exposure. Now a Wave 0 backend item.
+- §3.2 put the per-tenant WebRTC gate in `WebRtcConfigService`, which only shapes
+  a read-only metadata response. Enforcement has to happen in directory auth or
+  at a separate profile boundary.
+
+One recommendation was withdrawn as unsafe rather than merely wrong: §4.2
+originally proposed an emergency-calling caller-ID override, which would have
+manufactured the appearance of E911 support on a platform that documents having
+no PSAP or location path at all.
 
 Treat the remaining single-source claims with proportionate caution — especially
 any that assert something is *absent*, which is the hardest thing to prove from a
-partial read. The findings verified end to end are the ones where a specific code
-path was traced from entry point to effect.
+partial read, and any recommendation that names a specific enforcement point.
+The reliable findings here are the ones where a code path was traced from entry
+point to effect.
