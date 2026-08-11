@@ -37,7 +37,7 @@ sense.
 
 | Area | State | Biggest single problem |
 | --- | --- | --- |
-| Recording hierarchy | Solid resolver, invisible behavior | Effective policy is never shown; extension policy is silently ignored on queue-answered calls |
+| Recording hierarchy | Solid resolver, invisible behavior | Effective policy is never shown anywhere; queues, teams, and agents have no policy of their own |
 | Recording consumption | Complete API, **zero UI** | No recordings page, no playback in call history |
 | Extension/user/device | Model fights reality | Extension is owned by a user **XOR** a device; multi-device reality lives in an `EndpointBinding` table with no UI |
 | WSS enablement | Global-only | No per-organization gate; cannot pilot WebRTC for one client; a single save can restart the shared profile ~11 times |
@@ -122,27 +122,39 @@ nothing to inherit from.
 default so `Inherit` resolves to something nameable. If the latter, label it
 explicitly: `Inherit platform default (currently Off)`.
 
-### 1.4 Extension policy is silently ignored on queue- and team-answered calls
+### 1.4 There is no recording policy on a queue, team, or agent
 
-`usesExtensionPrecedence()` only includes the extension scope when
-`answered_target_type === 'extension'`
-(`RecordingPolicyResolver.php:95-99`). Any call answered through a queue, ring
-group, team, or agent path resolves on `did → organization` only.
+An earlier revision of this document claimed that extension policy is ignored on
+queue- and team-answered calls. **That was wrong**, and the correction is worth
+stating precisely because it changes what needs building.
 
-Consequence: an admin sets "record all calls" on one agent's extension for
-coaching or a dispute. Inbound queue calls answered by that agent are **not**
-recorded, and nothing in the UI explains why. This is the most likely
-correctness-of-mental-model complaint from a real customer, because it looks
-exactly like a bug.
+`usesExtensionPrecedence()` does gate on `answered_target_type === 'extension'`
+(`RecordingPolicyResolver.php:95-99`), but the caller sets that value from the
+winning leg, not from how the call was routed: `answeredTargetType()` returns
+`'extension'` whenever the winning attempt's endpoint binding has an
+`extension_id`, and `recordingContextForAnswer()` populates `extension_policy`
+from that binding's extension
+(`backend/app/Services/EventProcessor.php:629-658`). So an ordinary queue or
+team call answered by an extension-bound endpoint **does** get extension
+precedence. The original finding traced the resolver without tracing its caller.
 
-**Recommendation.** Two parts.
+Two narrower things are real:
 
-- Add `recording_policy` to `Queue`, `Team`/`RingGroup`, and `Agent`, and
-  include the answering entity in the candidate chain
-  (`agent → queue/team → did → organization`, with the extension consulted for
-  directly-dialed legs).
-- Until that lands, state the limitation in the extension form's help text
-  rather than letting admins infer it from missing audio.
+1. **Coverage depends on the winning binding having an extension.** A queue leg
+   won by a `pstn_forward` binding, or an agent endpoint with no `extension_id`,
+   falls through to `data_get(..., 'answered_target_type', 'unknown')`
+   (`EventProcessor.php:653-657`) and therefore resolves on `did → organization`
+   only. Voicemail is explicitly `'voicemail'` (`:648-650`).
+2. **Queue, Team/RingGroup, and Agent carry no `recording_policy` of their own.**
+   "Record everything that comes through the support queue" and "record this
+   agent regardless of which line they answer" are not expressible at any scope.
+   That is the actual gap, and it is a modeling gap rather than a bug.
+
+**Recommendation.** Add `recording_policy` to `Queue`, `Team`/`RingGroup`, and
+`Agent` and insert them into the candidate chain
+(`agent → queue/team → extension → did → organization`). Separately, give the
+non-extension answer paths an explicit scope rather than letting them land on
+`unknown`.
 
 ### 1.5 Lower scopes can loosen a compliance-mandated policy
 
@@ -672,9 +684,29 @@ intervene, and cannot start recording on a call that is going wrong — which is
 precisely the moment on-demand recording exists for (§1.6). The SSE live event
 stream `call-events/stream` (`backend/routes/api.php:190`) is likewise unused.
 
-**Recommendation.** Ship an Active Calls page over `calls/status` (or the SSE
-stream) with per-row Hangup / Transfer / Hold / Record actions. Endpoints and
-gates already exist; this is frontend-only work.
+**These endpoints are not tenant-safe, and that changes the work.** An earlier
+revision of this document called an Active Calls page "frontend-only work". That
+was wrong and would have been dangerous advice:
+
+- `CallController::status()` runs `show channels as json` and returns every row
+  the switch reports, with **no organization filter** — the route's
+  `Organization $organization` argument is never used to narrow the result
+  (`backend/app/Http/Controllers/Api/CallController.php:103-121`). On a shared
+  FreeSWITCH that is every tenant's live calls, including caller and callee
+  numbers.
+- `hangup`, `transfer`, `hold`, and `toggleRecording` each accept an arbitrary
+  channel UUID and pass it straight to `uuid_kill` / `uuid_transfer` /
+  `uuid_hold` / `uuid_record` with **no check that the channel belongs to the
+  caller's organization**
+  (`CallController.php:126-225`). Combined with default-open permissions (§8.1),
+  an agent in one tenant can hang up or start recording another tenant's call if
+  they learn a UUID — and `status()` hands out every UUID on the switch.
+
+**Recommendation.** Backend first: filter `status()` by the organization's
+domain/`CallSession` records, and resolve every inbound UUID through a
+`CallSession` lookup scoped to the route's organization before dispatching an ESL
+command. Only then build the Active Calls page. This belongs in Wave 0 with the
+other authorization items, not in the UI wave.
 
 ### 5.4 "Why didn't my phone ring?" has no answer surface
 
@@ -1049,12 +1081,27 @@ a mandatory filter unless the caller holds an org-wide grant.
 
 ### 8.4 Slug drift in both directions
 
-Enforced but never created by `SyncPermissionsCommand`, therefore ungrantable
-once a user has any explicit grant: `gateways.view`/`gateways.manage`
-(`GatewayPolicy.php:21,33`, `BridgePolicy.php:21,33`), `endpoint_bindings.*`
-(`EndpointBindingPolicy.php:21-45`), `calls.control` (`CallPolicy.php:33`), and
-`view-flows`/`manage-flows` (`FlowPolicy.php:24,38` — dash style, versus the
-command's `flows.view`).
+Enforced but never created, therefore ungrantable once a user has any explicit
+grant:
+
+- `endpoint_bindings.view|create|update|delete`
+  (`EndpointBindingPolicy.php:21-45`) — absent from the core list and from every
+  module's `permissions()`.
+- `view-flows` / `manage-flows` (`FlowPolicy.php:24,33,38,47,56`) — dash-style,
+  while the command creates dot-style `flows.view|create|update|delete`
+  (`SyncPermissionsCommand.php:71-74`). Five policy methods check slugs that can
+  never exist.
+
+An earlier revision also listed `gateways.view`, `gateways.manage`, and
+`calls.control` here. **That was wrong**: the command merges
+`ModuleRegistry::collectPermissions()` for enabled modules
+(`SyncPermissionsCommand.php:90-97`,
+`backend/app/Modules/ModuleRegistry.php:277-290`), `PbxMediaPolicy` contributes
+both gateway slugs, `PbxAutomation` contributes `calls.control`, and all six
+modules are enabled (`modules_statuses.json`). Those three are created and
+grantable. Note the corollary, though: because they arrive only from modules,
+disabling `PbxMediaPolicy` silently makes `gateways.*` ungrantable — a coupling
+between module state and authorization that nothing surfaces.
 
 Granted but never enforced: `teams.*`, `flows.*`, `users.*`, `cdrs.export`,
 `organizations.create|update|delete`. `UserPolicy.php:23-48` hardcodes
@@ -1129,10 +1176,17 @@ schedule rather than as part of a UX wave.
    (`backend/app/Http/Controllers/Api/Admin/AdminGatewayController.php:19-25`),
    also outside `EnsureOrganizationAccess`
    (`backend/routes/api.php:103`). Its only guard is
-   `authorize('viewAny', Gateway::class)` → `hasPermission('gateways.view')` — a
-   slug that per §8.4 has no `permissions` row, and which per §8.1 returns
-   `true` for any user with zero grants. A default-state agent in one tenant can
-   enumerate another tenant's gateway hostnames and configuration.
+   `authorize('viewAny', Gateway::class)` → `hasPermission('gateways.view')`,
+   which per §8.1 returns `true` for **any** user holding zero explicit grants —
+   the default state for a newly created agent. A default-state agent in one
+   tenant can therefore enumerate another tenant's gateway hostnames, realms,
+   proxies, and usernames, since `GatewayResource` serializes them.
+
+   (An earlier revision argued this was compounded by `gateways.view` having no
+   `permissions` row. That was wrong — `PbxMediaPolicy` contributes the slug, see
+   §8.4. The exposure does not depend on it: default-open grants the check
+   regardless of whether the row exists, and the missing organization filter is
+   unconditional.)
 
 **Recommendation.** Attach a `platform-admin` middleware to the whole `admin/*`
 route block rather than relying on per-controller gates, and add
@@ -1260,58 +1314,71 @@ Ordered by value per unit of work and by what unblocks what.
 4. Derive `caller_id_name` server-side and reject client-supplied display names
    on `calls/originate` (§4.4) — exploitable today, and not dependent on the web
    phone existing
+5. Scope the live-call endpoints: filter `calls/status` by organization and
+   resolve every inbound channel UUID through an organization-scoped
+   `CallSession` before dispatching hangup / transfer / hold / record (§5.3)
 
-**Wave 1 — make existing behavior visible (days, not weeks; frontend-only)**
+**Wave 1 — make existing behavior visible (mostly frontend, with the small
+backend additions noted per item)**
 
-5. Recordings page + inline playback in call history and interaction detail
-   (§1.7)
-6. Repoint Call History at CDRs and bind the existing filters, paginator, and
-   CSV export; fix the KPI tiles that cap at 15 (§5.1, §5.2)
-7. Render `provisioning_health.next_actions` as a setup checklist using the card
-   pattern that already exists on the dashboard (§7.1)
-8. Effective-recording-policy display on all three forms (§1.2); surface
-   `recording_retention_days` (§1.9); remove org-scope `Inherit` (§1.3)
-9. Reports section over the shipped analytics, supervisor-report, and usage
-   endpoints (§5.6)
-10. Cheap correctness fixes: extension number instead of raw UUID (§2.5), the
+6. Recordings page + inline playback in call history and interaction detail
+   (§1.7). *Backend: join recording presence into the CDR/interaction resource so
+   a row knows whether audio exists.*
+7. Repoint Call History at CDRs and bind the existing filters, paginator, and
+   CSV export; fix the KPI tiles that cap at 15 (§5.1, §5.2). *Backend: none for
+   the table and filters; the counters need `cdrs/analytics/summary`, which
+   already exists.*
+8. Render `provisioning_health.next_actions` as a setup checklist using the card
+   pattern that already exists on the dashboard (§7.1). *Backend: add
+   `provisioning_health` to the frontend zod schema only — the payload already
+   ships.*
+9. Effective-recording-policy display on all three forms (§1.2); surface
+   `recording_retention_days` (§1.9); remove org-scope `Inherit` (§1.3).
+   *Backend: a new effective-policy GET endpoint wrapping the existing resolver,
+   plus `recording_retention_days` on `OrganizationResource` and a dry-run count
+   for the preview.*
+10. Reports section over the shipped analytics, supervisor-report, and usage
+    endpoints (§5.6). *Backend: none — all endpoints exist and are authorized.*
+11. Cheap correctness fixes: extension number instead of raw UUID (§2.5), the
     capacity tile (§9.6), the "Hidden" password clipboard bug (§9.5), and
     `onError` on the nine mutations missing it (§7.4)
 
 **Wave 2 — fix the model and the missing call path**
 
-11. Outbound route compilation with DID-based caller ID, privacy mode, and an
+12. Outbound route compilation with DID-based caller ID, privacy mode, and an
     emergency override (§4.2) — nothing else in caller ID matters until this
     exists
-12. Recording scopes for queue/team/agent (§1.4) and the enforcement lock (§1.5)
-13. Collapse the duplicate extension↔device link (§2.3); person-first
+13. Recording scopes for queue/team/agent (§1.4) and the enforcement lock (§1.5)
+14. Collapse the duplicate extension↔device link (§2.3); person-first
     user↔extension UI (§2.4)
-14. Debounce SIP profile restarts and stop swallowing ESL failures (§3.3)
-15. Trunk pages, reusable trunk selection on DIDs, org-visible registration
+15. Debounce SIP profile restarts and stop swallowing ESL failures (§3.3)
+16. Trunk pages, reusable trunk selection on DIDs, org-visible registration
     status, and a test-call button (§7.3)
-16. Active Calls page with hangup/transfer/hold/record (§5.3)
+17. Active Calls page with hangup/transfer/hold/record (§5.3) — requires Wave 0
+    item 5; do not build this UI against the unscoped endpoints
 
 **Wave 3 — the requested control surfaces**
 
-17. Per-organization `webrtc_enabled` tri-state + superadmin rollout screen
+18. Per-organization `webrtc_enabled` tri-state + superadmin rollout screen
     (§3.2) and WebRTC readiness checks (§3.4)
-18. Endpoint-binding UI: devices & apps per extension (§2.6)
-19. Typed organization settings from a published schema (§9.1)
-20. Web phone with an in-dialer caller-ID picker (§4.4) and desk-phone prefix
+19. Endpoint-binding UI: devices & apps per extension (§2.6)
+20. Typed organization settings from a published schema (§9.1)
+21. Web phone with an in-dialer caller-ID picker (§4.4) and desk-phone prefix
     codes (§4.3) — the server-side name validation this depends on is Wave 0
     item 4
-21. Troubleshooting panel: hangup cause, ring/talk split, registration state at
+22. Troubleshooting panel: hangup cause, ring/talk split, registration state at
     call time, per-attempt reachability verdict (§5.4)
 
 **Wave 4 — hierarchy, self-service, and operations**
 
-22. Scoped visibility (`own`/`team`/`org`) across recordings, CDRs, and call
+23. Scoped visibility (`own`/`team`/`org`) across recordings, CDRs, and call
     sessions, with a real supervisor role and `team_supervisors` pivot
     (§1.8, §8.2, §8.3)
-23. Audit sensitive reads and permission changes (§8.6); rebuild the permission
+24. Audit sensitive reads and permission changes (§8.6); rebuild the permission
     editor around presets (§8.5)
-24. `/me` self-service area, voicemail message store and inbox, agent state
+25. `/me` self-service area, voicemail message store and inbox, agent state
     control (§6.2, §6.3, §6.4)
-25. Tenant vs platform console split (§9.3); CDR ingestion health check and
+26. Tenant vs platform console split (§9.3); CDR ingestion health check and
     scheduled anomaly detection (§5.5)
 
 ---
@@ -1325,3 +1392,22 @@ number of profile restarts a save produces in practice) are inferences from the
 code path rather than observations.
 
 Line numbers are accurate as of this commit and will drift.
+
+**Corrections made during review.** Three findings in the first revision were
+wrong, and all three failed the same way — reading a component without reading
+its caller or its full registration path:
+
+- §1.4 claimed extension recording policy is ignored on queue-answered calls. The
+  resolver does gate on `answered_target_type`, but `EventProcessor` sets that to
+  `extension` from the winning endpoint binding, so precedence does apply. The
+  real gap is narrower: no policy exists on Queue/Team/Agent.
+- §5.3 called an Active Calls page "frontend-only work". The live-call endpoints
+  are unscoped across tenants, so that advice would have shipped a cross-tenant
+  exposure. It is now a Wave 0 backend item.
+- §8.4 listed `gateways.*` and `calls.control` as ungrantable. They are
+  contributed by enabled modules via `ModuleRegistry::collectPermissions()`.
+
+Treat the remaining single-source claims with proportionate caution — especially
+any that assert something is *absent*, which is the hardest thing to prove from a
+partial read. The findings verified end to end are the ones where a specific code
+path was traced from entry point to effect.
