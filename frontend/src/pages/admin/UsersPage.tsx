@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { KeyRound, Shield, SquarePen, Trash2, User as UserIcon, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -33,11 +33,11 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import api from '@/lib/api';
+import { useApiMutation } from '@/lib/api-hooks';
 import type { User } from '@/types/models';
 
 export default function UsersPage() {
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const { user: authUser } = useAuth();
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
@@ -49,14 +49,12 @@ export default function UsersPage() {
         },
     });
 
-    const deleteMutation = useMutation({
+    const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
             await api.delete(`users/${id}`);
         },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['users'] });
-            setUserToDelete(null);
-        },
+        invalidateQueries: [['users']],
+        onSuccess: () => setUserToDelete(null),
     });
 
     const isSuperadmin = authUser?.role === 'superadmin';

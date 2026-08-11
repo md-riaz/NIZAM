@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
+import { useApiMutation } from '@/lib/api-hooks';
 import type { Organization } from '@/types/models';
 
 const userSchema = z.object({
@@ -49,7 +50,6 @@ export default function UserFormPage() {
     const { id } = useParams<{ id: string }>();
     const isEdit = Boolean(id && id !== 'new');
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const { user: authUser } = useAuth();
 
     const form = useForm<UserFormValues>({
@@ -119,7 +119,7 @@ export default function UserFormPage() {
         }
     }, [form, isSuperadmin, scopedOrganizationId, user]);
 
-    const mutation = useMutation({
+    const mutation = useApiMutation({
         mutationFn: async (values: UserFormValues) => {
             const payload = {
                 ...values,
@@ -136,10 +136,8 @@ export default function UserFormPage() {
 
             return api.post('users', payload);
         },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['users'] });
-            navigate('/admin/users');
-        },
+        invalidateQueries: [['users']],
+        onSuccess: () => navigate('/admin/users'),
     });
 
     return (

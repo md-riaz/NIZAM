@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
     AlertCircle,
     CheckCircle,
@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import api from '@/lib/api';
+import { useApiMutation } from '@/lib/api-hooks';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -91,7 +92,6 @@ interface HealthResponse {
 // ─── SIP Status Page ─────────────────────────────────────────
 
 export default function SipStatusPage() {
-    const queryClient = useQueryClient();
     const [confirmAction, setConfirmAction] = useState<{
         type: string;
         data: any;
@@ -157,49 +157,39 @@ export default function SipStatusPage() {
     });
 
     // Mutations
-    const reloadProfileMutation = useMutation({
+    const reloadProfileMutation = useApiMutation({
         mutationFn: async (profile: string) => {
             await api.post('admin/sip-status/profiles/reload', { profile });
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-sip-profiles'] });
-        },
+        invalidateQueries: [['admin-sip-profiles']],
     });
 
-    const startProfileMutation = useMutation({
+    const startProfileMutation = useApiMutation({
         mutationFn: async (profile: string) => {
             await api.post('admin/sip-status/profiles/start', { profile });
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-sip-profiles'] });
-        },
+        invalidateQueries: [['admin-sip-profiles']],
     });
 
-    const stopProfileMutation = useMutation({
+    const stopProfileMutation = useApiMutation({
         mutationFn: async (profile: string) => {
             await api.post('admin/sip-status/profiles/stop', { profile });
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-sip-profiles'] });
-        },
+        invalidateQueries: [['admin-sip-profiles']],
     });
 
-    const killRegistrationMutation = useMutation({
+    const killRegistrationMutation = useApiMutation({
         mutationFn: async ({ user, realm }: { user: string; realm: string }) => {
             await api.post('admin/sip-status/registrations/kill', { user, realm });
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-sip-registrations'] });
-        },
+        invalidateQueries: [['admin-sip-registrations']],
     });
 
-    const killGatewayMutation = useMutation({
+    const killGatewayMutation = useApiMutation({
         mutationFn: async (gateway: string) => {
             await api.post('admin/sip-status/gateways/kill', { gateway });
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-sip-gateways'] });
-        },
+        invalidateQueries: [['admin-sip-gateways']],
     });
 
     const handleAction = (type: string, data: any) => {

@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Hash, Pencil, Trash2, Activity } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
+import { useApiMutation } from '@/lib/api-hooks';
 import { useOrganization } from '@/context/OrganizationContext';
 import type { Did } from '@/types/models';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,6 @@ export default function DidsPage() {
     const { user } = useAuth();
     const { activeOrganization, organizationApiPrefix } = useOrganization();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const [didToDelete, setDidToDelete] = useState<Did | null>(null);
     const isSuperadmin = user?.role === 'superadmin';
 
@@ -95,14 +95,12 @@ export default function DidsPage() {
         [gatewayStatuses],
     );
 
-    const deleteMutation = useMutation({
+    const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
             return api.delete(`${organizationApiPrefix}/dids/${id}`);
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['dids'] });
-            setDidToDelete(null);
-        },
+        invalidateQueries: [['dids']],
+        onSuccess: () => setDidToDelete(null),
     });
 
     if (!activeOrganization) {
