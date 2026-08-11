@@ -70,7 +70,6 @@ class User extends Authenticatable
         return $this->belongsTo(HolidayCalendar::class);
     }
 
-
     public function effectiveSchedule(): ?Schedule
     {
         return $this->schedule ?: $this->organization?->defaultSchedule;
@@ -101,7 +100,6 @@ class User extends Authenticatable
         return $this->hasMany(DeviceProfile::class);
     }
 
-
     public function isSuperadmin(): bool
     {
         return $this->role === 'superadmin';
@@ -118,19 +116,67 @@ class User extends Authenticatable
     }
 
     /**
+     * Baseline permissions granted to a role when a user is created.
+     *
+     * Deliberately minimal. Because no policy narrows visibility below the
+     * organization yet, every grant here is organization-wide — so this list
+     * excludes anything that would expose one colleague's content to another
+     * (recordings, CDRs, audit logs) and everything that mutates configuration.
+     * Widen it only alongside own/team scoping.
+     *
+     * @var array<string, list<string>>
+     */
+    public const ROLE_BASELINE_PERMISSIONS = [
+        'agent' => [
+            'extensions.view',
+            'calls.originate',
+            'queues.view',
+            'agents.view',
+        ],
+    ];
+
+    /**
+     * Baseline permission slugs for a role, or an empty list if it has none.
+     *
+     * @return list<string>
+     */
+    public static function baselinePermissionsFor(?string $role): array
+    {
+        return self::ROLE_BASELINE_PERMISSIONS[$role] ?? [];
+    }
+
+    /**
+     * Grant this user's role baseline.
+     *
+     * Slugs absent from the permissions table are skipped rather than failing —
+     * some baseline slugs are contributed by optional modules, so the set
+     * legitimately varies with which modules are enabled.
+     */
+    public function grantRoleBaselinePermissions(): void
+    {
+        $slugs = self::baselinePermissionsFor($this->role);
+
+        if ($slugs === []) {
+            return;
+        }
+
+        $this->grantPermissions($slugs);
+    }
+
+    /**
      * Check if the user has a specific permission by slug.
-     * Admins always have all permissions.
-     * If no permissions have been assigned to the user yet, allow all (default-open).
-     * Once any permission is explicitly granted, only those permissions are allowed.
+     *
+     * Deny-by-default: a user holds exactly the permissions granted to them.
+     * Superadmins and organization admins bypass the check entirely.
+     *
+     * Note this was previously default-open — a user with no grants was allowed
+     * everything, so permissions subtracted rather than added and a new agent
+     * silently held every permission in their organization. New users now
+     * receive their role baseline at creation (see grantRoleBaselinePermissions).
      */
     public function hasPermission(string $slug): bool
     {
         if ($this->isSuperadmin() || $this->isAdmin()) {
-            return true;
-        }
-
-        // If no permissions have been assigned to this user, default to allow
-        if ($this->permissions()->count() === 0) {
             return true;
         }
 

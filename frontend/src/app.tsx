@@ -192,13 +192,13 @@ const router = createBrowserRouter(
                 <Route path="capabilities" element={<SuperadminOnlyRoute><CapabilitiesPage /></SuperadminOnlyRoute>} />
                 <Route path="system-settings" element={<SuperadminOnlyRoute><SystemSettingsPage /></SuperadminOnlyRoute>} />
                 <Route path="logs" element={<AuditLogsPage />} />
-                <Route path="system-logs" element={<LogViewerPage />} />
+                <Route path="system-logs" element={<SuperadminOnlyRoute><LogViewerPage /></SuperadminOnlyRoute>} />
                 <Route path="auth-tokens" element={<AuthTokensPage />} />
-                <Route path="sip-status" element={<SipStatusPage />} />
+                <Route path="sip-status" element={<SuperadminOnlyRoute><SipStatusPage /></SuperadminOnlyRoute>} />
                 <Route path="freeswitch/modules" element={<SuperadminOnlyRoute><FreeSwitchModulesPage /></SuperadminOnlyRoute>} />
-                <Route path="sip-profiles" element={<SipProfilesPage />} />
-                <Route path="sip-profiles/create" element={<SipProfileFormPage />} />
-                <Route path="sip-profiles/:id/edit" element={<SipProfileFormPage />} />
+                <Route path="sip-profiles" element={<SuperadminOnlyRoute><SipProfilesPage /></SuperadminOnlyRoute>} />
+                <Route path="sip-profiles/create" element={<SuperadminOnlyRoute><SipProfileFormPage /></SuperadminOnlyRoute>} />
+                <Route path="sip-profiles/:id/edit" element={<SuperadminOnlyRoute><SipProfileFormPage /></SuperadminOnlyRoute>} />
             </Route>
 
             {/* Catch-all */}

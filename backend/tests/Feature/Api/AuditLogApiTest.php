@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\AuditLog;
 use App\Models\Extension;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -53,7 +54,12 @@ class AuditLogApiTest extends TestCase
         $response->assertJsonFragment(['action' => 'created']);
     }
 
-    public function test_user_can_list_audit_logs_default_open(): void
+    /**
+     * Permissions are deny-by-default. An agent holding no explicit grant must
+     * not be able to read the organization's audit trail — this previously
+     * returned 200 because a user with zero grants was allowed everything.
+     */
+    public function test_agent_without_permission_cannot_list_audit_logs(): void
     {
         AuditLog::create([
             'organization_id' => $this->organization->id,
@@ -63,10 +69,27 @@ class AuditLogApiTest extends TestCase
             'auditable_id' => 'test-id',
         ]);
 
-        $response = $this->actingAs($this->user, 'sanctum')
-            ->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs");
+        $this->actingAs($this->user, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs")
+            ->assertForbidden();
+    }
 
-        $response->assertStatus(200);
+    public function test_agent_with_granted_permission_can_list_audit_logs(): void
+    {
+        AuditLog::create([
+            'organization_id' => $this->organization->id,
+            'user_id' => $this->admin->id,
+            'action' => 'updated',
+            'auditable_type' => Extension::class,
+            'auditable_id' => 'test-id',
+        ]);
+
+        Permission::updateOrCreate(['slug' => 'audit_logs.view'], ['module' => 'core']);
+        $this->user->grantPermissions(['audit_logs.view']);
+
+        $this->actingAs($this->user, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/audit-logs")
+            ->assertStatus(200);
     }
 
     public function test_can_filter_audit_logs_by_action(): void

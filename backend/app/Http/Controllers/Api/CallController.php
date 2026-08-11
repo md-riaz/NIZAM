@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\CallDeliveryAttempt;
+use App\Models\CallSession;
 use App\Models\Organization;
 use App\Services\Call\OutboundOriginateService;
 use App\Services\EslConnectionManager;
@@ -31,7 +33,15 @@ class CallController extends Controller
         $validated = $request->validate([
             'extension' => 'required|string',
             'destination' => 'required|string',
-            'caller_id_name' => 'nullable|string',
+            // Both halves of the presented caller ID are derived server-side.
+            // The number comes from the extension's allowed outbound DIDs, and
+            // the name from its configured caller-ID name — a client-supplied
+            // display name would let any caller present an arbitrary identity
+            // ("IRS", a colleague's name) on the PSTN, which the DID allow-list
+            // is there to prevent.
+            'caller_id_name' => [
+                'prohibited',
+            ],
             'caller_id_number' => [
                 'prohibited',
             ],
@@ -75,7 +85,6 @@ class CallController extends Controller
                 organization: $organization,
                 extension: $extension,
                 destination: $validated['destination'],
-                callerIdName: $validated['caller_id_name'] ?? null,
                 didId: $validated['did_id'] ?? null,
                 gatewayId: $validated['gateway_id'] ?? null,
             );
@@ -98,7 +107,14 @@ class CallController extends Controller
     }
 
     /**
-     * Get active channels/calls status.
+     * Get active channels/calls status for this organization.
+     *
+     * FreeSWITCH is shared by every tenant, so `show channels` reports the whole
+     * switch. Rows are filtered down to channels attributable to this
+     * organization — either by a CallSession record or by the dialplan context,
+     * which is keyed on the organization domain. Filtering is deliberately
+     * inclusive-by-evidence: a channel we cannot attribute is omitted rather
+     * than shown, since the alternative leaks other tenants' call metadata.
      */
     public function status(Organization $organization): JsonResponse
     {
@@ -113,11 +129,105 @@ class CallController extends Controller
         $esl->disconnect();
 
         $channels = json_decode($response ?? '{}', true);
+        $rows = is_array($channels['rows'] ?? null) ? $channels['rows'] : [];
+        $rows = $this->channelsForOrganization($organization, $rows);
 
         return response()->json([
-            'channels' => $channels['rows'] ?? [],
-            'count' => $channels['row_count'] ?? 0,
+            'channels' => $rows,
+            'count' => count($rows),
         ]);
+    }
+
+    /**
+     * Filter raw `show channels` rows down to one organization.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    protected function channelsForOrganization(Organization $organization, array $rows): array
+    {
+        if ($rows === []) {
+            return [];
+        }
+
+        $uuids = array_values(array_filter(array_map(
+            static fn ($row): ?string => is_array($row) ? ($row['uuid'] ?? null) : null,
+            $rows,
+        )));
+
+        if ($uuids === []) {
+            $ownedUuids = [];
+        } else {
+            $ownedUuids = CallSession::query()
+                ->where('organization_id', $organization->id)
+                ->whereIn('call_uuid', $uuids)
+                ->pluck('call_uuid')
+                ->all();
+
+            // Delivered legs have their own channel UUID, so a B-leg belonging
+            // to this organization is attributable even though it is not the
+            // session's call_uuid.
+            $ownedUuids = array_merge($ownedUuids, CallDeliveryAttempt::query()
+                ->whereIn('freeswitch_leg_uuid', $uuids)
+                ->whereHas('callSession', fn ($query) => $query->where('organization_id', $organization->id))
+                ->pluck('freeswitch_leg_uuid')
+                ->all());
+        }
+
+        $ownedUuids = array_flip($ownedUuids);
+        $domain = (string) $organization->domain;
+
+        return array_values(array_filter($rows, static function ($row) use ($ownedUuids, $domain): bool {
+            if (! is_array($row)) {
+                return false;
+            }
+
+            if (isset($row['uuid']) && isset($ownedUuids[$row['uuid']])) {
+                return true;
+            }
+
+            if ($domain === '') {
+                return false;
+            }
+
+            if (($row['context'] ?? null) === $domain) {
+                return true;
+            }
+
+            $presenceId = (string) ($row['presence_id'] ?? '');
+
+            return $presenceId !== '' && str_ends_with($presenceId, '@'.$domain);
+        }));
+    }
+
+    /**
+     * Resolve a channel UUID that this organization is allowed to control.
+     *
+     * Returns null when the UUID has no CallSession for this organization, which
+     * callers translate into a 404. Without this check any authenticated user
+     * could hang up, transfer, hold, or start recording another tenant's call
+     * simply by naming its UUID.
+     */
+    protected function organizationOwnsCall(Organization $organization, string $callUuid): bool
+    {
+        $ownsSession = CallSession::query()
+            ->where('organization_id', $organization->id)
+            ->where('call_uuid', $callUuid)
+            ->exists();
+
+        if ($ownsSession) {
+            return true;
+        }
+
+        // A call delivered to a SIP or PSTN endpoint has a distinct B-leg
+        // channel, and that leg UUID — not the session's call_uuid — is what a
+        // supervisor acts on when hanging up or recording the answered leg. It
+        // is surfaced to clients as winner.leg_uuid, so it has to be accepted
+        // here or legitimate control of an answered call would 404.
+        return CallDeliveryAttempt::query()
+            ->where('freeswitch_leg_uuid', $callUuid)
+            ->whereHas('callSession', fn ($query) => $query->where('organization_id', $organization->id))
+            ->exists();
     }
 
     /**
@@ -131,6 +241,10 @@ class CallController extends Controller
             'uuid' => 'required|string|max:255',
             'cause' => 'nullable|string|max:100',
         ]);
+
+        if (! $this->organizationOwnsCall($organization, $validated['uuid'])) {
+            return response()->json(['message' => 'Call not found for this organization.'], 404);
+        }
 
         $esl = app(EslConnectionManager::class);
 
@@ -161,6 +275,10 @@ class CallController extends Controller
             'leg' => 'nullable|string|in:aleg,bleg,both',
         ]);
 
+        if (! $this->organizationOwnsCall($organization, $validated['uuid'])) {
+            return response()->json(['message' => 'Call not found for this organization.'], 404);
+        }
+
         $esl = app(EslConnectionManager::class);
 
         if (! $esl->connect()) {
@@ -190,6 +308,10 @@ class CallController extends Controller
             'action' => 'required|string|in:start,stop',
         ]);
 
+        if (! $this->organizationOwnsCall($organization, $validated['uuid'])) {
+            return response()->json(['message' => 'Call not found for this organization.'], 404);
+        }
+
         $response = $validated['action'] === 'start'
             ? $this->answeredRecordingStarter->startForCall($organization->id, $validated['uuid'])
             : $this->answeredRecordingStarter->stopForCall($organization->id, $validated['uuid']);
@@ -211,6 +333,10 @@ class CallController extends Controller
             'uuid' => 'required|string|max:255',
             'action' => 'required|string|in:hold,unhold',
         ]);
+
+        if (! $this->organizationOwnsCall($organization, $validated['uuid'])) {
+            return response()->json(['message' => 'Call not found for this organization.'], 404);
+        }
 
         $esl = app(EslConnectionManager::class);
 

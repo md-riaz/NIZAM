@@ -33,5 +33,6 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="FREESWITCH_GATEWAY_DIRECTORY" value="storage/framework/testing/gateways"/>
+        <env name="FREESWITCH_SIP_PROFILE_DIRECTORY" value="storage/framework/testing/sip_profiles"/>
     </php>
 </phpunit>

@@ -46,6 +46,13 @@ if [ -n "$DB_HOST" ]; then
     echo "[entrypoint] Running pending migrations..."
     php artisan migrate --force --no-interaction 2>&1 || echo "[entrypoint] Migration failed — continuing anyway"
 
+    # Permissions are deny-by-default, so the permissions table must be
+    # populated before any non-admin user is created — otherwise their role
+    # baseline has no rows to attach and they land with no access at all.
+    # Matches what install.sh already does for bare-metal deployments.
+    echo "[entrypoint] Syncing permissions..."
+    php artisan nizam:sync-permissions --no-interaction 2>&1 || echo "[entrypoint] Permission sync failed — continuing anyway"
+
     if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
         echo "[entrypoint] ADMIN_EMAIL + ADMIN_PASSWORD set — running seeders..."
         php artisan db:seed --force --no-interaction 2>&1 || echo "[entrypoint] Seeding failed — continuing anyway"

@@ -144,7 +144,6 @@ return [
         ],
     ],
 
-
     /*
     |--------------------------------------------------------------------------
     | WebRTC Configuration (System-Wide)
@@ -171,6 +170,14 @@ return [
     'gateway_provisioning' => [
         'profile' => env('FREESWITCH_GATEWAY_PROFILE', 'external'),
         'external_directory' => env('FREESWITCH_GATEWAY_DIRECTORY', storage_path('app/freeswitch/sip_profiles/external')),
+    ],
+
+    'sip_profile_provisioning' => [
+        // Where compiled SIP profile XML is written for FreeSWITCH to read.
+        // Overridable so the test suite does not rewrite the checked-in
+        // profiles under storage/app — saving any SipProfile recompiles every
+        // profile to disk, which otherwise leaves the working tree dirty.
+        'directory' => env('FREESWITCH_SIP_PROFILE_DIRECTORY', storage_path('app/freeswitch/sip_profiles')),
     ],
 
     'xml_cdr' => [
@@ -212,17 +219,17 @@ return [
     */
     'push' => [
         'apns' => [
-            'key_id'           => env('APNS_KEY_ID'),
-            'team_id'          => env('APNS_TEAM_ID'),
-            'private_key'      => env('APNS_PRIVATE_KEY'),
+            'key_id' => env('APNS_KEY_ID'),
+            'team_id' => env('APNS_TEAM_ID'),
+            'private_key' => env('APNS_PRIVATE_KEY'),
             'private_key_path' => env('APNS_PRIVATE_KEY_PATH'),
-            'bundle_id'        => env('APNS_BUNDLE_ID'),
-            'production'       => (bool) env('APNS_PRODUCTION', true),
+            'bundle_id' => env('APNS_BUNDLE_ID'),
+            'production' => (bool) env('APNS_PRODUCTION', true),
         ],
         'fcm' => [
-            'project_id'            => env('FCM_PROJECT_ID'),
-            'service_account_json'  => env('FCM_SERVICE_ACCOUNT_JSON'),
-            'service_account_path'  => env('FCM_SERVICE_ACCOUNT_PATH'),
+            'project_id' => env('FCM_PROJECT_ID'),
+            'service_account_json' => env('FCM_SERVICE_ACCOUNT_JSON'),
+            'service_account_path' => env('FCM_SERVICE_ACCOUNT_PATH'),
         ],
     ],
 ];

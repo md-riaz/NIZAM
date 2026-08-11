@@ -19,8 +19,8 @@ class CallSessionController extends Controller
      */
     public function index(Organization $organization)
     {
-        // Assuming Gate::authorize('viewAny', CallSession::class) logic can be wired later
-        // Currently keeping it simple and organization scoped
+        $this->authorize('viewAny', [CallSession::class, $organization]);
+
         return CallSessionResource::collection(
             $organization->callSessions()
                 ->with([
@@ -36,9 +36,14 @@ class CallSessionController extends Controller
      */
     public function show(Organization $organization, CallSession $callSession): JsonResponse|CallSessionResource
     {
+        // Order matters: answer 404 for anything outside this organization before
+        // authorizing, otherwise a foreign session returns 403 while an unknown
+        // one returns 404 — an existence oracle for other tenants' session IDs.
         if ($callSession->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call session not found.'], 404);
         }
+
+        $this->authorize('view', $callSession);
 
         $callSession->load([
             'traceEvents' => function ($query) {
@@ -65,9 +70,14 @@ class CallSessionController extends Controller
      */
     public function analyze(Organization $organization, CallSession $callSession, CallTraceAnalyzer $analyzer): JsonResponse
     {
+        // Order matters: answer 404 for anything outside this organization before
+        // authorizing, otherwise a foreign session returns 403 while an unknown
+        // one returns 404 — an existence oracle for other tenants' session IDs.
         if ($callSession->organization_id !== $organization->id) {
             return response()->json(['message' => 'Call session not found.'], 404);
         }
+
+        $this->authorize('view', $callSession);
 
         $callSession->load([
             'deliveryAttempts' => function ($query) {
@@ -84,7 +94,7 @@ class CallSessionController extends Controller
         ]);
 
         return response()->json([
-            'data' => $analyzer->analyze($callSession)
+            'data' => $analyzer->analyze($callSession),
         ]);
     }
 }

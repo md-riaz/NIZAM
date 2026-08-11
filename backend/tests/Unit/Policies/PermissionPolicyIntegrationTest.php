@@ -3,8 +3,8 @@
 namespace Tests\Unit\Policies;
 
 use App\Models\Extension;
-use App\Models\Permission;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use App\Policies\ExtensionPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,19 +14,20 @@ class PermissionPolicyIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_with_no_permissions_assigned_defaults_to_allow(): void
+    public function test_user_with_no_permissions_assigned_is_denied(): void
     {
         $organization = Organization::factory()->create();
         $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
         $extension = Extension::factory()->create(['organization_id' => $organization->id]);
         $policy = new ExtensionPolicy;
 
-        // No permissions assigned → default-open
-        $this->assertTrue($policy->viewAny($user));
-        $this->assertTrue($policy->view($user, $extension));
-        $this->assertTrue($policy->create($user));
-        $this->assertTrue($policy->update($user, $extension));
-        $this->assertTrue($policy->delete($user, $extension));
+        // No permissions assigned → denied. Policies are deny-by-default, so an
+        // agent nobody has configured cannot read or mutate extensions.
+        $this->assertFalse($policy->viewAny($user));
+        $this->assertFalse($policy->view($user, $extension));
+        $this->assertFalse($policy->create($user));
+        $this->assertFalse($policy->update($user, $extension));
+        $this->assertFalse($policy->delete($user, $extension));
     }
 
     public function test_user_with_view_only_permission_cannot_create(): void

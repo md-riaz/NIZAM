@@ -7,13 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
 use App\Http\Resources\ExtensionResource;
+use App\Models\DeviceProfile;
 use App\Models\Extension;
 use App\Models\Organization;
-use App\Models\DeviceProfile;
 use App\Services\ExtensionFeatureService;
 use App\Services\OrganizationManifestBuilder;
-use App\Services\WebRtcConfigService;
 use App\Services\WebhookDispatcher;
+use App\Services\WebRtcConfigService;
 use Illuminate\Http\JsonResponse;
 use InvalidArgumentException;
 
@@ -76,7 +76,9 @@ class ExtensionController extends Controller
         }
 
         $this->syncOutboundPolicy($extension, $allowedOutboundDidIds, $allowedOutboundGatewayIds);
-        $this->syncOwnedDevice($extension, $attributes['device_profile_id'] ?? null);
+        if (($attributes['device_profile_id'] ?? null) !== null) {
+            $this->syncOwnedDevice($extension, $attributes['device_profile_id']);
+        }
 
         $this->webhookDispatcher->dispatch($organization->id, 'extension.created', [
             'extension_id' => $extension->id,
@@ -118,6 +120,7 @@ class ExtensionController extends Controller
         unset($attributes['allowed_outbound_did_ids'], $attributes['allowed_outbound_gateway_ids']);
 
         $oldExtensionNumber = $extension->extension;
+        $originalDeviceProfileId = $extension->device_profile_id;
 
         try {
             $extension->update($attributes);
@@ -130,7 +133,14 @@ class ExtensionController extends Controller
         }
 
         $this->syncOutboundPolicy($extension, $allowedOutboundDidIds, $allowedOutboundGatewayIds);
-        $this->syncOwnedDevice($extension, $attributes['device_profile_id'] ?? null);
+        // Reconcile the reverse link only when this extension's own
+        // device_profile_id actually changed. The admin form always submits the
+        // field — null for a user-owned extension — so acting on its value
+        // alone would unlink a phone assigned from the Devices page on any
+        // unrelated edit.
+        if ($extension->device_profile_id !== $originalDeviceProfileId) {
+            $this->syncOwnedDevice($extension, $extension->device_profile_id);
+        }
 
         if ((($attributes['extension'] ?? null) !== null && $oldExtensionNumber !== $extension->extension)
             || array_key_exists('is_active', $attributes)) {

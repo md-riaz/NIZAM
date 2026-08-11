@@ -6,16 +6,29 @@ use App\Http\Controllers\Controller;
 use App\Models\SipProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 
+/**
+ * Manages global FreeSWITCH SIP profiles.
+ *
+ * SIP profiles are platform-level objects shared by every organization, and
+ * saving one restarts the corresponding sofia profile (see SipProfileSetting),
+ * which drops registrations for all tenants. Every action is therefore gated on
+ * the platform-admin ability rather than on organization-scoped permissions.
+ */
 class SipProfileController extends Controller
 {
     public function index()
     {
+        Gate::authorize('platform-admin');
+
         return SipProfile::with('settings')->orderByDesc('id')->get();
     }
 
     public function store(Request $request)
     {
+        Gate::authorize('platform-admin');
+
         $validated = $request->validate([
             'name' => 'required|string|unique:sip_profiles,name',
             'hostname' => 'nullable|string',
@@ -48,13 +61,17 @@ class SipProfileController extends Controller
 
     public function show(SipProfile $sipProfile)
     {
+        Gate::authorize('platform-admin');
+
         return $sipProfile->load('settings');
     }
 
     public function update(Request $request, SipProfile $sipProfile)
     {
+        Gate::authorize('platform-admin');
+
         $validated = $request->validate([
-            'name' => 'sometimes|string|unique:sip_profiles,name,' . $sipProfile->id,
+            'name' => 'sometimes|string|unique:sip_profiles,name,'.$sipProfile->id,
             'hostname' => 'nullable|string',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
@@ -65,7 +82,7 @@ class SipProfileController extends Controller
             'settings.*.is_enabled' => 'boolean',
             'settings.*.description' => 'nullable|string',
             'settings_to_delete' => 'array',
-            'settings_to_delete.*' => 'uuid'
+            'settings_to_delete.*' => 'uuid',
         ]);
 
         $this->validateWebRtcSettings($validated['settings'] ?? []);
@@ -78,7 +95,7 @@ class SipProfileController extends Controller
         ]);
 
         // Delete requested settings
-        if (!empty($validated['settings_to_delete'])) {
+        if (! empty($validated['settings_to_delete'])) {
             $sipProfile->settings()->whereIn('id', $validated['settings_to_delete'])->delete();
         }
 
@@ -102,6 +119,8 @@ class SipProfileController extends Controller
 
     public function destroy(SipProfile $sipProfile)
     {
+        Gate::authorize('platform-admin');
+
         $sipProfile->delete();
 
         return response()->noContent();
