@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\CallSession;
 use App\Models\Did;
-use App\Models\SipProfile;
 use App\Models\Organization;
 use App\Models\OrganizationDialplanManifest;
+use App\Models\SipProfile;
 use Database\Seeders\SipProfileSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -300,7 +300,7 @@ class FreeswitchXmlTest extends TestCase
 
         app(\App\Services\SipProfileCompiler::class)->compileAllToDisk();
 
-        $compiledXml = file_get_contents(storage_path('app/freeswitch/sip_profiles/internal.xml'));
+        $compiledXml = file_get_contents(config('telephony.sip_profile_provisioning.directory').'/internal.xml');
 
         $this->assertIsString($compiledXml);
         $this->assertStringNotContainsString('internal/*.xml', $compiledXml);
@@ -313,7 +313,7 @@ class FreeswitchXmlTest extends TestCase
 
         app(\App\Services\SipProfileCompiler::class)->compileAllToDisk();
 
-        $compiledXml = file_get_contents(storage_path('app/freeswitch/sip_profiles/external.xml'));
+        $compiledXml = file_get_contents(config('telephony.sip_profile_provisioning.directory').'/external.xml');
 
         $this->assertIsString($compiledXml);
         $this->assertStringContainsString('<X-PRE-PROCESS cmd="include" data="/usr/local/freeswitch/db/sip_profiles/external/*.xml"/>', $compiledXml);
@@ -567,7 +567,7 @@ class FreeswitchXmlTest extends TestCase
 
         app(\App\Services\SipProfileCompiler::class)->compileAllToDisk();
 
-        $compiledXml = file_get_contents(storage_path('app/freeswitch/sip_profiles/internal.xml'));
+        $compiledXml = file_get_contents(config('telephony.sip_profile_provisioning.directory').'/internal.xml');
 
         $this->assertIsString($compiledXml);
         $this->assertStringContainsString('<profile name="internal">', $compiledXml);

@@ -23,9 +23,26 @@ class RoleBaselineBackfillMigrationTest extends TestCase
         $migration->up();
     }
 
+    /**
+     * The baseline the migration itself grants, duplicated here on purpose.
+     *
+     * The migration snapshots its own list rather than reading
+     * User::ROLE_BASELINE_PERMISSIONS, so this test must pin the same fixed set
+     * — otherwise a future change to the model constant would silently change
+     * what this test asserts about a historical migration.
+     *
+     * @var list<string>
+     */
+    private const MIGRATION_AGENT_BASELINE = [
+        'extensions.view',
+        'calls.originate',
+        'queues.view',
+        'agents.view',
+    ];
+
     private function seedBaselinePermissions(): void
     {
-        foreach (User::baselinePermissionsFor('agent') as $slug) {
+        foreach (self::MIGRATION_AGENT_BASELINE as $slug) {
             Permission::updateOrCreate(['slug' => $slug], ['module' => 'core']);
         }
 
@@ -43,7 +60,7 @@ class RoleBaselineBackfillMigrationTest extends TestCase
         $this->runBackfill();
 
         $granted = $agent->fresh()->permissions->pluck('slug')->sort()->values()->all();
-        $expected = collect(User::baselinePermissionsFor('agent'))->sort()->values()->all();
+        $expected = collect(self::MIGRATION_AGENT_BASELINE)->sort()->values()->all();
 
         $this->assertSame($expected, $granted);
         $this->assertTrue($agent->fresh()->hasPermission('extensions.view'));

@@ -111,6 +111,29 @@ class PlatformAuthorizationTest extends TestCase
             ->assertForbidden();
     }
 
+    /**
+     * Middleware must reject before FormRequest validation runs, otherwise an
+     * unauthorized caller receives 422 and can probe validation rules such as
+     * exists:organizations,id.
+     */
+    public function test_unauthorized_gateway_write_is_rejected_before_validation(): void
+    {
+        $organization = Organization::factory()->create();
+
+        $this->actingAs($this->tenantAdmin($organization), 'sanctum')
+            ->postJson('/api/v1/admin/gateways', [])
+            ->assertForbidden();
+    }
+
+    public function test_unauthorized_sip_profile_write_is_rejected_before_validation(): void
+    {
+        $organization = Organization::factory()->create();
+
+        $this->actingAs($this->tenantAdmin($organization), 'sanctum')
+            ->postJson('/api/v1/admin/sip-profiles', [])
+            ->assertForbidden();
+    }
+
     public function test_platform_admin_can_list_all_gateways(): void
     {
         $organization = Organization::factory()->create();

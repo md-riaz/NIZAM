@@ -108,7 +108,16 @@ class UserController extends Controller
             $validated['password'] = Hash::make($validated['password']);
         }
 
+        $previousRole = $user->role;
         $user->update($validated);
+
+        // Demoting an admin to agent moves them from bypassing permission checks
+        // to being subject to them. Admins usually hold no pivot rows precisely
+        // because they bypassed the checks, so without this the demoted account
+        // would end up with no permissions at all instead of the agent baseline.
+        if ($previousRole !== $user->role) {
+            $user->grantRoleBaselinePermissions();
+        }
 
         return new UserResource($user->fresh()->load('organization'));
     }

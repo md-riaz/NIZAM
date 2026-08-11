@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\CallSession;
+use App\Models\Organization;
 use App\Models\User;
 
 /**
@@ -23,9 +24,15 @@ class CallSessionPolicy
         return null;
     }
 
-    public function viewAny(User $user): bool
+    /**
+     * `EnsureOrganizationAccess` already rejects a tenant user who requests
+     * another organization's route, so this is defence in depth rather than the
+     * only barrier — but the whole point of this class is to not depend on a
+     * single layer, so the requested organization is checked here too.
+     */
+    public function viewAny(User $user, Organization $organization): bool
     {
-        return $user->organization_id !== null
+        return $user->organization_id === $organization->id
             && $user->hasPermission('cdrs.view');
     }
 

@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\Permission;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -68,7 +68,7 @@ class PermissionTest extends TestCase
         $this->assertTrue($admin->hasPermission('anything.at.all'));
     }
 
-    public function test_user_without_explicit_permissions_defaults_to_allow(): void
+    public function test_user_without_explicit_permissions_is_denied(): void
     {
         $organization = Organization::create([
             'name' => 'Test',
@@ -79,8 +79,10 @@ class PermissionTest extends TestCase
 
         $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
 
-        // Users with no explicit permissions default to allow (pre-sync state)
-        $this->assertTrue($user->hasPermission('extensions.view'));
+        // Permissions are deny-by-default: a user holds exactly what has been
+        // granted. This previously returned true, which meant a new agent
+        // silently held every permission in their organization.
+        $this->assertFalse($user->hasPermission('extensions.view'));
     }
 
     public function test_user_with_granted_permission_returns_true(): void

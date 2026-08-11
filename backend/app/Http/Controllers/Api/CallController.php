@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
 use App\Models\Organization;
 use App\Services\Call\OutboundOriginateService;
@@ -154,13 +155,24 @@ class CallController extends Controller
             $rows,
         )));
 
-        $ownedUuids = $uuids === []
-            ? []
-            : CallSession::query()
+        if ($uuids === []) {
+            $ownedUuids = [];
+        } else {
+            $ownedUuids = CallSession::query()
                 ->where('organization_id', $organization->id)
                 ->whereIn('call_uuid', $uuids)
                 ->pluck('call_uuid')
                 ->all();
+
+            // Delivered legs have their own channel UUID, so a B-leg belonging
+            // to this organization is attributable even though it is not the
+            // session's call_uuid.
+            $ownedUuids = array_merge($ownedUuids, CallDeliveryAttempt::query()
+                ->whereIn('freeswitch_leg_uuid', $uuids)
+                ->whereHas('callSession', fn ($query) => $query->where('organization_id', $organization->id))
+                ->pluck('freeswitch_leg_uuid')
+                ->all());
+        }
 
         $ownedUuids = array_flip($ownedUuids);
         $domain = (string) $organization->domain;
@@ -198,9 +210,23 @@ class CallController extends Controller
      */
     protected function organizationOwnsCall(Organization $organization, string $callUuid): bool
     {
-        return CallSession::query()
+        $ownsSession = CallSession::query()
             ->where('organization_id', $organization->id)
             ->where('call_uuid', $callUuid)
+            ->exists();
+
+        if ($ownsSession) {
+            return true;
+        }
+
+        // A call delivered to a SIP or PSTN endpoint has a distinct B-leg
+        // channel, and that leg UUID — not the session's call_uuid — is what a
+        // supervisor acts on when hanging up or recording the answered leg. It
+        // is surfaced to clients as winner.leg_uuid, so it has to be accepted
+        // here or legitimate control of an answered call would 404.
+        return CallDeliveryAttempt::query()
+            ->where('freeswitch_leg_uuid', $callUuid)
+            ->whereHas('callSession', fn ($query) => $query->where('organization_id', $organization->id))
             ->exists();
     }
 

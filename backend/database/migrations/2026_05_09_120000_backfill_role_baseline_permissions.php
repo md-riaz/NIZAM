@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -17,9 +16,28 @@ use Illuminate\Support\Facades\DB;
  */
 return new class extends Migration
 {
+    /**
+     * Snapshot of the role baselines at the time this migration was written.
+     *
+     * Deliberately not User::ROLE_BASELINE_PERMISSIONS: a migration must grant
+     * what it meant on the day it was authored. Reading the live constant would
+     * let a later baseline change retroactively alter what a delayed deployment
+     * grants to existing users.
+     *
+     * @var array<string, list<string>>
+     */
+    private const ROLE_BASELINE_PERMISSIONS = [
+        'agent' => [
+            'extensions.view',
+            'calls.originate',
+            'queues.view',
+            'agents.view',
+        ],
+    ];
+
     public function up(): void
     {
-        foreach (User::ROLE_BASELINE_PERMISSIONS as $role => $slugs) {
+        foreach (self::ROLE_BASELINE_PERMISSIONS as $role => $slugs) {
             $permissionIds = DB::table('permissions')
                 ->whereIn('slug', $slugs)
                 ->pluck('id');

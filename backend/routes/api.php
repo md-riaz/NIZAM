@@ -27,24 +27,24 @@ use App\Http\Controllers\Api\FreeSwitchModuleStatusController;
 use App\Http\Controllers\Api\GatewayController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\HolidayCalendarController;
+use App\Http\Controllers\Api\InteractionController;
+use App\Http\Controllers\Api\IvrController;
 use App\Http\Controllers\Api\MobileDeviceController;
 use App\Http\Controllers\Api\NumberProviderController;
-use App\Http\Controllers\Api\IvrController;
-use App\Http\Controllers\Api\InteractionController;
 use App\Http\Controllers\Api\OfficeFeatureController;
-use App\Http\Controllers\Api\QueueController;
-use App\Http\Controllers\Api\QueueMetricsController;
-use App\Http\Controllers\Api\RecordingController;
-use App\Http\Controllers\Api\RegistrationStatusController;
-use App\Http\Controllers\Api\ScheduleController;
-use App\Http\Controllers\Api\SystemMediaController;
-use App\Http\Controllers\Api\SupervisorReportController;
-use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\OrganizationDomainSuggestionController;
 use App\Http\Controllers\Api\OrganizationProvisioningHealthController;
 use App\Http\Controllers\Api\OrganizationStatsController;
 use App\Http\Controllers\Api\PlatformSettingController;
+use App\Http\Controllers\Api\QueueController;
+use App\Http\Controllers\Api\QueueMetricsController;
+use App\Http\Controllers\Api\RecordingController;
+use App\Http\Controllers\Api\RegistrationStatusController;
+use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\SupervisorReportController;
+use App\Http\Controllers\Api\SystemMediaController;
+use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TimeConditionController;
 use App\Http\Controllers\Api\TokenController;
 use App\Http\Controllers\Api\UsageController;
@@ -100,8 +100,13 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('permissions', [UserController::class, 'availablePermissions'])->name('permissions.index');
 
     // FreeSWITCH Security & Configuration (Superadmin)
-    Route::apiResource('admin/gateways', \App\Http\Controllers\Api\Admin\AdminGatewayController::class);
-    Route::apiResource('admin/sip-profiles', \App\Http\Controllers\Api\SipProfileController::class);
+    // Gated in middleware, not just in the controllers: middleware runs before
+    // FormRequest validation, so an unauthorized caller gets 403 rather than a
+    // 422 that would let them probe rules like exists:organizations,id.
+    Route::apiResource('admin/gateways', \App\Http\Controllers\Api\Admin\AdminGatewayController::class)
+        ->middleware('can:platform-admin');
+    Route::apiResource('admin/sip-profiles', \App\Http\Controllers\Api\SipProfileController::class)
+        ->middleware('can:platform-admin');
 
     // Platform Admin Log Viewer
     Route::prefix('admin/logs')->name('admin.logs.')->group(function () {

@@ -103,8 +103,9 @@ class OutboundCallerIdIntegrityTest extends TestCase
             ])
             ->assertOk();
 
+        // Assert the actual values, not just the parameter keys: the number must
+        // be the allowed DID and the name the extension's configured one.
         $this->assertStringContainsString('origination_caller_id_name=Sales Desk', $captured);
-        $this->assertStringContainsString('origination_caller_id_number=', $captured);
-        $this->assertStringNotContainsString('IRS', $captured);
+        $this->assertStringContainsString('origination_caller_id_number='.($did->normalized_number ?? $did->number), $captured);
     }
 }
