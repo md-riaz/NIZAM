@@ -31,6 +31,7 @@ class OrganizationResource extends JsonResource
             'settings' => $this->settings,
             'status' => $this->status,
             'recording_policy' => $this->recording_policy,
+            'recording_retention_days' => $this->recording_retention_days,
             'max_extensions' => $this->max_extensions,
             'max_concurrent_calls' => $this->max_concurrent_calls,
             'max_dids' => $this->max_dids,

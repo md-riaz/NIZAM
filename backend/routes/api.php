@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\PlatformSettingController;
 use App\Http\Controllers\Api\QueueController;
 use App\Http\Controllers\Api\QueueMetricsController;
 use App\Http\Controllers\Api\RecordingController;
+use App\Http\Controllers\Api\RecordingPolicyController;
 use App\Http\Controllers\Api\RegistrationStatusController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\SupervisorReportController;
@@ -132,6 +133,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('stats', OrganizationStatsController::class)->name('organizations.stats');
         Route::get('provisioning-health', OrganizationProvisioningHealthController::class)->name('organizations.provisioning-health');
         Route::get('directory', [DirectoryController::class, 'index'])->name('directory.index');
+        Route::get('recording-policy/effective', [RecordingPolicyController::class, 'organization'])->name('recording-policy.effective');
 
         // Usage metering
         Route::get('usage/summary', [UsageController::class, 'summary'])->name('organizations.usage.summary');
@@ -141,6 +143,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         // Core resources
         Route::apiResource('extensions', ExtensionController::class);
         Route::get('extensions/{extension}/sip-config', [ExtensionController::class, 'sipConfig'])->name('extensions.sip-config');
+        Route::get('extensions/{extension}/recording-policy/effective', [RecordingPolicyController::class, 'extension'])->name('extensions.recording-policy.effective');
         Route::put('extensions/{extension}/features', [ExtensionFeatureController::class, 'update'])->name('extensions.features.update');
         Route::get('office-features', [OfficeFeatureController::class, 'show'])->name('office-features.show');
         Route::put('office-features', [OfficeFeatureController::class, 'update'])->name('office-features.update');
@@ -159,6 +162,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('flows/{flow}/publish', [FlowController::class, 'publish'])->name('flows.publish');
 
         Route::apiResource('dids', DidController::class);
+        Route::get('dids/{did}/recording-policy/effective', [RecordingPolicyController::class, 'did'])->name('dids.recording-policy.effective');
         Route::post('dids/{did}/provider', [NumberProviderController::class, 'store'])->name('dids.provider.store');
         Route::put('dids/{did}/provider', [NumberProviderController::class, 'update'])->name('dids.provider.update');
         Route::delete('dids/{did}/provider', [NumberProviderController::class, 'destroy'])->name('dids.provider.destroy');

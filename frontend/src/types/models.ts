@@ -50,6 +50,7 @@ export const OrganizationSchema = z.object({
     settings: z.record(z.string(), z.unknown()).nullable().optional(),
     status: z.string().nullable().optional(),
     recording_policy: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']).nullable().optional(),
+    recording_retention_days: z.number().nullable().optional(),
     max_extensions: z.number().nullable().optional(),
     max_concurrent_calls: z.number().nullable().optional(),
     max_dids: z.number().nullable().optional(),
@@ -289,6 +290,24 @@ export const RecordingSchema = z.object({
     updated_at: z.string(),
 });
 export type Recording = z.infer<typeof RecordingSchema>;
+
+// ─── Recording policy resolution ──────────────────────────────
+
+export const RecordingPolicyResolutionSchema = z.object({
+    resolved_mode: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']),
+    should_record: z.boolean(),
+    winning_scope: z.enum(['organization', 'did', 'extension']).nullable(),
+    resolution_chain: z.array(z.string()),
+    reason: z.string(),
+});
+export type RecordingPolicyResolution = z.infer<typeof RecordingPolicyResolutionSchema>;
+
+export const EffectiveRecordingPolicySchema = z.object({
+    scope: z.enum(['organization', 'did', 'extension']),
+    inbound: RecordingPolicyResolutionSchema,
+    outbound: RecordingPolicyResolutionSchema,
+});
+export type EffectiveRecordingPolicy = z.infer<typeof EffectiveRecordingPolicySchema>;
 
 // ─── CDR ─────────────────────────────────────────────────────
 

@@ -35,22 +35,49 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import api from '@/lib/api';
-import type { Organization } from '@/types/models';
+import type { EffectiveRecordingPolicy, Organization, RecordingPolicyResolution } from '@/types/models';
 
 const organizationStatuses = ['trial', 'active', 'suspended', 'terminated'] as const;
+// "Inherit" is deliberately excluded here: at organization scope there is no
+// parent policy to inherit from, so it silently resolves to "off". DID and
+// extension scopes keep offering it since they inherit from this level.
 const recordingPolicyOptions = [
-    { value: 'inherit', label: 'Inherit' },
     { value: 'off', label: 'Off' },
     { value: 'all', label: 'All calls' },
     { value: 'incoming', label: 'Incoming only' },
     { value: 'outgoing', label: 'Outgoing only' },
 ] as const;
 
+const recordingModeLabels: Record<string, string> = {
+    inherit: 'Inherit',
+    off: 'Not recording',
+    all: 'Recording all calls',
+    incoming: 'Recording incoming calls',
+    outgoing: 'Recording outgoing calls',
+};
+
+function describeResolution(resolution: RecordingPolicyResolution): string {
+    const modeLabel = resolution.should_record
+        ? recordingModeLabels[resolution.resolved_mode] ?? resolution.resolved_mode
+        : 'Not recording';
+
+    if (resolution.winning_scope === null || resolution.winning_scope === 'organization') {
+        return modeLabel;
+    }
+
+    return `${modeLabel} — ${resolution.reason}`;
+}
+
 const organizationSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     domain_prefix: z.string().min(1, 'Domain prefix is required'),
     status: z.string().min(1, 'Status is required'),
+    // Kept broader than the form's own options so a legacy "inherit" value
+    // (accepted by the backend for compatibility) still passes validation.
     recording_policy: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']),
+    // Matches how max_extensions and the other quota fields below use 0 for
+    // "unlimited": 0 here means "keep recordings forever".
+    recording_retention_days: z.coerce.number().min(0),
     max_extensions: z.coerce.number().min(0),
     max_concurrent_calls: z.coerce.number().min(0),
     max_dids: z.coerce.number().min(0),
@@ -82,6 +109,7 @@ const serializeOrganizationPayload = (values: OrganizationFormValues) => ({
     domain_prefix: normalizeDomainPrefix(values.domain_prefix),
     status: values.status,
     recording_policy: values.recording_policy,
+    recording_retention_days: values.recording_retention_days,
     max_extensions: values.max_extensions,
     max_concurrent_calls: values.max_concurrent_calls,
     max_dids: values.max_dids,
@@ -134,12 +162,19 @@ export default function OrganizationFormPage() {
     const initializedCreateForm = useRef(false);
 
     const form = useForm<OrganizationFormValues>({
+        // Cast needed: @hookform/resolvers types the resolver's field-values
+        // generic from zod's *input* type, which is `unknown` for z.coerce
+        // fields — mismatched against the `number` *output* type react-hook-form
+        // is instantiated with here. Pre-existing zod v4/resolver generics gap;
+        // several other admin forms with coerced numeric fields hit the same
+        // TS error (QueueFormPage, TeamFormPage, UserFormPage, etc.).
         resolver: zodResolver(organizationSchema),
         defaultValues: {
             name: '',
             domain_prefix: '',
             status: 'active',
             recording_policy: 'off',
+            recording_retention_days: 0,
             max_extensions: 0,
             max_concurrent_calls: 0,
             max_dids: 0,
@@ -174,6 +209,7 @@ export default function OrganizationFormPage() {
                 domain_prefix: '',
                 status: 'active',
                 recording_policy: 'off',
+                recording_retention_days: 0,
                 max_extensions: 0,
                 max_concurrent_calls: 0,
                 max_dids: 0,
@@ -190,6 +226,7 @@ export default function OrganizationFormPage() {
                 domain_prefix: organization.domain_prefix ?? organization.domain ?? '',
                 status: normalizeOrganizationStatus(organization.status),
                 recording_policy: organization.recording_policy ?? 'off',
+                recording_retention_days: organization.recording_retention_days ?? 0,
                 max_extensions: organization.max_extensions ?? 0,
                 max_concurrent_calls: organization.max_concurrent_calls ?? 0,
                 max_dids: organization.max_dids ?? 0,
@@ -223,11 +260,20 @@ export default function OrganizationFormPage() {
                     return;
                 }
 
-                if (field === 'domain_prefix' || field === 'name' || field === 'status' || field === 'recording_policy' || field === 'max_extensions' || field === 'max_concurrent_calls' || field === 'max_dids' || field === 'max_teams' || field === 'is_active') {
+                if (field === 'domain_prefix' || field === 'name' || field === 'status' || field === 'recording_policy' || field === 'recording_retention_days' || field === 'max_extensions' || field === 'max_concurrent_calls' || field === 'max_dids' || field === 'max_teams' || field === 'is_active') {
                     form.setError(field, { type: 'server', message: messages[0] });
                 }
             });
         },
+    });
+
+    const { data: effectivePolicy } = useQuery<EffectiveRecordingPolicy>({
+        queryKey: ['organization-recording-policy-effective', id],
+        queryFn: async () => {
+            const response = await api.get(`organizations/${id}/recording-policy/effective`);
+            return response.data.data;
+        },
+        enabled: isEdit,
     });
 
     const composedDomain = useMemo(() => {
@@ -445,6 +491,18 @@ export default function OrganizationFormPage() {
                                                     </SelectContent>
                                                 </Select>
                                                 <FormDescription>Organization default for automatic call recording.</FormDescription>
+                                                {isEdit && effectivePolicy ? (
+                                                    <div className="space-y-1 rounded-md border border-border/70 bg-muted/30 p-3 text-sm">
+                                                        <p>
+                                                            <span className="font-medium">Effective (inbound):</span>{' '}
+                                                            {describeResolution(effectivePolicy.inbound)}
+                                                        </p>
+                                                        <p>
+                                                            <span className="font-medium">Effective (outbound):</span>{' '}
+                                                            {describeResolution(effectivePolicy.outbound)}
+                                                        </p>
+                                                    </div>
+                                                ) : null}
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -452,6 +510,24 @@ export default function OrganizationFormPage() {
                                 </div>
 
                                 <div className="grid gap-6 md:grid-cols-2">
+                                    <FormField
+                                        control={form.control}
+                                        name="recording_retention_days"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Recording retention (days)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min="0" placeholder="0 = keep forever" {...field} />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Recordings older than this many days are permanently deleted by the nightly
+                                                    retention job. Leave empty or set to 0 to keep recordings forever.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
                                     <FormField
                                         control={form.control}
                                         name="max_extensions"

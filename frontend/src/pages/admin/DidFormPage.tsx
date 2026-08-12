@@ -37,7 +37,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Did, Extension, Flow, Gateway } from '@/types/models';
+import type { Did, EffectiveRecordingPolicy, Extension, Flow, Gateway, RecordingPolicyResolution } from '@/types/models';
 
 const recordingPolicyOptions = [
     { value: 'inherit', label: 'Inherit' },
@@ -47,12 +47,32 @@ const recordingPolicyOptions = [
     { value: 'outgoing', label: 'Outgoing only' },
 ] as const;
 
+const recordingModeLabels: Record<string, string> = {
+    inherit: 'Inherit',
+    off: 'Not recording',
+    all: 'Recording all calls',
+    incoming: 'Recording incoming calls',
+    outgoing: 'Recording outgoing calls',
+};
+
+function describeResolution(resolution: RecordingPolicyResolution, organizationName: string): string {
+    const modeLabel = resolution.should_record
+        ? recordingModeLabels[resolution.resolved_mode] ?? resolution.resolved_mode
+        : 'Not recording';
+
+    if (resolution.winning_scope === 'organization') {
+        return `${modeLabel} — inherited from organization "${organizationName}"`;
+    }
+
+    return modeLabel;
+}
+
 const didSchema = z.object({
     number: z.string().min(1, 'Number is required'),
     description: z.string().optional(),
     recording_policy: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']),
     destination_type: z.enum(['extension', 'flow'], {
-        errorMap: () => ({ message: 'Destination type is required' }),
+        error: 'Destination type is required',
     }),
     destination_id: z.string().uuid('Destination is required'),
     is_active: z.boolean(),
@@ -284,6 +304,15 @@ export default function DidFormPage() {
         queryKey: ['did', currentDidId],
         queryFn: async () => {
             const res = await api.get(`${organizationApiPrefix}/dids/${currentDidId}`);
+            return res.data.data;
+        },
+        enabled: isEdit && !!currentDidId && !!activeOrganization,
+    });
+
+    const { data: effectivePolicy } = useQuery<EffectiveRecordingPolicy>({
+        queryKey: ['did-recording-policy-effective', currentDidId],
+        queryFn: async () => {
+            const res = await api.get(`${organizationApiPrefix}/dids/${currentDidId}/recording-policy/effective`);
             return res.data.data;
         },
         enabled: isEdit && !!currentDidId && !!activeOrganization,
@@ -624,6 +653,18 @@ export default function DidFormPage() {
                                                         </SelectContent>
                                                     </Select>
                                                     <FormDescription>Override inbound automatic recording for calls answered from this number.</FormDescription>
+                                                    {isEdit && effectivePolicy ? (
+                                                        <div className="space-y-1 rounded-md border border-border/70 bg-muted/30 p-3 text-sm">
+                                                            <p>
+                                                                <span className="font-medium">Effective (inbound):</span>{' '}
+                                                                {describeResolution(effectivePolicy.inbound, activeOrganization.name)}
+                                                            </p>
+                                                            <p>
+                                                                <span className="font-medium">Effective (outbound):</span>{' '}
+                                                                {describeResolution(effectivePolicy.outbound, activeOrganization.name)}
+                                                            </p>
+                                                        </div>
+                                                    ) : null}
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
