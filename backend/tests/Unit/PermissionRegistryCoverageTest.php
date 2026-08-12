@@ -77,8 +77,12 @@ class PermissionRegistryCoverageTest extends TestCase
                     continue;
                 }
 
+                // Deliberately shape-agnostic: an earlier version of this
+                // pattern required a dotted slug and so missed FlowPolicy's
+                // hyphenated `view-flows`, which was exactly the kind of gap
+                // this test exists to catch.
                 preg_match_all(
-                    "/hasPermission\(\s*'([a-z_]+\.[a-z_]+)'\s*\)/",
+                    "/hasPermission\(\s*'([^']+)'\s*\)/",
                     (string) file_get_contents($file->getPathname()),
                     $matches
                 );

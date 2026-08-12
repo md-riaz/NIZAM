@@ -4,9 +4,9 @@ namespace Tests\Unit\Policies;
 
 use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
+use App\Models\Organization;
 use App\Models\Permission;
 use App\Models\Recording;
-use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -40,9 +40,23 @@ class ResourcePolicyTest extends TestCase
         $this->assertTrue($this->admin->can('viewAny', CallEventLog::class));
     }
 
-    public function test_user_without_permissions_can_view_call_events_default_open(): void
+    public function test_user_without_permissions_cannot_view_call_events(): void
     {
-        $this->assertTrue($this->user->can('viewAny', CallEventLog::class));
+        // Deny-by-default: a user with no grants has no access, unlike the old
+        // allow-by-default rule this test used to encode.
+        $this->assertFalse($this->user->can('viewAny', CallEventLog::class));
+    }
+
+    /**
+     * Paired with the denial above so the grant itself is exercised; a policy
+     * hard-wired to false would otherwise satisfy the negative case alone.
+     */
+    public function test_granted_user_can_view_call_events(): void
+    {
+        Permission::updateOrCreate(['slug' => 'call_events.view'], ['module' => 'core']);
+        $this->user->grantPermissions(['call_events.view']);
+
+        $this->assertTrue($this->user->fresh()->can('viewAny', CallEventLog::class));
     }
 
     public function test_user_with_restricted_permissions_cannot_view_call_events(): void
@@ -70,6 +84,8 @@ class ResourcePolicyTest extends TestCase
 
     public function test_user_can_view_own_organization_recording(): void
     {
+        Permission::updateOrCreate(['slug' => 'recordings.view'], ['module' => 'core']);
+        $this->user->grantPermissions(['recordings.view']);
         $recording = Recording::factory()->create(['organization_id' => $this->organization->id]);
 
         $this->assertTrue($this->user->can('view', $recording));
@@ -85,6 +101,8 @@ class ResourcePolicyTest extends TestCase
 
     public function test_user_can_download_own_organization_recording(): void
     {
+        Permission::updateOrCreate(['slug' => 'recordings.download'], ['module' => 'core']);
+        $this->user->grantPermissions(['recordings.download']);
         $recording = Recording::factory()->create(['organization_id' => $this->organization->id]);
 
         $this->assertTrue($this->user->can('download', $recording));
@@ -92,6 +110,8 @@ class ResourcePolicyTest extends TestCase
 
     public function test_user_can_delete_own_organization_recording(): void
     {
+        Permission::updateOrCreate(['slug' => 'recordings.delete'], ['module' => 'core']);
+        $this->user->grantPermissions(['recordings.delete']);
         $recording = Recording::factory()->create(['organization_id' => $this->organization->id]);
 
         $this->assertTrue($this->user->can('delete', $recording));
@@ -104,6 +124,8 @@ class ResourcePolicyTest extends TestCase
 
     public function test_user_can_view_own_organization_cdr(): void
     {
+        Permission::updateOrCreate(['slug' => 'cdrs.view'], ['module' => 'core']);
+        $this->user->grantPermissions(['cdrs.view']);
         $cdr = CallDetailRecord::factory()->create(['organization_id' => $this->organization->id]);
 
         $this->assertTrue($this->user->can('view', $cdr));
