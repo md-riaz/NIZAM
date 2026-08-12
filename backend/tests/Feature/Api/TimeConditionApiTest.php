@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\TimeCondition;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,6 +23,24 @@ class TimeConditionApiTest extends TestCase
         parent::setUp();
         $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        // Permissions are deny-by-default, so the acting user is granted the
+        // time-condition abilities these cases exercise rather than relying
+        // on a permissive fallback.
+        $slugs = ['time_conditions.view', 'time_conditions.create', 'time_conditions.update', 'time_conditions.delete'];
+        foreach ($slugs as $slug) {
+            Permission::updateOrCreate(['slug' => $slug], ['module' => 'core']);
+        }
+        $this->user->grantPermissions($slugs);
+    }
+
+    public function test_user_without_permission_cannot_list_time_conditions(): void
+    {
+        $unprivileged = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/time-conditions")
+            ->assertForbidden();
     }
 
     public function test_can_list_time_conditions_for_a_organization(): void

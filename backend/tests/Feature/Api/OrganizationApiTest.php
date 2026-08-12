@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -18,7 +19,14 @@ class OrganizationApiTest extends TestCase
 
     private function organizationUser(Organization $organization): User
     {
-        return User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
+
+        // Permissions are deny-by-default, so this non-admin fixture needs an
+        // explicit grant to view its own organization.
+        Permission::updateOrCreate(['slug' => 'organizations.view'], ['module' => 'core']);
+        $user->grantPermissions(['organizations.view']);
+
+        return $user;
     }
 
     public function test_unauthenticated_requests_return_401(): void
@@ -64,6 +72,19 @@ class OrganizationApiTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => 'My Organization']);
         $response->assertJsonMissing(['name' => 'Other Organization']);
+    }
+
+    public function test_user_without_permission_cannot_list_organizations(): void
+    {
+        $organization = Organization::create([
+            'name' => 'Unprivileged Org',
+            'domain' => 'unprivileged.example.com',
+        ]);
+        $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/organizations')
+            ->assertForbidden();
     }
 
     public function test_admin_can_create_a_organization(): void

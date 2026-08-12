@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\DeviceProfile;
 use App\Models\Extension;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -22,6 +23,24 @@ class DeviceProfileApiTest extends TestCase
         parent::setUp();
         $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        // Permissions are deny-by-default, so the acting user is granted the
+        // device profile abilities these cases exercise rather than relying on
+        // a permissive fallback.
+        $slugs = ['device_profiles.view', 'device_profiles.create', 'device_profiles.update', 'device_profiles.delete'];
+        foreach ($slugs as $slug) {
+            Permission::updateOrCreate(['slug' => $slug], ['module' => 'core']);
+        }
+        $this->user->grantPermissions($slugs);
+    }
+
+    public function test_user_without_permission_cannot_list_device_profiles(): void
+    {
+        $unprivileged = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/device-profiles")
+            ->assertForbidden();
     }
 
     public function test_can_list_device_profiles_for_a_organization(): void

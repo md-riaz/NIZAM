@@ -39,25 +39,40 @@ class CdrSearchService
      */
     public function summarize(Organization $organization, Request $request): array
     {
-        $filtered = fn (): Builder => $this->applyFilters(
+        // Every counter comes from one pass with conditional aggregates. The
+        // summary rides along on each paginated list request, so issuing a
+        // separate aggregate query per tile would multiply the cost of every
+        // page view over what is typically the largest table in the schema.
+        $missed = ['NO_ANSWER', 'ALLOTTED_TIMEOUT', 'USER_BUSY'];
+        $notFailed = [...$missed, 'NORMAL_CLEARING', 'ORIGINATOR_CANCEL'];
+
+        $missedList = $this->quotedList($missed);
+        $notFailedList = $this->quotedList($notFailed);
+
+        $query = $this->applyFilters(
             CallDetailRecord::query()->where('organization_id', $organization->id),
             $request
         );
 
-        $totalCalls = $filtered()->count();
-        $answeredCalls = $filtered()->whereNotNull('answer_stamp')->count();
-        $totalBillsec = (int) $filtered()->sum('billsec');
+        $row = $query->selectRaw(implode(', ', [
+            'COUNT(*) as total_calls',
+            'SUM(CASE WHEN answer_stamp IS NOT NULL THEN 1 ELSE 0 END) as answered_calls',
+            "SUM(CASE WHEN answer_stamp IS NULL AND hangup_cause IN ({$missedList}) THEN 1 ELSE 0 END) as missed_calls",
+            "SUM(CASE WHEN answer_stamp IS NULL AND (hangup_cause IS NULL OR hangup_cause NOT IN ({$notFailedList})) THEN 1 ELSE 0 END) as failed_calls",
+            'COALESCE(SUM(duration), 0) as total_duration',
+            'COALESCE(SUM(billsec), 0) as total_billsec',
+        ]))->first();
+
+        $totalCalls = (int) ($row->total_calls ?? 0);
+        $answeredCalls = (int) ($row->answered_calls ?? 0);
+        $totalBillsec = (int) ($row->total_billsec ?? 0);
 
         return [
             'total_calls' => $totalCalls,
             'answered_calls' => $answeredCalls,
-            'missed_calls' => $filtered()->whereNull('answer_stamp')
-                ->whereIn('hangup_cause', ['NO_ANSWER', 'ALLOTTED_TIMEOUT', 'USER_BUSY'])
-                ->count(),
-            'failed_calls' => $filtered()->whereNull('answer_stamp')
-                ->whereNotIn('hangup_cause', ['NORMAL_CLEARING', 'NO_ANSWER', 'ALLOTTED_TIMEOUT', 'USER_BUSY', 'ORIGINATOR_CANCEL'])
-                ->count(),
-            'total_duration_seconds' => (int) $filtered()->sum('duration'),
+            'missed_calls' => (int) ($row->missed_calls ?? 0),
+            'failed_calls' => (int) ($row->failed_calls ?? 0),
+            'total_duration_seconds' => (int) ($row->total_duration ?? 0),
             'total_billsec_seconds' => $totalBillsec,
             // Answer Seizure Ratio: answered / attempted.
             'asr' => $totalCalls > 0 ? round(($answeredCalls / $totalCalls) * 100, 1) : 0.0,
@@ -104,8 +119,7 @@ class CdrSearchService
     public function applyFilters(Builder $query, Request $request): Builder
     {
         // Free-text search across caller/destination numbers and the call UUID.
-        if ($request->filled('search')) {
-            $search = $request->input('search');
+        if (($search = $this->scalar($request, 'search')) !== null) {
             $query->where(function (Builder $q) use ($search) {
                 $q->where('caller_id_number', 'LIKE', "%{$search}%")
                     ->orWhere('caller_id_name', 'LIKE', "%{$search}%")
@@ -115,33 +129,33 @@ class CdrSearchService
         }
 
         foreach (['direction', 'call_type', 'caller_id_number', 'destination_number', 'uuid', 'hangup_cause'] as $column) {
-            if ($request->filled($column)) {
-                $query->where($column, $request->input($column));
+            if (($value = $this->scalar($request, $column)) !== null) {
+                $query->where($column, $value);
             }
         }
 
-        if ($request->filled('date_from')) {
-            $query->where('start_stamp', '>=', DateRangeFilter::start($request->input('date_from')));
+        if (($from = $this->scalar($request, 'date_from')) !== null) {
+            $query->where('start_stamp', '>=', DateRangeFilter::start($from));
         }
 
-        if ($request->filled('date_to')) {
-            $query->where('start_stamp', '<=', DateRangeFilter::end($request->input('date_to')));
+        if (($to = $this->scalar($request, 'date_to')) !== null) {
+            $query->where('start_stamp', '<=', DateRangeFilter::end($to));
         }
 
-        if ($request->filled('duration_min')) {
-            $query->where('duration', '>=', (int) $request->input('duration_min'));
+        if (($value = $this->scalar($request, 'duration_min')) !== null) {
+            $query->where('duration', '>=', (int) $value);
         }
 
-        if ($request->filled('duration_max')) {
-            $query->where('duration', '<=', (int) $request->input('duration_max'));
+        if (($value = $this->scalar($request, 'duration_max')) !== null) {
+            $query->where('duration', '<=', (int) $value);
         }
 
-        if ($request->filled('quality_score_min')) {
-            $query->where('quality_score', '>=', (int) $request->input('quality_score_min'));
+        if (($value = $this->scalar($request, 'quality_score_min')) !== null) {
+            $query->where('quality_score', '>=', (int) $value);
         }
 
-        if ($request->filled('mos_score_min')) {
-            $query->where('mos_score', '>=', (float) $request->input('mos_score_min'));
+        if (($value = $this->scalar($request, 'mos_score_min')) !== null) {
+            $query->where('mos_score', '>=', (float) $value);
         }
 
         if ($request->filled('tags')) {
@@ -154,19 +168,52 @@ class CdrSearchService
             }
         }
 
-        if ($request->filled('destination_country')) {
-            $query->whereHas('enrichment', function ($q) use ($request) {
-                $q->where('destination_country', $request->input('destination_country'));
-            });
-        }
-
-        if ($request->filled('number_type')) {
-            $query->whereHas('enrichment', function ($q) use ($request) {
-                $q->where('number_type', $request->input('number_type'));
-            });
+        foreach (['destination_country', 'number_type'] as $column) {
+            if (($value = $this->scalar($request, $column)) !== null) {
+                $query->whereHas('enrichment', fn ($q) => $q->where($column, $value));
+            }
         }
 
         return $query;
+    }
+
+    /**
+     * A filter value as a string, or null when it is absent or not scalar.
+     *
+     * Query strings can carry arrays (`?date_to[]=x`). Handing one to a date
+     * parser or a query binding raised a TypeError and answered 500, so a
+     * non-scalar value is treated as no filter at all.
+     */
+    protected function scalar(Request $request, string $key): ?string
+    {
+        $value = $request->input($key);
+
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        $value = (string) $value;
+
+        return $value === '' ? null : $value;
+    }
+
+    /**
+     * Render a fixed list of hangup causes for inlining in a CASE expression.
+     *
+     * The values are class constants rather than user input, but they are quoted
+     * through the connection anyway so this cannot become an injection point if
+     * the list ever grows from somewhere less trusted.
+     *
+     * @param  array<int, string>  $values
+     */
+    protected function quotedList(array $values): string
+    {
+        $pdo = CallDetailRecord::query()->getConnection()->getPdo();
+
+        return implode(', ', array_map(
+            static fn (string $value): string => $pdo->quote($value),
+            $values
+        ));
     }
 
     /**

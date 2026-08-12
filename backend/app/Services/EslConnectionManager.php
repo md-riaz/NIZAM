@@ -283,9 +283,24 @@ class EslConnectionManager
         $remaining = $length;
         while ($remaining > 0 && ! feof($this->socket)) {
             $chunk = fread($this->socket, min($remaining, 8192));
-            if ($chunk === false) {
-                break;
+
+            // A read timeout returns '' with EOF still false, so an empty chunk
+            // must end the loop — otherwise this spins forever on a switch that
+            // announced a Content-Length and then stopped sending. The body is
+            // truncated either way, so the connection is dropped and the next
+            // command reconnects rather than resuming mid-message.
+            if ($chunk === false || $chunk === '') {
+                Log::warning(sprintf(
+                    'ESL body read incomplete: %d of %d bytes; dropping the connection.',
+                    $length - $remaining,
+                    $length
+                ));
+
+                $this->disconnect();
+
+                return $data;
             }
+
             $data .= $chunk;
             $remaining -= strlen($chunk);
         }

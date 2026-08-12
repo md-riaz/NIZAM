@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Did;
 use App\Models\Gateway;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -23,6 +24,24 @@ class DidApiTest extends TestCase
         parent::setUp();
         $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        // Permissions are deny-by-default, so the acting user is granted the
+        // DID abilities these cases exercise rather than relying on a
+        // permissive fallback.
+        $slugs = ['dids.view', 'dids.create', 'dids.update', 'dids.delete'];
+        foreach ($slugs as $slug) {
+            Permission::updateOrCreate(['slug' => $slug], ['module' => 'core']);
+        }
+        $this->user->grantPermissions($slugs);
+    }
+
+    public function test_user_without_permission_cannot_list_dids(): void
+    {
+        $unprivileged = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/dids")
+            ->assertForbidden();
     }
 
     public function test_can_list_dids_for_a_organization(): void
@@ -118,7 +137,14 @@ class DidApiTest extends TestCase
 
     public function test_can_update_a_did_recording_policy(): void
     {
-        $did = Did::factory()->create(['organization_id' => $this->organization->id]);
+        // Pinned to 'extension': the factory's default destination_type is a
+        // random pick that can land outside the update endpoint's
+        // extension|flow enum, making this test flaky independent of
+        // permissions.
+        $did = Did::factory()->create([
+            'organization_id' => $this->organization->id,
+            'destination_type' => 'extension',
+        ]);
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}", [
@@ -137,7 +163,6 @@ class DidApiTest extends TestCase
             'recording_policy' => 'incoming',
         ]);
     }
-
 
     public function test_can_delete_a_did(): void
     {

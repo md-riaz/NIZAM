@@ -3,13 +3,14 @@
 namespace Tests\Feature\Api;
 
 use App\Models\CallDetailRecord;
-use App\Models\Flow;
 use App\Models\CallRoutingPolicy;
 use App\Models\DeviceProfile;
 use App\Models\Did;
 use App\Models\Extension;
+use App\Models\Flow;
 use App\Models\Ivr;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\Recording;
 use App\Models\Team;
 use App\Models\User;
@@ -95,10 +96,28 @@ class OrganizationStatsTest extends TestCase
             'role' => 'agent',
         ]);
 
+        // Permissions are deny-by-default; viewing stats reuses the
+        // organization "view" ability.
+        Permission::updateOrCreate(['slug' => 'organizations.view'], ['module' => 'core']);
+        $user->grantPermissions(['organizations.view']);
+
         $response = $this->actingAs($user, 'sanctum')
             ->getJson("/api/v1/organizations/{$this->organization->id}/stats");
 
         $response->assertStatus(200);
+    }
+
+    public function test_user_without_permission_cannot_access_stats(): void
+    {
+        $user = User::factory()->create([
+            'organization_id' => $this->organization->id,
+            'role' => 'agent',
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/stats");
+
+        $response->assertForbidden();
     }
 
     public function test_different_organization_user_gets_403(): void

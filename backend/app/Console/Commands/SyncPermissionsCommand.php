@@ -50,6 +50,14 @@ class SyncPermissionsCommand extends Command
         'device_profiles.create' => 'Create device profiles',
         'device_profiles.update' => 'Update device profiles',
         'device_profiles.delete' => 'Delete device profiles',
+        // EndpointBindingPolicy has always checked these, but nothing declared
+        // them, so sync never created the rows. Under deny-by-default that made
+        // mobile-device and softphone binding management permanently
+        // unreachable for anyone below admin.
+        'endpoint_bindings.view' => 'View endpoint bindings',
+        'endpoint_bindings.create' => 'Create endpoint bindings',
+        'endpoint_bindings.update' => 'Update endpoint bindings',
+        'endpoint_bindings.delete' => 'Delete endpoint bindings',
         'calls.originate' => 'Originate calls',
         'calls.view_status' => 'View active call status',
         'recordings.view' => 'View recordings',
