@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Recording;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,7 +26,12 @@ class CallDetailRecordResource extends JsonResource
             'hangup_cause' => $this->hangup_cause,
             'direction' => $this->direction,
             'call_type' => $this->call_type,
-            'recording_path' => $this->recording_path,
+            // The raw storage path is only useful to an operator who may access
+            // the audio anyway, so it follows the recordings permission.
+            'recording_path' => $this->when(
+                $request->user()?->can('viewAny', Recording::class) ?? false,
+                fn () => $this->recording_path
+            ),
             'sip_user_agent' => $this->sip_user_agent,
             'remote_media_ip' => $this->remote_media_ip,
             'quality' => [

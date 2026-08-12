@@ -1,4 +1,4 @@
-import { AlertCircle, Loader2, Play } from 'lucide-react';
+import { AlertCircle, Loader2, Play, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,14 @@ export function RecordingPlayer({ downloadUrl, format, compact = false }: Record
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     // Revoke the blob when this row unmounts or the target changes, otherwise
     // paging through a long list leaks every file that was played.
@@ -46,11 +54,25 @@ export function RecordingPlayer({ downloadUrl, format, compact = false }: Record
 
         try {
             const url = await fetchRecordingObjectUrl(downloadUrl, format);
+
+            // A row can be unmounted while its audio is still in flight — paging
+            // away mid-download. The blob is already allocated at this point, so
+            // it has to be released here; the revoke effect above will never run
+            // for a URL that was never committed to state.
+            if (!isMountedRef.current) {
+                revokeObjectUrl(url);
+                return;
+            }
+
             setObjectUrl(url);
         } catch (caught) {
-            setError(getErrorMessage(caught));
+            if (isMountedRef.current) {
+                setError(getErrorMessage(caught));
+            }
         } finally {
-            setIsLoading(false);
+            if (isMountedRef.current) {
+                setIsLoading(false);
+            }
         }
     };
 
@@ -66,11 +88,30 @@ export function RecordingPlayer({ downloadUrl, format, compact = false }: Record
     }, [objectUrl]);
 
     if (error) {
+        // A failed fetch is usually transient (expired token, network blip), so
+        // the control stays actionable instead of becoming dead text.
         return (
-            <span className="inline-flex items-center gap-1.5 text-xs text-destructive" title={error}>
-                <AlertCircle className="size-3.5 shrink-0" />
-                {compact ? 'Unavailable' : error}
-            </span>
+            <div className="inline-flex items-center gap-1.5">
+                <span
+                    className="inline-flex items-center gap-1.5 text-xs text-destructive"
+                    title={error}
+                >
+                    <AlertCircle className="size-3.5 shrink-0" />
+                    {compact ? 'Unavailable' : error}
+                </span>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    onClick={() => {
+                        setError(null);
+                        void load();
+                    }}
+                    aria-label="Retry loading recording"
+                >
+                    <RotateCcw className="size-3.5" />
+                </Button>
+            </div>
         );
     }
 
@@ -90,7 +131,7 @@ export function RecordingPlayer({ downloadUrl, format, compact = false }: Record
         <Button
             variant="outline"
             size="sm"
-            onClick={load}
+            onClick={() => void load()}
             disabled={isLoading}
             className="h-8"
             aria-label="Play recording"

@@ -7,6 +7,7 @@ use App\Http\Resources\CallDetailRecordResource;
 use App\Models\CallDetailRecord;
 use App\Models\Organization;
 use App\Services\Cdr\CdrSearchService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -46,7 +47,7 @@ class CdrExportController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv; charset=utf-8',
-            'Content-Disposition' => 'attachment; filename="cdrs_export_' . now()->format('Y-m-d_His') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="cdrs_export_'.now()->format('Y-m-d_His').'.csv"',
         ];
 
         $columns = [
@@ -93,52 +94,20 @@ class CdrExportController extends Controller
 
     /**
      * Build the export query with filters applied.
+     *
+     * Filters come from CdrSearchService so an export always covers exactly the
+     * rows the on-screen table shows. This class used to reimplement a subset of
+     * them and quietly dropped the `search` box, producing a CSV of unrelated
+     * calls whenever an operator exported a narrowed view.
      */
-    protected function buildExportQuery(Request $request, Organization $organization)
+    protected function buildExportQuery(Request $request, Organization $organization): Builder
     {
-        $query = CallDetailRecord::where('organization_id', $organization->id)
-            ->with('enrichment')
-            ->orderBy('start_stamp', 'desc');
+        $query = CallDetailRecord::query()
+            ->where('organization_id', $organization->id)
+            ->with('enrichment');
 
-        if ($request->filled('direction')) {
-            $query->where('direction', $request->input('direction'));
-        }
-
-        if ($request->filled('call_type')) {
-            $query->where('call_type', $request->input('call_type'));
-        }
-
-        if ($request->filled('uuid')) {
-            $query->where('uuid', $request->input('uuid'));
-        }
-
-        if ($request->filled('hangup_cause')) {
-            $query->where('hangup_cause', $request->input('hangup_cause'));
-        }
-
-        if ($request->filled('caller_id_number')) {
-            $query->where('caller_id_number', $request->input('caller_id_number'));
-        }
-
-        if ($request->filled('destination_number')) {
-            $query->where('destination_number', $request->input('destination_number'));
-        }
-
-        if ($request->filled('date_from')) {
-            $query->where('start_stamp', '>=', $request->input('date_from'));
-        }
-
-        if ($request->filled('date_to')) {
-            $query->where('start_stamp', '<=', $request->input('date_to'));
-        }
-
-        if ($request->filled('quality_score_min')) {
-            $query->where('quality_score', '>=', (int) $request->input('quality_score_min'));
-        }
-
-        if ($request->filled('mos_score_min')) {
-            $query->where('mos_score', '>=', (float) $request->input('mos_score_min'));
-        }
+        $this->searchService->applyFilters($query, $request);
+        $this->searchService->applySorting($query, $request);
 
         return $query;
     }

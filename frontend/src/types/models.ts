@@ -302,10 +302,22 @@ export const RecordingPolicyResolutionSchema = z.object({
 });
 export type RecordingPolicyResolution = z.infer<typeof RecordingPolicyResolutionSchema>;
 
+export const InboundDidOverrideSchema = z.object({
+    id: idSchema,
+    number: z.string(),
+    recording_policy: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']),
+});
+export type InboundDidOverride = z.infer<typeof InboundDidOverrideSchema>;
+
 export const EffectiveRecordingPolicySchema = z.object({
     scope: z.enum(['organization', 'did', 'extension']),
     inbound: RecordingPolicyResolutionSchema,
     outbound: RecordingPolicyResolutionSchema,
+    /**
+     * Numbers routed straight to this extension whose own policy overrides the
+     * extension's for calls arriving on them. Extension scope only.
+     */
+    inbound_did_overrides: z.array(InboundDidOverrideSchema).optional(),
 });
 export type EffectiveRecordingPolicy = z.infer<typeof EffectiveRecordingPolicySchema>;
 
@@ -329,7 +341,7 @@ export const CdrSchema = z.object({
     end_stamp: z.string().nullable().optional(),
     recording_path: z.string().nullable().optional(),
     has_recording: z.boolean().optional(),
-    recordings: z.array(RecordingSchema).default([]),
+    recordings: z.array(RecordingSchema).optional(),
     /** Present only when the call was traced through the delivery pipeline. */
     call_session_id: idSchema.nullable().optional(),
     created_at: z.string(),
@@ -337,14 +349,20 @@ export const CdrSchema = z.object({
 });
 export type Cdr = z.infer<typeof CdrSchema>;
 
-/** Shape of `GET .../cdrs/analytics/summary`. */
+/**
+ * Aggregate counters for a set of call records.
+ *
+ * `GET .../cdrs` returns this in `meta.summary`, computed from the same filters
+ * as the rows themselves, so KPI tiles above a filtered table describe that
+ * table. The analytics endpoint returns the same fields for a date range only.
+ */
 export interface CdrSummary {
     total_calls: number;
     answered_calls: number;
     missed_calls: number;
     failed_calls: number;
     total_duration_seconds: number;
-    average_duration_seconds: number;
+    total_billsec_seconds: number;
     asr: number;
     acd_seconds: number;
 }
@@ -357,6 +375,11 @@ export interface PaginationMeta {
     total: number;
     from: number | null;
     to: number | null;
+}
+
+/** Paginator metadata for `GET .../cdrs`, which carries the filtered summary. */
+export interface CdrPaginationMeta extends PaginationMeta {
+    summary?: CdrSummary;
 }
 
 // ─── Interaction Overview ────────────────────────────────────

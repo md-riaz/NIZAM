@@ -418,6 +418,10 @@ export default function DidFormPage() {
             setSavedDidId(savedDid.id);
             queryClient.invalidateQueries({ queryKey: ['dids'] });
             queryClient.setQueryData(['did', savedDid.id], savedDid);
+            // The resolved policy is derived server-side, so the "what actually
+            // happens" panel keeps showing the pre-save answer unless it is
+            // refetched — the most misleading moment to be stale.
+            queryClient.invalidateQueries({ queryKey: ['did-recording-policy-effective', savedDid.id] });
             numberForm.reset(toDidFormValues(savedDid));
             toast.success(currentDidId ? 'Number updated.' : 'Number created.');
 

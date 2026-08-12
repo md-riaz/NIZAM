@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Pagination } from '@/components/ui/pagination';
+import { TablePagination } from '@/components/ui/table-pagination';
 import {
     Select,
     SelectContent,
@@ -38,7 +38,7 @@ import {
 import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
 import { downloadAuthenticatedFile, formatDuration } from '@/lib/media';
-import type { Cdr, CdrSummary, PaginationMeta } from '@/types/models';
+import type { Cdr, CdrPaginationMeta } from '@/types/models';
 
 interface Filters {
     search: string;
@@ -72,14 +72,33 @@ function formatDateTime(value?: string | null): string {
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
-function directionIcon(direction?: string | null) {
+/**
+ * Direction is shown as an icon to keep the row narrow, so the label it stands
+ * for is exposed to assistive technology rather than living only in a tooltip.
+ */
+function DirectionIcon({ direction }: { direction?: string | null }) {
     switch (direction?.toLowerCase()) {
         case 'inbound':
-            return <PhoneIncoming className="size-4 text-emerald-600" />;
+            return (
+                <>
+                    <PhoneIncoming className="size-4 text-emerald-600" />
+                    <span className="sr-only">Inbound call</span>
+                </>
+            );
         case 'outbound':
-            return <PhoneOutgoing className="size-4 text-blue-600" />;
+            return (
+                <>
+                    <PhoneOutgoing className="size-4 text-blue-600" />
+                    <span className="sr-only">Outbound call</span>
+                </>
+            );
         default:
-            return <PhoneCall className="size-4 text-muted-foreground" />;
+            return (
+                <>
+                    <PhoneCall className="size-4 text-muted-foreground" />
+                    <span className="sr-only">Unknown direction</span>
+                </>
+            );
     }
 }
 
@@ -140,7 +159,7 @@ export default function CallHistoryPage() {
     const { data, isLoading, isError } = useQuery({
         queryKey: ['cdrs', activeOrganization?.id, applied, page],
         queryFn: async () => {
-            const response = await api.get<{ data: Cdr[]; meta?: PaginationMeta }>(
+            const response = await api.get<{ data: Cdr[]; meta?: CdrPaginationMeta }>(
                 `${organizationApiPrefix}/cdrs`,
                 { params: { ...params, page } },
             );
@@ -149,19 +168,10 @@ export default function CallHistoryPage() {
         enabled: Boolean(activeOrganization),
     });
 
-    // Counters come from the server-side aggregate rather than the current page,
-    // which is why they can exceed the page size.
-    const { data: summary } = useQuery({
-        queryKey: ['cdr-summary', activeOrganization?.id, applied],
-        queryFn: async () => {
-            const response = await api.get<{ data: CdrSummary }>(
-                `${organizationApiPrefix}/cdrs/analytics/summary`,
-                { params: { date_from: params.date_from, date_to: params.date_to } },
-            );
-            return response.data.data;
-        },
-        enabled: Boolean(activeOrganization),
-    });
+    // Counters ride along in the list response's meta, so they are aggregated
+    // over every call matching the current filters — not just the loaded page,
+    // and not a differently-filtered set from a separate analytics call.
+    const summary = data?.meta?.summary;
 
     const applyFilters = () => {
         setApplied(draft);
@@ -228,7 +238,9 @@ export default function CallHistoryPage() {
                             {summary ? summary.answered_calls.toLocaleString() : '—'}
                         </div>
                         {summary ? (
-                            <p className="text-xs text-muted-foreground">{summary.asr}% answer rate</p>
+                            <p className="text-xs text-muted-foreground">
+                                {summary.asr.toFixed(1)}% answer rate
+                            </p>
                         ) : null}
                     </CardContent>
                 </Card>
@@ -335,7 +347,9 @@ export default function CallHistoryPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-10" />
+                                <TableHead className="w-10">
+                                    <span className="sr-only">Direction</span>
+                                </TableHead>
                                 <TableHead>From</TableHead>
                                 <TableHead>To</TableHead>
                                 <TableHead>Started</TableHead>
@@ -375,8 +389,8 @@ export default function CallHistoryPage() {
 
                                     return (
                                         <TableRow key={cdr.id}>
-                                            <TableCell title={cdr.direction ?? 'Unknown direction'}>
-                                                {directionIcon(cdr.direction)}
+                                            <TableCell>
+                                                <DirectionIcon direction={cdr.direction} />
                                             </TableCell>
                                             <TableCell>
                                                 <div className="font-mono text-sm">
@@ -450,7 +464,7 @@ export default function CallHistoryPage() {
                         </TableBody>
                     </Table>
 
-                    <Pagination meta={data?.meta} onPageChange={setPage} itemLabel="calls" />
+                    <TablePagination meta={data?.meta} onPageChange={setPage} itemLabel="calls" />
                 </CardContent>
             </Card>
         </div>

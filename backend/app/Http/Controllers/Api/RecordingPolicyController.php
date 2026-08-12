@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Did;
 use App\Models\Extension;
 use App\Models\Organization;
+use App\Services\Recording\RecordingPolicy;
 use App\Services\Recording\RecordingPolicyResolver;
 use Illuminate\Http\JsonResponse;
 
@@ -43,11 +44,13 @@ class RecordingPolicyController extends Controller
      */
     public function did(Organization $organization, Did $did): JsonResponse
     {
-        $this->authorize('view', $did);
-
+        // Scope first: a DID belonging to another organization is absent from
+        // this URL, and answering 403 would confirm that it exists.
         if ($did->organization_id !== $organization->id) {
             return response()->json(['message' => 'DID not found.'], 404);
         }
+
+        $this->authorize('view', $did);
 
         return response()->json([
             'data' => [
@@ -63,30 +66,68 @@ class RecordingPolicyController extends Controller
 
     /**
      * Effective recording policy at extension scope.
-     *
-     * The extension's DID context comes from its default outbound DID, when set.
      */
     public function extension(Organization $organization, Extension $extension): JsonResponse
     {
-        $this->authorize('view', $extension);
-
         if ($extension->organization_id !== $organization->id) {
             return response()->json(['message' => 'Extension not found.'], 404);
         }
 
+        $this->authorize('view', $extension);
+
         $extension->loadMissing('defaultOutboundDid');
+
+        $base = [
+            'extension_policy' => $extension->recording_policy,
+            'organization_policy' => $organization->recording_policy,
+            'answered_target_type' => 'extension',
+        ];
 
         return response()->json([
             'data' => [
                 'scope' => 'extension',
-                ...$this->resolveBothDirections([
-                    'extension_policy' => $extension->recording_policy,
+                // Inbound and outbound resolve through different DID layers.
+                //
+                // Outbound calls carry the extension's default outbound DID, so
+                // that number's policy sits between extension and organization.
+                // Inbound calls arrive on whatever number routed to this
+                // extension, which is not a single value — attributing the
+                // outbound DID to inbound calls reported a policy that would
+                // never apply. Inbound is therefore resolved without a DID
+                // layer, and the numbers that would override it are listed
+                // separately.
+                'inbound' => $this->resolver->resolve([...$base, 'direction' => 'inbound']),
+                'outbound' => $this->resolver->resolve([
+                    ...$base,
                     'did_policy' => $extension->defaultOutboundDid?->recording_policy,
-                    'organization_policy' => $organization->recording_policy,
-                    'answered_target_type' => 'extension',
+                    'direction' => 'outbound',
                 ]),
+                'inbound_did_overrides' => $this->inboundDidOverrides($extension),
             ],
         ]);
+    }
+
+    /**
+     * Numbers routed straight to this extension whose own policy would win over
+     * the extension's for calls arriving on them.
+     *
+     * @return array<int, array{id: string, number: string, recording_policy: string}>
+     */
+    protected function inboundDidOverrides(Extension $extension): array
+    {
+        return Did::query()
+            ->where('organization_id', $extension->organization_id)
+            ->where('destination_type', 'extension')
+            ->where('destination_id', $extension->id)
+            ->get(['id', 'number', 'recording_policy'])
+            ->reject(fn (Did $did) => RecordingPolicy::normalize($did->recording_policy) === RecordingPolicy::INHERIT)
+            ->map(fn (Did $did) => [
+                'id' => (string) $did->id,
+                'number' => (string) $did->number,
+                'recording_policy' => RecordingPolicy::normalize($did->recording_policy),
+            ])
+            ->values()
+            ->all();
     }
 
     /**

@@ -184,7 +184,10 @@ class CallDetailRecordApiTest extends TestCase
         $response = $this->actingAs($this->user, 'sanctum')
             ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs/{$cdr->id}");
 
-        $response->assertStatus(403);
+        // The scope check runs before authorization, so a record belonging to
+        // another organization is simply absent from this URL rather than
+        // confirming its existence with a 403.
+        $response->assertStatus(404);
     }
 
     public function test_cdrs_are_ordered_by_start_stamp_desc(): void

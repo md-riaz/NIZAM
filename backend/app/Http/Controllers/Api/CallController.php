@@ -74,12 +74,10 @@ class CallController extends Controller
             return response()->json(['message' => 'Extension not found or inactive.'], 404);
         }
 
-        $esl = app(EslConnectionManager::class);
-
-        if (! $esl->connect()) {
-            return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
-        }
-
+        // The outbound policy is resolved from stored state, so it is checked
+        // before touching FreeSWITCH. Connecting first meant a request rejected
+        // for policy reasons both required a reachable switch to be rejected at
+        // all and returned without closing the connection it had opened.
         try {
             $originateString = $this->outboundOriginateService->buildCommand(
                 organization: $organization,
@@ -95,6 +93,12 @@ class CallController extends Controller
                     'outbound_policy' => [$exception->getMessage()],
                 ],
             ], 422);
+        }
+
+        $esl = app(EslConnectionManager::class);
+
+        if (! $esl->connect()) {
+            return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
         }
 
         $response = $esl->bgapi($originateString);

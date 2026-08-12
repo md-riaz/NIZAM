@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { PaginationMeta } from '@/types/models';
 
-interface PaginationProps {
+interface TablePaginationProps {
     meta?: PaginationMeta | null;
     onPageChange: (page: number) => void;
     /** Noun for the row count, e.g. "calls" or "recordings". */
@@ -17,7 +17,7 @@ interface PaginationProps {
  * previously derived their stat tiles from a single page of results and reported
  * numbers that silently capped at the page size.
  */
-export function Pagination({ meta, onPageChange, itemLabel = 'results' }: PaginationProps) {
+export function TablePagination({ meta, onPageChange, itemLabel = 'results' }: TablePaginationProps) {
     if (!meta || meta.total === 0) {
         return null;
     }

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Pagination } from '@/components/ui/pagination';
+import { TablePagination } from '@/components/ui/table-pagination';
 import {
     Table,
     TableBody,
@@ -281,7 +281,7 @@ export default function RecordingsPage() {
                         </TableBody>
                     </Table>
 
-                    <Pagination meta={data?.meta} onPageChange={setPage} itemLabel="recordings" />
+                    <TablePagination meta={data?.meta} onPageChange={setPage} itemLabel="recordings" />
                 </CardContent>
             </Card>
 

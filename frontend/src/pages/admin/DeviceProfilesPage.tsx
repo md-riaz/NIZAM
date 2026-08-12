@@ -26,7 +26,7 @@ export default function DeviceProfilesPage() {
 
     // The device list stores only extension_id, so extensions are fetched to
     // render a human-readable number instead of a UUID.
-    const { data: extensions = [] } = useQuery<Extension[]>({
+    const { data: extensions = [], isPending: isResolvingExtensions } = useQuery<Extension[]>({
         queryKey: ['extensions', activeOrganization?.id],
         queryFn: async () => {
             if (!activeOrganization) return [];
@@ -108,8 +108,13 @@ export default function DeviceProfilesPage() {
                                             if (!deviceProfile.extension_id) return '-';
                                             const extension = extensionsById.get(deviceProfile.extension_id);
                                             if (!extension) {
+                                                // Distinguish "still fetching the
+                                                // extension list" from "the assigned
+                                                // extension no longer exists".
                                                 return (
-                                                    <span className="text-muted-foreground">Unknown extension</span>
+                                                    <span className="text-muted-foreground">
+                                                        {isResolvingExtensions ? '…' : 'Unknown extension'}
+                                                    </span>
                                                 );
                                             }
                                             return (

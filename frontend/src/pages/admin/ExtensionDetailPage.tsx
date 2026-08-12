@@ -186,7 +186,7 @@ export default function ExtensionDetailPage() {
                                     <div className="flex justify-end pt-2">
                                         <Button
                                             variant="outline"
-                                            onClick={() => {
+                                            onClick={async () => {
                                                 const lines = [
                                                     `SIP Server: ${sipConfig.sip_server || ''}`,
                                                     `Domain / Realm: ${sipConfig.sip_domain || ''}`,
@@ -205,7 +205,17 @@ export default function ExtensionDetailPage() {
                                                 if (sipConfig.enabled && sipConfig.websocket_url) {
                                                     lines.push(`WebSocket URL: ${sipConfig.websocket_url}`);
                                                 }
-                                                navigator.clipboard.writeText(lines.join('\n'));
+                                                // The write is awaited: it rejects when the
+                                                // clipboard is blocked (no permission, insecure
+                                                // context), and reporting success regardless would
+                                                // send someone to paste nothing.
+                                                try {
+                                                    await navigator.clipboard.writeText(lines.join('\n'));
+                                                } catch {
+                                                    toast.error('Could not copy to the clipboard. Select the values above and copy them manually.');
+                                                    return;
+                                                }
+
                                                 if (sipConfig.sip_password) {
                                                     toast.success('SIP credentials copied to clipboard');
                                                 } else {

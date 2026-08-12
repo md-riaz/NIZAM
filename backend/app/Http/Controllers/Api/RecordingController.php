@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RecordingResource;
-use App\Models\Recording;
 use App\Models\Organization;
+use App\Models\Recording;
 use App\Services\Storage\StorageDriver;
+use App\Support\DateRangeFilter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -31,23 +32,27 @@ class RecordingController extends Controller
             $query->where('call_uuid', $request->input('call_uuid'));
         }
 
+        // Numbers match on a substring: an operator searching for a recording
+        // types the digits they remember, not the exact stored E.164 string.
         if ($request->filled('caller_id_number')) {
-            $query->where('caller_id_number', $request->input('caller_id_number'));
+            $query->where('caller_id_number', 'LIKE', '%'.$request->input('caller_id_number').'%');
         }
 
         if ($request->filled('destination_number')) {
-            $query->where('destination_number', $request->input('destination_number'));
+            $query->where('destination_number', 'LIKE', '%'.$request->input('destination_number').'%');
         }
 
         if ($request->filled('date_from')) {
-            $query->where('created_at', '>=', $request->input('date_from'));
+            $query->where('created_at', '>=', DateRangeFilter::start($request->input('date_from')));
         }
 
         if ($request->filled('date_to')) {
-            $query->where('created_at', '<=', $request->input('date_to'));
+            $query->where('created_at', '<=', DateRangeFilter::end($request->input('date_to')));
         }
 
-        return RecordingResource::collection($query->paginate(15));
+        $perPage = max(1, min((int) $request->input('per_page', 15) ?: 15, 100));
+
+        return RecordingResource::collection($query->paginate($perPage));
     }
 
     public function show(Organization $organization, Recording $recording): RecordingResource|JsonResponse

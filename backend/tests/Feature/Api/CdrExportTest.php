@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\CallDetailRecord;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,6 +22,18 @@ class CdrExportTest extends TestCase
         parent::setUp();
         $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        Permission::updateOrCreate(['slug' => 'cdrs.view'], ['module' => 'core']);
+        $this->user->grantPermissions(['cdrs.view']);
+    }
+
+    public function test_export_denied_without_cdr_permission(): void
+    {
+        $unprivileged = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/cdrs/export")
+            ->assertForbidden();
     }
 
     public function test_export_returns_csv_with_headers(): void
@@ -94,6 +107,50 @@ class CdrExportTest extends TestCase
         $content = $response->streamedContent();
         $this->assertStringContainsString('in-range-uuid', $content);
         $this->assertStringNotContainsString('out-range-uuid', $content);
+    }
+
+    /**
+     * The export used to reimplement its own filter list and silently ignored
+     * the `search` box, so exporting a narrowed table produced a CSV of
+     * unrelated calls.
+     */
+    public function test_export_respects_the_search_filter(): void
+    {
+        CallDetailRecord::factory()->create([
+            'organization_id' => $this->organization->id,
+            'caller_id_number' => '15551230000',
+            'uuid' => 'matching-uuid',
+        ]);
+        CallDetailRecord::factory()->create([
+            'organization_id' => $this->organization->id,
+            'caller_id_number' => '15559990000',
+            'uuid' => 'other-uuid',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->get("/api/v1/organizations/{$this->organization->id}/cdrs/export?search=1555123");
+
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('matching-uuid', $content);
+        $this->assertStringNotContainsString('other-uuid', $content);
+    }
+
+    /**
+     * A bare `YYYY-MM-DD` upper bound has to cover the whole day; comparing it
+     * against a timestamp otherwise drops every call on the selected date.
+     */
+    public function test_export_date_to_includes_the_whole_selected_day(): void
+    {
+        CallDetailRecord::factory()->create([
+            'organization_id' => $this->organization->id,
+            'start_stamp' => '2024-01-15 23:45:00',
+            'uuid' => 'late-in-day-uuid',
+        ]);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->get("/api/v1/organizations/{$this->organization->id}/cdrs/export?date_from=2024-01-15&date_to=2024-01-15");
+
+        $this->assertStringContainsString('late-in-day-uuid', $response->streamedContent());
     }
 
     public function test_export_requires_authentication(): void
