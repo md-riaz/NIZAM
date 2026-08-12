@@ -26,7 +26,7 @@ class CdrSearchService
         $this->applyFilters($query, $request);
         $this->applySorting($query, $request);
 
-        return $query->paginate(min($perPage, 100));
+        return $query->paginate(max(1, min($perPage, 100)));
     }
 
     /**

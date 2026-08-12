@@ -5,6 +5,9 @@ return [
         'host' => env('FREESWITCH_HOST', '127.0.0.1'),
         'esl_port' => (int) env('FREESWITCH_ESL_PORT', 8021),
         'esl_password' => env('FREESWITCH_ESL_PASSWORD', 'ClueCon'),
+        // Connect and read timeout for the event socket. Bounds how long a
+        // web request can wait on an unresponsive switch.
+        'esl_timeout' => (int) env('FREESWITCH_ESL_TIMEOUT', 10),
         'xml_curl_url' => env('FREESWITCH_XML_CURL_URL', '/freeswitch/xml-curl'),
         'log_path' => env('FREESWITCH_LOG_PATH', '/var/log/freeswitch/freeswitch.log'),
         'sip_port' => env('FREESWITCH_SIP_PORT'),

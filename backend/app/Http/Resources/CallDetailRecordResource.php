@@ -10,6 +10,8 @@ class CallDetailRecordResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $mayViewRecordings = $request->user()?->can('viewAny', Recording::class) ?? false;
+
         return [
             'id' => $this->id,
             'organization_id' => $this->organization_id,
@@ -28,10 +30,7 @@ class CallDetailRecordResource extends JsonResource
             'call_type' => $this->call_type,
             // The raw storage path is only useful to an operator who may access
             // the audio anyway, so it follows the recordings permission.
-            'recording_path' => $this->when(
-                $request->user()?->can('viewAny', Recording::class) ?? false,
-                fn () => $this->recording_path
-            ),
+            'recording_path' => $this->when($mayViewRecordings, fn () => $this->recording_path),
             'sip_user_agent' => $this->sip_user_agent,
             'remote_media_ip' => $this->remote_media_ip,
             'quality' => [
@@ -53,7 +52,9 @@ class CallDetailRecordResource extends JsonResource
             // Shaped through RecordingResource rather than dumped raw, so the
             // client gets a stable contract and no internal file paths.
             'recordings' => RecordingResource::collection($this->whenLoaded('recordings')),
-            'has_recording' => $this->resolveHasRecording(),
+            // Whether audio exists is itself recording metadata, so it follows
+            // the same permission rather than leaking through a boolean.
+            'has_recording' => $this->when($mayViewRecordings, fn () => $this->resolveHasRecording()),
             // Present only when the call was traced through the delivery
             // pipeline; lets call history link to the interaction journey.
             'call_session_id' => $this->whenLoaded('callSession', fn () => $this->callSession?->id),

@@ -34,5 +34,12 @@
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="FREESWITCH_GATEWAY_DIRECTORY" value="storage/framework/testing/gateways"/>
         <env name="FREESWITCH_SIP_PROFILE_DIRECTORY" value="storage/framework/testing/sip_profiles"/>
+        <!--
+            No FreeSWITCH is listening during tests. Code paths that reload the
+            switch after a write tolerate a failed connection, but the default
+            10s connect timeout multiplied across retries made those tests take
+            minutes. 1s keeps the same behaviour without the wait.
+        -->
+        <env name="FREESWITCH_ESL_TIMEOUT" value="1"/>
     </php>
 </phpunit>

@@ -364,7 +364,13 @@ export default function CallHistoryPage() {
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={9} className="py-10 text-center">
-                                        <div className="mx-auto size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                        <div role="status">
+                                            <div
+                                                className="mx-auto size-6 animate-spin rounded-full border-2 border-primary border-t-transparent"
+                                                aria-hidden="true"
+                                            />
+                                            <span className="sr-only">Loading call history…</span>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : isError ? (

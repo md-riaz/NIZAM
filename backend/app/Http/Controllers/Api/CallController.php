@@ -101,8 +101,13 @@ class CallController extends Controller
             return response()->json(['message' => 'Unable to connect to FreeSWITCH.'], 503);
         }
 
-        $response = $esl->bgapi($originateString);
-        $esl->disconnect();
+        try {
+            $response = $esl->bgapi($originateString);
+        } finally {
+            // The connection is closed even if the command throws, so a failed
+            // originate cannot leave a socket open for the life of the worker.
+            $esl->disconnect();
+        }
 
         return response()->json([
             'message' => 'Call originated.',

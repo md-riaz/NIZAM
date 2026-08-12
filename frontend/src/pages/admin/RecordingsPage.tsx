@@ -200,7 +200,13 @@ export default function RecordingsPage() {
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={8} className="py-10 text-center">
-                                        <div className="mx-auto size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                        <div role="status">
+                                            <div
+                                                className="mx-auto size-6 animate-spin rounded-full border-2 border-primary border-t-transparent"
+                                                aria-hidden="true"
+                                            />
+                                            <span className="sr-only">Loading recordings…</span>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : isError ? (

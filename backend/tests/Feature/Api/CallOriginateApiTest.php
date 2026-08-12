@@ -172,6 +172,13 @@ class CallOriginateApiTest extends TestCase
         $extension->allowedOutboundGateways()->attach($allowedGateway->id);
         $extension->update(['default_outbound_did_id' => $did->id]);
 
+        // A policy rejection must not depend on, or open, a connection to the
+        // switch: the answer comes entirely from stored state.
+        $esl = Mockery::mock();
+        $esl->shouldNotReceive('connect');
+        $esl->shouldNotReceive('bgapi');
+        $this->app->instance(\App\Services\EslConnectionManager::class, $esl);
+
         $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/organizations/{$organization->id}/calls/originate", [
             'extension' => '1001',
             'destination' => '+15551234567',

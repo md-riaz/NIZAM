@@ -8,8 +8,6 @@ use App\Models\FlowNode;
 use App\Models\FlowVersion;
 use App\Models\RingGroup;
 use App\Models\Organization;
-use App\Services\Flow\Compile\FlowToIrCompiler;
-use App\Domain\Flow\Compile\NodeSpecRegistry;
 use App\Services\Flow\FlowArtifactService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -26,9 +24,10 @@ class FlowCompilerSnapshotTest extends TestCase
         parent::setUp();
 
         $this->organization = Organization::factory()->create(['domain' => 'snapshot.example.com']);
-        $registry = new NodeSpecRegistry();
-        $compiler = new FlowToIrCompiler($registry);
-        $this->artifactService = new FlowArtifactService($compiler, app(\App\Services\Routing\RoutingGraphCompiler::class));
+        // Resolved from the container rather than hand-constructed: the service
+        // has gained collaborators twice, and each time this line broke with an
+        // ArgumentCountError that had nothing to do with what the test asserts.
+        $this->artifactService = app(FlowArtifactService::class);
     }
 
     public function test_compiled_xml_matches_expected_snapshot(): void
