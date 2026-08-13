@@ -1,0 +1,58 @@
+name: nizam
+services:
+  app:
+    container_name: nizam-app
+  frontend:
+    container_name: nizam-frontend
+    ports: []
+  nginx:
+    container_name: nizam-nginx
+    ports:
+      - "127.0.0.1:${APP_PORT:-8091}:80"
+  postgres:
+    container_name: nizam-postgres
+    ports:
+      - "127.0.0.1:${DB_PORT:-55432}:5432"
+  redis:
+    container_name: nizam-redis
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-56379}:6379"
+  queue:
+    container_name: nizam-queue
+  scheduler:
+    container_name: nizam-scheduler
+  xml-cdr-watcher:
+    container_name: nizam-xml-cdr-watcher
+  certbot:
+    container_name: nizam-certbot
+    profiles: ["certbot"]
+  esl-listener:
+    container_name: nizam-esl-listener
+  freeswitch:
+    container_name: nizam-freeswitch
+    ports:
+      - "${FREESWITCH_SIP_PORT:-5060}:5060/udp"
+      - "${FREESWITCH_SIP_PORT:-5060}:5060/tcp"
+      - "${FREESWITCH_EXTERNAL_SIP_PORT:-5080}:5080/udp"
+      - "${FREESWITCH_EXTERNAL_SIP_PORT:-5080}:5080/tcp"
+      - "${FREESWITCH_WSS_PORT:-7443}:7443/tcp"
+      - "127.0.0.1:18021:8021"
+      - "${RTP_PORT_RANGE_START:-16384}-${RTP_PORT_RANGE_END:-16484}:${RTP_PORT_RANGE_START:-16384}-${RTP_PORT_RANGE_END:-16484}/udp"
+volumes:
+  postgres_data:
+    name: nizam_postgres_data
+  redis_data:
+    name: nizam_redis_data
+  vendor_data:
+    name: nizam_vendor_data
+  certs_data:
+    name: nizam_certs_data
+  freeswitch_logs:
+    name: nizam_freeswitch_logs
+  freeswitch_xml_cdr:
+    name: nizam_freeswitch_xml_cdr
+  freeswitch_data:
+    name: nizam_freeswitch_data
+networks:
+  app_net:
+    name: nizam_app_net
