@@ -144,15 +144,52 @@ function isUuid(value?: string | null): value is string {
     return typeof value === 'string' && z.string().uuid().safeParse(value).success;
 }
 
+// Sentinel for "no destination chosen yet". Deliberately not a well-formed UUID:
+// z.string().uuid() rejects it locally with a field-level message before the
+// form can submit, instead of shipping a placeholder the backend would reject.
+const UNSET_DESTINATION_ID = '';
+
+// DidSchema (types/models.ts) narrows destination_type to 'extension' | 'flow',
+// but nothing parses API responses through that schema — DidFormPage takes the
+// response as `DidResponse` via a plain cast. Older rows can still carry legacy
+// values (ivr, ring_group, queue, voicemail, time_condition, call_routing_policy,
+// agent, bridge) that the declared type says can't happen but really can. Read
+// the raw value as a string here rather than trusting the union.
+type RawDestinationType = string | null | undefined;
+
+function getRawDestinationType(did?: DidResponse | null): RawDestinationType {
+    return (did as { destination_type?: RawDestinationType } | null | undefined)?.destination_type;
+}
+
+function isFormDestinationType(value: RawDestinationType): value is DidFormValues['destination_type'] {
+    return value === 'extension' || value === 'flow';
+}
+
+const legacyDestinationTypeLabels: Record<string, string> = {
+    ivr: 'an IVR menu',
+    ring_group: 'a ring group',
+    queue: 'a call queue',
+    voicemail: 'a voicemail box',
+    time_condition: 'a time condition',
+    call_routing_policy: 'a call routing policy',
+    agent: 'an agent',
+    bridge: 'a bridge',
+};
+
+function describeLegacyDestination(destinationType: string): string {
+    return legacyDestinationTypeLabels[destinationType] ?? `a legacy "${destinationType}" destination`;
+}
+
 function toDidFormValues(did?: DidResponse | null): DidFormValues {
-    const destinationType = did?.destination_type;
+    const rawDestinationType = getRawDestinationType(did);
+    const isLegacyDestination = !!rawDestinationType && !isFormDestinationType(rawDestinationType);
 
     return {
         number: did?.number || '',
         description: did?.description || '',
         recording_policy: did?.recording_policy ?? 'inherit',
-        destination_type: destinationType === 'flow' ? destinationType : 'extension',
-        destination_id: isUuid(did?.destination_id) ? did.destination_id : '00000000-0000-0000-0000-000000000000',
+        destination_type: isFormDestinationType(rawDestinationType) ? rawDestinationType : 'extension',
+        destination_id: !isLegacyDestination && isUuid(did?.destination_id) ? did.destination_id : UNSET_DESTINATION_ID,
         is_active: did?.is_active ?? true,
     };
 }
@@ -276,6 +313,7 @@ export default function DidFormPage() {
     const [savedDidId, setSavedDidId] = useState<string | null>(isEdit ? (id ?? null) : null);
     const [activeTab, setActiveTab] = useState<'number' | 'provider'>('number');
     const [isProviderPasswordVisible, setIsProviderPasswordVisible] = useState(false);
+    const [legacyDestination, setLegacyDestination] = useState<{ type: string } | null>(null);
 
     const currentDidId = savedDidId ?? id ?? null;
 
@@ -286,7 +324,7 @@ export default function DidFormPage() {
             description: '',
             recording_policy: 'inherit',
             destination_type: 'extension',
-            destination_id: '00000000-0000-0000-0000-000000000000',
+            destination_id: UNSET_DESTINATION_ID,
             is_active: true,
         },
     });
@@ -366,6 +404,13 @@ export default function DidFormPage() {
     useEffect(() => {
         if (!did) return;
 
+        const rawDestinationType = getRawDestinationType(did);
+        setLegacyDestination(
+            rawDestinationType && !isFormDestinationType(rawDestinationType)
+                ? { type: rawDestinationType }
+                : null,
+        );
+
         numberForm.reset(toDidFormValues(did));
 
         providerForm.reset(did.gateway ? toProviderFormValues(did.gateway) : emptyProviderValues);
@@ -375,15 +420,13 @@ export default function DidFormPage() {
 
 
     useEffect(() => {
-        const emptyDestinationId = '00000000-0000-0000-0000-000000000000';
-
         if (currentDidId) {
             return;
         }
 
         if (destinationOptions.length === 0) {
-            if (selectedDestinationId !== emptyDestinationId) {
-                numberForm.setValue('destination_id', emptyDestinationId, {
+            if (selectedDestinationId !== UNSET_DESTINATION_ID) {
+                numberForm.setValue('destination_id', UNSET_DESTINATION_ID, {
                     shouldValidate: true,
                     shouldDirty: true,
                 });
@@ -513,12 +556,24 @@ export default function DidFormPage() {
             return;
         }
 
-        saveNumberMutation.mutate({
-            ...values,
-            destination_id: destinationOptions.some((option) => option.id === values.destination_id)
-                ? values.destination_id
-                : destinationOptions[0].id,
-        });
+        // The stored destination may legitimately sit outside the loaded option
+        // list — that is what the "Current extension"/"Current flow" entry in
+        // destinationOptionsWithCurrent represents. This used to fall back to
+        // destinationOptions[0] when the value was not in the *unaugmented*
+        // list, which silently repointed the number at whichever destination
+        // happened to be first. Send what was chosen, or refuse to save.
+        if (!destinationOptionsWithCurrent.some((option) => option.id === values.destination_id)) {
+            numberForm.setError('destination_id', {
+                type: 'manual',
+                message: destType === 'flow'
+                    ? 'Choose the call flow this number should reach.'
+                    : 'Choose the extension this number should reach.',
+            });
+
+            return;
+        }
+
+        saveNumberMutation.mutate(values);
     };
 
     const onSubmitProvider = (values: ProviderFormValues) => {
@@ -674,6 +729,16 @@ export default function DidFormPage() {
                                             )}
                                         />
 
+                                        {legacyDestination ? (
+                                            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+                                                This number currently routes to {describeLegacyDestination(legacyDestination.type)}.
+                                                A number can now only route directly to an extension or a call flow —
+                                                flows are where ring groups, menus, and queues live. Choose an
+                                                extension or a call flow below to keep saving; the destination has
+                                                been left blank so this change isn't made without you noticing.
+                                            </div>
+                                        ) : null}
+
                                         <div className="grid gap-6 sm:grid-cols-2">
                                             <FormField
                                                 control={numberForm.control}
@@ -688,14 +753,15 @@ export default function DidFormPage() {
                                                                 }
 
                                                                 field.onChange(value);
+                                                                setLegacyDestination(null);
                                                                 const nextOptions = getDestinationOptions(value, extensions, flows);
                                                                 numberForm.setValue(
                                                                     'destination_id',
-                                                                    nextOptions[0]?.id ?? '00000000-0000-0000-0000-000000000000',
+                                                                    nextOptions[0]?.id ?? UNSET_DESTINATION_ID,
                                                                     { shouldValidate: true, shouldDirty: true },
                                                                 );
                                                             }}
-                                                            value={field.value}
+                                                            value={legacyDestination ? '' : field.value}
                                                         >
                                                             <FormControl>
                                                                 <SelectTrigger>
@@ -724,12 +790,18 @@ export default function DidFormPage() {
                                                         </FormLabel>
                                                         <Select
                                                             onValueChange={field.onChange}
-                                                            value={destinationOptionsWithCurrent.some((option) => option.id === field.value) ? field.value : ''}
-                                                            disabled={destinationOptions.length === 0}
+                                                            value={
+                                                                !legacyDestination && destinationOptionsWithCurrent.some((option) => option.id === field.value)
+                                                                    ? field.value
+                                                                    : ''
+                                                            }
+                                                            disabled={destinationOptions.length === 0 || !!legacyDestination}
                                                         >
                                                             <FormControl>
                                                                 <SelectTrigger>
-                                                                    <SelectValue placeholder={destType === 'flow' ? 'Select flow' : 'Select extension'} />
+                                                                    <SelectValue placeholder={legacyDestination
+                                                                        ? 'Choose destination type first'
+                                                                        : (destType === 'flow' ? 'Select flow' : 'Select extension')} />
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
@@ -749,9 +821,11 @@ export default function DidFormPage() {
                                                             </SelectContent>
                                                         </Select>
                                                         <FormDescription>
-                                                            {destType === 'flow'
-                                                                ? 'Choose flow that should answer inbound call and execute published routing graph.'
-                                                                : 'Choose extension that should receive inbound calls.'}
+                                                            {legacyDestination
+                                                                ? 'Pick Extension or Call Flow above, then choose the specific destination here.'
+                                                                : (destType === 'flow'
+                                                                    ? 'Choose flow that should answer inbound call and execute published routing graph.'
+                                                                    : 'Choose extension that should receive inbound calls.')}
                                                         </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
