@@ -6,8 +6,8 @@ use App\Models\Flow;
 use App\Models\FlowEdge;
 use App\Models\FlowNode;
 use App\Models\FlowVersion;
-use App\Models\RingGroup;
 use App\Models\Organization;
+use App\Models\RingGroup;
 use App\Services\Flow\FlowArtifactService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,6 +17,7 @@ class FlowCompilerSnapshotTest extends TestCase
     use RefreshDatabase;
 
     protected FlowArtifactService $artifactService;
+
     protected Organization $organization;
 
     protected function setUp(): void
@@ -37,7 +38,7 @@ class FlowCompilerSnapshotTest extends TestCase
             'id' => '11111111-1111-1111-1111-111111111111',
             'organization_id' => $this->organization->id,
         ]);
-        
+
         $flowVersion = FlowVersion::factory()->create([
             'flow_id' => $flow->id,
             'status' => 'draft',
@@ -126,7 +127,7 @@ class FlowCompilerSnapshotTest extends TestCase
         $this->assertTrue($result['success'], $result['error'] ?? json_encode($result));
 
         $artifact = \App\Models\FlowCompiledArtifact::find($result['artifact_id']);
-        
+
         // We assert against a known snapshot string
         $expectedXml = <<<'XML'
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -201,15 +202,15 @@ class FlowCompilerSnapshotTest extends TestCase
 XML;
 
         // Note: For simplicity and dealing with non-deterministic node array ordering from DB query
-        // we'll just check that each expected block exists. 
+        // we'll just check that each expected block exists.
         // Real snapshot testing would freeze DB ordering or sort nodes.
-        
+
         $this->assertStringContainsString('<extension name="flow_11111111-1111-1111-1111-111111111111">', $artifact->content);
         $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000001 XML snapshot.example.com"/>', $artifact->content);
-        
+
         // Start node check
         $this->assertStringContainsString('<action application="transfer" data="node_10000000-0000-0000-0000-000000000002 XML snapshot.example.com"/>', $artifact->content);
-        $this->assertStringNotContainsString('<extension name="node_10000000-0000-0000-0000-000000000001">' . "\n" . '        <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000001$">' . "\n" . '          <action application="answer"/>', $artifact->content);
+        $this->assertStringNotContainsString('<extension name="node_10000000-0000-0000-0000-000000000001">'."\n".'        <condition field="destination_number" expression="^node_10000000-0000-0000-0000-000000000001$">'."\n".'          <action application="answer"/>', $artifact->content);
 
         // Schedule check
         $this->assertStringContainsString('<action application="set" data="nizam_schedule_return_node=node_10000000-0000-0000-0000-000000000002_resume"/>', $artifact->content);

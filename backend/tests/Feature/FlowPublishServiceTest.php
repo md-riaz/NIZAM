@@ -15,7 +15,9 @@ use Tests\TestCase;
 class FlowPublishServiceTest extends TestCase
 {
     use RefreshDatabase;
+
     protected FlowPublishService $publishService;
+
     protected Organization $organization;
 
     protected function setUp(): void
