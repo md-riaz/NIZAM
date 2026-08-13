@@ -36,6 +36,9 @@ const SystemMediaPage = lazy(() => import('@/pages/admin/SystemMediaPage'));
 const CallHistoryPage = lazy(() => import('@/pages/admin/CallHistoryPage'));
 const RecordingsPage = lazy(() => import('@/pages/admin/RecordingsPage'));
 const InteractionDetailPage = lazy(() => import('@/pages/admin/InteractionDetailPage'));
+const CallAnalyticsPage = lazy(() => import('@/pages/admin/CallAnalyticsPage'));
+const SupervisorReportsPage = lazy(() => import('@/pages/admin/SupervisorReportsPage'));
+const UsageReportPage = lazy(() => import('@/pages/admin/UsageReportPage'));
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
 const LogViewerPage = lazy(() => import('@/pages/admin/LogViewerPage'));
 const SipStatusPage = lazy(() => import('@/pages/admin/SipStatusPage'));
@@ -189,6 +192,11 @@ const router = createBrowserRouter(
                 <Route path="recordings" element={<RecordingsPage />} />
                 <Route path="call-blocks" element={<CallBlocksPage />} />
                 <Route path="interactions/:id" element={<InteractionDetailPage />} />
+
+                {/* Reports (organization-scoped) */}
+                <Route path="reports/call-analytics" element={<CallAnalyticsPage />} />
+                <Route path="reports/supervisor" element={<SupervisorReportsPage />} />
+                <Route path="reports/usage" element={<UsageReportPage />} />
 
                 {/* System */}
                 <Route path="capabilities" element={<SuperadminOnlyRoute><CapabilitiesPage /></SuperadminOnlyRoute>} />

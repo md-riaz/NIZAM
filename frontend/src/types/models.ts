@@ -529,3 +529,189 @@ export const FreeSwitchModuleStatusSchema = z.object({
     supports_stop: z.boolean().optional(),
 });
 export type FreeSwitchModuleStatus = z.infer<typeof FreeSwitchModuleStatusSchema>;
+
+// ─── Reports ─────────────────────────────────────────────────
+//
+// Report endpoints are read-only aggregates assembled by service classes rather
+// than API resources, so they are typed as plain interfaces (like `CdrSummary`
+// above) instead of zod schemas — nothing here is ever submitted back.
+//
+// Every report endpoint wraps its payload in `data`.
+
+/** ISO-8601 bounds echoed back by every report endpoint. */
+export interface ReportPeriod {
+    from: string;
+    to: string;
+}
+
+/** `GET .../cdrs/analytics/summary` — accepts `date_from`, `date_to`. */
+export interface CdrAnalyticsSummary {
+    period: ReportPeriod;
+    total_calls: number;
+    answered_calls: number;
+    missed_calls: number;
+    failed_calls: number;
+    total_duration_seconds: number;
+    total_billsec_seconds: number;
+    average_duration_seconds: number;
+    /** Answer-seizure ratio, already a percentage rounded to 2 decimals. */
+    asr: number;
+    /** Average call duration over answered calls, in seconds. */
+    acd_seconds: number;
+    quality: {
+        average_score: number | null;
+        average_mos: number | null;
+    };
+    /** Keyed by direction ("inbound"/"outbound"); absent directions are omitted. */
+    by_direction: Record<string, number>;
+    /** Keyed by call type; calls with a null `call_type` are excluded entirely. */
+    by_call_type: Record<string, number>;
+}
+
+/** One bucket from `GET .../cdrs/analytics/volume`. */
+export interface CdrVolumePoint {
+    /** `YYYY-MM-DD` for daily granularity. */
+    period: string;
+    total_calls: number;
+    answered_calls: number;
+    total_duration_seconds: number;
+    total_billsec_seconds: number;
+    asr: number;
+}
+
+/** One bucket from `GET .../cdrs/analytics/quality`. Only calls with a quality score are counted. */
+export interface CdrQualityPoint {
+    period: string;
+    avg_quality_score: number;
+    avg_mos: number | null;
+    avg_packet_loss: number | null;
+    avg_jitter_ms: number | null;
+    avg_latency_ms: number | null;
+    sample_count: number;
+}
+
+/** One row from `GET .../cdrs/analytics/destinations` — accepts `limit` (capped at 100). */
+export interface CdrTopDestination {
+    destination_number: string | null;
+    total_calls: number;
+    answered_calls: number;
+    total_duration_seconds: number;
+    total_billsec_seconds: number;
+    asr: number;
+    avg_quality_score: number | null;
+}
+
+/** `GET .../supervisor-reports/call-summary`. */
+export interface SupervisorCallSummaryReport {
+    period: ReportPeriod;
+    totals: {
+        calls: number;
+        answered_calls: number;
+        /** Inbound calls that were never answered. */
+        missed_calls: number;
+        voicemail_calls: number;
+        total_duration_seconds: number;
+        total_billsec_seconds: number;
+        /** Percentage rounded to 2 decimals. */
+        answer_rate: number;
+    };
+    by_direction: Record<string, number>;
+}
+
+/** The outbound call that closed the loop on a missed call or voicemail. */
+export interface ReportReturnedCall {
+    cdr_id: number;
+    call_uuid: string | null;
+    started_at: string | null;
+    destination_number: string | null;
+}
+
+export interface MissedReturnedCallItem {
+    cdr_id: number;
+    call_uuid: string | null;
+    caller_id_number: string | null;
+    normalized_caller_number: string;
+    destination_number: string | null;
+    missed_at: string | null;
+    returned: boolean;
+    returned_call: ReportReturnedCall | null;
+}
+
+/**
+ * `GET .../supervisor-reports/missed-returned-calls` — accepts `window_days`.
+ * Not paginated: every missed call in the range is returned in `items`.
+ */
+export interface MissedReturnedCallsReport {
+    period: ReportPeriod;
+    returned_call_window_days: number;
+    summary: {
+        missed_calls: number;
+        returned_calls: number;
+        open_missed_calls: number;
+    };
+    items: MissedReturnedCallItem[];
+}
+
+export interface VoicemailFollowUpItem {
+    event_id: number;
+    call_uuid: string | null;
+    caller_id_number: string;
+    normalized_caller_number: string;
+    mailbox: string | null;
+    received_at: string | null;
+    follow_up_status: 'pending' | 'returned';
+    needs_attention: boolean;
+    recording: {
+        id: number;
+        call_uuid: string | null;
+        needs_review: boolean;
+        review_reasons: string[] | null;
+        file_name: string | null;
+    } | null;
+    returned_call: ReportReturnedCall | null;
+}
+
+/**
+ * `GET .../supervisor-reports/voicemails-needing-follow-up` — accepts `window_days`.
+ * Authorized against `Recording`, not `CallDetailRecord`, so this one section can
+ * 403 while the rest of the supervisor report loads fine.
+ */
+export interface VoicemailsNeedingFollowUpReport {
+    period: ReportPeriod;
+    returned_call_window_days: number;
+    summary: {
+        voicemails: number;
+        pending_follow_up: number;
+        needs_review: number;
+        needs_attention: number;
+    };
+    items: VoicemailFollowUpItem[];
+}
+
+/** Aggregates for one metered metric over the requested range. */
+export interface UsageMetricSummary {
+    total: number;
+    peak: number;
+    average: number;
+    /** Number of daily usage records that contributed. */
+    count: number;
+}
+
+/** `GET .../usage/summary` — accepts `from`/`to` (not `date_from`/`date_to`). */
+export interface UsageSummaryReport {
+    organization_id: number;
+    /** `YYYY-MM-DD`. */
+    from: string;
+    to: string;
+    /** Keyed by metric slug; metrics with no records in range are absent. */
+    usage: Record<string, UsageMetricSummary>;
+}
+
+/** `GET .../usage/reconcile` — accepts `from`/`to`. */
+export interface UsageReconciliation {
+    cdr_total_seconds: number;
+    cdr_total_minutes: number;
+    metered_minutes: number;
+    difference_minutes: number;
+    matched: boolean;
+}

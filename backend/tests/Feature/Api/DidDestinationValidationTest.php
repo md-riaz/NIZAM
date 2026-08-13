@@ -7,7 +7,10 @@ use App\Models\Extension;
 use App\Models\Flow;
 use App\Models\Organization;
 use App\Models\User;
+use App\Rules\DidDestination;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -162,13 +165,114 @@ class DidDestinationValidationTest extends TestCase
     }
 
     /**
-     * The default state must be savable through the API, which is the whole
-     * point of narrowing it: it used to pick from five types, three of which the
-     * endpoint rejects.
+     * The default state's type must be one the API accepts. It used to pick from
+     * five types, three of which the endpoint rejects.
+     *
+     * Only the type is asserted: the default deliberately leaves destination_id a
+     * bare uuid, so it is a valid row but not a valid API write. forExtension()
+     * and forFlow() cover that, and the case below proves it.
      */
-    public function test_factory_default_destination_type_is_accepted_by_the_api(): void
+    public function test_factory_default_destination_type_is_one_the_api_accepts(): void
     {
-        $this->assertContains(Did::factory()->make()->destination_type, ['extension', 'flow']);
+        $this->assertContains(Did::factory()->make()->destination_type, DidDestination::TYPES);
+    }
+
+    /**
+     * An explicit target must also decide the DID's organization.
+     *
+     * Passing a target set only destination_id, so the DID still took a fresh
+     * organization from the base definition and pointed across organizations —
+     * the exact row these states exist to prevent.
+     */
+    public function test_an_explicit_factory_target_also_sets_the_organization(): void
+    {
+        $extension = Extension::factory()->create(['organization_id' => $this->organization->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
+
+        $withExtension = Did::factory()->forExtension($extension)->create();
+        $withFlow = Did::factory()->forFlow($flow)->create();
+
+        $this->assertSame($this->organization->id, $withExtension->organization_id);
+        $this->assertSame($extension->id, $withExtension->destination_id);
+
+        $this->assertSame($this->organization->id, $withFlow->organization_id);
+        $this->assertSame($flow->id, $withFlow->destination_id);
+    }
+
+    /**
+     * A DID built by the factory's target states must survive a round trip
+     * through the endpoint, which is the point of having the states at all.
+     */
+    public function test_a_factory_built_did_can_be_saved_back_through_the_api(): void
+    {
+        $did = Did::factory()->forExtension()->create(['organization_id' => $this->organization->id]);
+
+        $this->actingAs($this->user, 'sanctum')
+            ->putJson($this->url().'/'.$did->id, [
+                'number' => $did->number,
+                'destination_type' => $did->destination_type,
+                'destination_id' => (string) $did->destination_id,
+                'is_active' => true,
+            ])
+            ->assertOk();
+    }
+
+    /**
+     * A non-scalar destination_type must not reach the rule's constructor.
+     *
+     * The rule is built while the rules array is assembled, before any of them
+     * run, so an array value hit a `?string` parameter and raised a TypeError —
+     * a 500 where the client should simply be told the type is invalid.
+     */
+    public function test_a_non_scalar_destination_type_is_a_validation_error_not_a_crash(): void
+    {
+        $this->actingAs($this->user, 'sanctum')
+            ->postJson($this->url(), $this->payload([
+                'destination_type' => ['extension'],
+                'destination_id' => (string) fake()->uuid(),
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['destination_type']);
+    }
+
+    public function test_a_non_scalar_destination_id_is_a_validation_error_not_a_crash(): void
+    {
+        $this->actingAs($this->user, 'sanctum')
+            ->postJson($this->url(), $this->payload([
+                'destination_type' => 'extension',
+                'destination_id' => ['nope'],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['destination_id']);
+    }
+
+    /**
+     * A malformed destination_id must not be handed to the database.
+     *
+     * Laravel does not stop at the first failing rule, so this value fails the
+     * `uuid` rule and still reaches this one. Postgres types the primary key as
+     * `uuid` and raises "invalid input syntax" when compared with a non-UUID,
+     * turning invalid input into a 500. SQLite compares it as a string and would
+     * never reveal that, so the guarantee asserted here is that the rule
+     * short-circuits before querying at all.
+     */
+    public function test_a_malformed_destination_id_never_reaches_a_query(): void
+    {
+        $queried = false;
+        DB::listen(function (QueryExecuted $query) use (&$queried) {
+            if (str_contains($query->sql, 'extensions')) {
+                $queried = true;
+            }
+        });
+
+        $rule = new DidDestination($this->organization, 'extension');
+        $failed = false;
+        $rule->validate('destination_id', 'not-a-uuid', function () use (&$failed) {
+            $failed = true;
+        });
+
+        $this->assertFalse($queried, 'A malformed UUID was sent to the database.');
+        $this->assertFalse($failed, 'The uuid rule owns this message; the destination rule should stay quiet.');
     }
 
     private function url(): string

@@ -24,6 +24,11 @@ class DidFactory extends Factory
             // A number only ever routes to an extension or a flow. This used to
             // pick from five types, most of which the API rejects, so roughly
             // three in five factory DIDs could not be saved back through it.
+            //
+            // destination_id stays a bare uuid: most tests only need a row in the
+            // table, and materialising an extension for every DID would be waste.
+            // Anything written back through the API needs a real target, so use
+            // forExtension() or forFlow() there.
             'destination_type' => 'extension',
             'destination_id' => fake()->uuid(),
             'is_active' => true,
@@ -43,13 +48,25 @@ class DidFactory extends Factory
      */
     public function forExtension(?Extension $extension = null): static
     {
+        // An explicit target also fixes the organization. Setting only
+        // destination_id left the DID with a fresh organization from the base
+        // definition, producing the cross-organization row this state exists to
+        // avoid.
+        if ($extension) {
+            return $this->state(fn () => [
+                'organization_id' => $extension->organization_id,
+                'destination_type' => 'extension',
+                'destination_id' => $extension->id,
+            ]);
+        }
+
         return $this->state(fn () => [
             'destination_type' => 'extension',
             // Deferred to a closure so it resolves against the final attributes.
             // A state closure only sees this factory's own definition, so any
             // organization_id passed to create() would not be visible yet and the
             // extension would be built in the wrong organization.
-            'destination_id' => $extension?->id ?? fn (array $attributes) => Extension::factory()->create([
+            'destination_id' => fn (array $attributes) => Extension::factory()->create([
                 'organization_id' => $attributes['organization_id'],
             ])->id,
         ]);
@@ -60,9 +77,17 @@ class DidFactory extends Factory
      */
     public function forFlow(?Flow $flow = null): static
     {
+        if ($flow) {
+            return $this->state(fn () => [
+                'organization_id' => $flow->organization_id,
+                'destination_type' => 'flow',
+                'destination_id' => $flow->id,
+            ]);
+        }
+
         return $this->state(fn () => [
             'destination_type' => 'flow',
-            'destination_id' => $flow?->id ?? fn (array $attributes) => Flow::factory()->create([
+            'destination_id' => fn (array $attributes) => Flow::factory()->create([
                 'organization_id' => $attributes['organization_id'],
             ])->id,
         ]);

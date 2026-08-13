@@ -16,6 +16,7 @@ use App\Models\TimeCondition;
 use App\Models\User;
 use App\Models\Webhook;
 use App\Services\Flow\FlowGraphService;
+use App\Services\OrganizationManifestBuilder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -222,81 +223,55 @@ class DatabaseSeeder extends Seeder
         }
 
         // ──────────────────────────────────────────────
-        // 6c. Flows — the only legal DID destinations beyond a bare extension
+        // 6c. Flows — the only legal DID destination beyond a bare extension
+        //
+        // These graphs are deliberately limited to what the compiler actually
+        // emits. FlowArtifactService compiles `ring_team` into a real dial string
+        // driven by _team_ring.lua, and compiles a transfer for any *human*
+        // destination type (DeliveryTargetResolver::HUMAN_TARGET_TYPES).
+        //
+        // It does NOT implement two things a richer demo would want:
+        //   - `menu` compiles to CollectDigits, which emits no digit-collection
+        //     application at all. Given digit edges and no destination params it
+        //     transfers straight to the invalid/timeout branch, so a menu here
+        //     would advertise options that can never be selected.
+        //   - `voicemail` cannot express taking a message. Without destination
+        //     params it hangs up, and 'voicemail' is not a human target type, so
+        //     supplying them routes nowhere either.
+        //
+        // Seeded numbers therefore ring a team and overflow to a human extension.
+        // Both are paths the runtime executes end to end.
         // ──────────────────────────────────────────────
         $mainOfficeFlow = Flow::firstOrCreate(
-            ['organization_id' => $organization->id, 'name' => 'Main Office Menu Flow'],
-            ['description' => 'Auto-attendant menu reproducing the Main Auto-Attendant IVR options']
+            ['organization_id' => $organization->id, 'name' => 'Main Office Flow'],
+            ['description' => 'Rings the support team, overflowing to the operator extension']
         );
 
         if (! $mainOfficeFlow->versions()->exists()) {
-            app(FlowGraphService::class)->updateFlowWithVersion($mainOfficeFlow, FlowData::fromArray([
-                'name' => $mainOfficeFlow->name,
-                'description' => $mainOfficeFlow->description,
-                'publish' => true,
-                'version' => [
-                    'definition' => [
-                        'nodes' => [
-                            ['id' => 'start', 'type' => 'start', 'name' => 'Start', 'config' => []],
-                            ['id' => 'menu', 'type' => 'menu', 'name' => 'Main Menu', 'config' => [
-                                'prompt' => $mainIvr->greet_long,
-                                'timeout' => $mainIvr->timeout,
-                                'digits' => ['1', '2', '3', '0'],
-                            ]],
-                            ['id' => 'ring-sales', 'type' => 'ring_team', 'name' => 'Ring Sales Team', 'config' => ['team_id' => $salesTeam->id, 'timeout' => $salesTeam->timeout]],
-                            ['id' => 'ring-support', 'type' => 'ring_team', 'name' => 'Ring Support Team', 'config' => ['team_id' => $supportTeam->id, 'timeout' => $supportTeam->timeout]],
-                            ['id' => 'finance-voicemail', 'type' => 'voicemail', 'name' => 'Finance Voicemail', 'config' => ['mailbox' => $extensions['1005']->extension]],
-                            ['id' => 'operator-voicemail', 'type' => 'voicemail', 'name' => 'Operator Voicemail', 'config' => ['mailbox' => $extensions['1002']->extension]],
-                            ['id' => 'general-voicemail', 'type' => 'voicemail', 'name' => 'General Voicemail', 'config' => ['mailbox' => $extensions['1001']->extension]],
-                            ['id' => 'hangup', 'type' => 'hangup', 'name' => 'Hangup', 'config' => ['cause' => 'NORMAL_CLEARING']],
-                        ],
-                        'edges' => [
-                            ['source_node_id' => 'start', 'target_node_id' => 'menu', 'condition' => 'next'],
-                            ['source_node_id' => 'menu', 'target_node_id' => 'ring-sales', 'condition' => 'digit_1'],
-                            ['source_node_id' => 'menu', 'target_node_id' => 'ring-support', 'condition' => 'digit_2'],
-                            ['source_node_id' => 'menu', 'target_node_id' => 'finance-voicemail', 'condition' => 'digit_3'],
-                            ['source_node_id' => 'menu', 'target_node_id' => 'operator-voicemail', 'condition' => 'digit_0'],
-                            ['source_node_id' => 'menu', 'target_node_id' => 'general-voicemail', 'condition' => 'timeout'],
-                            ['source_node_id' => 'ring-sales', 'target_node_id' => 'hangup', 'condition' => 'answered'],
-                            ['source_node_id' => 'ring-sales', 'target_node_id' => 'general-voicemail', 'condition' => 'timeout'],
-                            ['source_node_id' => 'ring-support', 'target_node_id' => 'hangup', 'condition' => 'answered'],
-                            ['source_node_id' => 'ring-support', 'target_node_id' => 'general-voicemail', 'condition' => 'timeout'],
-                        ],
-                    ],
-                ],
-            ]));
-
-            $mainOfficeFlow->fresh(['activeVersion']);
+            app(FlowGraphService::class)->updateFlowWithVersion(
+                $mainOfficeFlow,
+                FlowData::fromArray($this->teamRingFlowDefinition(
+                    $mainOfficeFlow,
+                    $supportTeam,
+                    $extensions['1002'],
+                )),
+            );
         }
 
         $salesRingFlow = Flow::firstOrCreate(
             ['organization_id' => $organization->id, 'name' => 'Sales Ring Flow'],
-            ['description' => 'Rings the Sales Team ring group directly, falling back to voicemail']
+            ['description' => 'Rings the sales team, overflowing to the sales lead extension']
         );
 
         if (! $salesRingFlow->versions()->exists()) {
-            app(FlowGraphService::class)->updateFlowWithVersion($salesRingFlow, FlowData::fromArray([
-                'name' => $salesRingFlow->name,
-                'description' => $salesRingFlow->description,
-                'publish' => true,
-                'version' => [
-                    'definition' => [
-                        'nodes' => [
-                            ['id' => 'start', 'type' => 'start', 'name' => 'Start', 'config' => []],
-                            ['id' => 'ring-sales', 'type' => 'ring_team', 'name' => 'Ring Sales Team', 'config' => ['team_id' => $salesTeam->id, 'timeout' => $salesTeam->timeout]],
-                            ['id' => 'sales-voicemail', 'type' => 'voicemail', 'name' => 'Sales Voicemail', 'config' => ['mailbox' => $extensions['1003']->extension]],
-                            ['id' => 'hangup', 'type' => 'hangup', 'name' => 'Hangup', 'config' => ['cause' => 'NORMAL_CLEARING']],
-                        ],
-                        'edges' => [
-                            ['source_node_id' => 'start', 'target_node_id' => 'ring-sales', 'condition' => 'next'],
-                            ['source_node_id' => 'ring-sales', 'target_node_id' => 'hangup', 'condition' => 'answered'],
-                            ['source_node_id' => 'ring-sales', 'target_node_id' => 'sales-voicemail', 'condition' => 'timeout'],
-                        ],
-                    ],
-                ],
-            ]));
-
-            $salesRingFlow->fresh(['activeVersion']);
+            app(FlowGraphService::class)->updateFlowWithVersion(
+                $salesRingFlow,
+                FlowData::fromArray($this->teamRingFlowDefinition(
+                    $salesRingFlow,
+                    $salesTeam,
+                    $extensions['1003'],
+                )),
+            );
         }
 
         // ──────────────────────────────────────────────
@@ -489,6 +464,17 @@ class DatabaseSeeder extends Seeder
         );
 
         // ──────────────────────────────────────────────
+        // 11b. Inbound routing manifest
+        //
+        // Rebuilt explicitly, and only once every DID exists. This seeder uses
+        // WithoutModelEvents, so DidObserver never fires and no DID insert
+        // rebuilds the manifest on its own. Without this the manifest served to
+        // FreeSWITCH carries no DID extensions at all and every seeded inbound
+        // number falls through to the failsafe.
+        // ──────────────────────────────────────────────
+        app(OrganizationManifestBuilder::class)->buildAndActivate($organization);
+
+        // ──────────────────────────────────────────────
         // 12. Graph Flow Demo Data
         // ──────────────────────────────────────────────
         $this->call(GraphFlowDemoSeeder::class);
@@ -497,5 +483,49 @@ class DatabaseSeeder extends Seeder
         // 13. System SIP Profiles
         // ──────────────────────────────────────────────
         $this->call(SipProfileSeeder::class);
+    }
+
+    /**
+     * A flow that rings a team and overflows to an extension.
+     *
+     * Only `ring_team` and a transfer to a human destination are used, because
+     * those are the two things FlowArtifactService compiles into working
+     * dialplan. See the note at section 6c.
+     *
+     * @return array<string, mixed>
+     */
+    private function teamRingFlowDefinition(Flow $flow, Team $team, Extension $overflow): array
+    {
+        return [
+            'name' => $flow->name,
+            'description' => $flow->description,
+            'publish' => true,
+            'version' => [
+                'definition' => [
+                    'nodes' => [
+                        ['id' => 'start', 'type' => 'start', 'name' => 'Start', 'config' => []],
+                        ['id' => 'ring-team', 'type' => 'ring_team', 'name' => 'Ring '.$team->name, 'config' => [
+                            'team_id' => $team->id,
+                            'timeout' => $team->timeout,
+                        ]],
+                        // A play_message node carrying a human destination compiles
+                        // to a transfer through the delivery entrypoint, which is
+                        // how an unanswered call reaches a person.
+                        ['id' => 'overflow', 'type' => 'play_message', 'name' => 'Overflow to '.$overflow->extension, 'config' => [
+                            'prompt' => 'Connecting you to the next available person.',
+                            'destination_type' => 'extension',
+                            'destination_value' => $overflow->id,
+                        ]],
+                        ['id' => 'hangup', 'type' => 'hangup', 'name' => 'Hangup', 'config' => ['cause' => 'NORMAL_CLEARING']],
+                    ],
+                    'edges' => [
+                        ['source_node_id' => 'start', 'target_node_id' => 'ring-team', 'condition' => 'next'],
+                        ['source_node_id' => 'ring-team', 'target_node_id' => 'hangup', 'condition' => 'answered'],
+                        ['source_node_id' => 'ring-team', 'target_node_id' => 'overflow', 'condition' => 'no_answer'],
+                        ['source_node_id' => 'ring-team', 'target_node_id' => 'overflow', 'condition' => 'timeout'],
+                    ],
+                ],
+            ],
+        ];
     }
 }
