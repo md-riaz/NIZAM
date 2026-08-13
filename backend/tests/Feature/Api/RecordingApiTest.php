@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Recording;
 use App\Models\Organization;
+use App\Models\Permission;
+use App\Models\Recording;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,6 +22,39 @@ class RecordingApiTest extends TestCase
         parent::setUp();
         $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        // Permissions are deny-by-default. Recordings split view/download/delete
+        // into distinct slugs on purpose, so only grant what these cases need
+        // rather than the full set.
+        $slugs = ['recordings.view', 'recordings.download', 'recordings.delete'];
+        foreach ($slugs as $slug) {
+            Permission::updateOrCreate(['slug' => $slug], ['module' => 'core']);
+        }
+        $this->user->grantPermissions(['recordings.view', 'recordings.delete']);
+    }
+
+    public function test_user_without_permission_cannot_list_recordings(): void
+    {
+        $unprivileged = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/recordings")
+            ->assertForbidden();
+    }
+
+    public function test_view_permission_alone_cannot_download_or_delete_a_recording(): void
+    {
+        $recording = Recording::factory()->create(['organization_id' => $this->organization->id]);
+        $viewer = User::factory()->create(['organization_id' => $this->organization->id]);
+        $viewer->grantPermissions(['recordings.view']);
+
+        $this->actingAs($viewer, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/recordings/{$recording->id}/download")
+            ->assertForbidden();
+
+        $this->actingAs($viewer, 'sanctum')
+            ->deleteJson("/api/v1/organizations/{$this->organization->id}/recordings/{$recording->id}")
+            ->assertForbidden();
     }
 
     public function test_can_list_recordings(): void

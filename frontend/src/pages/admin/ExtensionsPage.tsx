@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Eye, Phone as PhoneIcon, Plus, SquarePen, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,12 +32,12 @@ import {
 } from '@/components/ui/table';
 import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
+import { useApiMutation } from '@/lib/api-hooks';
 import type { Extension } from '@/types/models';
 
 export default function ExtensionsPage() {
     const { activeOrganization, organizationApiPrefix } = useOrganization();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const [extensionToDelete, setExtensionToDelete] = useState<Extension | null>(null);
 
     const { data: extensions = [], isLoading } = useQuery({
@@ -61,17 +61,15 @@ export default function ExtensionsPage() {
         refetchInterval: 15_000,
     });
 
-    const deleteMutation = useMutation({
+    const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
             await api.delete(`${organizationApiPrefix}/extensions/${id}`);
         },
-        onSuccess: async () => {
-            await Promise.all([
-                queryClient.invalidateQueries({ queryKey: ['extensions', activeOrganization?.id] }),
-                queryClient.invalidateQueries({ queryKey: ['extension-status', activeOrganization?.id] }),
-            ]);
-            setExtensionToDelete(null);
-        },
+        invalidateQueries: [
+            ['extensions', activeOrganization?.id || ''],
+            ['extension-status', activeOrganization?.id || ''],
+        ],
+        onSuccess: () => setExtensionToDelete(null),
     });
 
     if (!activeOrganization) {
@@ -83,6 +81,8 @@ export default function ExtensionsPage() {
     }
 
     const registeredCount = Object.values(statusMap).filter((s) => s.status === 'registered').length;
+    // 0 means unlimited licensing in this codebase, so only render "of N licensed" when capped.
+    const maxExtensions = activeOrganization.max_extensions ?? 0;
 
     return (
         <div className="space-y-6 p-6 lg:p-8">
@@ -104,11 +104,13 @@ export default function ExtensionsPage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Total Capacity
+                            Extensions Provisioned
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{extensions.length}</div>
+                        <div className="text-2xl font-bold">
+                            {maxExtensions > 0 ? `${extensions.length} of ${maxExtensions} licensed` : extensions.length}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>

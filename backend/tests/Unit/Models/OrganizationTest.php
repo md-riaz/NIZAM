@@ -55,6 +55,7 @@ class OrganizationTest extends TestCase
             'max_calls_per_minute',
             'is_active',
             'status',
+            'recording_policy',
         ], $organization->getFillable());
     }
 

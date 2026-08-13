@@ -44,6 +44,7 @@ class UpdateOrganizationRequest extends FormRequest
             'is_active' => 'boolean',
             'status' => ['string', Rule::in(Organization::VALID_STATUSES)],
             'recording_policy' => ['string', Rule::in(['inherit', 'off', 'all', 'incoming', 'outgoing'])],
+            'recording_retention_days' => 'nullable|integer|min:0',
         ];
     }
 

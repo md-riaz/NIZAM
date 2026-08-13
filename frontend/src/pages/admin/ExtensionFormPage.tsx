@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/select';
 import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
-import type { DeviceProfile, Did, Gateway, User } from '@/types/models';
+import type { DeviceProfile, Did, EffectiveRecordingPolicy, Gateway, RecordingPolicyResolution, User } from '@/types/models';
 
 const ownerTypes = ['unassigned', 'user', 'device'] as const;
 const recordingPolicyOptions = [
@@ -44,6 +44,34 @@ const recordingPolicyOptions = [
     { value: 'incoming', label: 'Incoming only' },
     { value: 'outgoing', label: 'Outgoing only' },
 ] as const;
+
+const recordingModeLabels: Record<string, string> = {
+    inherit: 'Inherit',
+    off: 'Not recording',
+    all: 'Recording all calls',
+    incoming: 'Recording incoming calls',
+    outgoing: 'Recording outgoing calls',
+};
+
+function describeResolution(
+    resolution: RecordingPolicyResolution,
+    organizationName: string,
+    didLabel: string | null,
+): string {
+    const modeLabel = resolution.should_record
+        ? recordingModeLabels[resolution.resolved_mode] ?? resolution.resolved_mode
+        : 'Not recording';
+
+    if (resolution.winning_scope === 'organization') {
+        return `${modeLabel} — inherited from organization "${organizationName}"`;
+    }
+
+    if (resolution.winning_scope === 'did') {
+        return `${modeLabel} — inherited from DID${didLabel ? ` ${didLabel}` : ''}`;
+    }
+
+    return modeLabel;
+}
 
 const extensionSchema = z.object({
     extension: z.string().min(1, 'Extension number is required'),
@@ -215,6 +243,8 @@ export default function ExtensionFormPage() {
     const { activeOrganization, organizationApiPrefix } = useOrganization();
 
     const form = useForm<ExtensionFormValues>({
+        // Cast needed: pre-existing zod v4/@hookform-resolvers generics gap —
+        // see the identical cast in OrganizationFormPage for the full note.
         resolver: zodResolver(extensionSchema),
         defaultValues: {
             extension: '',
@@ -243,6 +273,15 @@ export default function ExtensionFormPage() {
         queryKey: ['extension', activeOrganization?.id, id],
         queryFn: async () => {
             const response = await api.get(`${organizationApiPrefix}/extensions/${id}`);
+            return response.data.data;
+        },
+        enabled: isEdit && Boolean(activeOrganization),
+    });
+
+    const { data: effectivePolicy } = useQuery<EffectiveRecordingPolicy>({
+        queryKey: ['extension-recording-policy-effective', activeOrganization?.id, id],
+        queryFn: async () => {
+            const response = await api.get(`${organizationApiPrefix}/extensions/${id}/recording-policy/effective`);
             return response.data.data;
         },
         enabled: isEdit && Boolean(activeOrganization),
@@ -410,6 +449,21 @@ export default function ExtensionFormPage() {
 
     const allowedOutboundDids = dids.filter((did) => did.is_active ?? true);
     const allowedOutboundGateways = gateways.filter((gateway) => gateway.is_active ?? gateway.enabled ?? true);
+
+    const effectiveDidLabel = (() => {
+        const defaultOutboundDidId = extension?.default_outbound_did_id;
+        if (!defaultOutboundDidId) {
+            return null;
+        }
+
+        const matchedDid = dids.find((did) => did.id === defaultOutboundDidId);
+
+        if (!matchedDid) {
+            return null;
+        }
+
+        return matchedDid.description ? `${matchedDid.number} — ${matchedDid.description}` : matchedDid.number;
+    })();
 
     const availableUsers = users;
 
@@ -663,6 +717,18 @@ export default function ExtensionFormPage() {
                                                     </SelectContent>
                                                 </Select>
                                                 <FormDescription>Override automatic recording for calls answered by this extension.</FormDescription>
+                                                {isEdit && effectivePolicy ? (
+                                                    <div className="space-y-1 rounded-md border border-border/70 bg-muted/30 p-3 text-sm">
+                                                        <p>
+                                                            <span className="font-medium">Effective (inbound):</span>{' '}
+                                                            {describeResolution(effectivePolicy.inbound, activeOrganization.name, effectiveDidLabel)}
+                                                        </p>
+                                                        <p>
+                                                            <span className="font-medium">Effective (outbound):</span>{' '}
+                                                            {describeResolution(effectivePolicy.outbound, activeOrganization.name, effectiveDidLabel)}
+                                                        </p>
+                                                    </div>
+                                                ) : null}
                                                 <FormMessage />
                                             </FormItem>
                                         )}

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use App\Models\Webhook;
 use App\Models\WebhookDeliveryAttempt;
@@ -22,6 +23,11 @@ class WebhookDeliveryAttemptApiTest extends TestCase
         parent::setUp();
         $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        // Permissions are deny-by-default; delivery attempts are viewed
+        // through the webhook's "view" ability.
+        Permission::updateOrCreate(['slug' => 'webhooks.view'], ['module' => 'core']);
+        $this->user->grantPermissions(['webhooks.view']);
     }
 
     public function test_can_list_delivery_attempts_for_a_webhook(): void
@@ -66,5 +72,15 @@ class WebhookDeliveryAttemptApiTest extends TestCase
             ->getJson("/api/v1/organizations/{$this->organization->id}/webhooks/{$webhook->id}/delivery-attempts");
 
         $response->assertStatus(404);
+    }
+
+    public function test_user_without_permission_cannot_list_delivery_attempts(): void
+    {
+        $webhook = Webhook::factory()->create(['organization_id' => $this->organization->id]);
+        $unprivileged = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/webhooks/{$webhook->id}/delivery-attempts")
+            ->assertForbidden();
     }
 }

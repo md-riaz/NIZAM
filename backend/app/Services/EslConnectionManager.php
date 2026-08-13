@@ -14,10 +14,20 @@ class EslConnectionManager
 
     protected int $retryDelayMs = 500;
 
+    /**
+     * Set once reconnect() has exhausted its retries.
+     *
+     * Without it, every command that calls ensureConnected() pays the full
+     * retry budget again. A single request touching several settings could
+     * spend minutes waiting on a switch that is plainly not answering.
+     */
+    protected bool $unreachable = false;
+
     public function __construct(
         protected string $host,
         protected int $port,
-        protected string $password
+        protected string $password,
+        protected int $timeoutSeconds = 10
     ) {}
 
     /**
@@ -28,7 +38,8 @@ class EslConnectionManager
         return new static(
             config('telephony.freeswitch.host'),
             config('telephony.freeswitch.esl_port'),
-            config('telephony.freeswitch.esl_password')
+            config('telephony.freeswitch.esl_password'),
+            (int) config('telephony.freeswitch.esl_timeout', 10)
         );
     }
 
@@ -37,25 +48,37 @@ class EslConnectionManager
      */
     public function connect(): bool
     {
-        $this->socket = @stream_socket_client(
+        $socket = @stream_socket_client(
             "tcp://{$this->host}:{$this->port}",
             $errno,
             $errstr,
-            timeout: 10
+            timeout: $this->timeoutSeconds
         );
 
-        if (! $this->socket) {
+        if (! $socket) {
             Log::error("ESL connection failed: [{$errno}] {$errstr}");
 
             return false;
         }
 
+        $this->socket = $socket;
+
+        // Bound reads as well as the handshake. A socket that accepts the
+        // connection and then says nothing would otherwise block forever.
+        stream_set_timeout($this->socket, $this->timeoutSeconds);
+
         // Read the initial Content-Type header
         $response = $this->readResponse();
 
-        if (str_contains($response, 'auth/request')) {
-            return $this->authenticate();
+        if (str_contains($response, 'auth/request') && $this->authenticate()) {
+            $this->unreachable = false;
+
+            return true;
         }
+
+        // The socket is open but unusable; leaving it dangling leaks a file
+        // descriptor for the life of the process.
+        $this->disconnect();
 
         return false;
     }
@@ -84,6 +107,7 @@ class EslConnectionManager
         }
 
         Log::error('ESL reconnect failed after '.$this->maxRetries.' attempts');
+        $this->unreachable = true;
 
         return false;
     }
@@ -95,6 +119,10 @@ class EslConnectionManager
     {
         if ($this->isConnected()) {
             return true;
+        }
+
+        if ($this->unreachable) {
+            return false;
         }
 
         return $this->reconnect();
@@ -255,9 +283,24 @@ class EslConnectionManager
         $remaining = $length;
         while ($remaining > 0 && ! feof($this->socket)) {
             $chunk = fread($this->socket, min($remaining, 8192));
-            if ($chunk === false) {
-                break;
+
+            // A read timeout returns '' with EOF still false, so an empty chunk
+            // must end the loop — otherwise this spins forever on a switch that
+            // announced a Content-Length and then stopped sending. The body is
+            // truncated either way, so the connection is dropped and the next
+            // command reconnects rather than resuming mid-message.
+            if ($chunk === false || $chunk === '') {
+                Log::warning(sprintf(
+                    'ESL body read incomplete: %d of %d bytes; dropping the connection.',
+                    $length - $remaining,
+                    $length
+                ));
+
+                $this->disconnect();
+
+                return $data;
             }
+
             $data .= $chunk;
             $remaining -= strlen($chunk);
         }

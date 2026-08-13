@@ -21,6 +21,28 @@ class CallOriginateApiTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * Assert an originate command, ignoring the per-call `origination_uuid`.
+     *
+     * The UUID is generated fresh for every call so it cannot be part of a
+     * literal expectation. Matching the rest of the string exactly still pins
+     * the caller ID, endpoint, and bridge target.
+     */
+    private function matchesOriginate(string $command, string $expectedTail): bool
+    {
+        $prefix = 'originate {origination_uuid=';
+
+        if (! str_starts_with($command, $prefix)) {
+            return false;
+        }
+
+        $remainder = substr($command, strlen($prefix));
+        [$uuid, $tail] = array_pad(explode(',', $remainder, 2), 2, '');
+
+        return $tail === $expectedTail
+            && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $uuid) === 1;
+    }
+
     public function test_originate_uses_extension_default_outbound_did_when_gateway_is_not_supplied(): void
     {
         $organization = Organization::factory()->create(['domain' => 'acme.test']);
@@ -43,9 +65,10 @@ class CallOriginateApiTest extends TestCase
 
         $esl = Mockery::mock();
         $esl->shouldReceive('connect')->once()->andReturnTrue();
-        $esl->shouldReceive('bgapi')->once()->with(
-            'originate {origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test 2001 XML acme.test'
-        )->andReturn('+OK Job-UUID: test');
+        $esl->shouldReceive('bgapi')->once()->withArgs(fn (string $command): bool => $this->matchesOriginate(
+            $command,
+            'origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test 2001 XML acme.test'
+        ))->andReturn('+OK Job-UUID: test');
         $esl->shouldReceive('disconnect')->once();
 
         $this->app->instance(\App\Services\EslConnectionManager::class, $esl);
@@ -84,9 +107,12 @@ class CallOriginateApiTest extends TestCase
 
         $esl = Mockery::mock();
         $esl->shouldReceive('connect')->once()->andReturnTrue();
-        $esl->shouldReceive('bgapi')->once()->with(sprintf(
-            'originate {origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test &bridge(sofia/gateway/v_%s/+15551234567)',
-            $gateway->id,
+        $esl->shouldReceive('bgapi')->once()->withArgs(fn (string $command): bool => $this->matchesOriginate(
+            $command,
+            sprintf(
+                'origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test &bridge(sofia/gateway/v_%s/+15551234567)',
+                $gateway->id,
+            )
         ))->andReturn('+OK Job-UUID: test');
         $esl->shouldReceive('disconnect')->once();
 
@@ -145,6 +171,13 @@ class CallOriginateApiTest extends TestCase
         $extension->allowedOutboundDids()->attach($did->id);
         $extension->allowedOutboundGateways()->attach($allowedGateway->id);
         $extension->update(['default_outbound_did_id' => $did->id]);
+
+        // A policy rejection must not depend on, or open, a connection to the
+        // switch: the answer comes entirely from stored state.
+        $esl = Mockery::mock();
+        $esl->shouldNotReceive('connect');
+        $esl->shouldNotReceive('bgapi');
+        $this->app->instance(\App\Services\EslConnectionManager::class, $esl);
 
         $response = $this->actingAs($user, 'sanctum')->postJson("/api/v1/organizations/{$organization->id}/calls/originate", [
             'extension' => '1001',

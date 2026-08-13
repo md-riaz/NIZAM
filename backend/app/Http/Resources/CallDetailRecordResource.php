@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Recording;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,6 +10,8 @@ class CallDetailRecordResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $mayViewRecordings = $request->user()?->can('viewAny', Recording::class) ?? false;
+
         return [
             'id' => $this->id,
             'organization_id' => $this->organization_id,
@@ -25,7 +28,9 @@ class CallDetailRecordResource extends JsonResource
             'hangup_cause' => $this->hangup_cause,
             'direction' => $this->direction,
             'call_type' => $this->call_type,
-            'recording_path' => $this->recording_path,
+            // The raw storage path is only useful to an operator who may access
+            // the audio anyway, so it follows the recordings permission.
+            'recording_path' => $this->when($mayViewRecordings, fn () => $this->recording_path),
             'sip_user_agent' => $this->sip_user_agent,
             'remote_media_ip' => $this->remote_media_ip,
             'quality' => [
@@ -44,9 +49,33 @@ class CallDetailRecordResource extends JsonResource
                 'number_type' => $this->enrichment->number_type,
                 'enriched_at' => $this->enrichment->enriched_at,
             ]),
-            'recordings' => $this->whenLoaded('recordings'),
+            // Shaped through RecordingResource rather than dumped raw, so the
+            // client gets a stable contract and no internal file paths.
+            'recordings' => RecordingResource::collection($this->whenLoaded('recordings')),
+            // Whether audio exists is itself recording metadata, so it follows
+            // the same permission rather than leaking through a boolean.
+            'has_recording' => $this->when($mayViewRecordings, fn () => $this->resolveHasRecording()),
+            // Present only when the call was traced through the delivery
+            // pipeline; lets call history link to the interaction journey.
+            'call_session_id' => $this->whenLoaded('callSession', fn () => $this->callSession?->id),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
+    }
+
+    /**
+     * Whether audio exists for this call.
+     *
+     * Prefers loaded Recording rows, falling back to the recording_path column
+     * FreeSWITCH writes — a call can have a path before the file is ingested as
+     * a Recording row, and the UI should still indicate audio is expected.
+     */
+    private function resolveHasRecording(): bool
+    {
+        if ($this->relationLoaded('recordings')) {
+            return $this->recordings->isNotEmpty() || filled($this->recording_path);
+        }
+
+        return filled($this->recording_path);
     }
 }

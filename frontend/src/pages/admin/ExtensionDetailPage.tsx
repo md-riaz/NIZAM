@@ -166,7 +166,13 @@ export default function ExtensionDetailPage() {
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground">Password</p>
-                                        <p className="mt-1 break-all font-mono">{sipConfig.sip_password || 'Hidden'}</p>
+                                        {sipConfig.sip_password ? (
+                                            <p className="mt-1 break-all font-mono">{sipConfig.sip_password}</p>
+                                        ) : (
+                                            <p className="mt-1 text-sm italic text-muted-foreground">
+                                                Not available — reset the extension password to issue new credentials.
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 mt-4 pt-4 border-t">
                                         <p className="text-muted-foreground">WebRTC support:</p>
@@ -180,22 +186,41 @@ export default function ExtensionDetailPage() {
                                     <div className="flex justify-end pt-2">
                                         <Button
                                             variant="outline"
-                                            onClick={() => {
+                                            onClick={async () => {
                                                 const lines = [
                                                     `SIP Server: ${sipConfig.sip_server || ''}`,
                                                     `Domain / Realm: ${sipConfig.sip_domain || ''}`,
                                                     `Transport: ${sipConfig.sip_transport || 'UDP/TCP'}`,
                                                     `Username: ${sipConfig.sip_username || extension.extension}`,
-                                                    `Password: ${sipConfig.sip_password || 'Hidden'}`,
                                                 ];
+                                                // Never put a placeholder like "Hidden" in the clipboard — that reads as
+                                                // a real value and would hand out a non-working credential. Omit the
+                                                // line and warn instead so the toast can't claim a fake success.
+                                                if (sipConfig.sip_password) {
+                                                    lines.push(`Password: ${sipConfig.sip_password}`);
+                                                }
                                                 if (sipConfig.sip_tls_server) {
                                                     lines.push(`TLS Server: ${sipConfig.sip_tls_server}`);
                                                 }
                                                 if (sipConfig.enabled && sipConfig.websocket_url) {
                                                     lines.push(`WebSocket URL: ${sipConfig.websocket_url}`);
                                                 }
-                                                navigator.clipboard.writeText(lines.join('\n'));
-                                                toast.success('SIP credentials copied to clipboard');
+                                                // The write is awaited: it rejects when the
+                                                // clipboard is blocked (no permission, insecure
+                                                // context), and reporting success regardless would
+                                                // send someone to paste nothing.
+                                                try {
+                                                    await navigator.clipboard.writeText(lines.join('\n'));
+                                                } catch {
+                                                    toast.error('Could not copy to the clipboard. Select the values above and copy them manually.');
+                                                    return;
+                                                }
+
+                                                if (sipConfig.sip_password) {
+                                                    toast.success('SIP credentials copied to clipboard');
+                                                } else {
+                                                    toast.warning('Copied SIP details, but no password is available — reset it to get working credentials.');
+                                                }
                                             }}
                                         >
                                             <Copy className="mr-2 size-4" />

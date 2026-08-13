@@ -15,6 +15,7 @@ use App\Services\OrganizationManifestBuilder;
 use App\Services\WebhookDispatcher;
 use App\Services\WebRtcConfigService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use InvalidArgumentException;
 
 /**
@@ -31,16 +32,22 @@ class ExtensionController extends Controller
 
     /**
      * List extensions for an organization (paginated).
+     *
+     * `per_page` is honoured because callers that need the whole dial plan — the
+     * pickers that resolve an extension number to a name — would otherwise only
+     * ever see the first page and label everything beyond it as unknown.
      */
-    public function index(Organization $organization)
+    public function index(Request $request, Organization $organization)
     {
         $this->authorize('viewAny', Extension::class);
+
+        $perPage = max(1, min((int) $request->input('per_page', 15) ?: 15, 500));
 
         return ExtensionResource::collection(
             $organization->extensions()
                 ->with(['allowedOutboundDids:id', 'allowedOutboundGateways:id'])
                 ->orderBy('extension')
-                ->paginate(15)
+                ->paginate($perPage)
         );
     }
 

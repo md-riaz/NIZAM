@@ -2,8 +2,9 @@
 
 namespace Tests\Unit\Policies;
 
-use App\Models\Organization;
 use App\Models\Extension;
+use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use App\Policies\DeviceProfilePolicy;
 use App\Policies\DidPolicy;
@@ -40,6 +41,9 @@ class PolicyTest extends TestCase
     {
         $organization = Organization::factory()->create();
         $user = User::factory()->create(['organization_id' => $organization->id, 'role' => 'agent']);
+        // Deny-by-default: an ordinary user needs the permission granted explicitly.
+        Permission::updateOrCreate(['slug' => 'organizations.view'], ['module' => 'core']);
+        $user->grantPermissions(['organizations.view']);
 
         $policy = new OrganizationPolicy;
         $this->assertTrue($policy->view($user, $organization));
@@ -73,6 +77,9 @@ class PolicyTest extends TestCase
             'first_name' => 'John',
             'last_name' => 'Doe',
         ]);
+        // Deny-by-default: an ordinary user needs the permission granted explicitly.
+        Permission::updateOrCreate(['slug' => 'extensions.view'], ['module' => 'core']);
+        $user->grantPermissions(['extensions.view']);
 
         $policy = new ExtensionPolicy;
         $this->assertTrue($policy->view($user, $extension));
@@ -111,6 +118,9 @@ class PolicyTest extends TestCase
             'destination_type' => 'extension',
             'destination_id' => $extension->id,
         ]);
+        // Deny-by-default: an ordinary user needs the permission granted explicitly.
+        Permission::updateOrCreate(['slug' => 'dids.view'], ['module' => 'core']);
+        $user->grantPermissions(['dids.view']);
 
         $policy = new DidPolicy;
         $this->assertTrue($policy->view($user, $did));
@@ -169,6 +179,9 @@ class PolicyTest extends TestCase
             'events' => ['call.created'],
             'secret' => 'test-secret',
         ]);
+        // Deny-by-default: an ordinary user needs the permission granted explicitly.
+        Permission::updateOrCreate(['slug' => 'webhooks.view'], ['module' => 'core']);
+        $user->grantPermissions(['webhooks.view']);
 
         $policy = new WebhookPolicy;
         $this->assertTrue($policy->view($user, $webhook));

@@ -92,7 +92,7 @@ class WebhookEventExpansionTest extends TestCase
         // Create extension
         $response = $this->actingAs($user, 'sanctum')
             ->postJson("/api/v1/organizations/{$organization->id}/extensions", [
-                'extension' => '1001',
+                'extension' => '101',
                 'password' => 'secret123456',
                 'first_name' => 'Test',
                 'last_name' => 'User',

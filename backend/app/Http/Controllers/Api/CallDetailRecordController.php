@@ -35,22 +35,34 @@ class CallDetailRecordController extends Controller
 
         $perPage = (int) $request->input('per_page', 25);
 
+        // The summary rides along in `meta` rather than being fetched separately
+        // so the KPI tiles above a filtered table always describe that same
+        // filtered set — the analytics endpoint only understands a date range.
         return CallDetailRecordResource::collection(
             $this->searchService->search($organization, $request, $perPage)
-        );
+        )->additional([
+            'meta' => [
+                'summary' => $this->searchService->summarize($organization, $request),
+            ],
+        ]);
     }
 
     /**
      * Show a single CDR with enrichment data.
      */
-    public function show(Organization $organization, CallDetailRecord $cdr): JsonResponse|CallDetailRecordResource
+    public function show(Request $request, Organization $organization, CallDetailRecord $cdr): JsonResponse|CallDetailRecordResource
     {
-        $this->authorize('view', $cdr);
         if ($cdr->organization_id !== $organization->id) {
             return response()->json(['message' => 'CDR not found.'], 404);
         }
 
-        $cdr->load('enrichment', 'recordings');
+        $this->authorize('view', $cdr);
+
+        $cdr->load('enrichment', 'callSession:id,call_uuid');
+
+        if ($this->searchService->canViewRecordings($request)) {
+            $cdr->load('recordings');
+        }
 
         return new CallDetailRecordResource($cdr);
     }

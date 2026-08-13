@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\CallRoutingPolicy;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -22,6 +23,16 @@ class CallRoutingPolicyApiTest extends TestCase
         parent::setUp();
         $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        foreach (['call_routing_policies.view', 'call_routing_policies.create', 'call_routing_policies.update', 'call_routing_policies.delete'] as $slug) {
+            Permission::updateOrCreate(['slug' => $slug], ['module' => 'core']);
+        }
+        $this->user->grantPermissions([
+            'call_routing_policies.view',
+            'call_routing_policies.create',
+            'call_routing_policies.update',
+            'call_routing_policies.delete',
+        ]);
     }
 
     public function test_can_list_call_routing_policies_for_a_organization(): void

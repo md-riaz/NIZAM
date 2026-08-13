@@ -8,18 +8,16 @@ use App\Models\FlowNode;
 use App\Models\FlowVersion;
 use App\Models\Organization;
 use App\Models\OrganizationDialplanManifest;
-use App\Services\Flow\FlowArtifactService;
 use App\Services\Flow\FlowPublishService;
-use App\Services\Flow\Compile\FlowToIrCompiler;
-use App\Domain\Flow\Compile\NodeSpecRegistry;
-use App\Services\OrganizationManifestBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class FlowPublishServiceTest extends TestCase
 {
     use RefreshDatabase;
+
     protected FlowPublishService $publishService;
+
     protected Organization $organization;
 
     protected function setUp(): void
@@ -27,12 +25,10 @@ class FlowPublishServiceTest extends TestCase
         parent::setUp();
 
         $this->organization = Organization::factory()->create(['domain' => 'test.example.com']);
-        $registry = new NodeSpecRegistry();
-        $compiler = new FlowToIrCompiler($registry);
-        $artifactService = new FlowArtifactService($compiler, app(\App\Services\Routing\RoutingGraphCompiler::class));
-        $manifestBuilder = new OrganizationManifestBuilder(app(\App\Services\DialplanCompiler::class));
-        $integrityValidator = app(\App\Services\Flow\FlowIntegrityValidator::class);
-        $this->publishService = new FlowPublishService($artifactService, $manifestBuilder, $integrityValidator);
+        // Resolved from the container rather than hand-constructed: these
+        // services have gained collaborators since, and each time this wiring
+        // broke with an ArgumentCountError unrelated to what the test asserts.
+        $this->publishService = app(FlowPublishService::class);
     }
 
     public function test_can_publish_flow_version(): void

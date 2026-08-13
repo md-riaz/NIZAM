@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import api from '@/lib/api';
+import { useApiMutation } from '@/lib/api-hooks';
 
 const organizationSettingsSchema = z.object({
     settingsText: z.string().superRefine((value: string, ctx: z.RefinementCtx) => {
@@ -49,7 +50,6 @@ type OrganizationSettingsValues = z.infer<typeof organizationSettingsSchema>;
 export default function OrganizationSettingsPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
 
     const form = useForm<OrganizationSettingsValues>({
         resolver: zodResolver(organizationSettingsSchema),
@@ -84,19 +84,18 @@ export default function OrganizationSettingsPage() {
         }
     }, [settings, form]);
 
-    const mutation = useMutation({
+    const mutation = useApiMutation({
         mutationFn: async (values: OrganizationSettingsValues) => {
             return api.put(`organizations/${id}/settings`, {
                 settings: JSON.parse(values.settingsText),
             });
         },
-        onSuccess: async () => {
-            await Promise.all([
-                queryClient.invalidateQueries({ queryKey: ['organization-settings', id] }),
-                queryClient.invalidateQueries({ queryKey: ['organization', id] }),
-                queryClient.invalidateQueries({ queryKey: ['organizations'] }),
-            ]);
-        },
+        successMessage: 'Organization settings saved successfully',
+        invalidateQueries: [
+            ['organization-settings', id || ''],
+            ['organization', id || ''],
+            ['organizations'],
+        ],
     });
 
     return (

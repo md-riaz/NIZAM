@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -20,6 +21,9 @@ class CallEventStreamTest extends TestCase
         parent::setUp();
         $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        Permission::updateOrCreate(['slug' => 'call_events.view'], ['module' => 'core']);
+        $this->user->grantPermissions(['call_events.view']);
     }
 
     public function test_stream_endpoint_returns_sse_content_type(): void

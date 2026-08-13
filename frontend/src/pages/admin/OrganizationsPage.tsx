@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Building2, CalendarDays, Globe, Plus, Settings, SquarePen, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,12 +32,12 @@ import {
 } from '@/components/ui/table';
 import { useOrganization } from '@/context/OrganizationContext';
 import api from '@/lib/api';
+import { useApiMutation } from '@/lib/api-hooks';
 import type { Organization } from '@/types/models';
 
 export default function OrganizationsPage() {
     const { switchOrganization, activeOrganization } = useOrganization();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const [organizationToDelete, setOrganizationToDelete] = useState<Organization | null>(null);
 
     const { data: organizations = [], isLoading } = useQuery({
@@ -50,12 +50,12 @@ export default function OrganizationsPage() {
 
     const activeOrganizations = organizations.filter((organization) => organization.is_active).length;
 
-    const deleteMutation = useMutation({
+    const deleteMutation = useApiMutation({
         mutationFn: async (id: string) => {
             await api.delete(`organizations/${id}`);
         },
-        onSuccess: async (_, deletedId) => {
-            await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+        invalidateQueries: [['organizations']],
+        onSuccess: (_, deletedId) => {
             if (activeOrganization && String(activeOrganization.id) === deletedId) {
                 const nextOrganization = organizations.find((organization) => String(organization.id) !== deletedId);
                 if (nextOrganization) {

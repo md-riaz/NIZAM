@@ -10,9 +10,7 @@ use App\Models\Did;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
 use App\Models\Organization;
-use App\Services\Call\CallOfferExecutor;
 use App\Services\Call\CallWinnerService;
-use App\Services\Call\ReachabilityCache;
 use App\Services\Call\TraceWriter;
 use App\Services\EventProcessor;
 use App\Services\Media\FreeSwitchCommandService;
@@ -55,6 +53,23 @@ class EventProcessorEventLogTest extends TestCase
         ]);
 
         return [$organization, $extension];
+    }
+
+    /**
+     * traceEvents() is a shared call-trace log: CallEventIngestionService also
+     * dispatches a synchronous ProcessCallEventJob for every CHANNEL_ANSWER (see
+     * CallEventProcessor::process), which appends its own unrelated
+     * "call.event.processed" entry regardless of recording/winner outcome. Scope
+     * to recording.* actions so recording-flow assertions aren't tripped by that
+     * unrelated bookkeeping.
+     */
+    private function recordingTraceActions(CallSession $session): array
+    {
+        return $session->traceEvents()
+            ->orderBy('created_at')
+            ->where('action', 'like', 'recording.%')
+            ->pluck('action')
+            ->all();
     }
 
     public function test_channel_create_persists_call_event(): void
@@ -413,12 +428,11 @@ class EventProcessorEventLogTest extends TestCase
         $this->assertSame('did', data_get($session->variables, 'recording_policy_resolution.winning_scope'));
         $this->assertNotNull(data_get($session->variables, 'recording_path'));
 
-        $traceActions = $session->traceEvents()->orderBy('created_at')->pluck('action')->all();
         $this->assertSame([
             'recording.policy.resolved',
             'recording.start.requested',
             'recording.start.succeeded',
-        ], $traceActions);
+        ], $this->recordingTraceActions($session));
     }
 
     public function test_duplicate_channel_answer_for_winner_does_not_repeat_recording_flow(): void
@@ -507,7 +521,7 @@ class EventProcessorEventLogTest extends TestCase
         $this->assertSame(CallDeliveryAttempt::STATUS_WON, $attempt->status);
         $this->assertTrue((bool) data_get($session->variables, 'recording_started'));
         $this->assertSame(storage_path('app/recordings/'.$organization->id.'/caller-leg-duplicate-answer.wav'), data_get($session->variables, 'recording_path'));
-        $this->assertCount(0, $session->traceEvents()->get());
+        $this->assertCount(0, $this->recordingTraceActions($session));
     }
 
     public function test_duplicate_channel_answer_with_existing_disabled_resolution_does_not_repeat_trace_flow(): void
@@ -596,7 +610,7 @@ class EventProcessorEventLogTest extends TestCase
 
         $this->assertSame(CallDeliveryAttempt::STATUS_WON, $attempt->status);
         $this->assertFalse((bool) data_get($session->variables, 'recording_policy_resolution.should_record'));
-        $this->assertCount(0, $session->traceEvents()->get());
+        $this->assertCount(0, $this->recordingTraceActions($session));
     }
 
     public function test_channel_answer_for_non_winner_does_not_start_recording(): void
@@ -668,7 +682,7 @@ class EventProcessorEventLogTest extends TestCase
         $this->assertSame(CallDeliveryAttempt::STATUS_ANSWERED, $attempt->status);
         $this->assertNull(data_get($session->variables, 'recording_started'));
         $this->assertNull(data_get($session->variables, 'recording_policy_resolution'));
-        $this->assertCount(0, $session->traceEvents()->get());
+        $this->assertCount(0, $this->recordingTraceActions($session));
     }
 
     public function test_channel_bridge_persists_orchestrated_bridge_metadata(): void

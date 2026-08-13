@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
+import { useApiMutation } from '@/lib/api-hooks';
 
 const systemSettingsSchema = z.object({
     organization_domain_suffix: z.string().min(1, 'Domain suffix is required'),
@@ -39,7 +40,6 @@ type SystemSettingsValues = z.infer<typeof systemSettingsSchema>;
 
 export default function SystemSettingsPage() {
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
 
     const form = useForm<SystemSettingsValues>({
         resolver: zodResolver(systemSettingsSchema),
@@ -68,17 +68,15 @@ export default function SystemSettingsPage() {
         }
     }, [settings, form]);
 
-    const mutation = useMutation({
+    const mutation = useApiMutation({
         mutationFn: async (values: SystemSettingsValues) => {
             return api.put('admin/platform-settings', values);
         },
-        onSuccess: async () => {
-            await Promise.all([
-                queryClient.invalidateQueries({ queryKey: ['platform-settings'] }),
-                queryClient.invalidateQueries({ queryKey: ['organization', 'create'] }),
-                queryClient.invalidateQueries({ queryKey: ['organizations'] }),
-            ]);
-        },
+        invalidateQueries: [
+            ['platform-settings'],
+            ['organization', 'create'],
+            ['organizations'],
+        ],
     });
 
     return (

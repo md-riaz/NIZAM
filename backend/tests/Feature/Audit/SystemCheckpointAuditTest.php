@@ -4,10 +4,11 @@ namespace Tests\Feature\Audit;
 
 use App\Models\Agent;
 use App\Models\CallEventLog;
+use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\Queue;
 use App\Models\QueueEntry;
 use App\Models\Recording;
-use App\Models\Organization;
 use App\Models\User;
 use App\Models\Webhook;
 use App\Services\DialplanCompiler;
@@ -72,6 +73,15 @@ class SystemCheckpointAuditTest extends TestCase
             'role' => 'admin',
             'organization_id' => null,
         ]);
+
+        // Permissions are deny-by-default; grant userA exactly the abilities
+        // this audit's positive-path cases exercise (extensions list, webhooks
+        // list). userB stays ungranted since its cases assert isolation denial.
+        $slugs = ['extensions.view', 'webhooks.view'];
+        foreach ($slugs as $slug) {
+            Permission::updateOrCreate(['slug' => $slug], ['module' => 'core']);
+        }
+        $this->userA->grantPermissions($slugs);
     }
 
     // ========================================================================
@@ -131,6 +141,18 @@ class SystemCheckpointAuditTest extends TestCase
         $response = $this->actingAs($this->userA, 'sanctum')
             ->getJson("/api/v1/organizations/{$this->organizationA->id}/extensions");
         $response->assertStatus(200);
+    }
+
+    public function test_cp1_user_without_permission_cannot_list_extensions(): void
+    {
+        $unprivileged = User::factory()->create([
+            'organization_id' => $this->organizationA->id,
+            'role' => 'agent',
+        ]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organizationA->id}/extensions")
+            ->assertForbidden();
     }
 
     // ========================================================================

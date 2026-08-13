@@ -34,6 +34,7 @@ const FlowsPage = lazy(() => import('@/pages/admin/FlowsPage'));
 const FlowEditorPage = lazy(() => import('@/pages/admin/FlowEditorPage'));
 const SystemMediaPage = lazy(() => import('@/pages/admin/SystemMediaPage'));
 const CallHistoryPage = lazy(() => import('@/pages/admin/CallHistoryPage'));
+const RecordingsPage = lazy(() => import('@/pages/admin/RecordingsPage'));
 const InteractionDetailPage = lazy(() => import('@/pages/admin/InteractionDetailPage'));
 const AuditLogsPage = lazy(() => import('@/pages/admin/AuditLogsPage'));
 const LogViewerPage = lazy(() => import('@/pages/admin/LogViewerPage'));
@@ -185,6 +186,7 @@ const router = createBrowserRouter(
 
                 {/* Call History (organization-scoped) */}
                 <Route path="call-history" element={<CallHistoryPage />} />
+                <Route path="recordings" element={<RecordingsPage />} />
                 <Route path="call-blocks" element={<CallBlocksPage />} />
                 <Route path="interactions/:id" element={<InteractionDetailPage />} />
 

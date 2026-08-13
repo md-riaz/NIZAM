@@ -50,6 +50,7 @@ export const OrganizationSchema = z.object({
     settings: z.record(z.string(), z.unknown()).nullable().optional(),
     status: z.string().nullable().optional(),
     recording_policy: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']).nullable().optional(),
+    recording_retention_days: z.number().nullable().optional(),
     max_extensions: z.number().nullable().optional(),
     max_concurrent_calls: z.number().nullable().optional(),
     max_dids: z.number().nullable().optional(),
@@ -272,6 +273,54 @@ export const FlowDefinitionSchema = z.object({
 });
 export type FlowDefinition = z.infer<typeof FlowDefinitionSchema>;
 
+// ─── Recordings ──────────────────────────────────────────────
+
+export const RecordingSchema = z.object({
+    id: idSchema,
+    organization_id: idSchema,
+    call_uuid: z.string().nullable().optional(),
+    file_name: z.string().nullable().optional(),
+    file_size: z.number().nullable().optional(),
+    format: z.string().nullable().optional(),
+    duration: z.number().nullable().optional(),
+    direction: z.string().nullable().optional(),
+    caller_id_number: z.string().nullable().optional(),
+    destination_number: z.string().nullable().optional(),
+    created_at: z.string(),
+    updated_at: z.string(),
+});
+export type Recording = z.infer<typeof RecordingSchema>;
+
+// ─── Recording policy resolution ──────────────────────────────
+
+export const RecordingPolicyResolutionSchema = z.object({
+    resolved_mode: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']),
+    should_record: z.boolean(),
+    winning_scope: z.enum(['organization', 'did', 'extension']).nullable(),
+    resolution_chain: z.array(z.string()),
+    reason: z.string(),
+});
+export type RecordingPolicyResolution = z.infer<typeof RecordingPolicyResolutionSchema>;
+
+export const InboundDidOverrideSchema = z.object({
+    id: idSchema,
+    number: z.string(),
+    recording_policy: z.enum(['inherit', 'off', 'all', 'incoming', 'outgoing']),
+});
+export type InboundDidOverride = z.infer<typeof InboundDidOverrideSchema>;
+
+export const EffectiveRecordingPolicySchema = z.object({
+    scope: z.enum(['organization', 'did', 'extension']),
+    inbound: RecordingPolicyResolutionSchema,
+    outbound: RecordingPolicyResolutionSchema,
+    /**
+     * Numbers routed straight to this extension whose own policy overrides the
+     * extension's for calls arriving on them. Extension scope only.
+     */
+    inbound_did_overrides: z.array(InboundDidOverrideSchema).optional(),
+});
+export type EffectiveRecordingPolicy = z.infer<typeof EffectiveRecordingPolicySchema>;
+
 // ─── CDR ─────────────────────────────────────────────────────
 
 export const CdrSchema = z.object({
@@ -283,16 +332,55 @@ export const CdrSchema = z.object({
     caller_id_number: z.string().nullable().optional(),
     destination_number: z.string().nullable().optional(),
     direction: z.string().nullable().optional(),
+    call_type: z.string().nullable().optional(),
     duration: z.number().nullable().optional(),
     billsec: z.number().nullable().optional(),
     hangup_cause: z.string().nullable().optional(),
     start_stamp: z.string().nullable().optional(),
     answer_stamp: z.string().nullable().optional(),
     end_stamp: z.string().nullable().optional(),
+    recording_path: z.string().nullable().optional(),
+    has_recording: z.boolean().optional(),
+    recordings: z.array(RecordingSchema).optional(),
+    /** Present only when the call was traced through the delivery pipeline. */
+    call_session_id: idSchema.nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
 });
 export type Cdr = z.infer<typeof CdrSchema>;
+
+/**
+ * Aggregate counters for a set of call records.
+ *
+ * `GET .../cdrs` returns this in `meta.summary`, computed from the same filters
+ * as the rows themselves, so KPI tiles above a filtered table describe that
+ * table. The analytics endpoint returns the same fields for a date range only.
+ */
+export interface CdrSummary {
+    total_calls: number;
+    answered_calls: number;
+    missed_calls: number;
+    failed_calls: number;
+    total_duration_seconds: number;
+    total_billsec_seconds: number;
+    asr: number;
+    acd_seconds: number;
+}
+
+/** Laravel paginator metadata, as returned alongside `data`. */
+export interface PaginationMeta {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+}
+
+/** Paginator metadata for `GET .../cdrs`, which carries the filtered summary. */
+export interface CdrPaginationMeta extends PaginationMeta {
+    summary?: CdrSummary;
+}
 
 // ─── Interaction Overview ────────────────────────────────────
 

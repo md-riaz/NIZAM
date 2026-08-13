@@ -6,6 +6,7 @@ use App\Models\DeviceProfile;
 use App\Models\EndpointBinding;
 use App\Models\Extension;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -28,6 +29,31 @@ class MobileDeviceApiTest extends TestCase
 
         $this->organization = Organization::factory()->create();
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        // Permissions are deny-by-default, so the acting user is granted the
+        // endpoint-binding abilities these cases exercise rather than relying
+        // on a permissive fallback.
+        $slugs = ['endpoint_bindings.create', 'endpoint_bindings.update', 'endpoint_bindings.delete'];
+        foreach ($slugs as $slug) {
+            Permission::updateOrCreate(['slug' => $slug], ['module' => 'core']);
+        }
+        $this->user->grantPermissions($slugs);
+    }
+
+    public function test_user_without_permission_cannot_register_a_mobile_device(): void
+    {
+        $extension = Extension::factory()->create(['organization_id' => $this->organization->id]);
+        $unprivileged = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/mobile-devices/register", [
+                'extension_id' => $extension->id,
+                'device_uuid' => 'device-456',
+                'platform' => EndpointBinding::PLATFORM_IOS,
+                'push_token' => 'push-token',
+                'app_version' => '1.0.0',
+            ])
+            ->assertForbidden();
     }
 
     public function test_can_register_a_mobile_device_for_a_organization(): void

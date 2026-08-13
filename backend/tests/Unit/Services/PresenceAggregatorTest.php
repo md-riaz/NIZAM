@@ -35,15 +35,16 @@ class PresenceAggregatorTest extends TestCase
     {
         $organization = Organization::factory()->create();
         $user = User::factory()->create(['organization_id' => $organization->id]);
+        // Extensions are one-per-user per organization (see the unique
+        // constraint added in 2026_04_22_020000_add_device_owner_to_extensions_table
+        // and the matching validation in StoreExtensionRequest). A user can
+        // still have several devices registered against their single
+        // extension, so the "secondary" device below hangs off the same
+        // primary extension instead of a second owned extension.
         $primaryExtension = Extension::factory()->create([
             'organization_id' => $organization->id,
             'user_id' => $user->id,
             'is_primary' => true,
-        ]);
-        $secondaryExtension = Extension::factory()->create([
-            'organization_id' => $organization->id,
-            'user_id' => $user->id,
-            'is_primary' => false,
         ]);
 
         $directDevice = DeviceProfile::factory()->create([
@@ -61,7 +62,7 @@ class PresenceAggregatorTest extends TestCase
         DeviceProfile::factory()->create([
             'organization_id' => $organization->id,
             'user_id' => null,
-            'extension_id' => $secondaryExtension->id,
+            'extension_id' => $primaryExtension->id,
             'is_active' => false,
         ]);
 

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -14,12 +14,12 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import api from '@/lib/api';
+import { useApiMutation } from '@/lib/api-hooks';
 import type { Permission } from '@/types/models';
 
 export default function UserPermissionsPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
 
     const { data: user } = useQuery({
         queryKey: ['user', id],
@@ -56,7 +56,7 @@ export default function UserPermissionsPage() {
         }, {});
     }, [availablePermissions]);
 
-    const mutation = useMutation({
+    const mutation = useApiMutation({
         mutationFn: async (nextPermissions: string[]) => {
             const toGrant = nextPermissions.filter((permission) => !assignedPermissions.includes(permission));
             const toRevoke = assignedPermissions.filter((permission) => !nextPermissions.includes(permission));
@@ -69,9 +69,7 @@ export default function UserPermissionsPage() {
                 await api.post(`users/${id}/permissions/revoke`, { permissions: toRevoke });
             }
         },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['user-permissions', id] });
-        },
+        invalidateQueries: [['user-permissions', id || '']],
     });
 
     const selected = new Set(assignedPermissions);

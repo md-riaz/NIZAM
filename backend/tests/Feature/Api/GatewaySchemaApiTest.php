@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,6 +16,12 @@ class GatewaySchemaApiTest extends TestCase
     {
         $organization = Organization::factory()->create();
         $user = User::factory()->create(['organization_id' => $organization->id]);
+
+        // Permissions are deny-by-default, so the acting user is granted the
+        // gateway ability this case exercises rather than relying on a
+        // permissive fallback.
+        Permission::updateOrCreate(['slug' => 'gateways.manage'], ['module' => 'module']);
+        $user->grantPermissions(['gateways.manage']);
 
         $payload = [
             'name' => 'Carrier A',
@@ -47,5 +54,18 @@ class GatewaySchemaApiTest extends TestCase
             ->assertJsonPath('data.expire_seconds', 600)
             ->assertJsonPath('data.retry_seconds', 15)
             ->assertJsonPath('data.profile', 'external');
+    }
+
+    public function test_user_without_permission_cannot_create_a_gateway(): void
+    {
+        $organization = Organization::factory()->create();
+        $unprivileged = User::factory()->create(['organization_id' => $organization->id]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->postJson("/api/v1/organizations/{$organization->id}/gateways", [
+                'name' => 'Carrier A',
+                'host' => 'sip.carrier.test',
+            ])
+            ->assertForbidden();
     }
 }

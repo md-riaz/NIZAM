@@ -6,6 +6,7 @@ use App\Models\DeviceProfile;
 use App\Models\Did;
 use App\Models\Gateway;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\User;
 use App\Services\OrganizationManifestBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,6 +23,12 @@ class ExtensionOutboundPolicySyncTest extends TestCase
             'domain' => 'test.example.com',
         ]);
         $user = User::factory()->create(['organization_id' => $organization->id]);
+
+        // Permissions are deny-by-default, so the acting user is granted the
+        // extension ability this case exercises rather than relying on a
+        // permissive fallback.
+        Permission::updateOrCreate(['slug' => 'extensions.update'], ['module' => 'core']);
+        $user->grantPermissions(['extensions.update']);
 
         $gateway = Gateway::factory()->create([
             'organization_id' => $organization->id,
@@ -75,5 +82,30 @@ class ExtensionOutboundPolicySyncTest extends TestCase
 
         $profile->refresh();
         $this->assertGreaterThan($originalUpdatedAt, $profile->updated_at);
+    }
+
+    public function test_user_without_permission_cannot_update_outbound_policy(): void
+    {
+        $organization = Organization::create([
+            'name' => 'Test Organization',
+            'domain' => 'test.example.com',
+        ]);
+        $unprivileged = User::factory()->create(['organization_id' => $organization->id]);
+        $extension = $organization->extensions()->create([
+            'extension' => '101',
+            'password' => 'secret1234',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->putJson("/api/v1/organizations/{$organization->id}/extensions/{$extension->id}", [
+                'extension' => '101',
+                'password' => 'secret1234',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+            ])
+            ->assertForbidden();
     }
 }

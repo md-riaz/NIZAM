@@ -9,6 +9,7 @@ use App\Models\FlowNode;
 use App\Models\FlowVersion;
 use App\Models\Organization;
 use App\Models\OrganizationDialplanManifest;
+use App\Models\Permission;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
@@ -33,6 +34,58 @@ class ExtensionApiTest extends TestCase
             'domain' => 'test.example.com',
         ]);
         $this->user = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        // Permissions are deny-by-default, so the acting user is granted the
+        // extension abilities these cases exercise rather than relying on a
+        // permissive fallback.
+        $slugs = ['extensions.view', 'extensions.create', 'extensions.update', 'extensions.delete'];
+        foreach ($slugs as $slug) {
+            Permission::updateOrCreate(['slug' => $slug], ['module' => 'core']);
+        }
+        $this->user->grantPermissions($slugs);
+    }
+
+    public function test_user_without_permission_cannot_list_extensions(): void
+    {
+        $unprivileged = User::factory()->create(['organization_id' => $this->organization->id]);
+
+        $this->actingAs($unprivileged, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/extensions")
+            ->assertForbidden();
+    }
+
+    public function test_view_permission_alone_cannot_create_an_extension(): void
+    {
+        $viewer = User::factory()->create(['organization_id' => $this->organization->id]);
+        $viewer->grantPermissions(['extensions.view']);
+
+        $this->actingAs($viewer, 'sanctum')
+            ->postJson("/api/v1/organizations/{$this->organization->id}/extensions", [
+                'extension' => '199',
+                'password' => 'secret1234',
+                'first_name' => 'Read',
+                'last_name' => 'Only',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_per_page_is_honoured_when_listing_extensions(): void
+    {
+        for ($i = 0; $i < 20; $i++) {
+            $this->organization->extensions()->create([
+                'extension' => (string) (200 + $i),
+                'password' => 'secret1234',
+                'first_name' => 'Seat',
+                'last_name' => (string) $i,
+            ]);
+        }
+
+        // The default page size is 15; pickers that resolve an extension number
+        // to a name need the whole list or they label the remainder unknown.
+        $this->actingAs($this->user, 'sanctum')
+            ->getJson("/api/v1/organizations/{$this->organization->id}/extensions?per_page=100")
+            ->assertOk()
+            ->assertJsonCount(20, 'data');
     }
 
     public function test_can_list_extensions_for_a_organization(): void

@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RecordingResource;
-use App\Models\Recording;
 use App\Models\Organization;
+use App\Models\Recording;
 use App\Services\Storage\StorageDriver;
+use App\Support\DateRangeFilter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -27,27 +28,48 @@ class RecordingController extends Controller
         $query = Recording::where('organization_id', $organization->id)
             ->orderBy('created_at', 'desc');
 
-        if ($request->filled('call_uuid')) {
-            $query->where('call_uuid', $request->input('call_uuid'));
+        if (($value = $this->scalarFilter($request, 'call_uuid')) !== null) {
+            $query->where('call_uuid', $value);
         }
 
-        if ($request->filled('caller_id_number')) {
-            $query->where('caller_id_number', $request->input('caller_id_number'));
+        // Numbers match on a substring: an operator searching for a recording
+        // types the digits they remember, not the exact stored E.164 string.
+        foreach (['caller_id_number', 'destination_number'] as $column) {
+            if (($value = $this->scalarFilter($request, $column)) !== null) {
+                $query->where($column, 'LIKE', '%'.$value.'%');
+            }
         }
 
-        if ($request->filled('destination_number')) {
-            $query->where('destination_number', $request->input('destination_number'));
+        if (($from = $this->scalarFilter($request, 'date_from')) !== null) {
+            $query->where('created_at', '>=', DateRangeFilter::start($from));
         }
 
-        if ($request->filled('date_from')) {
-            $query->where('created_at', '>=', $request->input('date_from'));
+        if (($to = $this->scalarFilter($request, 'date_to')) !== null) {
+            $query->where('created_at', '<=', DateRangeFilter::end($to));
         }
 
-        if ($request->filled('date_to')) {
-            $query->where('created_at', '<=', $request->input('date_to'));
+        $perPage = max(1, min((int) $request->input('per_page', 15) ?: 15, 100));
+
+        return RecordingResource::collection($query->paginate($perPage));
+    }
+
+    /**
+     * A filter value as a string, or null when it is absent or not scalar.
+     *
+     * A query string can carry an array (`?date_to[]=x`); passing one to a date
+     * parser or a query binding raised a TypeError and answered 500.
+     */
+    protected function scalarFilter(Request $request, string $key): ?string
+    {
+        $value = $request->input($key);
+
+        if (! is_scalar($value)) {
+            return null;
         }
 
-        return RecordingResource::collection($query->paginate(15));
+        $value = (string) $value;
+
+        return $value === '' ? null : $value;
     }
 
     public function show(Organization $organization, Recording $recording): RecordingResource|JsonResponse
