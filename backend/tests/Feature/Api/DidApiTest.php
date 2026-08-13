@@ -3,6 +3,8 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Did;
+use App\Models\Extension;
+use App\Models\Flow;
 use App\Models\Gateway;
 use App\Models\Organization;
 use App\Models\Permission;
@@ -62,7 +64,9 @@ class DidApiTest extends TestCase
                 'number' => '+15551234567',
                 'description' => 'Main line',
                 'destination_type' => 'extension',
-                'destination_id' => Str::uuid()->toString(),
+                'destination_id' => Extension::factory()->create([
+                    'organization_id' => $this->organization->id,
+                ])->id,
                 'is_active' => true,
             ]);
 
@@ -119,13 +123,14 @@ class DidApiTest extends TestCase
 
     public function test_can_update_a_did(): void
     {
-        $did = Did::factory()->create(['organization_id' => $this->organization->id]);
+        $did = Did::factory()->forExtension()->create(['organization_id' => $this->organization->id]);
+        $flow = Flow::factory()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}", [
                 'number' => '+15559999999',
                 'destination_type' => 'flow',
-                'destination_id' => Str::uuid()->toString(),
+                'destination_id' => $flow->id,
             ]);
 
         $response->assertStatus(200);
@@ -137,14 +142,7 @@ class DidApiTest extends TestCase
 
     public function test_can_update_a_did_recording_policy(): void
     {
-        // Pinned to 'extension': the factory's default destination_type is a
-        // random pick that can land outside the update endpoint's
-        // extension|flow enum, making this test flaky independent of
-        // permissions.
-        $did = Did::factory()->create([
-            'organization_id' => $this->organization->id,
-            'destination_type' => 'extension',
-        ]);
+        $did = Did::factory()->forExtension()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}", [
@@ -177,7 +175,7 @@ class DidApiTest extends TestCase
 
     public function test_did_recording_policy_rejects_unknown_values(): void
     {
-        $did = Did::factory()->create(['organization_id' => $this->organization->id]);
+        $did = Did::factory()->forExtension()->create(['organization_id' => $this->organization->id]);
 
         $response = $this->actingAs($this->user, 'sanctum')
             ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}", [
