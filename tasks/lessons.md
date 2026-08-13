@@ -7,3 +7,4 @@
 - When the user asks for a dedicated read model in this repo, do not stop at extracting a read service boundary; finish the persisted or projection-backed read path if live-query debt still remains.
 - When the user corrects Docker naming or deployment direction, update `tasks/lessons.md` immediately and normalize compose, docs, and operational helpers together so runtime names, backup commands, and first-boot credential docs do not drift.
 - When the user explicitly excludes domains (for example flows/ivrs/time-conditions), lock those out of implementation scope and plan complete frontend coverage for all remaining APIs.
+- Before claiming a deployed repo is fully synced, fetch/rebase or merge `origin/main`, push the local deployment commit, then redeploy from the pushed SHA so GitHub main and `/opt/NIZAM` runtime match.
