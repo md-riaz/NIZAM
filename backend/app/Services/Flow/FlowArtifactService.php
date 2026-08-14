@@ -13,7 +13,6 @@ use App\Services\Flow\Compile\FlowToIrCompiler;
 use App\Services\OrganizationManifestBuilder;
 use App\Services\Routing\RoutingGraphCompiler;
 use App\Services\Team\TeamRoutingService;
-use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class FlowArtifactService
@@ -24,6 +23,22 @@ class FlowArtifactService
         protected TeamRoutingService $teamRoutingService,
         protected OrganizationManifestBuilder $manifestBuilder,
     ) {}
+
+    /**
+     * Quote a value for use as a single Lua argument inside a dialplan attribute.
+     *
+     * Two layers of quoting apply: the arguments are space separated, so a value
+     * containing spaces needs single quotes, and the whole thing lives in an XML
+     * attribute. Single quotes are dropped rather than escaped — there is no
+     * escape for them inside a single-quoted argv entry, and a stray one would
+     * shift every later argument by one position.
+     */
+    protected function luaArgument(string $value): string
+    {
+        $sanitized = str_replace(["'", "\n", "\r"], ['', ' ', ' '], $value);
+
+        return "'".htmlspecialchars($sanitized, ENT_QUOTES | ENT_XML1)."'";
+    }
 
     public function getRoutingGraphCompiler(): RoutingGraphCompiler
     {
@@ -45,7 +60,7 @@ class FlowArtifactService
     public function compileAndStore(FlowVersion $flowVersion): array
     {
         // Validate that all node types have compilers registered
-        if (!$this->flowToIrCompiler->canCompile($flowVersion)) {
+        if (! $this->flowToIrCompiler->canCompile($flowVersion)) {
             return [
                 'success' => false,
                 'error' => 'Flow contains node types without registered compilers',
@@ -164,15 +179,15 @@ class FlowArtifactService
                     $xml .= '          <action application="set" data="nizam_schedule_return_node=node_'.$nodeId.'_resume"/>'."\n";
                     // Transfer to schedule XML
                     $xml .= '          <action application="transfer" data="schedule_'.$scheduleId.' XML '.$context.'"/>'."\n";
-                    
+
                     // Resume extension
                     $xml .= '        </condition>'."\n";
                     $xml .= '      </extension>'."\n\n";
-                    
+
                     $xml .= '      <extension name="node_'.$nodeId.'_resume">'."\n";
                     $xml .= '        <condition field="destination_number" expression="^node_'.$nodeId.'_resume$">'."\n";
                     $xml .= '          <action application="log" data="INFO Schedule state is ${nizam_schedule_state}"/>'."\n";
-                    
+
                     // Route based on state
                     foreach (['holiday', 'exception_open', 'exception_closed', 'break', 'open', 'closed'] as $state) {
                         $target = $instruction->transitions[$state] ?? ($instruction->transitions['closed'] ?? null);
@@ -182,7 +197,7 @@ class FlowArtifactService
                             $xml .= '          </condition>'."\n";
                         }
                     }
-                    
+
                     // Fallback
                     $fallback = $instruction->transitions['closed'] ?? null;
                     if ($fallback) {
@@ -213,6 +228,37 @@ class FlowArtifactService
 
                 $timeoutTarget = $instruction->transitions['timeout'] ?? null;
                 $invalidTarget = $instruction->transitions['invalid'] ?? null;
+
+                // Digit branches are the actual menu. The dialplan cannot collect
+                // a digit and branch on it, so this delegates to a Lua helper the
+                // same way a team ring does. Before that, a menu with digit edges
+                // emitted only a transfer to its timeout branch, which meant every
+                // option it advertised was unreachable.
+                $digitMap = [];
+                foreach ($instruction->transitions as $condition => $target) {
+                    if (preg_match('/^digit_(\w+)$/', (string) $condition, $matches) === 1) {
+                        $digitMap[] = $matches[1].':'.$target;
+                    }
+                }
+
+                if ($digitMap !== []) {
+                    $config = $instruction->params['config'] ?? [];
+                    $prompt = $this->luaArgument((string) ($config['prompt'] ?? ''));
+                    $menuTimeout = (int) ($config['timeout'] ?? 5);
+                    $tries = (int) ($config['max_failures'] ?? $config['tries'] ?? 3);
+
+                    $xml .= '          <action application="lua" data="/usr/local/freeswitch/scripts/custom/_menu.lua '
+                        .$prompt.' '
+                        .max(1, $menuTimeout).' '
+                        .max(1, $tries).' '
+                        .$this->luaArgument(implode(',', $digitMap)).' '
+                        .$this->luaArgument((string) ($invalidTarget ?? '')).' '
+                        .$this->luaArgument((string) ($timeoutTarget ?? '')).' '
+                        .$this->luaArgument($context)
+                        .'"/>'."\n";
+                    break;
+                }
+
                 $fallbackTarget = $invalidTarget ?? $timeoutTarget;
 
                 if ($fallbackTarget) {
@@ -241,7 +287,6 @@ class FlowArtifactService
                 }
                 break;
 
-
             case 'BridgeTeam':
                 $teamId = $instruction->params['team_id'] ?? null;
                 $timeout = $instruction->params['timeout'] ?? 30;
@@ -265,7 +310,11 @@ class FlowArtifactService
                     $xml .= '          <action application="transfer" data="'.$noAnswerTarget.' XML '.$context.'"/>'."\n";
                 } else {
                     $xml .= '          <action application="set" data="team_id='.$teamId.'"/>'."\n";
-                    $xml .= '          <action application="lua" data="/usr/local/freeswitch/scripts/custom/_team_ring.lua \''.$dialString.'\' '.$timeout.' '.$answeredTarget.' '.$noAnswerTarget.' '.$timeoutTarget.'"/>'."\n";
+                    // The context is passed explicitly: the script used to hardcode
+                    // "default", but these targets are compiled into the
+                    // organization's own context, so every branch transferred
+                    // somewhere the target did not exist.
+                    $xml .= '          <action application="lua" data="/usr/local/freeswitch/scripts/custom/_team_ring.lua \''.$dialString.'\' '.$timeout.' '.$answeredTarget.' '.$noAnswerTarget.' '.$timeoutTarget.' '.$this->luaArgument($context).'"/>'."\n";
                 }
                 break;
 

@@ -225,37 +225,70 @@ class DatabaseSeeder extends Seeder
         // ──────────────────────────────────────────────
         // 6c. Flows — the only legal DID destination beyond a bare extension
         //
-        // These graphs are deliberately limited to what the compiler actually
-        // emits. FlowArtifactService compiles `ring_team` into a real dial string
-        // driven by _team_ring.lua, and compiles a transfer for any *human*
-        // destination type (DeliveryTargetResolver::HUMAN_TARGET_TYPES).
+        // These graphs stay within what the compiler actually emits: `ring_team`
+        // becomes a real dial string driven by _team_ring.lua, `menu` becomes a
+        // digit collection driven by _menu.lua, and a node carrying a *human*
+        // destination type (DeliveryTargetResolver::HUMAN_TARGET_TYPES) becomes a
+        // transfer through the delivery entrypoint.
         //
-        // It does NOT implement two things a richer demo would want:
-        //   - `menu` compiles to CollectDigits, which emits no digit-collection
-        //     application at all. Given digit edges and no destination params it
-        //     transfers straight to the invalid/timeout branch, so a menu here
-        //     would advertise options that can never be selected.
-        //   - `voicemail` cannot express taking a message. Without destination
-        //     params it hangs up, and 'voicemail' is not a human target type, so
-        //     supplying them routes nowhere either.
-        //
-        // Seeded numbers therefore ring a team and overflow to a human extension.
-        // Both are paths the runtime executes end to end.
+        // `voicemail` is still avoided: it cannot express taking a message. With
+        // no destination params it hangs up, and 'voicemail' is not a human target
+        // type, so supplying them routes nowhere either. Unanswered calls overflow
+        // to a person instead.
         // ──────────────────────────────────────────────
         $mainOfficeFlow = Flow::firstOrCreate(
-            ['organization_id' => $organization->id, 'name' => 'Main Office Flow'],
-            ['description' => 'Rings the support team, overflowing to the operator extension']
+            ['organization_id' => $organization->id, 'name' => 'Main Office Menu Flow'],
+            ['description' => 'Auto-attendant menu: sales, support, or the operator']
         );
 
         if (! $mainOfficeFlow->versions()->exists()) {
-            app(FlowGraphService::class)->updateFlowWithVersion(
-                $mainOfficeFlow,
-                FlowData::fromArray($this->teamRingFlowDefinition(
-                    $mainOfficeFlow,
-                    $supportTeam,
-                    $extensions['1002'],
-                )),
-            );
+            app(FlowGraphService::class)->updateFlowWithVersion($mainOfficeFlow, FlowData::fromArray([
+                'name' => $mainOfficeFlow->name,
+                'description' => $mainOfficeFlow->description,
+                'publish' => true,
+                'version' => [
+                    'definition' => [
+                        'nodes' => [
+                            ['id' => 'start', 'type' => 'start', 'name' => 'Start', 'config' => []],
+                            ['id' => 'menu', 'type' => 'menu', 'name' => 'Main Menu', 'config' => [
+                                'prompt' => $mainIvr->greet_long ?: 'ivr/ivr-welcome_to_freeswitch.wav',
+                                'timeout' => max(1, (int) ($mainIvr->timeout ?: 5)),
+                                'max_failures' => 3,
+                                'digits' => ['1', '2', '0'],
+                            ]],
+                            ['id' => 'ring-sales', 'type' => 'ring_team', 'name' => 'Ring '.$salesTeam->name, 'config' => [
+                                'team_id' => $salesTeam->id,
+                                'timeout' => $salesTeam->timeout,
+                            ]],
+                            ['id' => 'ring-support', 'type' => 'ring_team', 'name' => 'Ring '.$supportTeam->name, 'config' => [
+                                'team_id' => $supportTeam->id,
+                                'timeout' => $supportTeam->timeout,
+                            ]],
+                            ['id' => 'operator', 'type' => 'play_message', 'name' => 'Operator', 'config' => [
+                                'prompt' => 'Connecting you to the operator.',
+                                'destination_type' => 'extension',
+                                'destination_value' => $extensions['1002']->id,
+                            ]],
+                            ['id' => 'hangup', 'type' => 'hangup', 'name' => 'Hangup', 'config' => ['cause' => 'NORMAL_CLEARING']],
+                        ],
+                        'edges' => [
+                            ['source_node_id' => 'start', 'target_node_id' => 'menu', 'condition' => 'next'],
+                            ['source_node_id' => 'menu', 'target_node_id' => 'ring-sales', 'condition' => 'digit_1'],
+                            ['source_node_id' => 'menu', 'target_node_id' => 'ring-support', 'condition' => 'digit_2'],
+                            ['source_node_id' => 'menu', 'target_node_id' => 'operator', 'condition' => 'digit_0'],
+                            // No selection, or repeated invalid keys, reaches a person.
+                            ['source_node_id' => 'menu', 'target_node_id' => 'operator', 'condition' => 'timeout'],
+                            ['source_node_id' => 'menu', 'target_node_id' => 'operator', 'condition' => 'invalid'],
+                            ['source_node_id' => 'ring-sales', 'target_node_id' => 'hangup', 'condition' => 'answered'],
+                            ['source_node_id' => 'ring-sales', 'target_node_id' => 'operator', 'condition' => 'no_answer'],
+                            ['source_node_id' => 'ring-sales', 'target_node_id' => 'operator', 'condition' => 'timeout'],
+                            ['source_node_id' => 'ring-support', 'target_node_id' => 'hangup', 'condition' => 'answered'],
+                            ['source_node_id' => 'ring-support', 'target_node_id' => 'operator', 'condition' => 'no_answer'],
+                            ['source_node_id' => 'ring-support', 'target_node_id' => 'operator', 'condition' => 'timeout'],
+                        ],
+                    ],
+                ],
+            ]));
         }
 
         $salesRingFlow = Flow::firstOrCreate(
