@@ -1,15 +1,12 @@
 import {
     BookUser,
     Building2,
-    ChartColumn,
     Check,
     ChevronLeft,
     ChevronRight,
     ChevronsUpDown,
-    ClipboardList,
     FileAudio,
     FileText,
-    Gauge,
     Globe,
     Hash,
     KeyRound,
@@ -100,14 +97,6 @@ const NAV_SECTIONS: NavSection[] = [
         items: [
             { label: 'Call History', icon: PhoneCall, href: '/admin/call-history', organizationRequired: true },
             { label: 'Recordings', icon: FileAudio, href: '/admin/recordings', organizationRequired: true },
-        ],
-    },
-    {
-        title: 'Reports',
-        items: [
-            { label: 'Call Analytics', icon: ChartColumn, href: '/admin/reports/call-analytics', organizationRequired: true },
-            { label: 'Supervisor', icon: ClipboardList, href: '/admin/reports/supervisor', organizationRequired: true },
-            { label: 'Usage', icon: Gauge, href: '/admin/reports/usage', organizationRequired: true },
         ],
     },
     {
