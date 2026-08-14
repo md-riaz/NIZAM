@@ -51,9 +51,16 @@ function initialFilters(): AnalyticsFilters {
     return { ...defaultReportRange(), limit: '20' };
 }
 
-/** Turn a metric key like `local_extension` into `Local extension`. */
+/**
+ * Turn a grouping key like `local_extension` into `Local extension`.
+ *
+ * `direction` and `call_type` are nullable columns grouped with `pluck`, so a
+ * blank key is possible and must not render as an empty row label.
+ */
 function humanizeKey(key: string): string {
     const spaced = key.replace(/[_-]+/g, ' ').trim();
+
+    if (spaced === '') return 'Unknown';
 
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }

@@ -46,8 +46,11 @@ function initialFilters(): SupervisorFilters {
     return { ...defaultReportRange(), window_days: '' };
 }
 
+/** `direction` is nullable, so a blank grouping key must not render as an empty label. */
 function humanizeKey(key: string): string {
     const spaced = key.replace(/[_-]+/g, ' ').trim();
+
+    if (spaced === '') return 'Unknown';
 
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
