@@ -620,14 +620,16 @@ export interface SupervisorCallSummaryReport {
 
 /** The outbound call that closed the loop on a missed call or voicemail. */
 export interface ReportReturnedCall {
-    cdr_id: number;
+    /** UUID: call_detail_records.id is a uuid primary key. */
+    cdr_id: string;
     call_uuid: string | null;
     started_at: string | null;
     destination_number: string | null;
 }
 
 export interface MissedReturnedCallItem {
-    cdr_id: number;
+    /** UUID: call_detail_records.id is a uuid primary key. */
+    cdr_id: string;
     call_uuid: string | null;
     caller_id_number: string | null;
     normalized_caller_number: string;
@@ -653,7 +655,8 @@ export interface MissedReturnedCallsReport {
 }
 
 export interface VoicemailFollowUpItem {
-    event_id: number;
+    /** UUID: call_events.id is a uuid primary key. */
+    event_id: string;
     call_uuid: string | null;
     caller_id_number: string;
     normalized_caller_number: string;
@@ -662,7 +665,8 @@ export interface VoicemailFollowUpItem {
     follow_up_status: 'pending' | 'returned';
     needs_attention: boolean;
     recording: {
-        id: number;
+        /** UUID: recordings.id is a uuid primary key. */
+        id: string;
         call_uuid: string | null;
         needs_review: boolean;
         review_reasons: string[] | null;
@@ -699,7 +703,8 @@ export interface UsageMetricSummary {
 
 /** `GET .../usage/summary` — accepts `from`/`to` (not `date_from`/`date_to`). */
 export interface UsageSummaryReport {
-    organization_id: number;
+    /** UUID, like every id here — `idSchema` normalises ids to string. */
+    organization_id: string;
     /** `YYYY-MM-DD`. */
     from: string;
     to: string;
