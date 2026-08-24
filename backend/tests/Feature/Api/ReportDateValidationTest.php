@@ -6,6 +6,7 @@ use App\Models\CallDetailRecord;
 use App\Models\Organization;
 use App\Models\Permission;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -150,6 +151,107 @@ class ReportDateValidationTest extends TestCase
             ->getJson($this->url('cdrs/analytics/summary').'?date_from=2026-01-31&date_to=2026-01-01')
             ->assertOk()
             ->assertJsonPath('data.total_calls', 1);
+    }
+
+    /**
+     * A bound supplied on its own must still bound the answer.
+     *
+     * Reordering compared an explicit bound against the default generated
+     * opposite it, so a lone `date_to` before the default window was swapped with
+     * it: `?date_to=2020-01-01` reported the range from a month ago *up to* 2020
+     * instead of the range ending at the bound that was asked for.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('rangeEchoingEndpoints')]
+    public function test_a_lone_upper_bound_stays_the_upper_bound(string $path, string $fromKey, string $toKey, string $echoPath): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson($this->url($path)."?{$toKey}=2020-01-01")
+            ->assertOk();
+
+        $echoed = $response->json($echoPath);
+
+        $this->assertStringStartsWith('2020-01-01', (string) $echoed['to'], 'The requested upper bound was not honoured.');
+        $this->assertLessThanOrEqual(
+            (string) $echoed['to'],
+            (string) $echoed['from'],
+            'The generated lower bound was placed after the requested upper bound.'
+        );
+    }
+
+    /**
+     * The same defect, seen through the data rather than the echoed range.
+     *
+     * The swapped range spanned everything between 2020 and a month ago, so a
+     * call in 2021 was counted for a request that asked for nothing after 2020.
+     */
+    public function test_a_lone_upper_bound_excludes_calls_after_it(): void
+    {
+        CallDetailRecord::factory()->create([
+            'organization_id' => $this->organization->id,
+            'start_stamp' => '2021-06-01 10:00:00',
+        ]);
+
+        $this->actingAs($this->user, 'sanctum')
+            ->getJson($this->url('cdrs/analytics/summary').'?date_to=2020-01-01')
+            ->assertOk()
+            ->assertJsonPath('data.total_calls', 0);
+    }
+
+    /**
+     * A lone lower bound in the future was inverted the same way, which for the
+     * usage endpoints means metering a range the caller never asked about.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('rangeEchoingEndpoints')]
+    public function test_a_lone_future_lower_bound_stays_the_lower_bound(string $path, string $fromKey, string $toKey, string $echoPath): void
+    {
+        $future = Carbon::today()->addYears(5)->toDateString();
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson($this->url($path)."?{$fromKey}={$future}")
+            ->assertOk();
+
+        $echoed = $response->json($echoPath);
+
+        $this->assertStringStartsWith($future, (string) $echoed['from'], 'The requested lower bound was not honoured.');
+        $this->assertGreaterThanOrEqual(
+            (string) $echoed['from'],
+            (string) $echoed['to'],
+            'The generated upper bound was placed before the requested lower bound.'
+        );
+    }
+
+    /**
+     * With neither bound supplied the defaults must be left alone.
+     */
+    public function test_an_absent_range_keeps_the_default_window(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson($this->url('cdrs/analytics/summary'))
+            ->assertOk();
+
+        $period = $response->json('data.period');
+
+        $this->assertStringStartsWith(Carbon::today()->subDays(30)->toDateString(), (string) $period['from']);
+        $this->assertStringStartsWith(Carbon::today()->toDateString(), (string) $period['to']);
+    }
+
+    /**
+     * A blank bound is an absent bound.
+     *
+     * An empty form field submits `?date_to=`, which passes `nullable|date`.
+     * `Carbon::parse('')` returns the current time rather than failing, so the
+     * blank field read as an explicit "now" — and on the usage endpoints, as an
+     * explicit bound that suppressed the month-to-date default.
+     */
+    public function test_a_blank_bound_falls_back_to_the_default(): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson($this->url('cdrs/analytics/summary').'?date_from=&date_to=')
+            ->assertOk();
+
+        $period = $response->json('data.period');
+
+        $this->assertStringStartsWith(Carbon::today()->subDays(30)->toDateString(), (string) $period['from']);
     }
 
     public function test_an_unsupported_granularity_is_rejected(): void

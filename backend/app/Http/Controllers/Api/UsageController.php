@@ -72,7 +72,8 @@ class UsageController extends Controller
      *
      * Usage reads `from`/`to` rather than `date_from`/`date_to`, and defaults to
      * the current month rather than the last 30 days, so it cannot simply reuse
-     * the shared report range.
+     * the shared report range — only its ordering, which must not trade an
+     * explicit bound for the default generated opposite it.
      *
      * @return array{0: Carbon, 1: Carbon}
      */
@@ -83,9 +84,11 @@ class UsageController extends Controller
             'to' => ['nullable', 'date'],
         ]);
 
-        $from = isset($validated['from']) ? Carbon::parse($validated['from']) : Carbon::today()->startOfMonth();
-        $to = isset($validated['to']) ? Carbon::parse($validated['to']) : Carbon::today();
-
-        return $from->greaterThan($to) ? [$to, $from] : [$from, $to];
+        return $this->orderedRange(
+            $this->suppliedBound($validated, 'from'),
+            $this->suppliedBound($validated, 'to'),
+            Carbon::today()->startOfMonth(),
+            Carbon::today(),
+        );
     }
 }
