@@ -462,7 +462,13 @@ export default function CallAnalyticsPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Destination</TableHead>
-                                        <TableHead>Share of calls</TableHead>
+                                        {/*
+                                          * The bar is scaled against the busiest row shown, not
+                                          * against every call in the period — the endpoint returns
+                                          * only the top N, so a share of the whole is not something
+                                          * this response can express.
+                                          */}
+                                        <TableHead>Relative volume</TableHead>
                                         <TableHead className="text-right">Calls</TableHead>
                                         <TableHead className="text-right">Answered</TableHead>
                                         <TableHead className="text-right">Answer rate</TableHead>
