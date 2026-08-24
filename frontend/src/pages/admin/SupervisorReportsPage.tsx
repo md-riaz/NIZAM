@@ -186,6 +186,8 @@ export default function SupervisorReportsPage() {
                         id="supervisor-window-days"
                         type="number"
                         min={1}
+                        // The endpoints accept 1–365; anything else is a 422.
+                        max={365}
                         placeholder={
                             missed ? String(missed.returned_call_window_days) : 'Server default'
                         }

@@ -132,6 +132,38 @@ export function isForbiddenError(error: unknown): boolean {
 }
 
 /**
+ * The server's reason for rejecting a filter, when it gave one.
+ *
+ * These endpoints validate their filters, so a callback window outside 1–365 or
+ * an unsupported granularity comes back as a 422 naming the offending field. That
+ * is actionable — the reader can correct it — and much more use than the panel's
+ * generic failure message, which would leave a valid-looking form unexplained.
+ */
+export function validationMessage(error: unknown): string | null {
+    if (!error || typeof error !== 'object') return null;
+
+    const response = (error as {
+        response?: { status?: number; data?: { message?: unknown; errors?: unknown } };
+    }).response;
+
+    if (response?.status !== 422) return null;
+
+    const errors = response.data?.errors;
+
+    if (errors && typeof errors === 'object') {
+        for (const messages of Object.values(errors as Record<string, unknown>)) {
+            const first = Array.isArray(messages) ? messages[0] : messages;
+
+            if (typeof first === 'string' && first !== '') return first;
+        }
+    }
+
+    return typeof response.data?.message === 'string' && response.data.message !== ''
+        ? response.data.message
+        : null;
+}
+
+/**
  * Renders whichever of loading / forbidden / error / empty applies, or the
  * panel's real content when the data is there.
  *
@@ -182,7 +214,7 @@ export function ReportPanelState({
         return (
             <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-6 text-sm text-destructive">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                <p>{errorMessage}</p>
+                <p>{validationMessage(error) ?? errorMessage}</p>
             </div>
         );
     }
