@@ -60,6 +60,12 @@ class UsageMeteringService
 
     /**
      * Get usage summary for an organization within a date range.
+     *
+     * `count` is the number of records, which is not the number of days covered:
+     * `record()` always inserts, and `call_minutes` is written once per billable
+     * hangup, so fifty calls in one day are fifty records. `days` is the count of
+     * distinct dates those records fall on, which is what a reader means by how
+     * much of the range the figures cover.
      */
     public function getSummary(Organization $organization, Carbon $from, Carbon $to): array
     {
@@ -76,6 +82,13 @@ class UsageMeteringService
                 'peak' => round((float) $metricRecords->max('value'), 4),
                 'average' => round((float) $metricRecords->avg('value'), 4),
                 'count' => $metricRecords->count(),
+                // `recorded_date` is cast to a date, so it has to be reduced to a
+                // string before uniqueness means anything.
+                'days' => $metricRecords
+                    ->map(fn (UsageRecord $record) => $record->recorded_date?->toDateString())
+                    ->filter()
+                    ->unique()
+                    ->count(),
             ];
         }
 
