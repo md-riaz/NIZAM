@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Concerns\ValidatesReportRange;
 use App\Models\Organization;
 use App\Services\SupervisorReports\CallSummaryReportService;
 use App\Services\SupervisorReports\MissedReturnedCallsReportService;
@@ -13,6 +14,8 @@ use Illuminate\Http\Request;
 
 class SupervisorReportController extends Controller
 {
+    use ValidatesReportRange;
+
     public function __construct(
         protected CallSummaryReportService $callSummaryReportService,
         protected MissedReturnedCallsReportService $missedReturnedCallsReportService,
@@ -62,16 +65,20 @@ class SupervisorReportController extends Controller
 
     protected function from(Request $request): Carbon
     {
-        return Carbon::parse($request->input('date_from', now()->subDays(30)->toDateString()));
+        return $this->reportRange($request)[0];
     }
 
     protected function to(Request $request): Carbon
     {
-        return Carbon::parse($request->input('date_to', now()->toDateString()));
+        return $this->reportRange($request)[1];
     }
 
     protected function windowDays(Request $request): ?int
     {
-        return $request->filled('window_days') ? max(1, (int) $request->input('window_days')) : null;
+        $validated = $request->validate([
+            'window_days' => ['nullable', 'integer', 'min:1', 'max:365'],
+        ]);
+
+        return isset($validated['window_days']) ? (int) $validated['window_days'] : null;
     }
 }
