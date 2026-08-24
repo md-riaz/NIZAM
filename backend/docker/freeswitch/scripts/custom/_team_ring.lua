@@ -1,16 +1,27 @@
 -- _team_ring.lua
 -- Team routing helper for organization call flows
--- Arguments: <dial_string> <timeout> <answered_target> <no_answer_target> <timeout_target>
+-- Arguments: <dial_string> <timeout> <answered_target> <no_answer_target> <timeout_target> [context]
+--
+-- context is the dialplan context the target extensions were compiled into. It
+-- was previously hardcoded to "default", but the compiler emits node extensions
+-- into the organization's own context, so every branch below transferred into a
+-- context where its target did not exist. It stays optional and falls back to
+-- "default" so manifests compiled before this argument existed behave as before.
 
 local dial_string = argv[1]
 local timeout = tonumber(argv[2]) or 30
 local answered_target = argv[3]
 local no_answer_target = argv[4]
 local timeout_target = argv[5]
+local context = argv[6]
+
+if context == nil or context == "" then
+    context = "default"
+end
 
 if not dial_string or dial_string == "" then
     freeswitch.consoleLog("WARNING", "[_team_ring] Empty dial string, treating as no_answer\n")
-    session:execute("transfer", no_answer_target .. " XML default")
+    session:execute("transfer", no_answer_target .. " XML " .. context)
     return
 end
 
@@ -31,15 +42,15 @@ local disposition = session:getVariable("originate_disposition") or ""
 freeswitch.consoleLog("INFO", "[_team_ring] Bridge disposition: " .. disposition .. "\n")
 
 if disposition == "USER_BUSY" or disposition == "NO_ANSWER" or disposition == "USER_NOT_REGISTERED" or disposition == "UNALLOCATED_NUMBER" then
-    session:execute("transfer", no_answer_target .. " XML default")
+    session:execute("transfer", no_answer_target .. " XML " .. context)
 elseif disposition == "NO_USER_RESPONSE" or disposition == "TIMEOUT" then
-    session:execute("transfer", timeout_target .. " XML default")
+    session:execute("transfer", timeout_target .. " XML " .. context)
 elseif disposition == "SUCCESS" then
     -- It was answered but the A-leg didn't hang up? (shouldn't happen with hangup_after_bridge)
     if answered_target and answered_target ~= "" and answered_target ~= "null" then
-        session:execute("transfer", answered_target .. " XML default")
+        session:execute("transfer", answered_target .. " XML " .. context)
     end
 else
     -- Default fallback for other failure cases
-    session:execute("transfer", no_answer_target .. " XML default")
+    session:execute("transfer", no_answer_target .. " XML " .. context)
 end

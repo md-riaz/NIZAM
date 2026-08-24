@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\DidDestination;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -43,10 +44,15 @@ class UpdateDidRequest extends FormRequest
             ],
             'description' => 'nullable|string',
             'recording_policy' => ['string', Rule::in(['inherit', 'off', 'all', 'incoming', 'outgoing'])],
-            'destination_type' => 'required|in:extension,flow',
-            'destination_id' => 'required|uuid',
+            // A number routes to an extension or a flow, nothing else: the flow
+            // is what decides a ring group, queue, or time condition.
+            'destination_type' => ['required', Rule::in(DidDestination::TYPES)],
+            'destination_id' => [
+                'required',
+                'uuid',
+                new DidDestination($organization, $this->input('destination_type')),
+            ],
             'is_active' => 'boolean',
         ];
     }
-
 }

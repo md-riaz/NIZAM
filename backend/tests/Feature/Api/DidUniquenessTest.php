@@ -3,11 +3,12 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Did;
+use App\Models\Extension;
+use App\Models\Flow;
 use App\Models\Organization;
 use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class DidUniquenessTest extends TestCase
@@ -34,6 +35,15 @@ class DidUniquenessTest extends TestCase
         $this->user->grantPermissions($slugs);
     }
 
+    /**
+     * A DID destination must exist in its organization, so tests that only care
+     * about the number-uniqueness rules still need a real target.
+     */
+    private function extensionIn(Organization $organization): string
+    {
+        return (string) Extension::factory()->create(['organization_id' => $organization->id])->id;
+    }
+
     public function test_user_without_permission_cannot_create_a_did(): void
     {
         $unprivileged = User::factory()->create(['organization_id' => $this->organization->id]);
@@ -42,7 +52,7 @@ class DidUniquenessTest extends TestCase
             ->postJson("/api/v1/organizations/{$this->organization->id}/dids", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
-                'destination_id' => Str::uuid()->toString(),
+                'destination_id' => $this->extensionIn($this->organization),
                 'is_active' => true,
             ])
             ->assertForbidden();
@@ -53,7 +63,7 @@ class DidUniquenessTest extends TestCase
         $this->organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
-            'destination_id' => Str::uuid()->toString(),
+            'destination_id' => $this->extensionIn($this->organization),
             'is_active' => true,
         ]);
 
@@ -61,7 +71,7 @@ class DidUniquenessTest extends TestCase
             ->postJson("/api/v1/organizations/{$this->organization->id}/dids", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
-                'destination_id' => Str::uuid()->toString(),
+                'destination_id' => $this->extensionIn($this->organization),
                 'is_active' => true,
             ]);
 
@@ -79,7 +89,7 @@ class DidUniquenessTest extends TestCase
         $this->organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
-            'destination_id' => Str::uuid()->toString(),
+            'destination_id' => $this->extensionIn($this->organization),
             'is_active' => true,
         ]);
 
@@ -88,7 +98,7 @@ class DidUniquenessTest extends TestCase
             ->postJson("/api/v1/organizations/{$organizationB->id}/dids", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
-                'destination_id' => Str::uuid()->toString(),
+                'destination_id' => $this->extensionIn($organizationB),
                 'is_active' => true,
             ]);
 
@@ -100,19 +110,18 @@ class DidUniquenessTest extends TestCase
         $did = $this->organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
-            'destination_id' => Str::uuid()->toString(),
+            'destination_id' => $this->extensionIn($this->organization),
             'is_active' => true,
         ]);
 
-        // 'voicemail' isn't in UpdateDidRequest's extension|flow enum, so the
-        // update endpoint would 422 regardless of the number check this test
-        // targets; use 'flow' to still exercise a destination_type change.
         $response = $this->actingAs($this->user, 'sanctum')
             ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did->id}", [
                 'number' => '+15551234567',
                 'description' => 'Updated description',
                 'destination_type' => 'flow',
-                'destination_id' => Str::uuid()->toString(),
+                'destination_id' => Flow::factory()->create([
+                    'organization_id' => $this->organization->id,
+                ])->id,
             ]);
 
         $response->assertStatus(200);
@@ -123,14 +132,14 @@ class DidUniquenessTest extends TestCase
         $this->organization->dids()->create([
             'number' => '+15551234567',
             'destination_type' => 'extension',
-            'destination_id' => Str::uuid()->toString(),
+            'destination_id' => $this->extensionIn($this->organization),
             'is_active' => true,
         ]);
 
         $did2 = $this->organization->dids()->create([
             'number' => '+15559876543',
             'destination_type' => 'extension',
-            'destination_id' => Str::uuid()->toString(),
+            'destination_id' => $this->extensionIn($this->organization),
             'is_active' => true,
         ]);
 
@@ -138,7 +147,7 @@ class DidUniquenessTest extends TestCase
             ->putJson("/api/v1/organizations/{$this->organization->id}/dids/{$did2->id}", [
                 'number' => '+15551234567',
                 'destination_type' => 'extension',
-                'destination_id' => Str::uuid()->toString(),
+                'destination_id' => $this->extensionIn($this->organization),
             ]);
 
         $response->assertStatus(422);
