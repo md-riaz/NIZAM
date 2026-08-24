@@ -46,6 +46,28 @@ function initialFilters(): SupervisorFilters {
     return { ...defaultReportRange(), window_days: '' };
 }
 
+/** The bound `SupervisorReportController` validates `window_days` against. */
+const WINDOW_DAYS_MAX = 365;
+
+/**
+ * Why a callback window cannot be applied, or null when it can.
+ *
+ * Blank means "use the server's configured default", which is always allowed.
+ */
+function windowDaysError(value: string): string | null {
+    const trimmed = value.trim();
+
+    if (trimmed === '') return null;
+
+    const days = Number(trimmed);
+
+    if (!/^\d+$/.test(trimmed) || days < 1 || days > WINDOW_DAYS_MAX) {
+        return `Enter a whole number of days between 1 and ${WINDOW_DAYS_MAX}.`;
+    }
+
+    return null;
+}
+
 /** `direction` is nullable, so a blank grouping key must not render as an empty label. */
 function humanizeKey(key: string): string {
     const spaced = key.replace(/[_-]+/g, ' ').trim();
@@ -153,7 +175,14 @@ export default function SupervisorReportsPage() {
 
     const voicemailForbidden = isForbiddenError(voicemailQuery.error);
 
+    // Apply is a button, not a form submission, so the input's own min/max never
+    // run — the value has to be checked here or three requests go out only to be
+    // rejected.
+    const windowError = windowDaysError(draft.window_days);
+
     const applyFilters = () => {
+        if (windowError) return;
+
         setApplied(draft);
         setMissedPage(1);
         setVoicemailPage(1);
@@ -186,16 +215,23 @@ export default function SupervisorReportsPage() {
                         id="supervisor-window-days"
                         type="number"
                         min={1}
-                        // The endpoints accept 1–365; anything else is a 422.
-                        max={365}
+                        max={WINDOW_DAYS_MAX}
+                        aria-invalid={windowError ? true : undefined}
+                        aria-describedby="supervisor-window-days-hint"
                         placeholder={
                             missed ? String(missed.returned_call_window_days) : 'Server default'
                         }
                         value={draft.window_days}
                         onChange={(e) => setDraft({ ...draft, window_days: e.target.value })}
                     />
-                    <p className="text-xs text-muted-foreground">
-                        How long after a missed call an outbound call still counts as a callback.
+                    <p
+                        id="supervisor-window-days-hint"
+                        className={
+                            windowError ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'
+                        }
+                    >
+                        {windowError ??
+                            'How long after a missed call an outbound call still counts as a callback.'}
                     </p>
                 </div>
             </ReportRangeBar>

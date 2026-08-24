@@ -261,10 +261,23 @@ export function formatDateTime(value?: string | null): string {
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
+/**
+ * Format a date the caller means as a calendar date, not an instant.
+ *
+ * `new Date('2026-08-24')` is parsed as midnight **UTC**, so anywhere west of it
+ * the result renders as the day before — the usage endpoints return date-only
+ * bounds, so the report's stated coverage was off by one for those readers. The
+ * components are read as a local date instead, which is the same correction the
+ * range picker's input formatter needs.
+ */
 export function formatDateOnly(value?: string | null): string {
     if (!value) return '—';
 
-    const date = new Date(value);
+    const calendarDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+    const date = calendarDate
+        ? new Date(Number(calendarDate[1]), Number(calendarDate[2]) - 1, Number(calendarDate[3]))
+        : new Date(value);
 
     return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
 }

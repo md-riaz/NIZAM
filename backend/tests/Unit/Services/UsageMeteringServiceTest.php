@@ -99,4 +99,31 @@ class UsageMeteringServiceTest extends TestCase
         $this->assertEquals(200, $summary[UsageRecord::METRIC_CALL_MINUTES]['total']);
         $this->assertEquals(1, $summary[UsageRecord::METRIC_CALL_MINUTES]['count']);
     }
+
+    /**
+     * The record count is not a count of days.
+     *
+     * `record()` always inserts, and `call_minutes` is written once per billable
+     * hangup, so a busy day produces many records for one date. A usage report
+     * that labelled `count` as days covered was reporting calls as days.
+     */
+    public function test_summary_counts_distinct_days_separately_from_records(): void
+    {
+        $organization = Organization::factory()->create();
+
+        foreach ([3.5, 1.25, 8.0] as $minutes) {
+            $this->service->record($organization, UsageRecord::METRIC_CALL_MINUTES, $minutes, null, Carbon::parse('2026-02-10'));
+        }
+
+        $this->service->record($organization, UsageRecord::METRIC_CALL_MINUTES, 2.0, null, Carbon::parse('2026-02-11'));
+
+        $summary = $this->service->getSummary(
+            $organization,
+            Carbon::parse('2026-02-01'),
+            Carbon::parse('2026-02-28')
+        );
+
+        $this->assertEquals(4, $summary[UsageRecord::METRIC_CALL_MINUTES]['count'], 'One record per billable hangup.');
+        $this->assertEquals(2, $summary[UsageRecord::METRIC_CALL_MINUTES]['days'], 'Four records fell on two dates.');
+    }
 }

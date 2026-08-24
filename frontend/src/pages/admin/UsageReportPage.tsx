@@ -193,6 +193,11 @@ export default function UsageReportPage() {
                                         <TableHead className="text-right">Total</TableHead>
                                         <TableHead className="text-right">Peak</TableHead>
                                         <TableHead className="text-right">Average</TableHead>
+                                        {/*
+                                          * Days, not records. `call_minutes` is written once per
+                                          * billable hangup, so labelling the record count as days
+                                          * reported fifty calls in one day as fifty days.
+                                          */}
                                         <TableHead className="text-right">Days recorded</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -227,7 +232,11 @@ export default function UsageReportPage() {
                                                     {formatMetricValue(values.average, meta.unit)}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    {formatCount(values.count)}
+                                                    {formatCount(values.days)}
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {formatCount(values.count)}{' '}
+                                                        {values.count === 1 ? 'record' : 'records'}
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         );

@@ -697,8 +697,15 @@ export interface UsageMetricSummary {
     total: number;
     peak: number;
     average: number;
-    /** Number of daily usage records that contributed. */
+    /**
+     * Number of usage records that contributed — not a number of days.
+     *
+     * `call_minutes` is written once per billable hangup, so a busy day produces
+     * many records for one date.
+     */
     count: number;
+    /** Distinct dates those records fall on. */
+    days: number;
 }
 
 /** `GET .../usage/summary` — accepts `from`/`to` (not `date_from`/`date_to`). */
