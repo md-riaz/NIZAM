@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\CallDetailRecord;
 use App\Models\Organization;
 use App\Models\Permission;
 use App\Models\User;
@@ -86,15 +87,69 @@ class ReportDateValidationTest extends TestCase
     }
 
     /**
-     * A range given backwards is what the caller meant, reversed. Passing it
-     * through unchanged returns an empty report with nothing to explain why.
+     * A reversed range must not error on any endpoint.
+     *
+     * This only establishes that nothing blows up. The cases below prove the
+     * range was actually reordered — on its own, a 200 carrying an empty report
+     * would satisfy this and hide a regression.
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('reportEndpoints')]
-    public function test_a_reversed_range_is_swapped_rather_than_returning_nothing(string $path, string $fromKey, string $toKey): void
+    public function test_a_reversed_range_does_not_error(string $path, string $fromKey, string $toKey): void
     {
         $this->actingAs($this->user, 'sanctum')
             ->getJson($this->url($path)."?{$fromKey}=2026-01-31&{$toKey}=2026-01-01")
             ->assertOk();
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string, 2: string, 3: string}>
+     */
+    public static function rangeEchoingEndpoints(): array
+    {
+        return [
+            // path, fromKey, toKey, dot-path to the echoed lower bound
+            'analytics summary' => ['cdrs/analytics/summary', 'date_from', 'date_to', 'data.period'],
+            'supervisor call summary' => ['supervisor-reports/call-summary', 'date_from', 'date_to', 'data.period'],
+            'usage summary' => ['usage/summary', 'from', 'to', 'data'],
+        ];
+    }
+
+    /**
+     * The endpoints that echo their range must report it the right way round.
+     *
+     * This is the assertion that actually pins the swap: the response has to
+     * come back with January 1st as the lower bound, not the 31st it was sent.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('rangeEchoingEndpoints')]
+    public function test_a_reversed_range_is_echoed_back_in_order(string $path, string $fromKey, string $toKey, string $echoPath): void
+    {
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->getJson($this->url($path)."?{$fromKey}=2026-01-31&{$toKey}=2026-01-01")
+            ->assertOk();
+
+        $echoed = $response->json($echoPath);
+
+        $this->assertStringStartsWith('2026-01-01', (string) $echoed['from'], 'The lower bound was not reordered.');
+        $this->assertStringStartsWith('2026-01-31', (string) $echoed['to'], 'The upper bound was not reordered.');
+    }
+
+    /**
+     * A reversed range must still count a call inside it.
+     *
+     * Reordering is only worth anything if the widened range actually selects
+     * rows; an empty report would satisfy the status-only case above.
+     */
+    public function test_a_reversed_range_still_counts_calls_within_it(): void
+    {
+        CallDetailRecord::factory()->create([
+            'organization_id' => $this->organization->id,
+            'start_stamp' => '2026-01-15 10:00:00',
+        ]);
+
+        $this->actingAs($this->user, 'sanctum')
+            ->getJson($this->url('cdrs/analytics/summary').'?date_from=2026-01-31&date_to=2026-01-01')
+            ->assertOk()
+            ->assertJsonPath('data.total_calls', 1);
     }
 
     public function test_an_unsupported_granularity_is_rejected(): void
