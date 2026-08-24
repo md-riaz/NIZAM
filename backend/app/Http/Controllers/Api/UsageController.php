@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Concerns\ValidatesReportRange;
 use App\Models\Organization;
 use App\Services\UsageMeteringService;
 use Carbon\Carbon;
@@ -14,6 +15,8 @@ use Illuminate\Http\Request;
  */
 class UsageController extends Controller
 {
+    use ValidatesReportRange;
+
     /**
      * Get usage summary for an organization.
      */
@@ -21,13 +24,7 @@ class UsageController extends Controller
     {
         $this->authorize('view', $organization);
 
-        $from = $request->has('from')
-            ? Carbon::parse($request->input('from'))
-            : Carbon::today()->startOfMonth();
-
-        $to = $request->has('to')
-            ? Carbon::parse($request->input('to'))
-            : Carbon::today();
+        [$from, $to] = $this->usageRange($request);
 
         return response()->json([
             'data' => [
@@ -63,16 +60,32 @@ class UsageController extends Controller
     {
         $this->authorize('view', $organization);
 
-        $from = $request->has('from')
-            ? Carbon::parse($request->input('from'))
-            : Carbon::today()->startOfMonth();
-
-        $to = $request->has('to')
-            ? Carbon::parse($request->input('to'))
-            : Carbon::today();
+        [$from, $to] = $this->usageRange($request);
 
         return response()->json([
             'data' => $metering->reconcileCallMinutes($organization, $from, $to),
         ]);
+    }
+
+    /**
+     * The validated usage range, defaulting to month-to-date.
+     *
+     * Usage reads `from`/`to` rather than `date_from`/`date_to`, and defaults to
+     * the current month rather than the last 30 days, so it cannot simply reuse
+     * the shared report range.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    protected function usageRange(Request $request): array
+    {
+        $validated = $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+        ]);
+
+        $from = isset($validated['from']) ? Carbon::parse($validated['from']) : Carbon::today()->startOfMonth();
+        $to = isset($validated['to']) ? Carbon::parse($validated['to']) : Carbon::today();
+
+        return $from->greaterThan($to) ? [$to, $from] : [$from, $to];
     }
 }

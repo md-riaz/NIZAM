@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Concerns\ValidatesReportRange;
 use App\Models\Organization;
 use App\Services\Cdr\CdrAnalyticsService;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CdrAnalyticsController extends Controller
 {
+    use ValidatesReportRange;
+
     public function __construct(
         protected CdrAnalyticsService $analyticsService
     ) {}
@@ -24,8 +26,7 @@ class CdrAnalyticsController extends Controller
     {
         $this->authorize('viewAny', \App\Models\CallDetailRecord::class);
 
-        $from = Carbon::parse($request->input('date_from', now()->subDays(30)->toDateString()));
-        $to = Carbon::parse($request->input('date_to', now()->toDateString()));
+        [$from, $to] = $this->reportRange($request);
 
         $data = $this->analyticsService->getSummary($organization, $from, $to);
 
@@ -41,9 +42,10 @@ class CdrAnalyticsController extends Controller
     {
         $this->authorize('viewAny', \App\Models\CallDetailRecord::class);
 
-        $from = Carbon::parse($request->input('date_from', now()->subDays(30)->toDateString()));
-        $to = Carbon::parse($request->input('date_to', now()->toDateString()));
-        $granularity = $request->input('granularity', 'daily');
+        [$from, $to] = $this->reportRange($request);
+        $granularity = $request->validate([
+            'granularity' => ['nullable', 'in:daily,hourly'],
+        ])['granularity'] ?? 'daily';
 
         $data = $this->analyticsService->getVolume($organization, $from, $to, $granularity);
 
@@ -59,9 +61,10 @@ class CdrAnalyticsController extends Controller
     {
         $this->authorize('viewAny', \App\Models\CallDetailRecord::class);
 
-        $from = Carbon::parse($request->input('date_from', now()->subDays(30)->toDateString()));
-        $to = Carbon::parse($request->input('date_to', now()->toDateString()));
-        $granularity = $request->input('granularity', 'daily');
+        [$from, $to] = $this->reportRange($request);
+        $granularity = $request->validate([
+            'granularity' => ['nullable', 'in:daily,hourly'],
+        ])['granularity'] ?? 'daily';
 
         $data = $this->analyticsService->getQualityTrends($organization, $from, $to, $granularity);
 
@@ -77,11 +80,12 @@ class CdrAnalyticsController extends Controller
     {
         $this->authorize('viewAny', \App\Models\CallDetailRecord::class);
 
-        $from = Carbon::parse($request->input('date_from', now()->subDays(30)->toDateString()));
-        $to = Carbon::parse($request->input('date_to', now()->toDateString()));
-        $limit = (int) $request->input('limit', 20);
+        [$from, $to] = $this->reportRange($request);
+        $limit = (int) ($request->validate([
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ])['limit'] ?? 20);
 
-        $data = $this->analyticsService->getTopDestinations($organization, $from, $to, min($limit, 100));
+        $data = $this->analyticsService->getTopDestinations($organization, $from, $to, $limit);
 
         return response()->json(['data' => $data]);
     }
