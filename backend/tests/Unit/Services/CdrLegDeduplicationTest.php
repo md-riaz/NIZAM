@@ -43,7 +43,7 @@ class CdrLegDeduplicationTest extends TestCase
     public function test_the_originated_leg_does_not_create_a_second_record(): void
     {
         $this->hangup('a-leg-uuid', 'inbound');
-        $this->hangup('b-leg-uuid', 'outbound');
+        $this->hangup('b-leg-uuid', 'outbound', extra: $this->originatedBy('a-leg-uuid'));
 
         $this->assertSame(1, CallDetailRecord::query()->count(), 'The b leg was recorded as a second call.');
         $this->assertDatabaseHas('call_detail_records', ['uuid' => 'a-leg-uuid']);
@@ -53,7 +53,7 @@ class CdrLegDeduplicationTest extends TestCase
     public function test_the_originated_leg_does_not_meter_the_call_twice(): void
     {
         $this->hangup('billed-a', 'inbound', billsec: 120);
-        $this->hangup('billed-b', 'outbound', billsec: 120);
+        $this->hangup('billed-b', 'outbound', billsec: 120, extra: $this->originatedBy('billed-a'));
 
         $records = UsageRecord::query()
             ->where('metric', UsageRecord::METRIC_CALL_MINUTES)
@@ -65,16 +65,62 @@ class CdrLegDeduplicationTest extends TestCase
 
     /**
      * A channel with no direction is still recorded.
-     *
-     * Suppressing anything that is not explicitly inbound would trade a duplicate
-     * — which the uuid key makes recoverable — for a missing record, which
-     * nothing can recover.
      */
     public function test_a_channel_without_a_direction_is_still_recorded(): void
     {
         $this->hangup('no-direction', null);
 
         $this->assertDatabaseHas('call_detail_records', ['uuid' => 'no-direction']);
+    }
+
+    /**
+     * A call placed through the originate API is still recorded and billed.
+     *
+     * It has no accepted inbound leg: FreeSWITCH dials out to reach the
+     * extension, so the first channel of the call is an outbound one. Deciding
+     * by direction skipped every leg, and the call vanished from both reporting
+     * and billing — the record could at least be restored from the spool later,
+     * the billable minutes could not.
+     */
+    public function test_an_api_originated_call_is_recorded_and_billed(): void
+    {
+        // Both legs outbound: the leg dialling the extension, then the leg it
+        // bridged to the carrier.
+        $this->hangup('originate-a', 'outbound', billsec: 60);
+        $this->hangup('originate-b', 'outbound', billsec: 60, extra: $this->originatedBy('originate-a'));
+
+        $this->assertSame(1, CallDetailRecord::query()->count(), 'An originated call produced the wrong number of records.');
+        $this->assertDatabaseHas('call_detail_records', ['uuid' => 'originate-a']);
+        $this->assertCount(1, UsageRecord::query()->where('metric', UsageRecord::METRIC_CALL_MINUTES)->get());
+    }
+
+    /**
+     * `originating_leg_uuid` alone is enough to recognise the far end.
+     *
+     * The two headers are set on the same occasions, but `Other-Type` reports
+     * whichever role the channel took most recently, so a channel that both
+     * originated and was originated can report the other one.
+     */
+    public function test_a_leg_naming_its_originator_is_not_recorded_again(): void
+    {
+        $this->hangup('bridge-a', 'inbound');
+        $this->hangup('bridge-b', 'outbound', extra: ['variable_originating_leg_uuid' => 'bridge-a']);
+
+        $this->assertDatabaseMissing('call_detail_records', ['uuid' => 'bridge-b']);
+    }
+
+    /**
+     * How FreeSWITCH marks a channel another channel brought into being.
+     *
+     * @return array<string, string>
+     */
+    private function originatedBy(string $originator): array
+    {
+        return [
+            'Other-Type' => 'originator',
+            'Other-Leg-Unique-ID' => $originator,
+            'variable_originating_leg_uuid' => $originator,
+        ];
     }
 
     /**

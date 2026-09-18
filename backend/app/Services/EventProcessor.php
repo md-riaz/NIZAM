@@ -957,21 +957,29 @@ class EventProcessor
     /**
      * Whether this channel is the one the call detail record should describe.
      *
-     * A channel FreeSWITCH accepted is inbound; one it originated to reach a
-     * destination is outbound and belongs to the same conversation. Only the
-     * first is billed and recorded. A channel with no direction at all is treated
-     * as primary: dropping it would lose a record, and the uuid key makes a
-     * duplicate recoverable where a miss is not.
+     * The question is not which way the channel faces — it is whether some other
+     * channel brought this one into being. mod_xml_cdr draws exactly that line
+     * for its `log-b-leg` setting, testing whether the channel has an originator
+     * caller profile rather than looking at its direction.
+     *
+     * Direction cannot answer it. A call placed through the originate API has no
+     * accepted inbound leg at all: FreeSWITCH creates the first channel by
+     * dialling out, so it is an outbound channel that is nonetheless the top of
+     * the call. Treating outbound as secondary dropped those calls entirely —
+     * no record and, worse, no billable minutes.
+     *
+     * Two headers carry the answer. `Other-Type: originator` says another channel
+     * originated this one, and `originating_leg_uuid` names it; FreeSWITCH sets
+     * neither when nothing originated the channel, which is the case both for a
+     * caller arriving from a carrier and for the first leg of an originate.
      */
     protected function isPrimaryLeg(array $event): bool
     {
-        $direction = strtolower(trim((string) (
-            $event['Call-Direction']
-            ?? $event['variable_direction']
-            ?? ''
-        )));
+        if (strtolower(trim((string) ($event['Other-Type'] ?? ''))) === 'originator') {
+            return false;
+        }
 
-        return $direction !== 'outbound';
+        return trim((string) ($event['variable_originating_leg_uuid'] ?? '')) === '';
     }
 
     /**
