@@ -81,14 +81,67 @@ class XmlCdrSpool
 
         $this->ensureQuarantineDirectories();
 
-        $destination = $this->quarantineDirectory($reason).'/'.basename($path);
+        $directory = $this->quarantineDirectory($reason);
+        $name = basename($path);
 
-        // A record quarantined twice must not overwrite the first copy, which
-        // would discard the evidence the quarantine exists to keep.
-        if (File::exists($destination)) {
-            $destination = $this->quarantineDirectory($reason).'/'.now()->format('YmdHis').'-'.basename($path);
+        // A record quarantined twice must not overwrite the first copy — that
+        // copy is the evidence the quarantine exists to keep. Each attempt uses
+        // a no-replace move, so a name already taken is reported rather than
+        // silently clobbered, and the next candidate name is tried.
+        foreach ($this->candidateNames($name) as $candidate) {
+            if ($this->moveWithoutReplacing($path, $directory.'/'.$candidate)) {
+                return $directory.'/'.$candidate;
+            }
         }
 
-        return @rename($path, $destination) ? $destination : null;
+        return null;
+    }
+
+    /**
+     * Move a file, refusing rather than replacing anything already there.
+     *
+     * `rename()` replaces its destination silently, and everything this class
+     * moves is either live work or the record of an earlier failure — both worth
+     * more than the convenience. `link()` fails when the destination exists, so
+     * linking and then unlinking the source gives a move that cannot clobber.
+     *
+     * `link()` also fails across filesystems, which is not a collision. When the
+     * destination is genuinely absent the fallback rename is safe: nothing is
+     * there to lose.
+     */
+    public function moveWithoutReplacing(string $from, string $to): bool
+    {
+        if (@link($from, $to)) {
+            @unlink($from);
+
+            return true;
+        }
+
+        clearstatcache(true, $to);
+
+        if (file_exists($to)) {
+            return false;
+        }
+
+        return @rename($from, $to);
+    }
+
+    /**
+     * Names to try for a quarantined record, in order of preference.
+     *
+     * A timestamp alone is not enough to separate two collisions: it has
+     * one-second resolution, and a burst of failures lands well inside that.
+     *
+     * @return array<int, string>
+     */
+    protected function candidateNames(string $name): array
+    {
+        $names = [$name, now()->format('YmdHis').'-'.$name];
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $names[] = now()->format('YmdHis').'-'.uniqid('', true).'-'.$name;
+        }
+
+        return $names;
     }
 }

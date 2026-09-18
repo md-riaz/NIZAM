@@ -126,6 +126,18 @@ class IngestXmlCdrCommand extends Command
                         inotify_rm_watch($watch, $watchDescriptor);
                         $watchDescriptor = inotify_add_watch($watch, $directory, $mask);
 
+                        // Without a watch there are no more events, and the
+                        // periodic sweep alone would leave records sitting for
+                        // minutes. Polling is slower than inotify but it cannot
+                        // stop working, so it is the right thing to fall back to.
+                        if ($watchDescriptor === false) {
+                            fclose($watch);
+                            $this->warn('Could not re-arm the XML CDR watch. Falling back to polling.');
+                            Log::warning('cdr:ingest-xml could not re-arm inotify watch', ['directory' => $directory]);
+
+                            return $this->runPollingLoop();
+                        }
+
                         break;
                     }
                 }

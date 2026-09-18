@@ -24,6 +24,7 @@ use App\Services\Call\ReachabilityDecision;
 use App\Services\Call\TraceWriter;
 use App\Services\Recording\AnsweredRecordingStarter;
 use App\Services\Recording\RecordingPolicyResolver;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -1027,13 +1028,7 @@ class EventProcessor
 
             $uuid = (string) ($meta['uuid'] ?? $data['call_uuid'] ?? '');
 
-            // Keyed on the call uuid rather than blindly inserted. The spooled
-            // XML record describes the same call, and either writer may arrive
-            // first; whichever does creates the row and the other completes it.
-            $cdr = CallDetailRecord::query()->firstOrNew(['uuid' => $uuid]);
-            $wasRecentlyCreated = ! $cdr->exists;
-
-            $cdr->fill([
+            $attributes = [
                 'organization_id' => $organizationId,
                 'caller_id_name' => $meta['caller_id_name'] ?? '',
                 'caller_id_number' => $meta['caller_id_number'] ?? '',
@@ -1055,16 +1050,64 @@ class EventProcessor
                 'packet_loss' => $qualityMetrics['packet_loss'],
                 'jitter' => $qualityMetrics['jitter'],
                 'latency' => $qualityMetrics['latency'],
-            ]);
+            ];
 
-            $cdr->save();
-
-            if ($wasRecentlyCreated) {
-                CallDetailRecordCreated::dispatch($cdr);
-            }
+            $this->mergeCdr($uuid, $attributes);
         } catch (\Exception $e) {
             Log::error('Failed to create CDR', ['error' => $e->getMessage(), 'uuid' => $data['call_uuid'] ?? 'unknown']);
         }
+    }
+
+    /**
+     * Write the record for a call, whether or not it already exists.
+     *
+     * The spooled XML copy describes the same call and either writer may arrive
+     * first, so this is keyed on the call uuid rather than blindly inserted.
+     *
+     * Looking the row up and inserting it are two steps, though, and both writers
+     * can look before either inserts. The loser's insert then fails on the unique
+     * key — and letting that surface as an error would discard everything that
+     * writer knew, which for the live path is the whole of the quality and SIP
+     * detail the spool never carries. So a conflict is treated as what it is: the
+     * row now exists, and this writer's fields still belong on it.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function mergeCdr(string $uuid, array $attributes): void
+    {
+        $cdr = CallDetailRecord::query()->firstOrNew(['uuid' => $uuid]);
+        $isNew = ! $cdr->exists;
+
+        $cdr->fill($attributes);
+
+        try {
+            $cdr->save();
+        } catch (QueryException $exception) {
+            if (! $isNew || ! $this->isUniqueViolation($exception)) {
+                throw $exception;
+            }
+
+            $cdr = CallDetailRecord::query()->where('uuid', $uuid)->firstOrFail();
+            $cdr->fill($attributes);
+            $cdr->save();
+
+            return;
+        }
+
+        if ($isNew) {
+            CallDetailRecordCreated::dispatch($cdr);
+        }
+    }
+
+    /**
+     * Whether the database refused a write because the row already exists.
+     *
+     * Postgres reports 23505 and SQLite 23000; both surface through the driver's
+     * SQLSTATE rather than anything portable above it.
+     */
+    protected function isUniqueViolation(QueryException $exception): bool
+    {
+        return in_array((string) $exception->getCode(), ['23505', '23000'], true);
     }
 
     protected function recordEvent(string $organizationId, string $eventType, array $data, ?CallSession $callSession = null): void

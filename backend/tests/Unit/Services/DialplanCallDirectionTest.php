@@ -57,10 +57,14 @@ class DialplanCallDirectionTest extends TestCase
     }
 
     /**
-     * The declaration has to precede the routing actions, or a route that
-     * transfers away leaves the channel without it.
+     * The declaration has to precede the routing actions.
+     *
+     * The route ends in a `transfer`, which ends dialplan execution on this
+     * extension — anything after it never runs. Asserting only that the
+     * declaration sits inside the condition would still pass if it drifted below
+     * the transfer, leaving the channel with no direction to report.
      */
-    public function test_the_declaration_comes_before_the_routing_actions(): void
+    public function test_the_declaration_comes_before_the_transfer(): void
     {
         $organization = Organization::factory()->create();
         $extension = Extension::factory()->create(['organization_id' => $organization->id]);
@@ -69,8 +73,17 @@ class DialplanCallDirectionTest extends TestCase
 
         $declaration = strpos($xml, 'call_direction=local');
         $condition = strpos($xml, '<condition');
+        $transfer = strpos($xml, 'application="transfer"');
 
         $this->assertNotFalse($declaration);
         $this->assertGreaterThan($condition, $declaration, 'The declaration is outside the matched condition.');
+
+        if ($transfer !== false) {
+            $this->assertLessThan(
+                $transfer,
+                $declaration,
+                'The declaration comes after the transfer, so it never runs.'
+            );
+        }
     }
 }

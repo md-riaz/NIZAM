@@ -339,6 +339,77 @@ class XmlCdrSpoolDurabilityTest extends TestCase
     }
 
     /**
+     * Quarantining the same name twice must not destroy the first copy.
+     *
+     * The collision name was a timestamp with one-second resolution, so a burst
+     * of failures chose the same destination — and `rename()` replaces silently,
+     * which here means destroying the evidence the quarantine exists to keep.
+     */
+    public function test_a_second_quarantine_of_the_same_name_keeps_both(): void
+    {
+        $spool = new XmlCdrSpool($this->directory);
+
+        foreach (['first', 'second', 'third'] as $contents) {
+            File::put($this->directory.'/a_clash.xml', $contents);
+            $this->assertNotNull($spool->quarantine($this->directory.'/a_clash.xml', XmlCdrSpool::REASON_XML));
+        }
+
+        $kept = collect(File::files($spool->quarantineDirectory(XmlCdrSpool::REASON_XML)))
+            ->map(fn ($file) => File::get($file->getPathname()))
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame(['first', 'second', 'third'], $kept, 'A quarantined record was overwritten by a later one.');
+    }
+
+    /**
+     * A no-replace move refuses rather than clobbering live work.
+     */
+    public function test_a_move_will_not_replace_an_existing_file(): void
+    {
+        $spool = new XmlCdrSpool($this->directory);
+
+        File::put($this->directory.'/source.xml', 'incoming');
+        File::put($this->directory.'/occupied.xml', 'already here');
+
+        $this->assertFalse($spool->moveWithoutReplacing($this->directory.'/source.xml', $this->directory.'/occupied.xml'));
+        $this->assertSame('already here', File::get($this->directory.'/occupied.xml'));
+        $this->assertTrue(File::exists($this->directory.'/source.xml'), 'The source was consumed by a refused move.');
+    }
+
+    /**
+     * Both writers can look before either inserts, and the loser must not lose
+     * what it knew.
+     *
+     * The live path carries RTP quality and SIP detail the spool never sees. An
+     * insert that lost the race used to surface as an error and be logged away,
+     * discarding all of it.
+     */
+    public function test_a_record_written_by_both_paths_keeps_both_contributions(): void
+    {
+        $organization = Organization::factory()->create(['domain' => 'merge.example.com']);
+
+        CallDetailRecord::factory()->create([
+            'organization_id' => $organization->id,
+            'uuid' => 'merged-call',
+            'mos_score' => 4.4,
+            'sip_user_agent' => 'Polycom',
+        ]);
+
+        $path = $this->spoolRecord('merged-call', 'merge.example.com');
+        $this->attemptOnce();
+
+        $cdr = CallDetailRecord::query()->where('uuid', 'merged-call')->firstOrFail();
+
+        $this->assertSame(1, CallDetailRecord::query()->where('uuid', 'merged-call')->count());
+        $this->assertEquals(4.4, (float) $cdr->mos_score, 'The live path\'s quality metrics were lost.');
+        $this->assertSame('Polycom', $cdr->sip_user_agent);
+        $this->assertSame(60, $cdr->billsec, 'The spooled record did not complete the row.');
+        $this->assertFalse(File::exists($path));
+    }
+
+    /**
      * Run one discovery-and-ingest pass the way the command does.
      */
     private function attemptOnce(): void

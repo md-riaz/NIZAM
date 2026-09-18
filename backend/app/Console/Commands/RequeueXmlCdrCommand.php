@@ -54,41 +54,51 @@ class RequeueXmlCdrCommand extends Command
             foreach (File::files($directory) as $file) {
                 $name = $file->getFilename();
 
-                if ($only !== [] && ! in_array($name, $only, true)) {
+                // The name on disk is not necessarily the name in the ledger. A
+                // quarantine whose preferred name was taken gets a prefixed one,
+                // and the ledger keeps the original. The stored quarantine path
+                // is the only thing that ties the two together, so it is what
+                // selects the row — with the ledger name accepted as a fallback
+                // for entries written before a collision was possible.
+                $record = ProcessedCdrFile::query()
+                    ->where('quarantine_path', $file->getPathname())
+                    ->first()
+                    ?? ProcessedCdrFile::query()->where('file_name', $name)->first();
+
+                if ($only !== [] && ! in_array($name, $only, true) && ! in_array((string) $record?->file_name, $only, true)) {
                     continue;
                 }
 
-                $destination = rtrim($spool->directory(), '/').'/'.$name;
-
-                // Never overwrite live work: a record already back in the spool
-                // is being dealt with, and clobbering it would lose whichever
-                // copy is further along.
-                if (File::exists($destination)) {
-                    $this->warn(sprintf('Skipped %s: already present in the spool.', $name));
-                    $skipped++;
-
-                    continue;
-                }
+                // Restore the record under the name the ledger knows it by, so
+                // discovery and the ledger agree about what is in the spool.
+                $spoolName = $record?->file_name ?: $name;
+                $destination = rtrim($spool->directory(), '/').'/'.$spoolName;
 
                 if ($dryRun) {
-                    $this->line(sprintf('Would requeue %s from %s.', $name, $reason));
+                    $this->line(sprintf('Would requeue %s from %s.', $spoolName, $reason));
                     $requeued++;
 
                     continue;
                 }
 
-                if (! @rename($file->getPathname(), $destination)) {
-                    $this->error(sprintf('Could not move %s back into the spool.', $name));
+                // The ledger entry goes first. If the move then fails, the record
+                // is still in quarantine with no entry — a later run picks it up
+                // and nothing has been lost. The other order can strand a live
+                // file under a terminal entry that discovery skips forever, and
+                // no ordering makes a filesystem move and a database write
+                // atomic, so the question is only which failure is survivable.
+                $record?->delete();
+
+                // A no-replace move: the destination may be live work, and
+                // `rename()` would replace it silently.
+                if (! $spool->moveWithoutReplacing($file->getPathname(), $destination)) {
+                    $this->warn(sprintf('Skipped %s: the spool already holds that record, or the move failed.', $spoolName));
                     $skipped++;
 
                     continue;
                 }
 
-                // The ledger entry goes with it. Leaving it would have discovery
-                // skip the file it just put back.
-                ProcessedCdrFile::query()->where('file_name', $name)->delete();
-
-                $this->line(sprintf('Requeued %s from %s.', $name, $reason));
+                $this->line(sprintf('Requeued %s from %s.', $spoolName, $reason));
                 $requeued++;
             }
         }

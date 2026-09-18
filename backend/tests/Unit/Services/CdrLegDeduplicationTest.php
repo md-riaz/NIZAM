@@ -179,6 +179,64 @@ class CdrLegDeduplicationTest extends TestCase
     }
 
     /**
+     * A writer that loses the insert race keeps what it knew.
+     *
+     * Looking the row up and inserting it are two steps, and the live path and
+     * the spool can both look before either inserts. The loser's insert then
+     * fails on the unique key. Letting that surface as an error discarded
+     * everything that writer carried — for the live path, the whole of the RTP
+     * quality and SIP detail the spooled copy never has.
+     *
+     * The competing row is inserted from inside the save here, which is the one
+     * way to land in that window on purpose.
+     */
+    public function test_a_writer_that_loses_the_insert_race_still_records_what_it_knew(): void
+    {
+        $organization = $this->organization;
+        $inserted = false;
+
+        CallDetailRecord::creating(function (CallDetailRecord $cdr) use ($organization, &$inserted) {
+            if ($inserted || $cdr->uuid !== 'raced') {
+                return;
+            }
+
+            $inserted = true;
+
+            // Another writer gets there first, between the lookup and the insert.
+            CallDetailRecord::query()->insert([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'organization_id' => $organization->id,
+                'uuid' => 'raced',
+                'caller_id_number' => '1001',
+                'destination_number' => '1002',
+                'direction' => 'inbound',
+                'start_stamp' => '2026-09-18 10:00:00',
+                'duration' => 0,
+                'billsec' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        try {
+            $this->hangup('raced', 'inbound', billsec: 99, extra: [
+                'variable_rtp_audio_in_mos' => '4.2',
+                'variable_sip_user_agent' => 'Yealink',
+            ]);
+        } finally {
+            CallDetailRecord::flushEventListeners();
+        }
+
+        $this->assertTrue($inserted, 'The race was never triggered, so this proves nothing.');
+
+        $rows = CallDetailRecord::query()->where('uuid', 'raced')->get();
+
+        $this->assertCount(1, $rows, 'The race produced more than one record.');
+        $this->assertSame(99, $rows->first()->billsec, 'The losing writer\'s fields were discarded.');
+        $this->assertSame('Yealink', $rows->first()->sip_user_agent);
+    }
+
+    /**
      * @param  array<string, string>  $extra
      */
     private function hangup(string $uuid, ?string $channelDirection, int $billsec = 60, array $extra = []): void
