@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Cdr\XmlCdrDiscoveryService;
 use App\Services\Cdr\XmlCdrIngestionService;
+use App\Services\Cdr\XmlCdrSpool;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +21,7 @@ class IngestXmlCdrCommand extends Command
     public function __construct(
         protected ?XmlCdrDiscoveryService $discovery = null,
         protected ?XmlCdrIngestionService $ingestion = null,
+        protected ?XmlCdrSpool $spool = null,
     ) {
         parent::__construct();
     }
@@ -43,10 +45,14 @@ class IngestXmlCdrCommand extends Command
         $watcher = (string) config('telephony.xml_cdr.watcher', 'inotify');
         $once = (bool) $this->option('once');
 
+        // Create the quarantine tree up front so a move never fails for want of
+        // a directory at the moment something has already gone wrong.
+        $this->spool()->ensureQuarantineDirectories();
+
         $this->registerSignalHandlers();
 
         if ($once) {
-            $processed = $this->processPendingFiles();
+            $processed = $this->drainPendingFiles();
             $this->info(sprintf('Processed %d XML CDR file(s).', $processed));
 
             return self::SUCCESS;
@@ -65,7 +71,10 @@ class IngestXmlCdrCommand extends Command
 
     protected function runInotifyLoop(string $directory): int
     {
-        $processed = $this->processPendingFiles();
+        // Sweep before watching. Anything written while this process was down
+        // produced an event nobody was listening for, and no later event will
+        // mention it — so the backlog is drained in full, not one batch of it.
+        $processed = $this->drainPendingFiles();
         $watch = inotify_init();
 
         if ($watch === false) {
@@ -75,7 +84,11 @@ class IngestXmlCdrCommand extends Command
         }
 
         stream_set_blocking($watch, false);
-        $mask = IN_CLOSE_WRITE | IN_MOVED_TO | IN_CREATE;
+
+        // IN_CREATE fires before the record has been written, so watching it
+        // guarantees reading files mid-write. Close and move are the two events
+        // that mean a complete file is present.
+        $mask = IN_CLOSE_WRITE | IN_MOVED_TO;
         $watchDescriptor = inotify_add_watch($watch, $directory, $mask);
 
         if ($watchDescriptor === false) {
@@ -84,6 +97,9 @@ class IngestXmlCdrCommand extends Command
 
             return $this->runPollingLoop();
         }
+
+        $lastSweep = time();
+        $sweepInterval = $this->sweepIntervalSeconds();
 
         while ($this->shouldRun) {
             $read = [$watch];
@@ -98,9 +114,34 @@ class IngestXmlCdrCommand extends Command
             if ($changed > 0) {
                 $events = inotify_read($watch) ?: [];
 
-                if ($events !== []) {
-                    $processed += $this->processPendingFiles();
+                foreach ($events as $event) {
+                    // The kernel drops events once its queue is full, and says so
+                    // exactly once. Without handling this, every record spooled
+                    // during a burst is invisible until some later event happens
+                    // to arrive — on a quiet system, potentially never.
+                    if (($event['mask'] ?? 0) & IN_Q_OVERFLOW) {
+                        $this->warn('inotify queue overflowed; sweeping the whole spool.');
+                        Log::warning('cdr:ingest-xml inotify queue overflow', ['directory' => $directory]);
+
+                        inotify_rm_watch($watch, $watchDescriptor);
+                        $watchDescriptor = inotify_add_watch($watch, $directory, $mask);
+
+                        break;
+                    }
                 }
+
+                if ($events !== []) {
+                    $processed += $this->drainPendingFiles();
+                    $lastSweep = time();
+                }
+            }
+
+            // Events are a hint, never the record of what is owed. A periodic
+            // sweep is what makes a missed, coalesced or dropped event cost
+            // minutes of latency instead of a lost call record.
+            if (time() - $lastSweep >= $sweepInterval) {
+                $processed += $this->drainPendingFiles();
+                $lastSweep = time();
             }
 
             if (function_exists('pcntl_signal_dispatch')) {
@@ -122,7 +163,7 @@ class IngestXmlCdrCommand extends Command
         $interval = $this->pollIntervalSeconds();
 
         while ($this->shouldRun) {
-            $processed += $this->processPendingFiles();
+            $processed += $this->drainPendingFiles();
 
             if (function_exists('pcntl_signal_dispatch')) {
                 pcntl_signal_dispatch();
@@ -140,30 +181,77 @@ class IngestXmlCdrCommand extends Command
         return self::SUCCESS;
     }
 
-    protected function processPendingFiles(): int
+    /**
+     * Work the spool down in batches until a pass finds nothing left.
+     *
+     * Discovery returns at most one batch so a single pass cannot block the loop
+     * for minutes after a backlog. Draining here keeps that bound while still
+     * clearing the whole spool before going back to waiting.
+     */
+    protected function drainPendingFiles(): int
     {
         $processed = 0;
 
+        while ($this->shouldRun) {
+            $batch = $this->processPendingFiles();
+
+            if ($batch === 0) {
+                break;
+            }
+
+            $processed += $batch;
+
+            if (function_exists('pcntl_signal_dispatch')) {
+                pcntl_signal_dispatch();
+            }
+        }
+
+        return $processed;
+    }
+
+    /**
+     * Attempt one batch, returning how many files were tried.
+     *
+     * The count is attempts rather than successes on purpose: the drain loop uses
+     * it to decide whether the spool still holds work, and a batch of records
+     * that all fail is still progress — each one burns an attempt and is
+     * quarantined once its budget runs out. Counting only successes would let a
+     * batch of poison records hide everything queued behind them.
+     */
+    protected function processPendingFiles(): int
+    {
+        $attempted = 0;
+        $ingested = 0;
+
         foreach ($this->discovery()->pendingFiles() as $path) {
+            $attempted++;
+
             try {
                 $record = $this->ingestion()->ingest($path);
-                $processed++;
+                $ingested++;
 
                 $this->line(sprintf('Ingested %s [%s].', $record->file_name, $record->call_uuid ?? 'unknown'));
             } catch (\Throwable $exception) {
-                $this->ingestion()->markFailed($path, $exception);
+                $record = $this->ingestion()->markFailed($path, $exception);
 
                 $message = sprintf('Failed to ingest %s: %s', basename($path), $exception->getMessage());
                 $this->error($message);
 
                 Log::error('cdr:ingest-xml failed', [
                     'path' => $path,
+                    'attempts' => $record->attempts,
+                    'status' => $record->status,
+                    'quarantine_path' => $record->quarantine_path,
                     'error' => $exception->getMessage(),
                 ]);
             }
         }
 
-        return $processed;
+        if ($attempted > 0) {
+            $this->line(sprintf('Batch complete: %d of %d ingested.', $ingested, $attempted));
+        }
+
+        return $attempted;
     }
 
     protected function discovery(): XmlCdrDiscoveryService
@@ -197,6 +285,19 @@ class IngestXmlCdrCommand extends Command
         }
 
         return max(1, (int) config('telephony.xml_cdr.poll_interval_seconds', 5));
+    }
+
+    /**
+     * How often the inotify loop sweeps regardless of events.
+     */
+    protected function sweepIntervalSeconds(): int
+    {
+        return max(1, (int) config('telephony.xml_cdr.sweep_interval_seconds', 300));
+    }
+
+    protected function spool(): XmlCdrSpool
+    {
+        return $this->spool ??= app(XmlCdrSpool::class);
     }
 
     protected function registerSignalHandlers(): void

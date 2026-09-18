@@ -1,8 +1,32 @@
 <configuration name="xml_cdr.conf" description="XML CDR Logger">
   <settings>
-    <param name="url" value="/var/log/freeswitch/xml_cdr"/>
+    <!--
+      No `url` param on purpose.
+
+      `url` is an HTTP endpoint mod_xml_cdr POSTs each record to. When it is set,
+      records only reach `err-log-dir` after the POST fails, and a value that is
+      not a URL fails every time. This deployment reads records off disk, so the
+      spool directory is the delivery mechanism and `log-dir` is what selects it.
+
+      If HTTP delivery is ever wanted, set `url`, keep `log-http-and-disk` true so
+      disk stays the durable copy, and add `retries`/`delay`.
+    -->
     <param name="log-dir" value="/var/log/freeswitch/xml_cdr"/>
+
+    <!-- Failed writes are quarantined here rather than mixed in with pending work. -->
     <param name="err-log-dir" value="/var/log/freeswitch/xml_cdr/errors"/>
+
+    <!--
+      One record per call, not one per channel.
+
+      A bridged call has two channels, so logging the b leg produces a second
+      record for the same conversation — double rows and double billable minutes.
+    -->
+    <param name="log-b-leg" value="false"/>
+
+    <!-- a-leg files are written as a_<uuid>.cdr.xml, which is what the ingester expects. -->
+    <param name="prefix-a-leg" value="true"/>
+
     <param name="encode" value="true"/>
   </settings>
 </configuration>

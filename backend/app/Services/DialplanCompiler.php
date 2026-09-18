@@ -359,6 +359,11 @@ class DialplanCompiler
     {
         $xml = '        <extension name="did-'.htmlspecialchars($did->number, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($did->number, '/').'$">'."\n";
+        // Declare what kind of call this is while the dialplan still knows. The
+        // channel's own direction says "inbound" for every a-leg regardless, so
+        // without this the call detail record cannot tell a carrier's call from
+        // one of this organization's own extensions dialling out.
+        $xml .= '            <action application="set" data="call_direction=inbound"/>'."\n";
         $xml .= $this->compileConcurrentCallLimit($organization);
 
         switch ($did->destination_type) {
@@ -1093,6 +1098,8 @@ class DialplanCompiler
     {
         $xml = '        <extension name="local-'.htmlspecialchars($extension->extension, ENT_QUOTES | ENT_XML1).'">'."\n";
         $xml .= '          <condition field="destination_number" expression="^'.preg_quote($extension->extension, '/').'$">'."\n";
+        // An extension dialling an extension stays inside the organization.
+        $xml .= '            <action application="set" data="call_direction=local"/>'."\n";
         $xml .= $this->compileConcurrentCallLimit($organization);
         $xml .= $this->compileExtensionRoutingActions($organization, $extension);
         $xml .= '          </condition>'."\n";

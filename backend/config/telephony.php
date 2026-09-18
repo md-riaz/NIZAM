@@ -189,6 +189,34 @@ return [
         'log_dir' => env('FREESWITCH_XML_CDR_LOG_DIR', env('FREESWITCH_XML_CDR_DIRECTORY', '/var/log/freeswitch/xml_cdr')),
         'watcher' => env('FREESWITCH_XML_CDR_WATCHER', 'inotify'),
         'poll_interval_seconds' => (int) env('FREESWITCH_XML_CDR_POLL_INTERVAL', 5),
+
+        // Sweep the whole spool this often even while inotify is watching.
+        // Filesystem events are a latency optimisation, not a guarantee: they
+        // coalesce, and the kernel drops them once its queue fills.
+        'sweep_interval_seconds' => (int) env('FREESWITCH_XML_CDR_SWEEP_INTERVAL', 300),
+
+        // Files read per pass. Bounds how long one pass can block the loop when
+        // a backlog has built up behind an outage.
+        'batch_limit' => (int) env('FREESWITCH_XML_CDR_BATCH_LIMIT', 100),
+
+        // Tries before a record is moved to the quarantine tree. A failure is
+        // usually transient — an unreachable database, an organization not yet
+        // created — and FreeSWITCH never sends a record twice.
+        'max_attempts' => (int) env('FREESWITCH_XML_CDR_MAX_ATTEMPTS', 3),
+
+        // How long a failed record waits before it is tried again. Retrying
+        // within the same pass is not a retry — whatever was wrong has had no
+        // time to change — and it would keep a failing record in every batch.
+        'retry_delay_seconds' => (int) env('FREESWITCH_XML_CDR_RETRY_DELAY', 60),
+
+        // Anything at or above this is not a call detail record; it is
+        // quarantined unread rather than risked against memory.
+        'max_bytes' => (int) env('FREESWITCH_XML_CDR_MAX_BYTES', 3145728),
+
+        // Pause between the two size reads used to tell a finished record from
+        // one still being written.
+        'stability_microseconds' => (int) env('FREESWITCH_XML_CDR_STABILITY_US', 10000),
+
         'cleanup_on_success' => env('FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS', true),
         'cleanup_after_ingest' => env('FREESWITCH_XML_CDR_CLEANUP_AFTER_INGEST', env('FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS', true)),
     ],

@@ -163,8 +163,17 @@ class EventProcessor
 
         $data = $this->buildEventPayload($organizationId, CallEventLog::EVENT_CALL_HANGUP, $callData);
 
-        $this->createCdr($organizationId, $data, $event);
-        $this->recordCallMinutes($organizationId, $callData['billsec']);
+        // One record per call, not one per channel.
+        //
+        // CHANNEL_HANGUP_COMPLETE fires for every channel, so a bridged call
+        // raises it twice with two distinct Unique-IDs. Recording both wrote two
+        // rows for one conversation and metered its minutes twice. The b leg is
+        // the channel FreeSWITCH originated, which is exactly the distinction
+        // mod_xml_cdr's `log-b-leg` setting makes on the file side.
+        if ($this->isPrimaryLeg($event)) {
+            $this->createCdr($organizationId, $data, $event);
+            $this->recordCallMinutes($organizationId, $callData['billsec']);
+        }
 
         CallEvent::dispatch($organizationId, CallEventLog::EVENT_CALL_HANGUP, $data);
         $this->webhookDispatcher->dispatch($organizationId, CallEventLog::EVENT_CALL_HANGUP, $data);
@@ -945,20 +954,79 @@ class EventProcessor
         };
     }
 
+    /**
+     * Whether this channel is the one the call detail record should describe.
+     *
+     * A channel FreeSWITCH accepted is inbound; one it originated to reach a
+     * destination is outbound and belongs to the same conversation. Only the
+     * first is billed and recorded. A channel with no direction at all is treated
+     * as primary: dropping it would lose a record, and the uuid key makes a
+     * duplicate recoverable where a miss is not.
+     */
+    protected function isPrimaryLeg(array $event): bool
+    {
+        $direction = strtolower(trim((string) (
+            $event['Call-Direction']
+            ?? $event['variable_direction']
+            ?? ''
+        )));
+
+        return $direction !== 'outbound';
+    }
+
+    /**
+     * What kind of call this was, from the dialplan's own declaration.
+     *
+     * `Call-Direction` describes the channel, not the call: every a-leg is
+     * "inbound" to FreeSWITCH whether the caller was a carrier or one of this
+     * organization's own extensions. The dialplan sets `call_direction` to say
+     * which it actually was, and that is what the record should carry.
+     *
+     * Dialplans compiled before that was set carry no declaration, so the caller's
+     * SIP domain decides: a request from outside the organization's own domain
+     * came in from a carrier. It is the same comparison FusionPBX falls back to.
+     */
+    protected function resolveCallDirection(array $event, string $channelDirection): string
+    {
+        $declared = strtolower(trim((string) ($event['variable_call_direction'] ?? '')));
+
+        if (in_array($declared, ['inbound', 'outbound', 'local'], true)) {
+            return $declared;
+        }
+
+        $domain = trim((string) ($event['variable_domain_name'] ?? ''));
+        $fromDomain = trim((string) ($event['variable_sip_from_domain'] ?? ''));
+
+        if ($domain !== '' && $fromDomain !== '') {
+            // A request from outside this organization's own domain came in from
+            // a carrier. One from inside it did not, whatever the channel says.
+            return $fromDomain === $domain ? 'local' : 'inbound';
+        }
+
+        return in_array($channelDirection, ['inbound', 'outbound', 'local'], true)
+            ? $channelDirection
+            : 'local';
+    }
+
     protected function createCdr(string $organizationId, array $data, array $event): void
     {
         try {
             $meta = $data['metadata'] ?? $data;
-            $direction = in_array($meta['direction'] ?? '', ['inbound', 'outbound', 'local'])
-                ? $meta['direction']
-                : 'local';
+            $direction = $this->resolveCallDirection($event, (string) ($meta['direction'] ?? ''));
 
             $qualityMetrics = $this->extractQualityMetrics($event);
             $callType = $this->classifyCallType($event, $direction);
 
-            $cdr = CallDetailRecord::create([
+            $uuid = (string) ($meta['uuid'] ?? $data['call_uuid'] ?? '');
+
+            // Keyed on the call uuid rather than blindly inserted. The spooled
+            // XML record describes the same call, and either writer may arrive
+            // first; whichever does creates the row and the other completes it.
+            $cdr = CallDetailRecord::query()->firstOrNew(['uuid' => $uuid]);
+            $wasRecentlyCreated = ! $cdr->exists;
+
+            $cdr->fill([
                 'organization_id' => $organizationId,
-                'uuid' => $meta['uuid'] ?? $data['call_uuid'] ?? '',
                 'caller_id_name' => $meta['caller_id_name'] ?? '',
                 'caller_id_number' => $meta['caller_id_number'] ?? '',
                 'destination_number' => $meta['destination_number'] ?? '',
@@ -981,7 +1049,11 @@ class EventProcessor
                 'latency' => $qualityMetrics['latency'],
             ]);
 
-            CallDetailRecordCreated::dispatch($cdr);
+            $cdr->save();
+
+            if ($wasRecentlyCreated) {
+                CallDetailRecordCreated::dispatch($cdr);
+            }
         } catch (\Exception $e) {
             Log::error('Failed to create CDR', ['error' => $e->getMessage(), 'uuid' => $data['call_uuid'] ?? 'unknown']);
         }
