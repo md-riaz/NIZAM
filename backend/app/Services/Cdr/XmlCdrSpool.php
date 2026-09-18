@@ -91,35 +91,4 @@ class XmlCdrSpool
 
         return @rename($path, $destination) ? $destination : null;
     }
-
-    /**
-     * Whether the file is still being written.
-     *
-     * mod_xml_cdr creates the file and then writes it, so a reader that arrives
-     * between the two gets nothing or half a record. Comparing the size across a
-     * short pause costs a stat and removes the whole class of partial read — the
-     * same guard FS PBX's daemon uses instead of trusting filesystem events.
-     */
-    public function isSettled(string $path, int $microseconds = 10000): bool
-    {
-        $first = $this->currentSize($path);
-
-        if ($first === false) {
-            return false;
-        }
-
-        usleep(max(0, $microseconds));
-
-        return $this->currentSize($path) === $first;
-    }
-
-    /**
-     * The file's size right now, ignoring anything the stat cache remembers.
-     */
-    protected function currentSize(string $path): int|false
-    {
-        clearstatcache(true, $path);
-
-        return @filesize($path);
-    }
 }

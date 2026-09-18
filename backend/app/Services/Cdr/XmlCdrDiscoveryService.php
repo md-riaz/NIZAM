@@ -16,13 +16,19 @@ use SplFileInfo;
  *   half-flushed file is never parsed as a whole one.
  * - A record that is empty or implausibly large is quarantined without being
  *   read, so one malformed write cannot exhaust memory on every pass.
- * - A record that failed before is retried up to a bounded number of attempts,
- *   then quarantined. A transient database outage must not cost a call record,
- *   and a genuinely bad record must not be retried forever.
+ * - A record that failed before is retried, spaced out, up to a bounded number
+ *   of attempts and then quarantined. A transient database outage must not cost
+ *   a call record, and a bad record must not be retried forever.
  *
- * The batch limit bounds a single pass. After a backlog — the watcher was down,
- * or an inotify queue overflowed — the directory can hold tens of thousands of
- * files, and reading all of them in one pass would block the loop for minutes.
+ * The pass is built to stay cheap as the spool grows, because it runs on every
+ * filesystem event:
+ *
+ * - The batch is chosen from file metadata alone. Nothing is read and nothing is
+ *   hashed — the ledger is keyed on the file name, which mod_xml_cdr has already
+ *   made unique per call.
+ * - The ledger is consulted once for the whole batch rather than once per file.
+ * - The settling pause is taken once for the whole batch rather than once per
+ *   file, so a batch of a hundred costs one pause instead of a hundred.
  */
 class XmlCdrDiscoveryService
 {
@@ -45,109 +51,154 @@ class XmlCdrDiscoveryService
             return [];
         }
 
+        $candidates = $this->sizedCandidates();
+
+        if ($candidates === []) {
+            return [];
+        }
+
+        $settled = $this->rejectUnsettled($candidates);
+
+        if ($settled === []) {
+            return [];
+        }
+
+        return $this->rejectSettledLedgerEntries($settled);
+    }
+
+    /**
+     * Spool files worth considering, with the size each one had when scanned.
+     *
+     * Empty and implausibly large records are moved aside here rather than
+     * offered: neither becomes valid on a later pass, and reading one costs
+     * either a parse failure or a great deal of memory.
+     *
+     * The scan is deliberately non-recursive. `failed/` holds records already
+     * given up on, and descending into it would undo the quarantine.
+     *
+     * @return array<string, int> path => size
+     */
+    protected function sizedCandidates(): array
+    {
         $batchLimit = $this->batchLimit();
         $maxBytes = $this->maxBytes();
-        $pending = [];
+        $sized = [];
 
-        foreach ($this->candidates() as $file) {
-            if (count($pending) >= $batchLimit) {
+        $files = collect(File::files($this->directory))
+            ->filter(fn (SplFileInfo $file) => str_ends_with(strtolower($file->getFilename()), '.xml'))
+            ->sortBy(fn (SplFileInfo $file) => $file->getFilename());
+
+        foreach ($files as $file) {
+            if (count($sized) >= $batchLimit) {
                 break;
             }
 
-            $path = $file->getPathname();
             $size = $file->getSize();
 
-            // Judge size before reading: a zero-byte or oversized record is not
-            // going to become valid on a later pass.
             if ($size === 0 || $size >= $maxBytes) {
-                $this->spool->quarantine($path, XmlCdrSpool::REASON_SIZE);
+                $this->spool->quarantine($file->getPathname(), XmlCdrSpool::REASON_SIZE);
 
                 continue;
             }
 
-            // mod_xml_cdr creates the file before writing it, so a reader can
-            // arrive mid-write. Leave it for the next pass rather than read it.
-            if (! $this->spool->isSettled($path, $this->stabilityMicroseconds())) {
+            $sized[$file->getPathname()] = $size;
+        }
+
+        return $sized;
+    }
+
+    /**
+     * Drop the records whose size moved while the batch was being examined.
+     *
+     * mod_xml_cdr creates the file and then writes it, so a reader can arrive
+     * between the two. One pause covers the whole batch: the sizes were taken
+     * before it and are compared after, which is the same guarantee as pausing
+     * per file at a hundredth of the cost.
+     *
+     * @param  array<string, int>  $candidates  path => size
+     * @return array<int, string>
+     */
+    protected function rejectUnsettled(array $candidates): array
+    {
+        $this->pause();
+
+        $settled = [];
+
+        foreach ($candidates as $path => $size) {
+            clearstatcache(true, $path);
+
+            if (@filesize($path) === $size) {
+                $settled[] = $path;
+            }
+        }
+
+        return $settled;
+    }
+
+    /**
+     * Wait long enough for an in-progress write to show up as a size change.
+     */
+    protected function pause(): void
+    {
+        usleep($this->stabilityMicroseconds());
+    }
+
+    /**
+     * Drop the records the ledger says are finished with, or not yet due.
+     *
+     * One query covers the batch. Quarantining here catches a record left over
+     * its attempt budget, which the ingester normally handles as it exhausts it.
+     *
+     * @param  array<int, string>  $paths
+     * @return array<int, string>
+     */
+    protected function rejectSettledLedgerEntries(array $paths): array
+    {
+        $ledger = ProcessedCdrFile::query()
+            ->whereIn('file_name', array_map('basename', $paths))
+            ->get()
+            ->keyBy('file_name');
+
+        $maxAttempts = $this->maxAttempts();
+        $retryDelay = $this->retryDelaySeconds();
+        $pending = [];
+
+        foreach ($paths as $path) {
+            $record = $ledger->get(basename($path));
+
+            if (! $record) {
+                $pending[] = $path;
+
                 continue;
             }
 
-            if (! $this->shouldAttempt($path)) {
+            if (in_array($record->status, ProcessedCdrFile::settledStatuses(), true)) {
                 continue;
             }
 
-            $pending[] = $path;
+            if ($record->attempts >= $maxAttempts) {
+                $record->forceFill([
+                    'status' => ProcessedCdrFile::STATUS_QUARANTINED,
+                    'quarantine_reason' => XmlCdrSpool::REASON_SQL,
+                    'quarantine_path' => $this->spool->quarantine($path, XmlCdrSpool::REASON_SQL),
+                ])->save();
+
+                continue;
+            }
+
+            // Space the retries out. Attempting three times inside one pass is
+            // not a retry — whatever failed has had no time to change — and it
+            // would keep a failing record in every batch, hiding the work queued
+            // behind it.
+            $due = ! $record->last_attempted_at
+                || ! $record->last_attempted_at->addSeconds($retryDelay)->isFuture();
+
+            if ($due) {
+                $pending[] = $path;
+            }
         }
 
         return $pending;
-    }
-
-    /**
-     * Spool files in a stable order, ignoring the quarantine tree.
-     *
-     * The scan is deliberately non-recursive: `failed/` holds records this
-     * service has already given up on, and walking back into it would undo the
-     * quarantine.
-     *
-     * @return array<int, SplFileInfo>
-     */
-    protected function candidates(): array
-    {
-        $files = collect(File::files($this->directory))
-            ->filter(fn (SplFileInfo $file) => str_ends_with(strtolower($file->getFilename()), '.xml'))
-            ->sortBy(fn (SplFileInfo $file) => $file->getFilename())
-            ->values()
-            ->all();
-
-        return $files;
-    }
-
-    /**
-     * Whether this pass should read the file, given what the ledger remembers.
-     *
-     * A record already committed is skipped. A record that failed is retried
-     * until the attempt budget runs out, and is then moved out of the spool so it
-     * stops costing a stat and a query on every later pass.
-     */
-    protected function shouldAttempt(string $path): bool
-    {
-        $record = ProcessedCdrFile::query()
-            ->where('dedupe_key', ProcessedCdrFile::dedupeKeyFor($path, $this->checksumFor($path)))
-            ->first();
-
-        if (! $record) {
-            return true;
-        }
-
-        if (in_array($record->status, [ProcessedCdrFile::STATUS_PROCESSED, ProcessedCdrFile::STATUS_QUARANTINED], true)) {
-            return false;
-        }
-
-        if ($record->attempts >= $this->maxAttempts()) {
-            $destination = $this->spool->quarantine($path, XmlCdrSpool::REASON_SQL);
-
-            $record->forceFill([
-                'status' => ProcessedCdrFile::STATUS_QUARANTINED,
-                'quarantine_reason' => XmlCdrSpool::REASON_SQL,
-                'quarantine_path' => $destination,
-            ])->save();
-
-            return false;
-        }
-
-        // Space the retries out. Attempting three times inside one pass is not a
-        // retry — the database is still down, the organization still does not
-        // exist — it just burns the budget in milliseconds. Waiting also keeps a
-        // failing record from occupying a slot in every batch, which would hide
-        // everything queued behind it.
-        return ! $record->last_attempted_at
-            || ! $record->last_attempted_at->addSeconds($this->retryDelaySeconds())->isFuture();
-    }
-
-    protected function checksumFor(string $path): ?string
-    {
-        $checksum = @hash_file('sha256', $path);
-
-        return $checksum === false ? null : $checksum;
     }
 
     protected function batchLimit(): int

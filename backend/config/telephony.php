@@ -184,7 +184,7 @@ return [
     ],
 
     'xml_cdr' => [
-        'enabled' => env('FREESWITCH_XML_CDR_ENABLED', false),
+        'enabled' => env('FREESWITCH_XML_CDR_ENABLED', true),
         'directory' => env('FREESWITCH_XML_CDR_DIRECTORY', '/var/log/freeswitch/xml_cdr'),
         'log_dir' => env('FREESWITCH_XML_CDR_LOG_DIR', env('FREESWITCH_XML_CDR_DIRECTORY', '/var/log/freeswitch/xml_cdr')),
         'watcher' => env('FREESWITCH_XML_CDR_WATCHER', 'inotify'),

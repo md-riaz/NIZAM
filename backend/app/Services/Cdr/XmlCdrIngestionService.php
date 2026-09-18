@@ -21,7 +21,6 @@ class XmlCdrIngestionService
 
     public function ingest(string $path): ProcessedCdrFile
     {
-        $checksum = $this->checksumFor($path);
         $parsed = $this->parser->parseFile($path);
         $organization = $this->resolveOrganization($parsed);
 
@@ -76,12 +75,10 @@ class XmlCdrIngestionService
 
         $processed = ProcessedCdrFile::query()->updateOrCreate(
             [
-                'dedupe_key' => ProcessedCdrFile::dedupeKeyFor($path, $checksum),
+                'file_name' => basename($path),
             ],
             [
                 'file_path' => $path,
-                'file_name' => basename($path),
-                'checksum' => $checksum,
                 'status' => ProcessedCdrFile::STATUS_PROCESSED,
                 'call_uuid' => $cdr->uuid,
                 'error_message' => null,
@@ -113,10 +110,7 @@ class XmlCdrIngestionService
      */
     public function markFailed(string $path, \Throwable $exception): ProcessedCdrFile
     {
-        $checksum = $this->checksumFor($path);
-        $dedupeKey = ProcessedCdrFile::dedupeKeyFor($path, $checksum);
-
-        $record = ProcessedCdrFile::query()->firstOrNew(['dedupe_key' => $dedupeKey]);
+        $record = ProcessedCdrFile::query()->firstOrNew(['file_name' => basename($path)]);
         $attempts = (int) ($record->attempts ?? 0) + 1;
         $exhausted = $attempts >= $this->maxAttempts();
 
@@ -128,8 +122,6 @@ class XmlCdrIngestionService
 
         $record->fill([
             'file_path' => $path,
-            'file_name' => basename($path),
-            'checksum' => $checksum,
             'status' => $exhausted ? ProcessedCdrFile::STATUS_QUARANTINED : ProcessedCdrFile::STATUS_FAILED,
             'attempts' => $attempts,
             'last_attempted_at' => now(),
@@ -210,16 +202,5 @@ class XmlCdrIngestionService
             'telephony.xml_cdr.cleanup_after_ingest',
             config('telephony.xml_cdr.cleanup_on_success', true)
         );
-    }
-
-    protected function checksumFor(string $path): ?string
-    {
-        if (! File::exists($path)) {
-            return null;
-        }
-
-        $checksum = @hash_file('sha256', $path);
-
-        return $checksum === false ? null : $checksum;
     }
 }

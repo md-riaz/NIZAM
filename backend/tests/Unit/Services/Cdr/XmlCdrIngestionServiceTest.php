@@ -4,8 +4,8 @@ namespace Tests\Unit\Services\Cdr;
 
 use App\Events\CallDetailRecordCreated;
 use App\Models\CallDetailRecord;
-use App\Models\ProcessedCdrFile;
 use App\Models\Organization;
+use App\Models\ProcessedCdrFile;
 use App\Services\Cdr\XmlCdrIngestionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;

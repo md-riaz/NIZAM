@@ -8,7 +8,9 @@ use App\Models\ProcessedCdrFile;
 use App\Services\Cdr\XmlCdrDiscoveryService;
 use App\Services\Cdr\XmlCdrIngestionService;
 use App\Services\Cdr\XmlCdrSpool;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
@@ -116,50 +118,29 @@ class XmlCdrSpoolDurabilityTest extends TestCase
      * A record still being written must not be read as a finished one.
      *
      * mod_xml_cdr creates the file and then writes it. The watcher used to ask
-     * inotify for IN_CREATE, which fires between those two steps.
+     * inotify for IN_CREATE, which fires between those two steps. The batch's
+     * sizes are taken before the settling pause and compared after it, so a
+     * record that grew across the pause is held back for the next pass.
      */
     public function test_a_record_that_is_still_growing_is_left_for_the_next_pass(): void
     {
-        $path = $this->directory.'/growing.xml';
-        File::put($path, '<cdr><variables><uuid>partial');
-
-        // Stands in for a writer that appends between the two size reads, which
-        // is the window a real reader has to survive.
-        $growing = new class($this->directory) extends XmlCdrSpool
-        {
-            private int $reads = 0;
-
-            protected function currentSize(string $path): int|false
-            {
-                return 100 + (++$this->reads * 10);
-            }
-        };
-
-        $this->assertFalse($growing->isSettled($path, 1), 'A file that changed size was treated as settled.');
-        $this->assertTrue(
-            (new XmlCdrSpool($this->directory))->isSettled($path, 1),
-            'A file that stopped changing was not treated as settled.'
-        );
-    }
-
-    /**
-     * And discovery must not offer it for reading while it is still growing.
-     */
-    public function test_a_growing_record_is_not_offered_for_reading(): void
-    {
         $this->spoolRecord('still-writing', 'writing.example.com');
 
-        $unsettled = new class($this->directory) extends XmlCdrSpool
+        // Stands in for mod_xml_cdr continuing to write during the pause.
+        $discovery = new class($this->directory) extends XmlCdrDiscoveryService
         {
-            public function isSettled(string $path, int $microseconds = 10000): bool
+            protected function pause(): void
             {
-                return false;
+                foreach (File::files($this->directory) as $file) {
+                    File::append($file->getPathname(), '<!-- still writing -->');
+                }
             }
         };
 
-        $discovery = new XmlCdrDiscoveryService($this->directory, $unsettled);
-
         $this->assertEmpty($discovery->pendingFiles(), 'A record still being written was offered for reading.');
+
+        // And once the writer stops, the very next pass picks it up.
+        $this->assertCount(1, app(XmlCdrDiscoveryService::class)->pendingFiles());
     }
 
     /**
@@ -209,6 +190,31 @@ class XmlCdrSpoolDurabilityTest extends TestCase
         }
 
         $this->assertCount(3, app(XmlCdrDiscoveryService::class)->pendingFiles());
+    }
+
+    /**
+     * And it costs the same one query however many records are in the batch.
+     *
+     * This runs on every filesystem event, so asking the ledger once per file
+     * would make a busy spool quadratic in database round trips.
+     */
+    public function test_a_pass_consults_the_ledger_once_for_the_whole_batch(): void
+    {
+        foreach (range(1, 20) as $index) {
+            $this->spoolRecord('counted-'.$index, 'counted.example.com');
+        }
+
+        $queries = 0;
+        DB::listen(function (QueryExecuted $query) use (&$queries) {
+            if (str_contains($query->sql, 'processed_cdr_files')) {
+                $queries++;
+            }
+        });
+
+        $pending = app(XmlCdrDiscoveryService::class)->pendingFiles();
+
+        $this->assertCount(20, $pending);
+        $this->assertSame(1, $queries, 'The ledger was consulted per file instead of per batch.');
     }
 
     /**

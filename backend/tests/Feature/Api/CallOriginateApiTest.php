@@ -26,7 +26,7 @@ class CallOriginateApiTest extends TestCase
      *
      * The UUID is generated fresh for every call so it cannot be part of a
      * literal expectation. Matching the rest of the string exactly still pins
-     * the caller ID, endpoint, and bridge target.
+     * the declared direction, caller ID, endpoint, and bridge target.
      */
     private function matchesOriginate(string $command, string $expectedTail): bool
     {
@@ -67,7 +67,7 @@ class CallOriginateApiTest extends TestCase
         $esl->shouldReceive('connect')->once()->andReturnTrue();
         $esl->shouldReceive('bgapi')->once()->withArgs(fn (string $command): bool => $this->matchesOriginate(
             $command,
-            'origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test 2001 XML acme.test'
+            'call_direction=outbound,origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test 2001 XML acme.test'
         ))->andReturn('+OK Job-UUID: test');
         $esl->shouldReceive('disconnect')->once();
 
@@ -110,7 +110,7 @@ class CallOriginateApiTest extends TestCase
         $esl->shouldReceive('bgapi')->once()->withArgs(fn (string $command): bool => $this->matchesOriginate(
             $command,
             sprintf(
-                'origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test &bridge(sofia/gateway/v_%s/+15551234567)',
+                'call_direction=outbound,origination_caller_id_name=John Doe,origination_caller_id_number=+15551234567}user/1001@acme.test &bridge(sofia/gateway/v_%s/+15551234567)',
                 $gateway->id,
             )
         ))->andReturn('+OK Job-UUID: test');
