@@ -2,15 +2,18 @@
 
 namespace Tests\Feature\Cdr;
 
+use App\Events\CallDetailRecordCreated;
 use App\Models\CallDetailRecord;
 use App\Models\Organization;
 use App\Models\ProcessedCdrFile;
 use App\Services\Cdr\XmlCdrDiscoveryService;
 use App\Services\Cdr\XmlCdrIngestionService;
 use App\Services\Cdr\XmlCdrSpool;
+use App\Services\EventProcessor;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
@@ -406,6 +409,96 @@ class XmlCdrSpoolDurabilityTest extends TestCase
         $this->assertEquals(4.4, (float) $cdr->mos_score, 'The live path\'s quality metrics were lost.');
         $this->assertSame('Polycom', $cdr->sip_user_agent);
         $this->assertSame(60, $cdr->billsec, 'The spooled record did not complete the row.');
+        $this->assertFalse(File::exists($path));
+    }
+
+    /**
+     * The live path must not erase what the spool already knew.
+     *
+     * Both writers reach the same row and each has fields the other does not.
+     * An absent variable on one side means it has nothing to say about that
+     * field, not that the field should be emptied — and for the recording path
+     * that distinction is the difference between an archived recording and an
+     * orphaned file, because the archiver finds the audio by that path.
+     */
+    public function test_the_live_path_does_not_erase_a_recording_path_the_spool_stored(): void
+    {
+        $organization = Organization::factory()->create([
+            'domain' => 'keep.example.com',
+            'is_active' => true,
+            'status' => Organization::STATUS_ACTIVE,
+        ]);
+
+        CallDetailRecord::factory()->create([
+            'organization_id' => $organization->id,
+            'uuid' => 'keep-the-path',
+            'recording_path' => '/recordings/keep-the-path.wav',
+            'sip_user_agent' => 'Polycom',
+        ]);
+
+        // A hangup event that carries no recording variables at all.
+        (new EventProcessor(
+            $this->createMock(\App\Services\WebhookDispatcher::class),
+            new \App\Services\UsageMeteringService,
+        ))->process([
+            'Event-Name' => 'CHANNEL_HANGUP_COMPLETE',
+            'variable_domain_name' => 'keep.example.com',
+            'Unique-ID' => 'keep-the-path',
+            'Caller-Caller-ID-Number' => '1001',
+            'Caller-Destination-Number' => '1002',
+            'Hangup-Cause' => 'NORMAL_CLEARING',
+            'variable_billsec' => '42',
+            'Call-Direction' => 'inbound',
+        ]);
+
+        $cdr = CallDetailRecord::query()->where('uuid', 'keep-the-path')->firstOrFail();
+
+        $this->assertSame('/recordings/keep-the-path.wav', $cdr->recording_path, 'The recording path was erased.');
+        $this->assertSame('Polycom', $cdr->sip_user_agent);
+        $this->assertSame(42, $cdr->billsec, 'The live path did not update what it did know.');
+    }
+
+    /**
+     * A record retried after a crash still announces itself.
+     *
+     * The event is what queues enrichment and archival. It used to fire only
+     * when the row was new, so a record that crashed between being saved and
+     * being published was, on retry, marked processed with nothing queued for
+     * it — no enrichment, and no archived recording.
+     */
+    public function test_a_retried_record_still_announces_itself(): void
+    {
+        Organization::factory()->create(['domain' => 'announce.example.com']);
+        $path = $this->spoolRecord('announce-me', 'announce.example.com');
+
+        // First attempt: the record is stored, then publication fails. The
+        // listener has to be real for the failure to propagate — a faked
+        // dispatcher records the event instead of delivering it.
+        $ingestion = app(XmlCdrIngestionService::class);
+
+        Event::listen(CallDetailRecordCreated::class, function () {
+            throw new \RuntimeException('queue unavailable');
+        });
+
+        try {
+            $ingestion->ingest($path);
+            $this->fail('Publication was expected to fail on the first attempt.');
+        } catch (\Throwable $exception) {
+            $ingestion->markFailed($path, $exception);
+        }
+
+        Event::forget(CallDetailRecordCreated::class);
+
+        $this->assertDatabaseHas('call_detail_records', ['uuid' => 'announce-me']);
+        $this->assertTrue(File::exists($path), 'The record was acknowledged before it was announced.');
+
+        // Second attempt: the row already exists, so the old condition would
+        // have skipped the announcement entirely.
+        Event::fake([CallDetailRecordCreated::class]);
+
+        $ingestion->ingest($path);
+
+        Event::assertDispatched(CallDetailRecordCreated::class);
         $this->assertFalse(File::exists($path));
     }
 

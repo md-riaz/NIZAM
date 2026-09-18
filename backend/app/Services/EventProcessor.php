@@ -1041,9 +1041,6 @@ class EventProcessor
                 'billsec' => $meta['billsec'] ?? 0,
                 'hangup_cause' => $meta['hangup_cause'] ?? 'NORMAL_CLEARING',
                 'direction' => $direction,
-                'recording_path' => $event['variable_record_file_path'] ?? null,
-                'sip_user_agent' => $event['variable_sip_user_agent'] ?? null,
-                'remote_media_ip' => $event['variable_remote_media_ip'] ?? null,
                 'call_type' => $callType,
                 'quality_score' => $qualityMetrics['quality_score'],
                 'mos_score' => $qualityMetrics['mos_score'],
@@ -1051,6 +1048,24 @@ class EventProcessor
                 'jitter' => $qualityMetrics['jitter'],
                 'latency' => $qualityMetrics['latency'],
             ];
+
+            // The spooled copy of this call may have arrived first and carried
+            // values this event does not. An absent variable here means this
+            // writer has nothing to say about the field — not that the field
+            // should be emptied. The recording path matters most: the archiver
+            // finds the audio by it, so overwriting it with nothing orphans the
+            // file. The spool applies the same rule in the other direction.
+            $optional = [
+                'recording_path' => $event['variable_record_file_path'] ?? null,
+                'sip_user_agent' => $event['variable_sip_user_agent'] ?? null,
+                'remote_media_ip' => $event['variable_remote_media_ip'] ?? null,
+            ];
+
+            foreach ($optional as $field => $value) {
+                if (! empty($value)) {
+                    $attributes[$field] = $value;
+                }
+            }
 
             $this->mergeCdr($uuid, $attributes);
         } catch (\Exception $e) {

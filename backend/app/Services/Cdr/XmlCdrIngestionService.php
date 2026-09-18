@@ -67,6 +67,8 @@ class XmlCdrIngestionService
             }
         }
 
+        $ledger = ProcessedCdrFile::query()->firstOrNew(['file_name' => basename($path)]);
+
         $cdr = CallDetailRecord::query()->firstOrNew([
             'uuid' => $parsed['uuid'],
         ]);
@@ -75,7 +77,17 @@ class XmlCdrIngestionService
         $cdr->fill($attributes);
         $cdr->save();
 
-        if ($wasRecentlyCreated) {
+        // The event is what queues enrichment and archival, and it is announced
+        // before the record is marked processed — so a failure to publish leaves
+        // the file unacknowledged and the whole step is retried.
+        //
+        // That retry is the reason this cannot be conditional on the row being
+        // new. On the second attempt the row exists, so `$wasRecentlyCreated` is
+        // false, and a record that crashed between saving and publishing would
+        // be marked processed with nothing ever queued for it. A retry therefore
+        // always publishes: consumers key on the record and can absorb a repeat,
+        // where a record that is never archived cannot be recovered at all.
+        if ($wasRecentlyCreated || (int) ($ledger->attempts ?? 0) > 0) {
             CallDetailRecordCreated::dispatch($cdr);
         }
 
