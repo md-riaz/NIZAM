@@ -8,6 +8,7 @@ use App\Models\Organization;
 use App\Models\ProcessedCdrFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class XmlCdrIngestionService
 {
@@ -48,14 +49,19 @@ class XmlCdrIngestionService
             'billsec' => (int) ($parsed['billsec'] ?? 0),
             'hangup_cause' => $parsed['hangup_cause'] ?: null,
             'direction' => $this->normalizeDirection($parsed['direction'] ?? null),
-            'recording_path' => $parsed['recording_path'] ?: null,
             'metadata' => $parsed['metadata'] ?? [],
         ];
 
         // The live event path fills these from the channel and the spool is often
         // the second writer, so an absent value here must not erase what is
         // already stored.
-        foreach (['sip_user_agent', 'remote_media_ip'] as $optional) {
+        //
+        // `recording_path` matters most: a recording is started over ESL with
+        // `uuid_record`, which leaves the path in no channel variable a spooled
+        // record carries, so the spool essentially never knows it. Writing that
+        // absence over a path the live path had already stored would orphan the
+        // audio file — the archiver looks the recording up by that path.
+        foreach (['sip_user_agent', 'remote_media_ip', 'recording_path'] as $optional) {
             if (! empty($parsed[$optional])) {
                 $attributes[$optional] = $parsed[$optional];
             }
@@ -112,22 +118,36 @@ class XmlCdrIngestionService
     {
         $record = ProcessedCdrFile::query()->firstOrNew(['file_name' => basename($path)]);
         $attempts = (int) ($record->attempts ?? 0) + 1;
-        $exhausted = $attempts >= $this->maxAttempts();
+        $reason = $this->reasonFor($exception);
 
+        // Out of tries, so the record leaves the spool — but only if it actually
+        // leaves. A move that fails on permissions or a full disk would otherwise
+        // strand it twice: still in the working directory where nothing reads it,
+        // and marked terminal so nothing ever tries again. A file already gone is
+        // a race with another worker, and settling it is correct.
+        $quarantined = false;
         $quarantinePath = null;
 
-        if ($exhausted) {
-            $quarantinePath = $this->spool->quarantine($path, $this->reasonFor($exception));
+        if ($attempts >= $this->maxAttempts()) {
+            $quarantinePath = $this->spool->quarantine($path, $reason);
+            $quarantined = $quarantinePath !== null || ! File::exists($path);
+
+            if (! $quarantined) {
+                Log::error('cdr:ingest-xml could not quarantine a spooled record', [
+                    'path' => $path,
+                    'reason' => $reason,
+                ]);
+            }
         }
 
         $record->fill([
             'file_path' => $path,
-            'status' => $exhausted ? ProcessedCdrFile::STATUS_QUARANTINED : ProcessedCdrFile::STATUS_FAILED,
+            'status' => $quarantined ? ProcessedCdrFile::STATUS_QUARANTINED : ProcessedCdrFile::STATUS_FAILED,
             'attempts' => $attempts,
             'last_attempted_at' => now(),
             'call_uuid' => null,
             'error_message' => $exception->getMessage(),
-            'quarantine_reason' => $exhausted ? $this->reasonFor($exception) : null,
+            'quarantine_reason' => $quarantined ? $reason : null,
             'quarantine_path' => $quarantinePath,
             'processed_at' => now(),
         ])->save();

@@ -155,6 +155,9 @@ class XmlCdrSpoolDurabilityTest extends TestCase
         File::put($huge, str_repeat('x', 1024));
         config()->set('telephony.xml_cdr.max_bytes', 512);
 
+        // A record only counts as empty once it has been empty for a while.
+        touch($empty, now()->subMinutes(5)->getTimestamp());
+
         $pending = app(XmlCdrDiscoveryService::class)->pendingFiles();
 
         $this->assertEmpty($pending, 'A record that cannot be valid was still offered for reading.');
@@ -163,6 +166,64 @@ class XmlCdrSpoolDurabilityTest extends TestCase
 
         $quarantine = (new XmlCdrSpool($this->directory))->quarantineDirectory(XmlCdrSpool::REASON_SIZE);
         $this->assertCount(2, File::files($quarantine));
+    }
+
+    /**
+     * A record that is empty only because it has just been created stays put.
+     *
+     * mod_xml_cdr creates the file and then writes it, so zero bytes is a normal
+     * intermediate state. Quarantining on sight moved the file out from under
+     * FreeSWITCH's open descriptor: it kept writing to the moved inode, and the
+     * finished record landed in a directory the scan deliberately never reads.
+     */
+    public function test_a_freshly_created_empty_record_is_not_quarantined(): void
+    {
+        $justCreated = $this->directory.'/a_being-written.xml';
+        File::put($justCreated, '');
+
+        $this->assertEmpty(app(XmlCdrDiscoveryService::class)->pendingFiles());
+        $this->assertTrue(File::exists($justCreated), 'A record still being written was quarantined.');
+
+        // Once FreeSWITCH finishes the write, the next pass picks it up.
+        File::put($justCreated, '<cdr><variables><uuid>being-written</uuid></variables></cdr>');
+
+        $this->assertCount(1, app(XmlCdrDiscoveryService::class)->pendingFiles());
+    }
+
+    /**
+     * A record is only marked terminal once it has genuinely left the spool.
+     *
+     * Recording the status after a failed move would strand it twice over: still
+     * in the working directory where nothing reads it, and marked never to be
+     * tried again.
+     */
+    public function test_a_record_stays_retryable_when_the_quarantine_move_fails(): void
+    {
+        $path = $this->spoolRecord('immovable', 'nowhere.example.com');
+
+        $immovable = new class($this->directory) extends XmlCdrSpool
+        {
+            public function quarantine(string $path, string $reason): ?string
+            {
+                return null;
+            }
+        };
+
+        $ingestion = new XmlCdrIngestionService(null, $immovable);
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            try {
+                $ingestion->ingest($path);
+            } catch (\Throwable $exception) {
+                $ingestion->markFailed($path, $exception);
+            }
+        }
+
+        $record = ProcessedCdrFile::query()->firstOrFail();
+
+        $this->assertSame(ProcessedCdrFile::STATUS_FAILED, $record->status, 'A record was marked terminal without leaving the spool.');
+        $this->assertNull($record->quarantine_path);
+        $this->assertTrue(File::exists($path));
     }
 
     /**

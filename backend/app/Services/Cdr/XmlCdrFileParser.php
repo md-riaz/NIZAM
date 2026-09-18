@@ -34,13 +34,67 @@ class XmlCdrFileParser
             // was added.
             'direction' => (string) ($vars->call_direction ?? $vars->direction ?? ''),
             'context' => (string) ($vars->context ?? ''),
-            'recording_path' => (string) ($vars->recording_file ?? ''),
+            'recording_path' => $this->recordingPath($vars),
             'sip_user_agent' => (string) ($vars->sip_user_agent ?? ''),
             'remote_media_ip' => (string) ($vars->remote_media_ip ?? ''),
             'metadata' => [
                 'raw' => $xml,
             ],
         ];
+    }
+
+    /**
+     * Where the recording for this call ended up, if the record says.
+     *
+     * There is no single variable for this. FreeSWITCH has several ways to
+     * record a call and each leaves the path somewhere different, so the record
+     * has to be asked in turn — the same chain FusionPBX and FS PBX both walk,
+     * arrived at over years of finding recordings the previous branch missed.
+     *
+     * A call recorded by `uuid_record` issued over the event socket appears in
+     * none of them: nothing writes the path back to the channel. Those are known
+     * only to whoever started the recording, which is why an empty answer here
+     * must never overwrite a path another writer already stored.
+     */
+    protected function recordingPath(?SimpleXMLElement $vars): ?string
+    {
+        if (! $vars) {
+            return null;
+        }
+
+        $directory = trim((string) ($vars->record_path ?? ''));
+        $name = trim((string) ($vars->record_name ?? ''));
+
+        if ($directory !== '' && $name !== '') {
+            return rtrim($directory, '/').'/'.$name;
+        }
+
+        // A queue recording names its own file.
+        $callCentre = trim((string) ($vars->cc_record_filename ?? ''));
+
+        if ($callCentre !== '') {
+            return $callCentre;
+        }
+
+        // `record_session` leaves its destination as the last application's
+        // argument, which is the only trace of it on the channel.
+        if (trim((string) ($vars->last_app ?? '')) === 'record_session') {
+            $argument = trim((string) ($vars->last_arg ?? ''));
+
+            if ($argument !== '') {
+                return $argument;
+            }
+        }
+
+        foreach (['sofia_record_file', 'conference_recording'] as $variable) {
+            $value = trim((string) ($vars->{$variable} ?? ''));
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     /**

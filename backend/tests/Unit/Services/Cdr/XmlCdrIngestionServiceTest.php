@@ -51,7 +51,8 @@ class XmlCdrIngestionServiceTest extends TestCase
             'caller_id_number' => '01710000000',
             'destination_number' => '1001',
             'direction' => 'inbound',
-            'recording_file' => '/recordings/call-a.wav',
+            'record_path' => '/recordings',
+            'record_name' => 'call-a.wav',
             'start_stamp' => '2026-04-12 10:00:00',
             'answer_stamp' => '2026-04-12 10:00:05',
             'end_stamp' => '2026-04-12 10:00:45',
@@ -134,7 +135,8 @@ class XmlCdrIngestionServiceTest extends TestCase
             'caller_id_number' => '01710000000',
             'destination_number' => '1000',
             'direction' => 'local',
-            'recording_file' => '',
+            'record_path' => '',
+            'record_name' => '',
             'start_stamp' => '2026-04-12 10:00:00',
             'answer_stamp' => '',
             'end_stamp' => '2026-04-12 10:00:00',
@@ -154,7 +156,8 @@ class XmlCdrIngestionServiceTest extends TestCase
     <caller_id_number>{$values['caller_id_number']}</caller_id_number>
     <destination_number>{$values['destination_number']}</destination_number>
     <direction>{$values['direction']}</direction>
-    <recording_file>{$values['recording_file']}</recording_file>
+    <record_path>{$values['record_path']}</record_path>
+    <record_name>{$values['record_name']}</record_name>
     <start_stamp>{$values['start_stamp']}</start_stamp>
     <answer_stamp>{$values['answer_stamp']}</answer_stamp>
     <end_stamp>{$values['end_stamp']}</end_stamp>

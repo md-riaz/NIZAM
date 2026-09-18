@@ -4,6 +4,7 @@ namespace App\Services\Cdr;
 
 use App\Models\ProcessedCdrFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use SplFileInfo;
 
 /**
@@ -82,6 +83,7 @@ class XmlCdrDiscoveryService
     {
         $batchLimit = $this->batchLimit();
         $maxBytes = $this->maxBytes();
+        $emptyAfter = now()->subSeconds($this->emptyGraceSeconds())->getTimestamp();
         $sized = [];
 
         $files = collect(File::files($this->directory))
@@ -95,8 +97,22 @@ class XmlCdrDiscoveryService
 
             $size = $file->getSize();
 
-            if ($size === 0 || $size >= $maxBytes) {
+            if ($size >= $maxBytes) {
                 $this->spool->quarantine($file->getPathname(), XmlCdrSpool::REASON_SIZE);
+
+                continue;
+            }
+
+            if ($size === 0) {
+                // Zero bytes is the normal state between mod_xml_cdr creating a
+                // record and writing it. Quarantining on sight would move the
+                // file out from under an open descriptor: FreeSWITCH would go on
+                // writing to the moved inode, and the finished record would sit
+                // in a directory the scan deliberately never reads. Only a file
+                // that has been empty for a while is really empty.
+                if ($file->getMTime() < $emptyAfter) {
+                    $this->spool->quarantine($file->getPathname(), XmlCdrSpool::REASON_SIZE);
+                }
 
                 continue;
             }
@@ -144,6 +160,35 @@ class XmlCdrDiscoveryService
     }
 
     /**
+     * Stop offering a record, but only once it is genuinely out of the spool.
+     *
+     * A move can fail — permissions, a full disk, a name that is already taken.
+     * Recording the terminal status anyway would strand the record twice over:
+     * the file stays in the working directory where nothing reads it, and the
+     * ledger says never to look at it again. A file that has already gone is a
+     * different matter, and settling it is correct.
+     */
+    protected function giveUpOn(ProcessedCdrFile $record, string $path, string $reason): void
+    {
+        $destination = $this->spool->quarantine($path, $reason);
+
+        if ($destination === null && File::exists($path)) {
+            Log::error('cdr:ingest-xml could not quarantine a spooled record', [
+                'path' => $path,
+                'reason' => $reason,
+            ]);
+
+            return;
+        }
+
+        $record->forceFill([
+            'status' => ProcessedCdrFile::STATUS_QUARANTINED,
+            'quarantine_reason' => $reason,
+            'quarantine_path' => $destination,
+        ])->save();
+    }
+
+    /**
      * Drop the records the ledger says are finished with, or not yet due.
      *
      * One query covers the batch. Quarantining here catches a record left over
@@ -177,11 +222,7 @@ class XmlCdrDiscoveryService
             }
 
             if ($record->attempts >= $maxAttempts) {
-                $record->forceFill([
-                    'status' => ProcessedCdrFile::STATUS_QUARANTINED,
-                    'quarantine_reason' => XmlCdrSpool::REASON_SQL,
-                    'quarantine_path' => $this->spool->quarantine($path, XmlCdrSpool::REASON_SQL),
-                ])->save();
+                $this->giveUpOn($record, $path, XmlCdrSpool::REASON_SQL);
 
                 continue;
             }
@@ -224,5 +265,10 @@ class XmlCdrDiscoveryService
     protected function stabilityMicroseconds(): int
     {
         return max(0, (int) config('telephony.xml_cdr.stability_microseconds', 10000));
+    }
+
+    protected function emptyGraceSeconds(): int
+    {
+        return max(1, (int) config('telephony.xml_cdr.empty_grace_seconds', 30));
     }
 }

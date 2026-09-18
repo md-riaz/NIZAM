@@ -217,6 +217,12 @@ return [
         // one still being written.
         'stability_microseconds' => (int) env('FREESWITCH_XML_CDR_STABILITY_US', 10000),
 
+        // How long a record may sit at zero bytes before it counts as empty
+        // rather than as one mod_xml_cdr has created but not yet written.
+        // Quarantining too eagerly moves the file out from under an open
+        // descriptor and the finished record is never seen again.
+        'empty_grace_seconds' => (int) env('FREESWITCH_XML_CDR_EMPTY_GRACE', 30),
+
         'cleanup_on_success' => env('FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS', true),
         'cleanup_after_ingest' => env('FREESWITCH_XML_CDR_CLEANUP_AFTER_INGEST', env('FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS', true)),
     ],
