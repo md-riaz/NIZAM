@@ -40,6 +40,23 @@ class RecordingPathResolver
     }
 
     /**
+     * The same chain over a plain map of channel variables, without the ESL
+     * `variable_` prefix — the shape the spooled XML record parses into.
+     *
+     * @param  array<string, mixed>  $variables
+     */
+    public function fromVariables(array $variables): ?string
+    {
+        $prefixed = [];
+
+        foreach ($variables as $name => $value) {
+            $prefixed['variable_'.$name] = $value;
+        }
+
+        return $this->fromChannelVariables($prefixed);
+    }
+
+    /**
      * @param  array<string, mixed>  $event
      */
     public function fromChannelVariables(array $event): ?string

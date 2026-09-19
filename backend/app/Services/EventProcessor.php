@@ -25,6 +25,7 @@ use App\Services\Call\TraceWriter;
 use App\Services\Recording\AnsweredRecordingStarter;
 use App\Services\Recording\RecordingPathResolver;
 use App\Services\Recording\RecordingPolicyResolver;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -165,8 +166,17 @@ class EventProcessor
 
         $data = $this->buildEventPayload($organizationId, CallEventLog::EVENT_CALL_HANGUP, $callData);
 
-        $this->createCdr($organizationId, $data, $event, $context['call_session']);
-        $this->recordCallMinutes($organizationId, $callData['billsec']);
+        // One record per call, not one per channel.
+        //
+        // CHANNEL_HANGUP_COMPLETE fires for every channel, so a bridged call
+        // raises it twice with two distinct Unique-IDs. Recording both wrote two
+        // rows for one conversation and metered its minutes twice. The b leg is
+        // the channel FreeSWITCH originated, which is exactly the distinction
+        // mod_xml_cdr's `log-b-leg` setting makes on the file side.
+        if ($this->isPrimaryLeg($event)) {
+            $this->createCdr($organizationId, $data, $event, $context['call_session']);
+            $this->recordCallMinutes($organizationId, $callData['billsec']);
+        }
 
         CallEvent::dispatch($organizationId, CallEventLog::EVENT_CALL_HANGUP, $data);
         $this->webhookDispatcher->dispatch($organizationId, CallEventLog::EVENT_CALL_HANGUP, $data);
@@ -947,20 +957,81 @@ class EventProcessor
         };
     }
 
+    /**
+     * Whether this channel is the one the call detail record should describe.
+     *
+     * The question is not which way the channel faces — it is whether some other
+     * channel brought this one into being. mod_xml_cdr draws exactly that line
+     * for its `log-b-leg` setting, testing whether the channel has an originator
+     * caller profile rather than looking at its direction.
+     *
+     * Direction cannot answer it. A call placed through the originate API has no
+     * accepted inbound leg at all: FreeSWITCH creates the first channel by
+     * dialling out, so it is an outbound channel that is nonetheless the top of
+     * the call. Treating outbound as secondary dropped those calls entirely —
+     * no record and, worse, no billable minutes.
+     *
+     * Two headers carry the answer. `Other-Type: originator` says another channel
+     * originated this one, and `originating_leg_uuid` names it; FreeSWITCH sets
+     * neither when nothing originated the channel, which is the case both for a
+     * caller arriving from a carrier and for the first leg of an originate.
+     */
+    protected function isPrimaryLeg(array $event): bool
+    {
+        if (strtolower(trim((string) ($event['Other-Type'] ?? ''))) === 'originator') {
+            return false;
+        }
+
+        return trim((string) ($event['variable_originating_leg_uuid'] ?? '')) === '';
+    }
+
+    /**
+     * What kind of call this was, from the dialplan's own declaration.
+     *
+     * `Call-Direction` describes the channel, not the call: every a-leg is
+     * "inbound" to FreeSWITCH whether the caller was a carrier or one of this
+     * organization's own extensions. The dialplan sets `call_direction` to say
+     * which it actually was, and that is what the record should carry.
+     *
+     * Dialplans compiled before that was set carry no declaration, so the caller's
+     * SIP domain decides: a request from outside the organization's own domain
+     * came in from a carrier. It is the same comparison FusionPBX falls back to.
+     */
+    protected function resolveCallDirection(array $event, string $channelDirection): string
+    {
+        $declared = strtolower(trim((string) ($event['variable_call_direction'] ?? '')));
+
+        if (in_array($declared, ['inbound', 'outbound', 'local'], true)) {
+            return $declared;
+        }
+
+        $domain = trim((string) ($event['variable_domain_name'] ?? ''));
+        $fromDomain = trim((string) ($event['variable_sip_from_domain'] ?? ''));
+
+        if ($domain !== '' && $fromDomain !== '') {
+            // A request from outside this organization's own domain came in from
+            // a carrier. One from inside it did not, whatever the channel says.
+            return $fromDomain === $domain ? 'local' : 'inbound';
+        }
+
+        return in_array($channelDirection, ['inbound', 'outbound', 'local'], true)
+            ? $channelDirection
+            : 'local';
+    }
+
     protected function createCdr(string $organizationId, array $data, array $event, ?CallSession $callSession = null): void
     {
         try {
             $meta = $data['metadata'] ?? $data;
-            $direction = in_array($meta['direction'] ?? '', ['inbound', 'outbound', 'local'])
-                ? $meta['direction']
-                : 'local';
+            $direction = $this->resolveCallDirection($event, (string) ($meta['direction'] ?? ''));
 
             $qualityMetrics = $this->extractQualityMetrics($event);
             $callType = $this->classifyCallType($event, $direction);
 
-            $cdr = CallDetailRecord::create([
+            $uuid = (string) ($meta['uuid'] ?? $data['call_uuid'] ?? '');
+
+            $attributes = [
                 'organization_id' => $organizationId,
-                'uuid' => $meta['uuid'] ?? $data['call_uuid'] ?? '',
                 'caller_id_name' => $meta['caller_id_name'] ?? '',
                 'caller_id_number' => $meta['caller_id_number'] ?? '',
                 'destination_number' => $meta['destination_number'] ?? '',
@@ -972,21 +1043,88 @@ class EventProcessor
                 'billsec' => $meta['billsec'] ?? 0,
                 'hangup_cause' => $meta['hangup_cause'] ?? 'NORMAL_CLEARING',
                 'direction' => $direction,
-                'recording_path' => $this->recordingPathResolver()->resolve($event, $callSession),
-                'sip_user_agent' => $event['variable_sip_user_agent'] ?? null,
-                'remote_media_ip' => $event['variable_remote_media_ip'] ?? null,
                 'call_type' => $callType,
                 'quality_score' => $qualityMetrics['quality_score'],
                 'mos_score' => $qualityMetrics['mos_score'],
                 'packet_loss' => $qualityMetrics['packet_loss'],
                 'jitter' => $qualityMetrics['jitter'],
                 'latency' => $qualityMetrics['latency'],
-            ]);
+            ];
 
-            CallDetailRecordCreated::dispatch($cdr);
+            // The spooled copy of this call may have arrived first and carried
+            // values this event does not. An absent variable here means this
+            // writer has nothing to say about the field — not that the field
+            // should be emptied. The recording path matters most: the archiver
+            // finds the audio by it, so overwriting it with nothing orphans the
+            // file. The spool applies the same rule in the other direction.
+            $optional = [
+                'recording_path' => $this->recordingPathResolver()->resolve($event, $callSession),
+                'sip_user_agent' => $event['variable_sip_user_agent'] ?? null,
+                'remote_media_ip' => $event['variable_remote_media_ip'] ?? null,
+            ];
+
+            foreach ($optional as $field => $value) {
+                if (! empty($value)) {
+                    $attributes[$field] = $value;
+                }
+            }
+
+            $this->mergeCdr($uuid, $attributes);
         } catch (\Exception $e) {
             Log::error('Failed to create CDR', ['error' => $e->getMessage(), 'uuid' => $data['call_uuid'] ?? 'unknown']);
         }
+    }
+
+    /**
+     * Write the record for a call, whether or not it already exists.
+     *
+     * The spooled XML copy describes the same call and either writer may arrive
+     * first, so this is keyed on the call uuid rather than blindly inserted.
+     *
+     * Looking the row up and inserting it are two steps, though, and both writers
+     * can look before either inserts. The loser's insert then fails on the unique
+     * key — and letting that surface as an error would discard everything that
+     * writer knew, which for the live path is the whole of the quality and SIP
+     * detail the spool never carries. So a conflict is treated as what it is: the
+     * row now exists, and this writer's fields still belong on it.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function mergeCdr(string $uuid, array $attributes): void
+    {
+        $cdr = CallDetailRecord::query()->firstOrNew(['uuid' => $uuid]);
+        $isNew = ! $cdr->exists;
+
+        $cdr->fill($attributes);
+
+        try {
+            $cdr->save();
+        } catch (QueryException $exception) {
+            if (! $isNew || ! $this->isUniqueViolation($exception)) {
+                throw $exception;
+            }
+
+            $cdr = CallDetailRecord::query()->where('uuid', $uuid)->firstOrFail();
+            $cdr->fill($attributes);
+            $cdr->save();
+
+            return;
+        }
+
+        if ($isNew) {
+            CallDetailRecordCreated::dispatch($cdr);
+        }
+    }
+
+    /**
+     * Whether the database refused a write because the row already exists.
+     *
+     * Postgres reports 23505 and SQLite 23000; both surface through the driver's
+     * SQLSTATE rather than anything portable above it.
+     */
+    protected function isUniqueViolation(QueryException $exception): bool
+    {
+        return in_array((string) $exception->getCode(), ['23505', '23000'], true);
     }
 
     protected function recordEvent(string $organizationId, string $eventType, array $data, ?CallSession $callSession = null): void
