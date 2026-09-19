@@ -23,6 +23,7 @@ use App\Services\Call\ReachabilityCache;
 use App\Services\Call\ReachabilityDecision;
 use App\Services\Call\TraceWriter;
 use App\Services\Recording\AnsweredRecordingStarter;
+use App\Services\Recording\RecordingPathResolver;
 use App\Services\Recording\RecordingPolicyResolver;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
@@ -42,6 +43,7 @@ class EventProcessor
         protected ?RecordingPolicyResolver $recordingPolicyResolver = null,
         protected ?AnsweredRecordingStarter $answeredRecordingStarter = null,
         protected ?TraceWriter $traceWriter = null,
+        protected ?RecordingPathResolver $recordingPathResolver = null,
     ) {}
 
     /**
@@ -172,7 +174,7 @@ class EventProcessor
         // the channel FreeSWITCH originated, which is exactly the distinction
         // mod_xml_cdr's `log-b-leg` setting makes on the file side.
         if ($this->isPrimaryLeg($event)) {
-            $this->createCdr($organizationId, $data, $event);
+            $this->createCdr($organizationId, $data, $event, $context['call_session']);
             $this->recordCallMinutes($organizationId, $callData['billsec']);
         }
 
@@ -1017,7 +1019,7 @@ class EventProcessor
             : 'local';
     }
 
-    protected function createCdr(string $organizationId, array $data, array $event): void
+    protected function createCdr(string $organizationId, array $data, array $event, ?CallSession $callSession = null): void
     {
         try {
             $meta = $data['metadata'] ?? $data;
@@ -1056,7 +1058,7 @@ class EventProcessor
             // finds the audio by it, so overwriting it with nothing orphans the
             // file. The spool applies the same rule in the other direction.
             $optional = [
-                'recording_path' => $event['variable_record_file_path'] ?? null,
+                'recording_path' => $this->recordingPathResolver()->resolve($event, $callSession),
                 'sip_user_agent' => $event['variable_sip_user_agent'] ?? null,
                 'remote_media_ip' => $event['variable_remote_media_ip'] ?? null,
             ];
@@ -1180,6 +1182,11 @@ class EventProcessor
     protected function voicemailEventService(): VoicemailEventService
     {
         return $this->voicemailEventService ??= app(VoicemailEventService::class);
+    }
+
+    protected function recordingPathResolver(): RecordingPathResolver
+    {
+        return $this->recordingPathResolver ??= app(RecordingPathResolver::class);
     }
 
     protected function recordingPolicyResolver(): RecordingPolicyResolver

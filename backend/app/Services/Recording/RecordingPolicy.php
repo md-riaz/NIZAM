@@ -22,7 +22,7 @@ final class RecordingPolicy
         self::OUTGOING,
     ];
 
-    public static function normalize(null|string $value): string
+    public static function normalize(?string $value): string
     {
         $normalized = strtolower(trim((string) $value));
 

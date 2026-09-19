@@ -371,19 +371,19 @@ class EventProcessorEventLogTest extends TestCase
                 ];
             });
 
+        // Two commands go out: the recording variables are set on the channel
+        // first, then the recorder is started.
+        $recordArguments = [];
         $freeSwitch = $this->createMock(FreeSwitchCommandService::class);
-        $freeSwitch->expects($this->once())
+        $freeSwitch->expects($this->exactly(2))
             ->method('execute')
-            ->with(
-                'uuid_record',
-                $this->callback(function (array $arguments): bool {
-                    return $arguments[0] === 'caller-leg-recording'
-                        && $arguments[1] === 'start'
-                        && str_ends_with($arguments[2], '/caller-leg-recording.wav');
-                }),
-                false
-            )
-            ->willReturn(['executed' => true]);
+            ->willReturnCallback(function (string $command, array $arguments) use (&$recordArguments): array {
+                if ($command === 'uuid_record') {
+                    $recordArguments = $arguments;
+                }
+
+                return ['executed' => true];
+            });
 
         $processor = new EventProcessor(
             $this->createMock(WebhookDispatcher::class),
@@ -417,6 +417,10 @@ class EventProcessorEventLogTest extends TestCase
 
         $session->refresh();
         $attempt->refresh();
+
+        $this->assertSame('caller-leg-recording', $recordArguments[0] ?? null);
+        $this->assertSame('start', $recordArguments[1] ?? null);
+        $this->assertStringEndsWith('/caller-leg-recording.wav', $recordArguments[2] ?? '');
 
         $this->assertSame(CallDeliveryAttempt::STATUS_WON, $attempt->status);
         $this->assertTrue((bool) data_get($session->variables, 'recording_started'));

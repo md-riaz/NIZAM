@@ -127,6 +127,27 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Create log directory and set permissions
 RUN mkdir -p /var/log/freeswitch && chown -R freeswitch:freeswitch /var/log/freeswitch
 
+# The recordings tree is shared with the application, which runs as a different
+# user: the application creates the per-organization and per-date directory and
+# FreeSWITCH writes the audio into it. They need a group in common, so both
+# images create one at a fixed GID and put their own user in it. The two images
+# come from different distributions and neither's own user IDs line up, which is
+# why this is an explicit shared group rather than a matching UID.
+#
+# Docker seeds a fresh named volume from whatever the image has at the mount
+# point, so the ownership and mode have to be set here — a volume with no image
+# content behind it is created root-owned, and neither side can write.
+#
+# 2775 is group-writable and setgid, so the directories the application creates
+# inherit this group and stay writable by FreeSWITCH.
+ARG RECORDINGS_GID=2000
+RUN set -eux; \
+    groupadd -g "${RECORDINGS_GID}" recordings; \
+    usermod -aG recordings freeswitch; \
+    mkdir -p /var/lib/freeswitch/recordings; \
+    chown freeswitch:recordings /var/lib/freeswitch/recordings; \
+    chmod 2775 /var/lib/freeswitch/recordings
+
 # Drop to unprivileged user
 USER freeswitch
 

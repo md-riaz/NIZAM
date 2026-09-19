@@ -2,6 +2,7 @@
 
 namespace App\Services\Cdr;
 
+use App\Services\Recording\RecordingPathResolver;
 use SimpleXMLElement;
 
 class XmlCdrFileParser
@@ -62,39 +63,16 @@ class XmlCdrFileParser
             return null;
         }
 
-        $directory = trim((string) ($vars->record_path ?? ''));
-        $name = trim((string) ($vars->record_name ?? ''));
+        $variables = [];
 
-        if ($directory !== '' && $name !== '') {
-            return rtrim($directory, '/').'/'.$name;
+        foreach ($vars->children() as $name => $value) {
+            $variables[(string) $name] = (string) $value;
         }
 
-        // A queue recording names its own file.
-        $callCentre = trim((string) ($vars->cc_record_filename ?? ''));
-
-        if ($callCentre !== '') {
-            return $callCentre;
-        }
-
-        // `record_session` leaves its destination as the last application's
-        // argument, which is the only trace of it on the channel.
-        if (trim((string) ($vars->last_app ?? '')) === 'record_session') {
-            $argument = trim((string) ($vars->last_arg ?? ''));
-
-            if ($argument !== '') {
-                return $argument;
-            }
-        }
-
-        foreach (['sofia_record_file', 'conference_recording'] as $variable) {
-            $value = trim((string) ($vars->{$variable} ?? ''));
-
-            if ($value !== '') {
-                return $value;
-            }
-        }
-
-        return null;
+        // The same candidate chain the live path walks. There is one chain, not
+        // one per writer: two copies of it would drift, and the two writers
+        // disagreeing about where a call's audio is would orphan the file.
+        return app(RecordingPathResolver::class)->fromVariables($variables);
     }
 
     /**
