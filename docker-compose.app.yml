@@ -15,6 +15,7 @@ services:
     volumes:
       - ./backend:/var/www/html
       - vendor_data:/var/www/html/vendor
+      - freeswitch_recordings:/var/lib/freeswitch/recordings
       - ./backend/storage:/var/www/html/storage
       - freeswitch_logs:/var/log/freeswitch
       - freeswitch_xml_cdr:/var/log/freeswitch/xml_cdr
@@ -34,12 +35,18 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
       - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
-      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
+      - RECORDING_PATH=${RECORDING_PATH:-/var/lib/freeswitch/recordings}
+      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-true}
       - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
       - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
       - FREESWITCH_XML_CDR_WATCHER=${FREESWITCH_XML_CDR_WATCHER:-inotify}
       - FREESWITCH_XML_CDR_POLL_INTERVAL=${FREESWITCH_XML_CDR_POLL_INTERVAL:-5}
       - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=${FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS:-true}
+      - FREESWITCH_XML_CDR_SWEEP_INTERVAL=${FREESWITCH_XML_CDR_SWEEP_INTERVAL:-300}
+      - FREESWITCH_XML_CDR_BATCH_LIMIT=${FREESWITCH_XML_CDR_BATCH_LIMIT:-100}
+      - FREESWITCH_XML_CDR_MAX_ATTEMPTS=${FREESWITCH_XML_CDR_MAX_ATTEMPTS:-3}
+      - FREESWITCH_XML_CDR_MAX_BYTES=${FREESWITCH_XML_CDR_MAX_BYTES:-3145728}
+      - FREESWITCH_XML_CDR_STABILITY_US=${FREESWITCH_XML_CDR_STABILITY_US:-10000}
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
       - CACHE_STORE=${CACHE_STORE:-database}
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
@@ -136,7 +143,11 @@ services:
     image: php-app:${APP_IMAGE_TAG:-local}
     container_name: queue
     restart: unless-stopped
-    command: php artisan queue:work --tries=3 --timeout=90 --sleep=3
+    # `cdr-enrichment` is named explicitly because a worker with no --queue only
+    # drains `default`. EnrichCallDetailRecord pushes onto its own queue, so
+    # without this every enrichment job accumulated unprocessed and
+    # `cdr_enrichments` stayed empty.
+    command: php artisan queue:work --queue=default,cdr-enrichment --tries=3 --timeout=90 --sleep=3
     depends_on:
       app:
         condition: service_healthy
@@ -147,6 +158,7 @@ services:
     volumes:
       - ./backend:/var/www/html
       - vendor_data:/var/www/html/vendor
+      - freeswitch_recordings:/var/lib/freeswitch/recordings
       - certs_data:/etc/letsencrypt
     networks:
       - app_net
@@ -165,12 +177,18 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
       - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
-      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
+      - RECORDING_PATH=${RECORDING_PATH:-/var/lib/freeswitch/recordings}
+      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-true}
       - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
       - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
       - FREESWITCH_XML_CDR_WATCHER=${FREESWITCH_XML_CDR_WATCHER:-inotify}
       - FREESWITCH_XML_CDR_POLL_INTERVAL=${FREESWITCH_XML_CDR_POLL_INTERVAL:-5}
       - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=${FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS:-true}
+      - FREESWITCH_XML_CDR_SWEEP_INTERVAL=${FREESWITCH_XML_CDR_SWEEP_INTERVAL:-300}
+      - FREESWITCH_XML_CDR_BATCH_LIMIT=${FREESWITCH_XML_CDR_BATCH_LIMIT:-100}
+      - FREESWITCH_XML_CDR_MAX_ATTEMPTS=${FREESWITCH_XML_CDR_MAX_ATTEMPTS:-3}
+      - FREESWITCH_XML_CDR_MAX_BYTES=${FREESWITCH_XML_CDR_MAX_BYTES:-3145728}
+      - FREESWITCH_XML_CDR_STABILITY_US=${FREESWITCH_XML_CDR_STABILITY_US:-10000}
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
       - CACHE_STORE=${CACHE_STORE:-database}
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
@@ -190,6 +208,7 @@ services:
     volumes:
       - ./backend:/var/www/html
       - vendor_data:/var/www/html/vendor
+      - freeswitch_recordings:/var/lib/freeswitch/recordings
       - certs_data:/etc/letsencrypt
     networks:
       - app_net
@@ -208,12 +227,18 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
       - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
-      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
+      - RECORDING_PATH=${RECORDING_PATH:-/var/lib/freeswitch/recordings}
+      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-true}
       - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
       - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
       - FREESWITCH_XML_CDR_WATCHER=${FREESWITCH_XML_CDR_WATCHER:-inotify}
       - FREESWITCH_XML_CDR_POLL_INTERVAL=${FREESWITCH_XML_CDR_POLL_INTERVAL:-5}
       - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=${FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS:-true}
+      - FREESWITCH_XML_CDR_SWEEP_INTERVAL=${FREESWITCH_XML_CDR_SWEEP_INTERVAL:-300}
+      - FREESWITCH_XML_CDR_BATCH_LIMIT=${FREESWITCH_XML_CDR_BATCH_LIMIT:-100}
+      - FREESWITCH_XML_CDR_MAX_ATTEMPTS=${FREESWITCH_XML_CDR_MAX_ATTEMPTS:-3}
+      - FREESWITCH_XML_CDR_MAX_BYTES=${FREESWITCH_XML_CDR_MAX_BYTES:-3145728}
+      - FREESWITCH_XML_CDR_STABILITY_US=${FREESWITCH_XML_CDR_STABILITY_US:-10000}
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
       - CACHE_STORE=${CACHE_STORE:-database}
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
@@ -258,12 +283,17 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
       - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
-      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
+      - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-true}
       - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
       - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
       - FREESWITCH_XML_CDR_WATCHER=${FREESWITCH_XML_CDR_WATCHER:-inotify}
       - FREESWITCH_XML_CDR_POLL_INTERVAL=${FREESWITCH_XML_CDR_POLL_INTERVAL:-5}
       - FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS=${FREESWITCH_XML_CDR_CLEANUP_ON_SUCCESS:-true}
+      - FREESWITCH_XML_CDR_SWEEP_INTERVAL=${FREESWITCH_XML_CDR_SWEEP_INTERVAL:-300}
+      - FREESWITCH_XML_CDR_BATCH_LIMIT=${FREESWITCH_XML_CDR_BATCH_LIMIT:-100}
+      - FREESWITCH_XML_CDR_MAX_ATTEMPTS=${FREESWITCH_XML_CDR_MAX_ATTEMPTS:-3}
+      - FREESWITCH_XML_CDR_MAX_BYTES=${FREESWITCH_XML_CDR_MAX_BYTES:-3145728}
+      - FREESWITCH_XML_CDR_STABILITY_US=${FREESWITCH_XML_CDR_STABILITY_US:-10000}
       - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
       - CACHE_STORE=${CACHE_STORE:-database}
       - SESSION_DRIVER=${SESSION_DRIVER:-database}
@@ -293,6 +323,8 @@ volumes:
     name: freeswitch_logs
   freeswitch_xml_cdr:
     name: freeswitch_xml_cdr
+  freeswitch_recordings:
+    name: freeswitch_recordings
 
 networks:
   app_net:

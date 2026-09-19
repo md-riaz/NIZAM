@@ -67,6 +67,17 @@ RUN composer dump-autoload --optimize --no-interaction
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
+# Share the recordings tree with FreeSWITCH.
+#
+# This side of the same shared group the FreeSWITCH image creates. Without a
+# group in common the application cannot create the directory the recorder
+# writes into, and no call is ever recorded. Keep RECORDINGS_GID in step with
+# the FreeSWITCH image.
+ARG RECORDINGS_GID=2000
+RUN set -eux; \
+    addgroup -g "${RECORDINGS_GID}" recordings; \
+    addgroup www-data recordings
+
 # Copy and wire up entrypoint (fixes bind-mount permissions then execs php-fpm)
 COPY docker/app/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh

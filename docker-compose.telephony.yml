@@ -7,6 +7,10 @@ services:
     volumes:
       - ./backend:/var/www/html
       - vendor_data:/var/www/html/vendor
+      # The ESL listener is what starts recordings: it creates the directory
+      # before asking FreeSWITCH to write into it, so it needs the same view of
+      # the recordings tree the other services have.
+      - freeswitch_recordings:/var/lib/freeswitch/recordings
     networks:
       - app_net
     env_file: .env
@@ -24,6 +28,7 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_XML_CURL_URL=${FREESWITCH_XML_CURL_URL:-http://nginx/freeswitch/xml-curl}
       - FREESWITCH_LOG_PATH=${FREESWITCH_LOG_PATH:-/var/log/freeswitch/freeswitch.log}
+      - RECORDING_PATH=${RECORDING_PATH:-/var/lib/freeswitch/recordings}
       - FREESWITCH_XML_CDR_ENABLED=${FREESWITCH_XML_CDR_ENABLED:-false}
       - FREESWITCH_XML_CDR_DIRECTORY=${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}
       - FREESWITCH_XML_CDR_LOG_DIR=${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}
@@ -57,6 +62,10 @@ services:
       - freeswitch_data:/var/lib/freeswitch
       - freeswitch_logs:/var/log/freeswitch
       - freeswitch_xml_cdr:/var/log/freeswitch/xml_cdr
+      # FreeSWITCH writes the audio and the application reads and archives it,
+      # so recordings need a path both can see — the same arrangement the XML
+      # CDR spool already has.
+      - freeswitch_recordings:/var/lib/freeswitch/recordings
       - certs_data:/usr/local/freeswitch/certs
       - ./backend/storage/app/freeswitch/sip_profiles:/usr/local/freeswitch/db/sip_profiles
       - ./backend/docker/freeswitch/conf/autoload_configs/xml_curl.conf.xml:/usr/local/freeswitch/conf/autoload_configs/xml_curl.conf.xml
@@ -80,6 +89,8 @@ services:
       - RTP_PORT_RANGE_END=${RTP_PORT_RANGE_END:-32768}
 
 volumes:
+  freeswitch_recordings:
+    name: freeswitch_recordings
   freeswitch_data:
     name: freeswitch_data
   freeswitch_logs:
