@@ -2,6 +2,7 @@
 
 namespace App\Services\Recording;
 
+use App\Models\CallDeliveryAttempt;
 use App\Models\CallSession;
 use App\Services\Media\FreeSwitchCommandService;
 use Illuminate\Support\Carbon;
@@ -38,7 +39,7 @@ class AnsweredRecordingStarter
 
         $path = $this->buildPath($callSession->organization_id, $callSession->call_uuid);
         $this->ensureDirectoryFor($path);
-        $this->applyRecordingVariables($callSession->call_uuid, (string) ($decision['direction'] ?? 'inbound'));
+        $this->applyRecordingVariables($callSession->call_uuid, $this->directionFor($decision));
 
         $response = $this->freeSwitchCommandService->execute('uuid_record', [$callSession->call_uuid, 'start', $path], false);
 
@@ -49,6 +50,7 @@ class AnsweredRecordingStarter
 
         if (($response['executed'] ?? false) === true) {
             $nextVariables['recording_started'] = true;
+            $nextVariables['recording_created'] = true;
         }
 
         $callSession->forceFill([
@@ -74,13 +76,20 @@ class AnsweredRecordingStarter
     /**
      * @return array<string, mixed>
      */
-    public function startForCall(string $organizationId, string $callUuid): array
+    public function startForCall(string $organizationId, string $callUuid, string $direction = 'inbound'): array
     {
-        $session = CallSession::query()->where('call_uuid', $callUuid)->first();
+        $session = $this->sessionFor($organizationId, $callUuid);
         $path = $this->pathFor($session) ?? $this->buildPath($organizationId, $callUuid);
 
         $this->ensureDirectoryFor($path);
-        $this->applyRecordingVariables($callUuid, 'inbound');
+
+        // The caller rarely knows the direction — the call control API is given
+        // a UUID and nothing else — but the session worked it out when the call
+        // was answered, so prefer what it recorded.
+        $this->applyRecordingVariables(
+            $callUuid,
+            (string) (data_get($session?->variables, 'recording_context.direction') ?: $direction)
+        );
 
         $response = $this->freeSwitchCommandService->execute('uuid_record', [$callUuid, 'start', $path], false);
         $started = ($response['executed'] ?? false) === true;
@@ -102,7 +111,7 @@ class AnsweredRecordingStarter
      */
     public function stopForCall(string $organizationId, string $callUuid): array
     {
-        $session = CallSession::query()->where('call_uuid', $callUuid)->first();
+        $session = $this->sessionFor($organizationId, $callUuid);
 
         // Stop the recording that was actually started. Recomputing the path
         // gives today's date, so a call recorded either side of midnight — or
@@ -115,6 +124,9 @@ class AnsweredRecordingStarter
 
         if ($stopped && $session) {
             $session->forceFill([
+                // `recording_created` is deliberately left alone: the recorder
+                // is no longer running, but the audio it wrote is still there
+                // and still has to reach the CDR and the archive.
                 'variables' => array_merge($session->variables ?? [], ['recording_started' => false]),
             ])->save();
         }
@@ -152,9 +164,45 @@ class AnsweredRecordingStarter
 
         if ($started) {
             $variables['recording_started'] = true;
+            $variables['recording_created'] = true;
         }
 
         $session->forceFill(['variables' => $variables])->save();
+    }
+
+    /**
+     * The call session a UUID belongs to.
+     *
+     * A supervisor recording an answered call acts on the B-leg UUID, which is
+     * the one surfaced to clients as `winner.leg_uuid` and the one the call
+     * control API accepts. That UUID is on the delivery attempt, not on the
+     * session, so looking only at `call_uuid` would find nothing and the start
+     * would go unrecorded — leaving the CDR with no path and a later stop
+     * recomputing a different one.
+     */
+    protected function sessionFor(string $organizationId, string $callUuid): ?CallSession
+    {
+        $session = CallSession::query()
+            ->where('organization_id', $organizationId)
+            ->where('call_uuid', $callUuid)
+            ->first();
+
+        if ($session) {
+            return $session;
+        }
+
+        return CallDeliveryAttempt::query()
+            ->where('freeswitch_leg_uuid', $callUuid)
+            ->whereHas('callSession', fn ($query) => $query->where('organization_id', $organizationId))
+            ->first()?->callSession;
+    }
+
+    /**
+     * @param  array<string, mixed>  $decision
+     */
+    protected function directionFor(array $decision): string
+    {
+        return ($decision['direction'] ?? null) === 'outbound' ? 'outbound' : 'inbound';
     }
 
     /**

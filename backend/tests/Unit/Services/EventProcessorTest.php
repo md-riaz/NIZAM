@@ -102,6 +102,7 @@ class EventProcessorTest extends TestCase
             'call_uuid' => 'recorded-uuid-123',
             'variables' => [
                 'recording_started' => true,
+                'recording_created' => true,
                 'recording_path' => '/var/lib/freeswitch/recordings/'.$organization->id.'/2026/09/18/recorded-uuid-123.wav',
             ],
         ]);
@@ -134,6 +135,7 @@ class EventProcessorTest extends TestCase
             'call_uuid' => 'dialplan-recorded-uuid',
             'variables' => [
                 'recording_started' => true,
+                'recording_created' => true,
                 'recording_path' => '/recordings/stale.wav',
             ],
         ]);

@@ -62,7 +62,12 @@ class RecordingPathResolver
         }
 
         return $this->value($event, 'variable_sofia_record_file')
-            ?? $this->value($event, 'variable_conference_recording');
+            ?? $this->value($event, 'variable_conference_recording')
+            // The variable this code read before the chain existed. Nothing in
+            // FreeSWITCH is known to set it, but an integration or a dialplan
+            // outside this repository may, and dropping a candidate that used
+            // to work is not worth the tidiness.
+            ?? $this->value($event, 'variable_record_file_path');
     }
 
     public function fromCallSession(?CallSession $callSession): ?string
@@ -71,11 +76,16 @@ class RecordingPathResolver
             return null;
         }
 
-        // Only report a path the recorder was actually asked to write. An
-        // attempt that failed to start leaves the path behind as a record of
-        // what was tried; putting it on the CDR would promise audio that does
-        // not exist.
-        if ((($callSession->variables['recording_started'] ?? false)) !== true) {
+        // Only report a path the recorder actually wrote to. An attempt that
+        // failed to start leaves the path behind as a record of what was
+        // tried; putting it on the CDR would promise audio that does not
+        // exist.
+        //
+        // The question is whether a recording was ever created, not whether
+        // one is running now. A supervisor who stops a recording before the
+        // call ends leaves `recording_started` false, and the file they
+        // recorded still has to reach the CDR and the archive.
+        if ((($callSession->variables['recording_created'] ?? false)) !== true) {
             return null;
         }
 

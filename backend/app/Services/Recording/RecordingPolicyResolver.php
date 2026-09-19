@@ -34,6 +34,7 @@ class RecordingPolicyResolver
      * @return array{
      *     resolved_mode: string,
      *     should_record: bool,
+     *     direction: string,
      *     winning_scope: string|null,
      *     resolution_chain: array<int, string>,
      *     reason: string
@@ -63,6 +64,7 @@ class RecordingPolicyResolver
                 return [
                     'resolved_mode' => $normalized,
                     'should_record' => false,
+                    'direction' => $direction,
                     'winning_scope' => $scope,
                     'resolution_chain' => $resolutionChain,
                     'reason' => sprintf('%s policy disables recording', $scope),
@@ -73,6 +75,7 @@ class RecordingPolicyResolver
                 return [
                     'resolved_mode' => $normalized,
                     'should_record' => true,
+                    'direction' => $direction,
                     'winning_scope' => $scope,
                     'resolution_chain' => $resolutionChain,
                     'reason' => sprintf('%s policy enables %s recording', $scope, $direction),
@@ -90,6 +93,7 @@ class RecordingPolicyResolver
             return [
                 'resolved_mode' => $nearestMode,
                 'should_record' => false,
+                'direction' => $direction,
                 'winning_scope' => $nearestScope,
                 'resolution_chain' => $resolutionChain,
                 'reason' => sprintf('%s policy does not match %s direction', $nearestScope, $direction),
@@ -99,6 +103,7 @@ class RecordingPolicyResolver
         return [
             'resolved_mode' => RecordingPolicy::OFF,
             'should_record' => false,
+            'direction' => $direction,
             'winning_scope' => null,
             'resolution_chain' => $resolutionChain,
             'reason' => sprintf('no policy requests %s recording', $direction),

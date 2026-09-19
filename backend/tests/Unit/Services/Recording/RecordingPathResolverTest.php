@@ -93,6 +93,7 @@ class RecordingPathResolverTest extends TestCase
         $session = CallSession::factory()->create([
             'variables' => [
                 'recording_started' => true,
+                'recording_created' => true,
                 'recording_path' => '/recordings/acme/2026/09/18/call.wav',
             ],
         ]);
@@ -108,6 +109,7 @@ class RecordingPathResolverTest extends TestCase
         $session = CallSession::factory()->create([
             'variables' => [
                 'recording_started' => true,
+                'recording_created' => true,
                 'recording_path' => '/recordings/acme/stale.wav',
             ],
         ]);
@@ -131,6 +133,33 @@ class RecordingPathResolverTest extends TestCase
         ]);
 
         $this->assertNull($this->resolver()->resolve([], $session));
+    }
+
+    public function test_a_recording_stopped_by_hand_still_reports_its_path(): void
+    {
+        // A supervisor who stops recording before the call ends leaves the
+        // recorder idle, but the audio is written and still has to reach the
+        // CDR and the archive.
+        $session = CallSession::factory()->create([
+            'variables' => [
+                'recording_attempted' => true,
+                'recording_created' => true,
+                'recording_started' => false,
+                'recording_path' => '/recordings/acme/stopped-early.wav',
+            ],
+        ]);
+
+        $this->assertSame(
+            '/recordings/acme/stopped-early.wav',
+            $this->resolver()->resolve([], $session)
+        );
+    }
+
+    public function test_it_keeps_the_variable_this_code_used_to_read(): void
+    {
+        $this->assertSame('/recordings/acme/legacy.wav', $this->resolver()->fromChannelVariables([
+            'variable_record_file_path' => '/recordings/acme/legacy.wav',
+        ]));
     }
 
     public function test_it_resolves_to_nothing_without_a_session_or_variables(): void
