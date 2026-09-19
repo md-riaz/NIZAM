@@ -43,9 +43,18 @@ class AnsweredRecordingStarterTest extends TestCase
             'variables' => [],
         ]);
 
-        $expectedPath = "/tmp/test-recordings/{$organization->id}/{$session->call_uuid}.wav";
+        $expectedPath = sprintf(
+            '/tmp/test-recordings/%s/%s/%s.wav',
+            $organization->id,
+            now()->format('Y/m/d'),
+            $session->call_uuid
+        );
 
         $freeSwitch = $this->mock(FreeSwitchCommandService::class);
+        // The recorder reads these when it starts, so they are set first.
+        $freeSwitch->shouldReceive('execute')
+            ->with('uuid_setvar_multi', \Mockery::any(), false)
+            ->andReturn(['executed' => true]);
         $freeSwitch->shouldReceive('execute')
             ->once()
             ->with('uuid_record', [$session->call_uuid, 'start', $expectedPath], false)
@@ -92,9 +101,18 @@ class AnsweredRecordingStarterTest extends TestCase
             'variables' => [],
         ]);
 
-        $expectedPath = "/tmp/test-recordings/{$session->organization_id}/{$session->call_uuid}.wav";
+        $expectedPath = sprintf(
+            '/tmp/test-recordings/%s/%s/%s.wav',
+            $session->organization_id,
+            now()->format('Y/m/d'),
+            $session->call_uuid
+        );
 
         $freeSwitch = $this->mock(FreeSwitchCommandService::class);
+        // The recorder reads these when it starts, so they are set first.
+        $freeSwitch->shouldReceive('execute')
+            ->with('uuid_setvar_multi', \Mockery::any(), false)
+            ->andReturn(['executed' => true]);
         $freeSwitch->shouldReceive('execute')
             ->once()
             ->with('uuid_record', [$session->call_uuid, 'start', $expectedPath], false)

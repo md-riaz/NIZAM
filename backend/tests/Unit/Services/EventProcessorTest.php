@@ -7,18 +7,19 @@ use App\Events\CallEvent;
 use App\Listeners\ArchiveCallRecording;
 use App\Models\CallDetailRecord;
 use App\Models\CallEventLog;
+use App\Models\CallSession;
 use App\Models\Extension;
-use App\Models\Recording;
 use App\Models\Organization;
+use App\Models\Recording;
 use App\Modules\Media\MediaArchiveModule;
 use App\Modules\ModuleRegistry;
 use App\Services\EventProcessor;
 use App\Services\Storage\LocalFileSystemDriver;
 use App\Services\WebhookDispatcher;
-use Mockery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class EventProcessorTest extends TestCase
@@ -86,6 +87,73 @@ class EventProcessorTest extends TestCase
             'caller_id_number' => '1001',
             'destination_number' => '1002',
             'hangup_cause' => 'NORMAL_CLEARING',
+        ]);
+    }
+
+    public function test_cdr_carries_the_recording_path_the_recorder_was_started_at(): void
+    {
+        [$organization, $extension] = $this->createOrganizationWithExtension();
+        Event::fake([CallEvent::class]);
+
+        // `uuid_record` over the event socket writes the path to no channel
+        // variable, so the hangup event carries nothing about it. The call
+        // session is the only record of where the audio went.
+        $session = CallSession::factory()->for($organization)->create([
+            'call_uuid' => 'recorded-uuid-123',
+            'variables' => [
+                'recording_started' => true,
+                'recording_path' => '/var/lib/freeswitch/recordings/'.$organization->id.'/2026/09/18/recorded-uuid-123.wav',
+            ],
+        ]);
+
+        $this->processor->process([
+            'Event-Name' => 'CHANNEL_HANGUP_COMPLETE',
+            'variable_domain_name' => 'test.example.com',
+            'Unique-ID' => 'recorded-uuid-123',
+            'variable_sip_h_X-Nizam-Call-Session-Id' => $session->id,
+            'Caller-Caller-ID-Number' => '1001',
+            'Caller-Destination-Number' => '1002',
+            'Call-Direction' => 'inbound',
+            'Hangup-Cause' => 'NORMAL_CLEARING',
+            'variable_duration' => '60',
+            'variable_billsec' => '55',
+        ]);
+
+        $this->assertDatabaseHas('call_detail_records', [
+            'uuid' => 'recorded-uuid-123',
+            'recording_path' => '/var/lib/freeswitch/recordings/'.$organization->id.'/2026/09/18/recorded-uuid-123.wav',
+        ]);
+    }
+
+    public function test_cdr_prefers_the_recording_path_freeswitch_reports_over_the_session(): void
+    {
+        [$organization, $extension] = $this->createOrganizationWithExtension();
+        Event::fake([CallEvent::class]);
+
+        $session = CallSession::factory()->for($organization)->create([
+            'call_uuid' => 'dialplan-recorded-uuid',
+            'variables' => [
+                'recording_started' => true,
+                'recording_path' => '/recordings/stale.wav',
+            ],
+        ]);
+
+        $this->processor->process([
+            'Event-Name' => 'CHANNEL_HANGUP_COMPLETE',
+            'variable_domain_name' => 'test.example.com',
+            'Unique-ID' => 'dialplan-recorded-uuid',
+            'variable_sip_h_X-Nizam-Call-Session-Id' => $session->id,
+            'Caller-Caller-ID-Number' => '1001',
+            'Caller-Destination-Number' => '1002',
+            'Call-Direction' => 'inbound',
+            'Hangup-Cause' => 'NORMAL_CLEARING',
+            'variable_record_path' => '/recordings/acme/2026/09/18',
+            'variable_record_name' => 'dialplan-recorded-uuid.wav',
+        ]);
+
+        $this->assertDatabaseHas('call_detail_records', [
+            'uuid' => 'dialplan-recorded-uuid',
+            'recording_path' => '/recordings/acme/2026/09/18/dialplan-recorded-uuid.wav',
         ]);
     }
 

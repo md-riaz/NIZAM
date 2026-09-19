@@ -23,6 +23,7 @@ use App\Services\Call\ReachabilityCache;
 use App\Services\Call\ReachabilityDecision;
 use App\Services\Call\TraceWriter;
 use App\Services\Recording\AnsweredRecordingStarter;
+use App\Services\Recording\RecordingPathResolver;
 use App\Services\Recording\RecordingPolicyResolver;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -41,6 +42,7 @@ class EventProcessor
         protected ?RecordingPolicyResolver $recordingPolicyResolver = null,
         protected ?AnsweredRecordingStarter $answeredRecordingStarter = null,
         protected ?TraceWriter $traceWriter = null,
+        protected ?RecordingPathResolver $recordingPathResolver = null,
     ) {}
 
     /**
@@ -163,7 +165,7 @@ class EventProcessor
 
         $data = $this->buildEventPayload($organizationId, CallEventLog::EVENT_CALL_HANGUP, $callData);
 
-        $this->createCdr($organizationId, $data, $event);
+        $this->createCdr($organizationId, $data, $event, $context['call_session']);
         $this->recordCallMinutes($organizationId, $callData['billsec']);
 
         CallEvent::dispatch($organizationId, CallEventLog::EVENT_CALL_HANGUP, $data);
@@ -945,7 +947,7 @@ class EventProcessor
         };
     }
 
-    protected function createCdr(string $organizationId, array $data, array $event): void
+    protected function createCdr(string $organizationId, array $data, array $event, ?CallSession $callSession = null): void
     {
         try {
             $meta = $data['metadata'] ?? $data;
@@ -970,7 +972,7 @@ class EventProcessor
                 'billsec' => $meta['billsec'] ?? 0,
                 'hangup_cause' => $meta['hangup_cause'] ?? 'NORMAL_CLEARING',
                 'direction' => $direction,
-                'recording_path' => $event['variable_record_file_path'] ?? null,
+                'recording_path' => $this->recordingPathResolver()->resolve($event, $callSession),
                 'sip_user_agent' => $event['variable_sip_user_agent'] ?? null,
                 'remote_media_ip' => $event['variable_remote_media_ip'] ?? null,
                 'call_type' => $callType,
@@ -1042,6 +1044,11 @@ class EventProcessor
     protected function voicemailEventService(): VoicemailEventService
     {
         return $this->voicemailEventService ??= app(VoicemailEventService::class);
+    }
+
+    protected function recordingPathResolver(): RecordingPathResolver
+    {
+        return $this->recordingPathResolver ??= app(RecordingPathResolver::class);
     }
 
     protected function recordingPolicyResolver(): RecordingPolicyResolver

@@ -57,6 +57,10 @@ services:
       - freeswitch_data:/var/lib/freeswitch
       - freeswitch_logs:/var/log/freeswitch
       - freeswitch_xml_cdr:/var/log/freeswitch/xml_cdr
+      # FreeSWITCH writes the audio and the application reads and archives it,
+      # so recordings need a path both can see — the same arrangement the XML
+      # CDR spool already has.
+      - freeswitch_recordings:/var/lib/freeswitch/recordings
       - certs_data:/usr/local/freeswitch/certs
       - ./backend/storage/app/freeswitch/sip_profiles:/usr/local/freeswitch/db/sip_profiles
       - ./backend/docker/freeswitch/conf/autoload_configs/xml_curl.conf.xml:/usr/local/freeswitch/conf/autoload_configs/xml_curl.conf.xml
@@ -80,6 +84,8 @@ services:
       - RTP_PORT_RANGE_END=${RTP_PORT_RANGE_END:-32768}
 
 volumes:
+  freeswitch_recordings:
+    name: freeswitch_recordings
   freeswitch_data:
     name: freeswitch_data
   freeswitch_logs:
