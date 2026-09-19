@@ -11,49 +11,53 @@ class ProcessedCdrFileTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_processed_cdr_file_can_be_created_with_status_and_checksum(): void
+    public function test_a_ledger_entry_records_what_happened_to_a_spooled_record(): void
     {
         $record = ProcessedCdrFile::create([
-            'file_path' => 'xml_cdr/test-uuid.xml',
-            'file_name' => 'test-uuid.xml',
-            'checksum' => 'abc123',
-            'dedupe_key' => ProcessedCdrFile::dedupeKeyFor('xml_cdr/test-uuid.xml', 'abc123'),
+            'file_path' => 'xml_cdr/a_test-uuid.cdr.xml',
+            'file_name' => 'a_test-uuid.cdr.xml',
             'status' => ProcessedCdrFile::STATUS_PROCESSED,
+            'call_uuid' => 'test-uuid',
         ]);
 
         $this->assertNotNull($record->id);
         $this->assertSame(ProcessedCdrFile::STATUS_PROCESSED, $record->status);
-        $this->assertSame('abc123', $record->checksum);
+        $this->assertSame(0, $record->attempts);
     }
 
-    public function test_dedupe_key_is_stable_for_path_normalization(): void
+    /**
+     * The file name is the identity, so two entries cannot claim the same one.
+     *
+     * mod_xml_cdr names each record after the call it describes, which makes the
+     * name unique without reading a byte of the file.
+     */
+    public function test_a_file_name_can_only_appear_once(): void
     {
-        $linuxStyle = ProcessedCdrFile::dedupeKeyFor('xml_cdr/test-uuid.xml', 'abc123');
-        $windowsStyle = ProcessedCdrFile::dedupeKeyFor('XML_CDR\\test-uuid.xml', 'abc123');
-
-        $this->assertSame($linuxStyle, $windowsStyle);
-    }
-
-    public function test_dedupe_key_must_be_unique(): void
-    {
-        $dedupeKey = ProcessedCdrFile::dedupeKeyFor('xml_cdr/test-uuid.xml', 'abc123');
-
         ProcessedCdrFile::create([
-            'file_path' => 'xml_cdr/test-uuid.xml',
-            'file_name' => 'test-uuid.xml',
-            'checksum' => 'abc123',
-            'dedupe_key' => $dedupeKey,
+            'file_path' => 'xml_cdr/a_test-uuid.cdr.xml',
+            'file_name' => 'a_test-uuid.cdr.xml',
             'status' => ProcessedCdrFile::STATUS_PROCESSED,
         ]);
 
         $this->expectException(QueryException::class);
 
         ProcessedCdrFile::create([
-            'file_path' => 'xml_cdr/test-uuid-copy.xml',
-            'file_name' => 'test-uuid-copy.xml',
-            'checksum' => 'abc123',
-            'dedupe_key' => $dedupeKey,
-            'status' => ProcessedCdrFile::STATUS_PROCESSED,
+            'file_path' => 'somewhere/else/a_test-uuid.cdr.xml',
+            'file_name' => 'a_test-uuid.cdr.xml',
+            'status' => ProcessedCdrFile::STATUS_FAILED,
         ]);
+    }
+
+    /**
+     * Only these two mean the record needs no further attention.
+     */
+    public function test_failed_is_not_a_settled_status(): void
+    {
+        $this->assertSame(
+            [ProcessedCdrFile::STATUS_PROCESSED, ProcessedCdrFile::STATUS_QUARANTINED],
+            ProcessedCdrFile::settledStatuses()
+        );
+
+        $this->assertNotContains(ProcessedCdrFile::STATUS_FAILED, ProcessedCdrFile::settledStatuses());
     }
 }

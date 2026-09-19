@@ -44,7 +44,7 @@ class OutboundOriginateService
             : sprintf('%s XML %s', $destination, $organization->domain);
 
         return sprintf(
-            'originate {origination_uuid=%s,origination_caller_id_name=%s,origination_caller_id_number=%s}user/%s@%s %s',
+            'originate {origination_uuid=%s,call_direction=outbound,origination_caller_id_name=%s,origination_caller_id_number=%s}user/%s@%s %s',
             $originationUuid,
             $callerIdName,
             $callerIdNumber,

@@ -35,7 +35,7 @@ class XmlCdrDiscoveryServiceTest extends TestCase
         $this->assertSame(['a.xml', 'b.xml'], array_map('basename', $files));
     }
 
-    public function test_it_skips_already_processed_files_using_dedupe_key(): void
+    public function test_it_skips_already_processed_files_by_name(): void
     {
         $directory = storage_path('app/testing/xml_cdr_discovery');
         File::ensureDirectoryExists($directory);
@@ -46,13 +46,9 @@ class XmlCdrDiscoveryServiceTest extends TestCase
         File::put($processedPath, '<cdr><variables><uuid>a</uuid></variables></cdr>');
         File::put($pendingPath, '<cdr><variables><uuid>b</uuid></variables></cdr>');
 
-        $checksum = hash_file('sha256', $processedPath);
-
         ProcessedCdrFile::create([
             'file_path' => $processedPath,
             'file_name' => 'a.xml',
-            'checksum' => $checksum,
-            'dedupe_key' => ProcessedCdrFile::dedupeKeyFor($processedPath, $checksum),
             'status' => ProcessedCdrFile::STATUS_PROCESSED,
         ]);
 
