@@ -57,9 +57,13 @@ RUN set -eux; \
     && make install \
     && ldconfig
 
-# spandsp has no usable release, so everyone pins a commit. This is the same one
-# FusionPBX and FS PBX both use.
-ARG SPANDSP_COMMIT=0d2e6ac65e0e8f53d652665a743015a88bf048d4
+# spandsp has no usable release, so everyone pins a commit.
+#
+# Not the commit FusionPBX and FS PBX pin: theirs is spandsp 3.0.0, and
+# FreeSWITCH 1.11.3's configure requires >= 3.1.1 — it stops with "no usable
+# spandsp" against the older one. 3.1.1 is on spandsp's master branch; this is
+# the commit that set that version.
+ARG SPANDSP_COMMIT=8f1e1646bdec99eac5fd2cd92c35563f736b9b89
 RUN set -eux; \
     cd /usr/src \
     && git clone https://github.com/freeswitch/spandsp.git spandsp \
