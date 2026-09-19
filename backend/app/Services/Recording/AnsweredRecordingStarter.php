@@ -38,8 +38,26 @@ class AnsweredRecordingStarter
         }
 
         $path = $this->buildPath($callSession->organization_id, $callSession->call_uuid);
-        $this->ensureDirectoryFor($path);
-        $this->applyRecordingVariables($callSession->call_uuid, $this->directionFor($decision));
+
+        if (! $this->ensureDirectoryFor($path)) {
+            // Starting the recorder now would report success for a file
+            // FreeSWITCH cannot create, and the CDR would point at audio that
+            // does not exist.
+            $callSession->forceFill([
+                'variables' => array_merge($variables, [
+                    'recording_attempted' => true,
+                    'recording_path' => $path,
+                ]),
+            ])->save();
+
+            return [
+                'status' => 'failed',
+                'reason' => 'recording_directory_unavailable',
+                'path' => $path,
+            ];
+        }
+
+        $variablesApplied = $this->applyRecordingVariables($callSession->call_uuid, $this->directionFor($decision));
 
         $response = $this->freeSwitchCommandService->execute('uuid_record', [$callSession->call_uuid, 'start', $path], false);
 
@@ -47,6 +65,10 @@ class AnsweredRecordingStarter
             'recording_attempted' => true,
             'recording_path' => $path,
         ]);
+
+        if (! $variablesApplied) {
+            $nextVariables['recording_variables_applied'] = false;
+        }
 
         if (($response['executed'] ?? false) === true) {
             $nextVariables['recording_started'] = true;
@@ -69,6 +91,7 @@ class AnsweredRecordingStarter
         return [
             'status' => 'started',
             'path' => $path,
+            'variables_applied' => $variablesApplied,
             'response' => $response,
         ];
     }
@@ -81,7 +104,13 @@ class AnsweredRecordingStarter
         $session = $this->sessionFor($organizationId, $callUuid);
         $path = $this->pathFor($session) ?? $this->buildPath($organizationId, $callUuid);
 
-        $this->ensureDirectoryFor($path);
+        if (! $this->ensureDirectoryFor($path)) {
+            return [
+                'status' => 'failed',
+                'reason' => 'recording_directory_unavailable',
+                'path' => $path,
+            ];
+        }
 
         // The caller rarely knows the direction — the call control API is given
         // a UUID and nothing else — but the session worked it out when the call
@@ -148,9 +177,6 @@ class AnsweredRecordingStarter
         return is_string($path) && $path !== '' ? $path : null;
     }
 
-    /**
-     * @param  array<string, string>  $extra
-     */
     protected function rememberOnSession(?CallSession $session, string $path, bool $started): void
     {
         if (! $session) {
@@ -207,8 +233,15 @@ class AnsweredRecordingStarter
 
     /**
      * Set the channel variables the recorder reads when it starts.
+     *
+     * A failure here is reported but does not stop the recorder. These
+     * variables shape the recording — stereo layout, behaviour across a
+     * transfer — and a recording without them is worse than one with them, but
+     * it is far better than no recording at all, which is what aborting would
+     * produce. If the socket is genuinely down, `uuid_record` fails on the next
+     * line and the start is reported failed on its own account.
      */
-    protected function applyRecordingVariables(string $callUuid, string $direction): void
+    protected function applyRecordingVariables(string $callUuid, string $direction): bool
     {
         $pairs = [];
 
@@ -216,7 +249,9 @@ class AnsweredRecordingStarter
             $pairs[] = $name.'='.$value;
         }
 
-        $this->freeSwitchCommandService->execute('uuid_setvar_multi', [$callUuid, implode(';', $pairs)], false);
+        $response = $this->freeSwitchCommandService->execute('uuid_setvar_multi', [$callUuid, implode(';', $pairs)], false);
+
+        return ($response['executed'] ?? false) === true;
     }
 
     /**
@@ -251,13 +286,31 @@ class AnsweredRecordingStarter
      * The recorder fails silently when the tree does not exist, which is why
      * every reference dialplan calls `mkdir` immediately before recording.
      */
-    protected function ensureDirectoryFor(string $path): void
+    protected function ensureDirectoryFor(string $path): bool
     {
         $directory = dirname($path);
 
-        if (! File::isDirectory($directory)) {
-            File::makeDirectory($directory, 0775, true, true);
+        if (File::isDirectory($directory)) {
+            return true;
         }
+
+        // The fourth argument swallows the warning; the return value is the
+        // only report of what happened, and the caller needs it — FreeSWITCH
+        // writes nothing into a directory that is not there, and says so in a
+        // way this code cannot see.
+        if (! File::makeDirectory($directory, 0775, true, true)) {
+            // Lost a race with another leg of the same call, most likely.
+            clearstatcache(true, $directory);
+
+            return File::isDirectory($directory);
+        }
+
+        // makeDirectory's mode is subject to the process umask, which commonly
+        // clears the group write bit. FreeSWITCH runs as a different user in
+        // the same group and has to write the audio into here.
+        @chmod($directory, 0775);
+
+        return true;
     }
 
     /**

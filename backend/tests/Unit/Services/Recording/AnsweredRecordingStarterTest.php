@@ -265,4 +265,69 @@ class AnsweredRecordingStarterTest extends TestCase
 
         $this->assertNull(data_get($session->fresh()->variables, 'recording_path'));
     }
+
+    public function test_the_recorder_is_not_started_when_the_directory_cannot_be_made(): void
+    {
+        // A path under a plain file: the parent cannot become a directory, so
+        // this stands in for the real case, which is a shared volume the
+        // application has no write permission on.
+        $blocker = tempnam(sys_get_temp_dir(), 'rec');
+        config(['filesystems.disks.recordings.root' => $blocker]);
+
+        $session = CallSession::factory()->create(['variables' => []]);
+
+        $freeSwitch = $this->mock(FreeSwitchCommandService::class);
+        // FreeSWITCH writes nothing into a directory that is not there and
+        // reports success anyway, so the recorder must not be asked to start.
+        $freeSwitch->shouldNotReceive('execute');
+
+        $result = app(AnsweredRecordingStarter::class)->start($session, [
+            'organization_id' => $session->organization_id,
+            'call_uuid' => $session->call_uuid,
+            'should_record' => true,
+            'answered_target_type' => 'extension',
+        ]);
+
+        $session->refresh();
+
+        $this->assertSame('failed', $result['status']);
+        $this->assertSame('recording_directory_unavailable', $result['reason']);
+        $this->assertTrue((bool) data_get($session->variables, 'recording_attempted'));
+        $this->assertFalse((bool) data_get($session->variables, 'recording_started', false));
+        $this->assertFalse((bool) data_get($session->variables, 'recording_created', false));
+
+        @unlink($blocker);
+    }
+
+    public function test_a_failure_to_set_the_recording_variables_is_reported_but_does_not_stop_the_recorder(): void
+    {
+        config(['filesystems.disks.recordings.root' => '/tmp/test-recordings']);
+
+        $session = CallSession::factory()->create(['variables' => []]);
+
+        $freeSwitch = $this->mock(FreeSwitchCommandService::class);
+        $freeSwitch->shouldReceive('execute')
+            ->with('uuid_setvar_multi', \Mockery::any(), false)
+            ->andReturn(['executed' => false, 'error' => 'no such channel']);
+        $freeSwitch->shouldReceive('execute')
+            ->once()
+            ->with('uuid_record', \Mockery::any(), false)
+            ->andReturn(['executed' => true]);
+
+        $result = app(AnsweredRecordingStarter::class)->start($session, [
+            'organization_id' => $session->organization_id,
+            'call_uuid' => $session->call_uuid,
+            'should_record' => true,
+            'answered_target_type' => 'extension',
+        ]);
+
+        $session->refresh();
+
+        // A recording without the stereo layout is worse than one with it. It
+        // is far better than no recording, which is what aborting would give.
+        $this->assertSame('started', $result['status']);
+        $this->assertFalse($result['variables_applied']);
+        $this->assertFalse((bool) data_get($session->variables, 'recording_variables_applied', true));
+        $this->assertTrue((bool) data_get($session->variables, 'recording_created'));
+    }
 }
