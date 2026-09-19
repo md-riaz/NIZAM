@@ -76,14 +76,46 @@ class DialplanCallDirectionTest extends TestCase
         $transfer = strpos($xml, 'application="transfer"');
 
         $this->assertNotFalse($declaration);
+        // Unguarded on purpose. The route always hands off with a transfer, so
+        // if one stops being emitted the ordering this test exists to protect
+        // has stopped being checkable — that should fail here, not pass
+        // quietly.
+        $this->assertNotFalse($transfer, 'The route no longer ends in a transfer.');
         $this->assertGreaterThan($condition, $declaration, 'The declaration is outside the matched condition.');
+        $this->assertLessThan(
+            $transfer,
+            $declaration,
+            'The declaration comes after the transfer, so it never runs.'
+        );
+    }
 
-        if ($transfer !== false) {
-            $this->assertLessThan(
-                $transfer,
-                $declaration,
-                'The declaration comes after the transfer, so it never runs.'
-            );
-        }
+    /**
+     * The same ordering on the inbound route, which reaches the same handoff.
+     */
+    public function test_the_inbound_declaration_comes_before_the_transfer(): void
+    {
+        $organization = Organization::factory()->create();
+        $extension = Extension::factory()->create(['organization_id' => $organization->id]);
+        $did = Did::factory()->create([
+            'organization_id' => $organization->id,
+            'destination_type' => 'extension',
+            'destination_id' => $extension->id,
+            'is_active' => true,
+        ]);
+
+        $xml = app(DialplanCompiler::class)->compileDidExtension($organization, $did);
+
+        $declaration = strpos($xml, 'call_direction=inbound');
+        $condition = strpos($xml, '<condition');
+        $transfer = strpos($xml, 'application="transfer"');
+
+        $this->assertNotFalse($declaration);
+        $this->assertNotFalse($transfer, 'The route no longer ends in a transfer.');
+        $this->assertGreaterThan($condition, $declaration, 'The declaration is outside the matched condition.');
+        $this->assertLessThan(
+            $transfer,
+            $declaration,
+            'The declaration comes after the transfer, so it never runs.'
+        );
     }
 }
