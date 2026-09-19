@@ -154,10 +154,8 @@ RUN chown -R freeswitch:freeswitch /usr/local/freeswitch/scripts
 COPY docker/freeswitch/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Log and recording directories. Recordings live on a volume the application
-# containers share, because FreeSWITCH writes the file and the application reads
-# and archives it.
-RUN mkdir -p /var/log/freeswitch /var/lib/freeswitch/recordings \
+# Log directory.
+RUN mkdir -p /var/log/freeswitch /var/lib/freeswitch \
     && chown -R freeswitch:freeswitch /var/log/freeswitch /var/lib/freeswitch
 
 # The recordings tree is shared with the application, which runs as a different
