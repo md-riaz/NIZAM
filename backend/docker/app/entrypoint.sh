@@ -44,12 +44,16 @@ if getent group "$FS_SHARED_GROUP" >/dev/null 2>&1; then
     # revisits it. FreeSWITCH then refuses to start on the spool and silently
     # records nothing to the other, which is exactly what an upgrade of an
     # already-running deployment would hit.
+    # Directories only, not files. A recordings tree holds one file per call
+    # and walking those on every boot would cost more than it fixes, while the
+    # directories are what has to be writable for FreeSWITCH to create the next
+    # one — and on a date-partitioned tree there are only a few per day.
     for shared_dir in \
         "${RECORDING_PATH:-/var/lib/freeswitch/recordings}" \
         "${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}"; do
         [ -d "$shared_dir" ] || mkdir -p "$shared_dir" 2>/dev/null || continue
-        chgrp "$FS_SHARED_GROUP" "$shared_dir" 2>/dev/null || true
-        chmod 2775 "$shared_dir" 2>/dev/null || true
+        find "$shared_dir" -type d -exec chgrp "$FS_SHARED_GROUP" {} + 2>/dev/null || true
+        find "$shared_dir" -type d -exec chmod 2775 {} + 2>/dev/null || true
     done
 else
     echo "[entrypoint] WARNING: group $FS_SHARED_GROUP is missing; FreeSWITCH will not be able to write the SIP profile tree."
