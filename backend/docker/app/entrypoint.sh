@@ -48,9 +48,20 @@ if getent group "$FS_SHARED_GROUP" >/dev/null 2>&1; then
     # and walking those on every boot would cost more than it fixes, while the
     # directories are what has to be writable for FreeSWITCH to create the next
     # one — and on a date-partitioned tree there are only a few per day.
+    # Two separate settings point at the CDR spool and they do not have to
+    # agree: FreeSWITCH writes to FREESWITCH_XML_CDR_LOG_DIR, which its own
+    # preflight checks, while the spool reader scans
+    # telephony.xml_cdr.directory, which comes from FREESWITCH_XML_CDR_DIRECTORY.
+    # log_dir falls back to it, so the default has them the same — but setting
+    # only the log dir splits them, and then repairing one leaves the other
+    # unwritable. Repair both; the repeat is harmless when they match.
+    xml_cdr_log_dir="${FREESWITCH_XML_CDR_LOG_DIR:-${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}}"
+    xml_cdr_dir="${FREESWITCH_XML_CDR_DIRECTORY:-/var/log/freeswitch/xml_cdr}"
+
     for shared_dir in \
         "${RECORDING_PATH:-/var/lib/freeswitch/recordings}" \
-        "${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}"; do
+        "$xml_cdr_log_dir" \
+        "$xml_cdr_dir"; do
         [ -d "$shared_dir" ] || mkdir -p "$shared_dir" 2>/dev/null || continue
         find "$shared_dir" -type d -exec chgrp "$FS_SHARED_GROUP" {} + 2>/dev/null || true
         find "$shared_dir" -type d -exec chmod 2775 {} + 2>/dev/null || true
