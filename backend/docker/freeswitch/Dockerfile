@@ -158,26 +158,33 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN mkdir -p /var/log/freeswitch /var/lib/freeswitch \
     && chown -R freeswitch:freeswitch /var/log/freeswitch /var/lib/freeswitch
 
-# The recordings tree is shared with the application, which runs as a different
-# user: the application creates the per-organization and per-date directory and
-# FreeSWITCH writes the audio into it. They need a group in common, so both
-# images create one at a fixed GID and put their own user in it. The two images
-# come from different distributions and neither's own user IDs line up, which is
-# why this is an explicit shared group rather than a matching UID.
+# Trees the application and FreeSWITCH both write to.
+#
+# There are three of them — the recordings, the XML CDR spool, and the generated
+# Sofia profiles — and each is written by one side and read or deleted by the
+# other. They run as different users from different distributions and neither
+# image's own IDs line up, so they share an explicit group at a fixed GID rather
+# than a matching UID.
+#
+# The spool is the one that has to be group-writable in both directions:
+# FreeSWITCH writes each record and the watcher deletes it once it is committed,
+# which needs write permission on the directory, not on the file.
 #
 # Docker seeds a fresh named volume from whatever the image has at the mount
-# point, so the ownership and mode have to be set here — a volume with no image
-# content behind it is created root-owned, and neither side can write.
+# point, so the recordings ownership and mode have to be set here — a volume
+# with no image content behind it is created root-owned, and neither side can
+# write. The profile tree is a bind mount and carries the host's ownership
+# instead, so the application's entrypoint sets that one up.
 #
-# 2775 is group-writable and setgid, so the directories the application creates
-# inherit this group and stay writable by FreeSWITCH.
-ARG RECORDINGS_GID=2000
+# 2775 is group-writable and setgid, so directories created underneath inherit
+# this group and stay writable by both.
+ARG FS_SHARED_GID=2000
 RUN set -eux; \
-    groupadd -g "${RECORDINGS_GID}" recordings; \
-    usermod -aG recordings freeswitch; \
-    mkdir -p /var/lib/freeswitch/recordings; \
-    chown freeswitch:recordings /var/lib/freeswitch/recordings; \
-    chmod 2775 /var/lib/freeswitch/recordings
+    groupadd -g "${FS_SHARED_GID}" fsshared; \
+    usermod -aG fsshared freeswitch; \
+    mkdir -p /var/lib/freeswitch/recordings /var/log/freeswitch/xml_cdr; \
+    chown freeswitch:fsshared /var/lib/freeswitch/recordings /var/log/freeswitch/xml_cdr; \
+    chmod 2775 /var/lib/freeswitch/recordings /var/log/freeswitch/xml_cdr
 
 # Drop to unprivileged user
 USER freeswitch

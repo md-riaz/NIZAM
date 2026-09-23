@@ -1,0 +1,43 @@
+# The image installs its own dependencies; the host's working copy must not be
+# copied over them.
+#
+# The Dockerfile already assumes this file exists — it installs with
+# `composer install --no-dev` first and notes that `COPY . .` "will NOT
+# overwrite it, via .dockerignore". Without the file that is exactly what
+# happened: a development vendor tree, dev dependencies and all, landed on top
+# of the production install. Here that was 4.2 GB, including 122 embedded .git
+# directories and the whole of phpunit, sebastian and mockery, and it produced
+# an 8.7 GB image.
+vendor
+node_modules
+
+# History and local git state. Never needed at runtime, and large.
+.git
+.gitignore
+.gitattributes
+
+# Secrets and per-machine configuration. These come from the environment.
+.env
+.env.*
+!.env.example
+
+# Runtime state, recreated by the entrypoint.
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+storage/framework/testing
+storage/debugbar
+bootstrap/cache
+
+# Test and tooling artifacts.
+tests
+.phpunit.result.cache
+.phpunit.cache
+coverage
+.php-cs-fixer.cache
+
+# Editor and OS noise.
+.idea
+.vscode
+.DS_Store

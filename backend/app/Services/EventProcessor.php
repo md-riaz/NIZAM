@@ -365,6 +365,36 @@ class EventProcessor
             return null;
         }
 
+        try {
+            return $this->queryAttemptByLegUuid($organizationId, $legUuid);
+        } catch (QueryException $e) {
+            if (! $this->isUnparseableValue($e)) {
+                throw $e;
+            }
+
+            // A channel identifier that the column's type cannot represent
+            // cannot match a row in it. That is a miss, not a failure — but
+            // PostgreSQL raises rather than returning nothing, and the raise
+            // used to abort processing of the whole event: no call record and
+            // no billable minutes for that call, and ten in a row dropped the
+            // listener's connection.
+            //
+            // FreeSWITCH generates real uuids, but `origination_uuid` lets a
+            // caller supply its own, so the value is not ours to trust.
+            Log::debug('Ignoring non-uuid FreeSWITCH leg identifier', [
+                'leg_uuid' => $legUuid,
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * The lookup itself, kept separate so the error handling around it can be
+     * exercised without a PostgreSQL-backed test database.
+     */
+    protected function queryAttemptByLegUuid(string $organizationId, string $legUuid): ?CallDeliveryAttempt
+    {
         return CallDeliveryAttempt::query()
             ->with('callSession')
             ->where('freeswitch_leg_uuid', $legUuid)
@@ -373,6 +403,17 @@ class EventProcessor
             })
             ->latest('created_at')
             ->first();
+    }
+
+    /**
+     * Whether a query failed because a value did not fit the column's type,
+     * rather than for a reason worth propagating.
+     *
+     * PostgreSQL reports this as SQLSTATE 22P02, invalid text representation.
+     */
+    protected function isUnparseableValue(QueryException $exception): bool
+    {
+        return ($exception->errorInfo[0] ?? null) === '22P02';
     }
 
     /**
