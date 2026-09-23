@@ -362,4 +362,32 @@ class EventProcessorTest extends TestCase
 
         Event::assertNotDispatched(CallEvent::class);
     }
+
+    public function test_a_leg_identifier_the_column_cannot_represent_does_not_abort_the_event(): void
+    {
+        [$organization, $extension] = $this->createOrganizationWithExtension();
+        Event::fake([CallEvent::class]);
+
+        // `freeswitch_leg_uuid` is a uuid column and PostgreSQL raises on a
+        // value it cannot parse, rather than simply not matching. An
+        // integration that sets its own origination_uuid used to take the whole
+        // event down with it — no call record, no billable minutes.
+        $this->processor->process([
+            'Event-Name' => 'CHANNEL_HANGUP_COMPLETE',
+            'variable_domain_name' => 'test.example.com',
+            'Unique-ID' => 'not-a-uuid-at-all',
+            'Caller-Caller-ID-Number' => '1001',
+            'Caller-Destination-Number' => '1002',
+            'Call-Direction' => 'inbound',
+            'Hangup-Cause' => 'NORMAL_CLEARING',
+            'variable_duration' => '30',
+            'variable_billsec' => '25',
+        ]);
+
+        $this->assertDatabaseHas('call_detail_records', [
+            'uuid' => 'not-a-uuid-at-all',
+            'organization_id' => $organization->id,
+            'billsec' => 25,
+        ]);
+    }
 }

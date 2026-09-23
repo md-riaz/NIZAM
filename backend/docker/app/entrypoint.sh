@@ -20,6 +20,26 @@ chown -R www-data:www-data \
     "$APP_ROOT/storage" \
     "$APP_ROOT/bootstrap/cache"
 
+# The generated Sofia profiles are read *and written* by FreeSWITCH, which runs
+# as a different user in another container. The chown above would otherwise
+# leave this tree www-data-only and FreeSWITCH would refuse to start.
+#
+# It is a bind mount, so unlike the recordings volume the image cannot seed its
+# ownership — the host's wins, and this is the only place running as root on
+# either side. setgid so anything the application creates underneath stays
+# group-writable.
+FS_SHARED_GROUP=${FS_SHARED_GROUP:-fsshared}
+SIP_PROFILE_DIR="$APP_ROOT/storage/app/freeswitch/sip_profiles"
+
+if getent group "$FS_SHARED_GROUP" >/dev/null 2>&1; then
+    mkdir -p "$SIP_PROFILE_DIR/external"
+    chgrp -R "$FS_SHARED_GROUP" "$SIP_PROFILE_DIR"
+    chmod -R g+w "$SIP_PROFILE_DIR"
+    find "$SIP_PROFILE_DIR" -type d -exec chmod g+s {} +
+else
+    echo "[entrypoint] WARNING: group $FS_SHARED_GROUP is missing; FreeSWITCH will not be able to write the SIP profile tree."
+fi
+
 rm -f \
     "$APP_ROOT/bootstrap/cache/packages.php" \
     "$APP_ROOT/bootstrap/cache/services.php"
@@ -52,6 +72,18 @@ if [ -n "$DB_HOST" ]; then
     # Matches what install.sh already does for bare-metal deployments.
     echo "[entrypoint] Syncing permissions..."
     php artisan nizam:sync-permissions --no-interaction 2>&1 || echo "[entrypoint] Permission sync failed — continuing anyway"
+
+    # FreeSWITCH refuses to start without internal.xml and external.xml, and
+    # until now the only thing that ever wrote them was a model observer. A
+    # deployment that never edited a profile left FreeSWITCH restarting forever.
+    # The seeder is infrastructure rather than demo data and is idempotent, so
+    # it runs unconditionally — unlike db:seed below, which is gated on the
+    # admin credentials because it also loads sample data.
+    echo "[entrypoint] Seeding SIP profiles..."
+    php artisan db:seed --class=Database\\Seeders\\SipProfileSeeder --force --no-interaction 2>&1 || echo "[entrypoint] SIP profile seeding failed — continuing anyway"
+
+    echo "[entrypoint] Compiling SIP profiles..."
+    php artisan nizam:compile-sip-profiles --no-interaction 2>&1 || echo "[entrypoint] SIP profile compilation failed — continuing anyway"
 
     if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
         echo "[entrypoint] ADMIN_EMAIL + ADMIN_PASSWORD set — running seeders..."

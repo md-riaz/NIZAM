@@ -20,8 +20,13 @@ class SipProfileCompiler
         $storagePath = (string) config('telephony.sip_profile_provisioning.directory', storage_path('app/freeswitch/sip_profiles'));
 
         if (! File::exists($storagePath)) {
-            File::makeDirectory($storagePath, 0755, true);
+            File::makeDirectory($storagePath, 0775, true);
         }
+
+        // FreeSWITCH runs as a different user and writes into this tree too —
+        // its entrypoint refuses to start if it cannot. 0755 would lock it out,
+        // and makeDirectory's mode is subject to the umask, so set it outright.
+        @chmod($storagePath, 02775);
 
         // Clean out existing .xml files
         $existingFiles = File::glob($storagePath.'/*.xml');
@@ -36,8 +41,10 @@ class SipProfileCompiler
 
         $externalGatewayPath = $storagePath.'/external';
         if (! File::exists($externalGatewayPath)) {
-            File::makeDirectory($externalGatewayPath, 0755, true);
+            File::makeDirectory($externalGatewayPath, 0775, true);
         }
+
+        @chmod($externalGatewayPath, 02775);
     }
 
     /**
