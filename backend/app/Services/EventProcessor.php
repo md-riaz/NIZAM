@@ -366,15 +366,7 @@ class EventProcessor
         }
 
         try {
-
-            return CallDeliveryAttempt::query()
-                ->with('callSession')
-                ->where('freeswitch_leg_uuid', $legUuid)
-                ->whereHas('callSession', function ($query) use ($organizationId): void {
-                    $query->where('organization_id', $organizationId);
-                })
-                ->latest('created_at')
-                ->first();
+            return $this->queryAttemptByLegUuid($organizationId, $legUuid);
         } catch (QueryException $e) {
             if (! $this->isUnparseableValue($e)) {
                 throw $e;
@@ -395,6 +387,22 @@ class EventProcessor
 
             return null;
         }
+    }
+
+    /**
+     * The lookup itself, kept separate so the error handling around it can be
+     * exercised without a PostgreSQL-backed test database.
+     */
+    protected function queryAttemptByLegUuid(string $organizationId, string $legUuid): ?CallDeliveryAttempt
+    {
+        return CallDeliveryAttempt::query()
+            ->with('callSession')
+            ->where('freeswitch_leg_uuid', $legUuid)
+            ->whereHas('callSession', function ($query) use ($organizationId): void {
+                $query->where('organization_id', $organizationId);
+            })
+            ->latest('created_at')
+            ->first();
     }
 
     /**

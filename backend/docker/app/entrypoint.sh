@@ -36,6 +36,21 @@ if getent group "$FS_SHARED_GROUP" >/dev/null 2>&1; then
     chgrp -R "$FS_SHARED_GROUP" "$SIP_PROFILE_DIR"
     chmod -R g+w "$SIP_PROFILE_DIR"
     find "$SIP_PROFILE_DIR" -type d -exec chmod g+s {} +
+
+    # The recordings tree and the XML CDR spool are named volumes, and the
+    # FreeSWITCH image sets their ownership so that Docker seeds a *fresh* one
+    # correctly. A volume that already existed keeps whatever it was created
+    # with — root-owned, if it predates that — and the image layer never
+    # revisits it. FreeSWITCH then refuses to start on the spool and silently
+    # records nothing to the other, which is exactly what an upgrade of an
+    # already-running deployment would hit.
+    for shared_dir in \
+        "${RECORDING_PATH:-/var/lib/freeswitch/recordings}" \
+        "${FREESWITCH_XML_CDR_LOG_DIR:-/var/log/freeswitch/xml_cdr}"; do
+        [ -d "$shared_dir" ] || mkdir -p "$shared_dir" 2>/dev/null || continue
+        chgrp "$FS_SHARED_GROUP" "$shared_dir" 2>/dev/null || true
+        chmod 2775 "$shared_dir" 2>/dev/null || true
+    done
 else
     echo "[entrypoint] WARNING: group $FS_SHARED_GROUP is missing; FreeSWITCH will not be able to write the SIP profile tree."
 fi

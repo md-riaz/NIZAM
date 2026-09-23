@@ -17,6 +17,18 @@ ODBC_INST_INI="$ODBC_CONFIG_DIR/odbcinst.ini"
 # something Debian's odbc-postgresql ships at all. The preflight below therefore
 # could never pass and the container could never start, and odbcinst.ini pointed
 # Driver= at it as well, so connecting would have failed even if it had.
+#
+# Debian puts it under a multiarch directory, so the path differs between an
+# amd64 and an arm64 build. Find it rather than naming one architecture, and
+# keep ODBC_DRIVER_PATH as an override for anything unusual.
+if [ -z "$ODBC_DRIVER_PATH" ]; then
+    for candidate in /usr/lib/*/odbc/psqlodbcw.so; do
+        if [ -r "$candidate" ]; then
+            ODBC_DRIVER_PATH="$candidate"
+            break
+        fi
+    done
+fi
 ODBC_DRIVER_PATH=${ODBC_DRIVER_PATH:-/usr/lib/x86_64-linux-gnu/odbc/psqlodbcw.so}
 
 fatal() {
